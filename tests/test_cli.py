@@ -72,6 +72,19 @@ def test_table_by_category(
     assert "bug-fix" in out and "feature-dev" in out and "unclassified" in out
 
 
+def test_report_command_writes_static_html(
+    pareto_fixture: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    out_file = tmp_path / "report.html"
+
+    main(["report", "--data", str(pareto_fixture), "--out", str(out_file)])
+
+    assert out_file.exists()
+    html = out_file.read_text()
+    assert "<svg" in html and "bug-fix" in html
+    assert str(out_file) in capsys.readouterr().out
+
+
 def test_classify_with_warm_cache_needs_no_api_key(
     dataset_fixture: Path, tmp_path: Path,
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch,

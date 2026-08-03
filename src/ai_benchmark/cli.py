@@ -25,6 +25,7 @@ from ai_benchmark.queries import (
     render_table,
     resolution_rates,
 )
+from ai_benchmark.report import pareto_points, render_report
 from ai_benchmark.schema import Record
 from ai_benchmark.swebench import ingest_swebench
 
@@ -68,6 +69,13 @@ def _table_command(args: argparse.Namespace) -> None:
         print()
         print(f"aggregate records ({len(aggregates)}), as published — not pooled above:")
         print(render_aggregate_table(aggregates))
+
+
+def _report_command(args: argparse.Namespace) -> None:
+    records = read_records(args.data)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(render_report(pareto_points(records)))
+    print(f"wrote Pareto report over {len(records)} records to {args.out}")
 
 
 def _never_llm(benchmark: str, instance_id: str) -> Label:
@@ -121,6 +129,14 @@ def main(argv: list[str] | None = None) -> None:
         "--by-category", action="store_true", help="group rates by task category"
     )
     table.set_defaults(command=_table_command)
+
+    report = subcommands.add_parser(
+        "report",
+        help="write a static HTML report: per-category Pareto frontier of quality vs cost",
+    )
+    report.add_argument("--data", type=Path, default=DEFAULT_DATA)
+    report.add_argument("--out", type=Path, default=Path("report.html"))
+    report.set_defaults(command=_report_command)
 
     classify = subcommands.add_parser(
         "classify", help="classify unclassified instances via the committed cache + LLM"

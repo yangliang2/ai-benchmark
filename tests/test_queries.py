@@ -172,6 +172,13 @@ def test_aggregate_rows_surface_cost_and_latency(aggregates_fixture: Path) -> No
     assert gpt6.benchmark == "aider-polyglot"
     assert gpt6.quality_metric == "pass-rate-2"
     assert gpt6.cost_usd == pytest.approx(45.10 / 225)
+    assert gpt6.confidence == "low"
+    assert gpt6.source == "https://aider.chat/docs/leaderboards/"
 
     table = render_aggregate_table(rows)
     assert "pass-rate-2" in table and "0.20" in table
+    # Provenance is visible in the view, so a low-confidence leaderboard number
+    # is never mistaken for a measured one.
+    header = table.splitlines()[0]
+    assert "confidence" in header and "source" in header
+    assert "low" in table and "aider.chat" in table

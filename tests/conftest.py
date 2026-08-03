@@ -28,3 +28,8 @@ def aggregates_fixture() -> Path:
 @pytest.fixture
 def aider_fixture() -> Path:
     return FIXTURES / "aider"
+
+
+@pytest.fixture
+def pareto_fixture() -> Path:
+    return FIXTURES / "pareto.jsonl"

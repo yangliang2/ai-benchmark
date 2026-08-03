@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 from typing import NamedTuple
 
-from ai_benchmark.schema import Record, TaskCategory
+from ai_benchmark.schema import Confidence, Record, TaskCategory
 
 
 class CombinationRate(NamedTuple):
@@ -67,6 +67,8 @@ class AggregateRow(NamedTuple):
     quality_value: float
     cost_usd: float | None  # USD per benchmark instance (normalized at ingest)
     latency_s: float | None
+    confidence: Confidence
+    source: str
     as_of: date
 
 
@@ -82,6 +84,8 @@ def published_aggregates(records: list[Record]) -> list[AggregateRow]:
             quality_value=r.quality_value,
             cost_usd=r.cost_usd,
             latency_s=r.latency_s,
+            confidence=r.confidence,
+            source=r.source,
             as_of=r.as_of,
         )
         for r in records
@@ -165,6 +169,8 @@ def render_aggregate_table(rows: list[AggregateRow]) -> str:
             "value",
             "cost/inst",
             "latency-s",
+            "confidence",
+            "source",
             "as-of",
         ),
         [
@@ -176,6 +182,8 @@ def render_aggregate_table(rows: list[AggregateRow]) -> str:
                 f"{row.quality_value:g}",
                 _money(row.cost_usd),
                 f"{row.latency_s:.1f}" if row.latency_s is not None else "-",
+                row.confidence,
+                row.source,
                 row.as_of.isoformat(),
             )
             for row in rows
