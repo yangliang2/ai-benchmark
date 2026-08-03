@@ -25,4 +25,4 @@ testpaths = ["tests"]
 
 [tool.mypy]
 strict = true
-packages = ["ai_benchmark"]
+files = ["src/ai_benchmark", "tests"]

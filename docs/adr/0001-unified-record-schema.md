@@ -20,12 +20,16 @@ Field groups:
 - **Cost dimensions** (all optional — most second-hand sources lack them): `tokens_in`, `tokens_out`, `cost_usd`, `latency_s`, `turns`
 - **Provenance** (all mandatory): `source`, `source_type`, `confidence`, `as_of`
 
-Cross-field rule: `instance_id` is required unless `source_type` is `aggregate`.
+Cross-field rules: `instance_id` is required unless `source_type` is `aggregate`; `first-party` records must have `confidence: high` (enforced at the seam, not by convention).
+
+`category` additionally admits `unclassified` — an escape hatch beyond taxonomy v0's seven categories so ingestion never force-fits and unclassified counts stay visible (spec #1 story 13; ticket #3 ingests before classification exists).
+
+For non-Python consumers, the schema is exported as JSON Schema to `record.schema.json` at the repo root; a test keeps the export in sync with the pydantic model.
 
 ### Provenance/confidence model
 
 - `source_type` states *how the number was produced*: `first-party` | `per-instance` | `aggregate`. It is structural fact, not judgement.
-- `confidence` (`high`/`medium`/`low`) states *how much to trust it*, set by the ingester: first-party runs are `high`; per-instance second-hand data defaults to `medium`; aggregates and anything with known contamination or methodology doubts get `low`. Views filter or weight by it; records never get silently dropped.
+- `confidence` (`high`/`medium`/`low`) states *how much to trust it*, set by the ingester: first-party runs are `high` (schema-enforced); per-instance second-hand data defaults to `medium`; aggregates and anything with known contamination or methodology doubts get `low`. Views filter or weight by it; records never get silently dropped.
 
 ## Rationale
 

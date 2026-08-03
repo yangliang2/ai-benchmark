@@ -10,6 +10,7 @@ The vocabulary this project uses. Skills and contributors should use these terms
 - **Agent** — the coding harness/scaffold (claude-code, aider, cursor, …), independent of the model driving it (not: assistant, tool).
 - **Benchmark instance** — one task inside a source benchmark, e.g. one SWE-bench issue (not: problem, sample).
 - **Capability matrix** — the conceptual grid task category × combination × dimension the whole project exists to fill. Empty cells are as informative as full ones.
+- **Quality metric** — the named measure a record's quality value is expressed in (e.g. `resolved`, `resolution-rate`, `pass-rate`). Values under different quality metrics are never directly comparable (not: score).
 - **Pareto frontier** — within one task category, the set of combinations not dominated on both quality and cost.
 
 ## Task taxonomy v0
@@ -48,6 +49,7 @@ Orthogonal to category:
 
 ## Provenance vocabulary
 
+- **source** — where a record's number came from: a URL, report name, or run id (not: origin, provider).
 - **source type** — how the number was produced: `first-party` (we ran it, exact measurements), `per-instance` (second-hand but instance-level), `aggregate` (second-hand summary number only).
 - **confidence** — how much a record should be trusted when views weight or filter: `high` / `medium` / `low`. First-party records are high by construction; see ADR-0001 for the model.
 - **as-of date** — when the underlying result was produced (not when we ingested it). Views must surface it; stale data is shown, never hidden.

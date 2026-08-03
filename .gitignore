@@ -1,2 +1,5 @@
 .omc/
 .scratch/
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,197 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "enum": [
+        "bug-fix",
+        "feature-dev",
+        "refactor",
+        "test-authoring",
+        "frontend-ui",
+        "infra-config",
+        "codebase-comprehension",
+        "unclassified"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "scale": {
+      "enum": [
+        "single-file",
+        "cross-file",
+        "unknown"
+      ],
+      "title": "Scale",
+      "type": "string"
+    },
+    "language": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z][a-z0-9+#.-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Language"
+    },
+    "agent": {
+      "minLength": 1,
+      "title": "Agent",
+      "type": "string"
+    },
+    "agent_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agent Version"
+    },
+    "model": {
+      "minLength": 1,
+      "title": "Model",
+      "type": "string"
+    },
+    "benchmark": {
+      "minLength": 1,
+      "title": "Benchmark",
+      "type": "string"
+    },
+    "instance_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Instance Id"
+    },
+    "quality_metric": {
+      "minLength": 1,
+      "title": "Quality Metric",
+      "type": "string"
+    },
+    "quality_value": {
+      "title": "Quality Value",
+      "type": "number"
+    },
+    "tokens_in": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tokens In"
+    },
+    "tokens_out": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tokens Out"
+    },
+    "cost_usd": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cost Usd"
+    },
+    "latency_s": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latency S"
+    },
+    "turns": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Turns"
+    },
+    "source": {
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "source_type": {
+      "enum": [
+        "first-party",
+        "per-instance",
+        "aggregate"
+      ],
+      "title": "Source Type",
+      "type": "string"
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    }
+  },
+  "required": [
+    "category",
+    "scale",
+    "agent",
+    "model",
+    "benchmark",
+    "quality_metric",
+    "quality_value",
+    "source",
+    "source_type",
+    "confidence",
+    "as_of"
+  ],
+  "title": "Record",
+  "type": "object"
+}

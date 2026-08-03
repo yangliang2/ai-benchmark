@@ -1,13 +1,13 @@
-"""The unified record schema — the single seam all three layers read and write.
+"""The record schema — the validation gate on the unified dataset.
 
-One Record = one (agent x model) combination's result on one benchmark instance,
-or an aggregate when per-instance data is unavailable. See ADR-0001 and CONTEXT.md
-for the vocabulary.
+One Record = one combination's result on one benchmark instance, or an
+aggregate when per-instance data is unavailable. See ADR-0001 and CONTEXT.md
+for the vocabulary. Non-Python consumers use the exported record.schema.json.
 """
 
 from collections.abc import Mapping
 from datetime import date
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -28,6 +28,11 @@ SourceType = Literal["first-party", "per-instance", "aggregate"]
 
 Confidence = Literal["high", "medium", "low"]
 
+NonEmptyStr = Annotated[str, Field(min_length=1)]
+
+# Lowercase language identifiers per CONTEXT.md: python, typescript, c++, c#, ...
+LanguageStr = Annotated[str, Field(pattern=r"^[a-z][a-z0-9+#.-]*$")]
+
 
 class RecordValidationError(ValueError):
     """A raw mapping does not form a valid unified-dataset record."""
@@ -38,16 +43,16 @@ class Record(BaseModel):
 
     category: TaskCategory
     scale: Scale
-    language: str | None = None
+    language: LanguageStr | None = None
 
-    agent: str = Field(min_length=1)
+    agent: NonEmptyStr
     agent_version: str | None = None
-    model: str = Field(min_length=1)
+    model: NonEmptyStr
 
-    benchmark: str = Field(min_length=1)
+    benchmark: NonEmptyStr
     instance_id: str | None = None
 
-    quality_metric: str = Field(min_length=1)
+    quality_metric: NonEmptyStr
     quality_value: float
 
     tokens_in: int | None = Field(default=None, ge=0)
@@ -56,17 +61,22 @@ class Record(BaseModel):
     latency_s: float | None = Field(default=None, ge=0)
     turns: int | None = Field(default=None, ge=1)
 
-    source: str = Field(min_length=1)
+    source: NonEmptyStr
     source_type: SourceType
     confidence: Confidence
     as_of: date
 
     @model_validator(mode="after")
-    def instance_id_required_unless_aggregate(self) -> Self:
+    def cross_field_rules(self) -> Self:
         if self.source_type != "aggregate" and self.instance_id is None:
             raise ValueError(
                 f"instance_id is required for source_type={self.source_type!r}; "
                 "only aggregate records may omit it"
+            )
+        if self.source_type == "first-party" and self.confidence != "high":
+            raise ValueError(
+                "confidence must be 'high' for first-party records (ADR-0001); "
+                f"got {self.confidence!r}"
             )
         return self
 

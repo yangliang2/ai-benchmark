@@ -1,11 +1,15 @@
 """Tests at the unified-dataset seam: raw mapping in -> validated Record or clear error."""
 
+import json
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from ai_benchmark.schema import Record, RecordValidationError, validate_record
 
 
-def valid_record_data() -> dict:
+def valid_record_data() -> dict[str, Any]:
     """A well-formed per-instance record, as a raw mapping (e.g. one JSONL row)."""
     return {
         "category": "bug-fix",
@@ -96,3 +100,29 @@ def test_per_instance_record_without_instance_id_is_rejected() -> None:
 
     with pytest.raises(RecordValidationError, match="instance_id"):
         validate_record(data)
+
+
+def test_non_lowercase_language_is_rejected() -> None:
+    data = valid_record_data()
+    data["language"] = "Python"
+
+    with pytest.raises(RecordValidationError, match="language"):
+        validate_record(data)
+
+
+def test_first_party_record_must_have_high_confidence() -> None:
+    data = valid_record_data()
+    data["source_type"] = "first-party"
+    data["confidence"] = "low"
+
+    with pytest.raises(RecordValidationError, match="confidence"):
+        validate_record(data)
+
+
+def test_checked_in_json_schema_matches_the_model() -> None:
+    """record.schema.json is the schema for non-Python consumers; it must not drift."""
+    checked_in = json.loads(
+        (Path(__file__).parent.parent / "record.schema.json").read_text()
+    )
+
+    assert checked_in == Record.model_json_schema()
