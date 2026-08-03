@@ -1,0 +1,7 @@
+{
+  "agent": "claude-code",
+  "agent_version": "2.1.0",
+  "model": "claude-sonnet-5",
+  "source": "https://github.com/swe-bench/experiments/tree/main/evaluation/verified/20260115_claude-code",
+  "as_of": "2026-01-15"
+}

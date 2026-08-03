@@ -1,0 +1,4 @@
+{
+  "resolved": ["astropy__astropy-12907", "django__django-11099"],
+  "unresolved": ["sympy__sympy-20590", "requests__requests-863"]
+}
