@@ -6,6 +6,9 @@ from typing import NamedTuple
 
 from ai_benchmark.schema import Confidence, Record, TaskCategory
 
+# Instance-level rows pool into rates; aggregates never do (ADR-0001).
+_INSTANCE_LEVEL = ("per-instance", "first-party")
+
 
 class CombinationRate(NamedTuple):
     benchmark: str
@@ -30,12 +33,13 @@ class CategoryRate(NamedTuple):
 
 
 def resolution_rates(records: list[Record]) -> list[CombinationRate]:
-    """Per-instance resolution rate per benchmark x combination, best rate first
-    within each benchmark. Aggregate records are never pooled in (they would
-    double-count; see ADR-0001)."""
+    """Instance-level resolution rate per benchmark x combination (second-hand
+    per-instance and first-party rows alike), best rate first within each
+    benchmark. Aggregate records are never pooled in (they would double-count;
+    see ADR-0001)."""
     groups: dict[tuple[str, str, str], list[Record]] = defaultdict(list)
     for record in records:
-        if record.quality_metric == "resolved" and record.source_type == "per-instance":
+        if record.quality_metric == "resolved" and record.source_type in _INSTANCE_LEVEL:
             groups[(record.benchmark, record.agent, record.model)].append(record)
 
     rates = [
@@ -102,7 +106,7 @@ def category_rates(records: list[Record]) -> list[CategoryRate]:
     stays visible rather than being dropped."""
     groups: dict[tuple[str, TaskCategory, str, str], list[Record]] = defaultdict(list)
     for record in records:
-        if record.quality_metric == "resolved" and record.source_type == "per-instance":
+        if record.quality_metric == "resolved" and record.source_type in _INSTANCE_LEVEL:
             groups[
                 (record.benchmark, record.category, record.agent, record.model)
             ].append(record)

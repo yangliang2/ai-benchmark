@@ -162,6 +162,33 @@ def test_mean_cost_per_instance_when_records_carry_cost() -> None:
     assert rates[0].cost_usd == 2.0
 
 
+def test_first_party_records_pool_into_resolution_rates() -> None:
+    def record(instance_id: str, resolved: float) -> Record:
+        return validate_record(
+            {
+                "category": "bug-fix",
+                "scale": "single-file",
+                "agent": "claude-code",
+                "model": "claude-sonnet-5",
+                "benchmark": "first-party-v0",
+                "instance_id": instance_id,
+                "quality_metric": "resolved",
+                "quality_value": resolved,
+                "cost_usd": 0.05,
+                "source": "data/first-party-runs/2026-08-03.jsonl",
+                "source_type": "first-party",
+                "confidence": "high",
+                "as_of": "2026-08-03",
+            }
+        )
+
+    rates = resolution_rates([record("t-1", 1.0), record("t-2", 0.0)])
+
+    assert len(rates) == 1
+    assert rates[0].benchmark == "first-party-v0"
+    assert rates[0].rate == 0.5
+
+
 def test_aggregate_rows_surface_cost_and_latency(aggregates_fixture: Path) -> None:
     records = read_records(aggregates_fixture)
 

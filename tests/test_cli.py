@@ -85,6 +85,26 @@ def test_report_command_writes_static_html(
     assert str(out_file) in capsys.readouterr().out
 
 
+def test_eval_replay_then_table_shows_first_party_alongside_aggregates(
+    firstparty_runs: Path, aggregates_fixture: Path, tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    data = tmp_path / "unified.jsonl"
+    shutil.copy(aggregates_fixture, data)
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v0.yaml"
+
+    main(["eval", "--tasks", str(tasks), "--replay", str(firstparty_runs),
+          "--data", str(data)])
+    assert "12" in capsys.readouterr().out
+
+    main(["table", "--data", str(data)])
+    out = capsys.readouterr().out
+    # First-party rates with exact cost, next to the aggregate section.
+    assert "first-party-v0" in out
+    assert "100.0%" in out and "83.3%" in out
+    assert "aider-polyglot" in out
+
+
 def test_classify_with_warm_cache_needs_no_api_key(
     dataset_fixture: Path, tmp_path: Path,
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch,

@@ -33,3 +33,8 @@ def aider_fixture() -> Path:
 @pytest.fixture
 def pareto_fixture() -> Path:
     return FIXTURES / "pareto.jsonl"
+
+
+@pytest.fixture
+def firstparty_runs() -> Path:
+    return FIXTURES / "firstparty" / "runs.jsonl"

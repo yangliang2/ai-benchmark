@@ -2,6 +2,7 @@
 
 import argparse
 import os
+from datetime import date
 from pathlib import Path
 
 from ai_benchmark.classify import (
@@ -17,6 +18,13 @@ from functools import partial
 
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.dataset import merge_records, read_records, write_records
+from ai_benchmark.firstparty import (
+    DEFAULT_MODELS,
+    evaluate,
+    load_runs,
+    load_tasks,
+    run_live,
+)
 from ai_benchmark.queries import (
     category_rates,
     published_aggregates,
@@ -69,6 +77,22 @@ def _table_command(args: argparse.Namespace) -> None:
         print()
         print(f"aggregate records ({len(aggregates)}), as published — not pooled above:")
         print(render_aggregate_table(aggregates))
+
+
+def _eval_command(args: argparse.Namespace) -> None:
+    tasks = load_tasks(args.tasks)
+    if args.replay is not None:
+        runs = load_runs(args.replay)
+        source = str(args.replay)
+    else:
+        log = args.log or Path("data/first-party-runs") / f"{date.today().isoformat()}.jsonl"
+        runs = run_live(tasks, args.model or DEFAULT_MODELS, log)
+        source = str(log)
+        print(f"ran {len(runs)} live runs; raw log written to {log}")
+    records = evaluate(tasks, runs, source=source)
+    resolved = int(sum(r.quality_value for r in records))
+    print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
+    _merge_into(records, args.data)
 
 
 def _report_command(args: argparse.Namespace) -> None:
@@ -129,6 +153,32 @@ def main(argv: list[str] | None = None) -> None:
         "--by-category", action="store_true", help="group rates by task category"
     )
     table.set_defaults(command=_table_command)
+
+    evaluate_parser = subcommands.add_parser(
+        "eval",
+        help="run the first-party eval (live via claude-code, or replay a raw "
+        "run log) and merge the records",
+    )
+    evaluate_parser.add_argument(
+        "--tasks", type=Path, default=Path("tasks/first-party-v0.yaml")
+    )
+    evaluate_parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
+    mode = evaluate_parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument(
+        "--replay", type=Path, help="replay a raw run log instead of running live"
+    )
+    mode.add_argument(
+        "--live", action="store_true", help="run live via the claude CLI"
+    )
+    evaluate_parser.add_argument(
+        "--model",
+        action="append",
+        help=f"live model (repeatable; default: {', '.join(DEFAULT_MODELS)})",
+    )
+    evaluate_parser.add_argument(
+        "--log", type=Path, help="where a live run writes its raw log"
+    )
+    evaluate_parser.set_defaults(command=_eval_command)
 
     report = subcommands.add_parser(
         "report",
