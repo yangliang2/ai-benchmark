@@ -23,3 +23,8 @@ def classified_fixture() -> Path:
 @pytest.fixture
 def aggregates_fixture() -> Path:
     return FIXTURES / "aggregates.jsonl"
+
+
+@pytest.fixture
+def aider_fixture() -> Path:
+    return FIXTURES / "aider"

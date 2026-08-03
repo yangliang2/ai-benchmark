@@ -63,14 +63,14 @@ class AggregateRow(NamedTuple):
     benchmark: str
     agent: str
     model: str
-    metric: str
-    value: float
-    cost_usd: float | None
+    quality_metric: str
+    quality_value: float
+    cost_usd: float | None  # USD per benchmark instance (normalized at ingest)
     latency_s: float | None
     as_of: date
 
 
-def aggregate_rows(records: list[Record]) -> list[AggregateRow]:
+def published_aggregates(records: list[Record]) -> list[AggregateRow]:
     """Aggregate records shown as published — never pooled into per-instance
     rates (double counting; ADR-0001), but never hidden either."""
     rows = [
@@ -78,8 +78,8 @@ def aggregate_rows(records: list[Record]) -> list[AggregateRow]:
             benchmark=r.benchmark,
             agent=r.agent,
             model=r.model,
-            metric=r.quality_metric,
-            value=r.quality_value,
+            quality_metric=r.quality_metric,
+            quality_value=r.quality_value,
             cost_usd=r.cost_usd,
             latency_s=r.latency_s,
             as_of=r.as_of,
@@ -87,7 +87,9 @@ def aggregate_rows(records: list[Record]) -> list[AggregateRow]:
         for r in records
         if r.source_type == "aggregate"
     ]
-    return sorted(rows, key=lambda row: (row.benchmark, row.agent, row.model, row.metric))
+    return sorted(
+        rows, key=lambda row: (row.benchmark, row.agent, row.model, row.quality_metric)
+    )
 
 
 def category_rates(records: list[Record]) -> list[CategoryRate]:
@@ -155,14 +157,23 @@ def render_table(rates: list[CombinationRate]) -> str:
 
 def render_aggregate_table(rows: list[AggregateRow]) -> str:
     return _render(
-        ("benchmark", "agent", "model", "metric", "value", "cost", "latency-s", "as-of"),
+        (
+            "benchmark",
+            "agent",
+            "model",
+            "quality-metric",
+            "value",
+            "cost/inst",
+            "latency-s",
+            "as-of",
+        ),
         [
             (
                 row.benchmark,
                 row.agent,
                 row.model,
-                row.metric,
-                f"{row.value:g}",
+                row.quality_metric,
+                f"{row.quality_value:g}",
                 _money(row.cost_usd),
                 f"{row.latency_s:.1f}" if row.latency_s is not None else "-",
                 row.as_of.isoformat(),

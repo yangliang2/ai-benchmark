@@ -12,11 +12,10 @@ Language is `python` — every SWE-bench Verified task repo is Python.
 import json
 from pathlib import Path
 
+from ai_benchmark.dataset import IngestError
 from ai_benchmark.schema import Record, RecordValidationError, validate_record
 
-
-class IngestError(ValueError):
-    """A raw submission directory cannot be ingested."""
+__all__ = ["IngestError", "ingest_swebench"]
 
 
 def ingest_swebench(raw_dir: Path) -> list[Record]:

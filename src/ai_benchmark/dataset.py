@@ -12,6 +12,10 @@ from pathlib import Path
 from ai_benchmark.schema import Record, validate_record
 
 
+class IngestError(ValueError):
+    """Raw source data cannot become valid unified-dataset records."""
+
+
 def write_records(records: list[Record], path: Path) -> None:
     lines = [
         json.dumps(record.model_dump(mode="json"), sort_keys=True)

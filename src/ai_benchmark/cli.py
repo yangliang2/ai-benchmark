@@ -12,11 +12,14 @@ from ai_benchmark.classify import (
     needs_classification,
     write_cache,
 )
+from collections.abc import Callable
+from functools import partial
+
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.dataset import merge_records, read_records, write_records
 from ai_benchmark.queries import (
-    aggregate_rows,
     category_rates,
+    published_aggregates,
     render_aggregate_table,
     render_category_table,
     render_table,
@@ -37,12 +40,22 @@ def _merge_into(new: list[Record], data: Path) -> None:
     print(f"merged {len(new)} records into {data} ({len(merged)} total)")
 
 
-def _ingest_swebench_command(args: argparse.Namespace) -> None:
-    _merge_into(ingest_swebench(args.raw_dir), args.data)
+def _ingest_command(
+    args: argparse.Namespace, ingester: Callable[[Path], list[Record]]
+) -> None:
+    _merge_into(ingester(args.raw_dir), args.data)
 
 
-def _ingest_aider_command(args: argparse.Namespace) -> None:
-    _merge_into(ingest_aider(args.raw_dir), args.data)
+INGESTERS: dict[str, tuple[Callable[[Path], list[Record]], str]] = {
+    "ingest-swebench": (
+        ingest_swebench,
+        "merge a directory of SWE-bench per-instance submissions into the dataset",
+    ),
+    "ingest-aider": (
+        ingest_aider,
+        "merge Aider polyglot leaderboard data into the dataset",
+    ),
+}
 
 
 def _table_command(args: argparse.Namespace) -> None:
@@ -51,7 +64,7 @@ def _table_command(args: argparse.Namespace) -> None:
         print(render_category_table(category_rates(records)))
     else:
         print(render_table(resolution_rates(records)))
-    if aggregates := aggregate_rows(records):
+    if aggregates := published_aggregates(records):
         print()
         print(f"aggregate records ({len(aggregates)}), as published — not pooled above:")
         print(render_aggregate_table(aggregates))
@@ -94,21 +107,11 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="ai-bench")
     subcommands = parser.add_subparsers(required=True)
 
-    ingest = subcommands.add_parser(
-        "ingest-swebench",
-        help="merge a directory of SWE-bench per-instance submissions into the dataset",
-    )
-    ingest.add_argument("raw_dir", type=Path)
-    ingest.add_argument("--data", type=Path, default=DEFAULT_DATA)
-    ingest.set_defaults(command=_ingest_swebench_command)
-
-    ingest_aider_parser = subcommands.add_parser(
-        "ingest-aider",
-        help="merge Aider polyglot leaderboard data into the dataset",
-    )
-    ingest_aider_parser.add_argument("raw_dir", type=Path)
-    ingest_aider_parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
-    ingest_aider_parser.set_defaults(command=_ingest_aider_command)
+    for name, (ingester, help_text) in INGESTERS.items():
+        ingest = subcommands.add_parser(name, help=help_text)
+        ingest.add_argument("raw_dir", type=Path)
+        ingest.add_argument("--data", type=Path, default=DEFAULT_DATA)
+        ingest.set_defaults(command=partial(_ingest_command, ingester=ingester))
 
     table = subcommands.add_parser(
         "table", help="print per-instance resolution rates per benchmark x combination"

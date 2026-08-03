@@ -17,7 +17,7 @@ Field groups:
 - **Combination**: `agent`, `agent_version?`, `model`
 - **Task identity**: `benchmark`, `instance_id?`
 - **Quality**: `quality_metric` (named, e.g. `resolved`, `resolution-rate`), `quality_value`
-- **Cost dimensions** (all optional — most second-hand sources lack them): `tokens_in`, `tokens_out`, `cost_usd`, `latency_s`, `turns`
+- **Cost dimensions** (all optional — most second-hand sources lack them): `tokens_in`, `tokens_out`, `cost_usd`, `latency_s`, `turns`. `cost_usd` is always **USD per benchmark instance**; sources that publish whole-run cost are normalized at ingest using the published case count (e.g. Aider's `total_cost / test_cases`) — one field must not hold two units.
 - **Provenance** (all mandatory): `source`, `source_type`, `confidence`, `as_of`
 
 Cross-field rules: `instance_id` is required unless `source_type` is `aggregate`; `first-party` records must have `confidence: high` (enforced at the seam, not by convention).

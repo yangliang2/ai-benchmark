@@ -10,10 +10,13 @@ from ai_benchmark.queries import (
     CategoryRate,
     CombinationRate,
     category_rates,
+    published_aggregates,
+    render_aggregate_table,
     render_category_table,
     render_table,
     resolution_rates,
 )
+from ai_benchmark.schema import Record, validate_record
 
 
 def test_resolution_rates_group_by_benchmark_and_combination(
@@ -135,9 +138,7 @@ def test_rendered_table_shows_benchmark_rate_and_as_of(dataset_fixture: Path) ->
 
 
 def test_mean_cost_per_instance_when_records_carry_cost() -> None:
-    from ai_benchmark.schema import validate_record
-
-    def record(instance_id: str, cost: float | None) -> object:
+    def record(instance_id: str, cost: float | None) -> Record:
         return validate_record(
             {
                 "category": "unclassified",
@@ -156,23 +157,21 @@ def test_mean_cost_per_instance_when_records_carry_cost() -> None:
             }
         )
 
-    rates = resolution_rates([record("a__a-1", 1.0), record("a__a-2", 3.0)])  # type: ignore[list-item]
+    rates = resolution_rates([record("a__a-1", 1.0), record("a__a-2", 3.0)])
 
     assert rates[0].cost_usd == 2.0
 
 
 def test_aggregate_rows_surface_cost_and_latency(aggregates_fixture: Path) -> None:
-    from ai_benchmark.queries import aggregate_rows, render_aggregate_table
-
     records = read_records(aggregates_fixture)
 
-    rows = aggregate_rows(records)
+    rows = published_aggregates(records)
 
     assert len(rows) == 2
     [gpt6] = [r for r in rows if r.model == "gpt-6"]
     assert gpt6.benchmark == "aider-polyglot"
-    assert gpt6.metric == "pass-rate"
-    assert gpt6.cost_usd == pytest.approx(45.10)
+    assert gpt6.quality_metric == "pass-rate-2"
+    assert gpt6.cost_usd == pytest.approx(45.10 / 225)
 
     table = render_aggregate_table(rows)
-    assert "pass-rate" in table and "45.10" in table
+    assert "pass-rate-2" in table and "0.20" in table

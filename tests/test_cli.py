@@ -47,9 +47,9 @@ def test_table_shows_aggregate_records_in_their_own_section(
 
 
 def test_ingest_aider_then_table_shows_costs_and_gaps(
-    swebench_fixture: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    swebench_fixture: Path, aider_fixture: Path, tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    aider_fixture = Path(__file__).parent / "fixtures" / "aider"
     data = tmp_path / "unified.jsonl"
 
     main(["ingest-swebench", str(swebench_fixture), "--data", str(data)])
@@ -59,8 +59,8 @@ def test_ingest_aider_then_table_shows_costs_and_gaps(
     out = capsys.readouterr().out
     # Per-instance section: swe-bench rows with honest cost gaps.
     assert "swe-bench-verified" in out
-    # Aggregate section: aider leaderboard rows with real costs.
-    assert "aider-polyglot" in out and "14.32" in out and "pass-rate" in out
+    # Aggregate section: aider rows with per-instance-normalized cost (45.10/225).
+    assert "aider-polyglot" in out and "0.20" in out and "pass-rate-2" in out
 
 
 def test_table_by_category(
