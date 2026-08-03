@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Coding-agent capability matrix: which agent x model is best for which task category, at what cost"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.40",
     "pydantic>=2.7",
 ]
 

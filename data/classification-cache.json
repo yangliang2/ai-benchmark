@@ -1,0 +1,22 @@
+{
+  "swe-bench-verified/astropy__astropy-12907": {
+    "category": "bug-fix",
+    "language": "python",
+    "scale": "single-file"
+  },
+  "swe-bench-verified/django__django-11099": {
+    "category": "bug-fix",
+    "language": "python",
+    "scale": "single-file"
+  },
+  "swe-bench-verified/requests__requests-863": {
+    "category": "bug-fix",
+    "language": "python",
+    "scale": "unknown"
+  },
+  "swe-bench-verified/sympy__sympy-20590": {
+    "category": "bug-fix",
+    "language": "python",
+    "scale": "unknown"
+  }
+}

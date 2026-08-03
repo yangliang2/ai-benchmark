@@ -13,3 +13,8 @@ def swebench_fixture() -> Path:
 @pytest.fixture
 def dataset_fixture() -> Path:
     return FIXTURES / "unified.jsonl"
+
+
+@pytest.fixture
+def classified_fixture() -> Path:
+    return FIXTURES / "classified.jsonl"

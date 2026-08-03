@@ -4,7 +4,14 @@ from datetime import date
 from pathlib import Path
 
 from ai_benchmark.dataset import read_records
-from ai_benchmark.queries import CombinationRate, render_table, resolution_rates
+from ai_benchmark.queries import (
+    CategoryRate,
+    CombinationRate,
+    category_rates,
+    render_category_table,
+    render_table,
+    resolution_rates,
+)
 
 
 def test_resolution_rates_group_by_benchmark_and_combination(
@@ -44,6 +51,68 @@ def test_aggregate_records_are_not_pooled_into_per_instance_rates(
     rates = resolution_rates(records)
 
     assert not any(row.agent == "aider" for row in rates)
+
+
+def test_category_rates_group_by_category_and_combination(
+    classified_fixture: Path,
+) -> None:
+    records = read_records(classified_fixture)
+
+    rates = category_rates(records)
+
+    assert rates == [
+        CategoryRate(
+            benchmark="swe-bench-verified",
+            category="bug-fix",
+            agent="claude-code",
+            model="claude-sonnet-5",
+            resolved=1,
+            total=2,
+            rate=0.5,
+            as_of=date(2026, 1, 15),
+        ),
+        CategoryRate(
+            benchmark="swe-bench-verified",
+            category="bug-fix",
+            agent="aider",
+            model="gpt-6",
+            resolved=0,
+            total=1,
+            rate=0.0,
+            as_of=date(2026, 1, 15),
+        ),
+        CategoryRate(
+            benchmark="swe-bench-verified",
+            category="feature-dev",
+            agent="claude-code",
+            model="claude-sonnet-5",
+            resolved=1,
+            total=1,
+            rate=1.0,
+            as_of=date(2026, 1, 20),
+        ),
+        CategoryRate(
+            benchmark="swe-bench-verified",
+            category="unclassified",
+            agent="aider",
+            model="gpt-6",
+            resolved=1,
+            total=1,
+            rate=1.0,
+            as_of=date(2026, 1, 15),
+        ),
+    ]
+
+
+def test_unclassified_stays_visible_in_the_category_table(
+    classified_fixture: Path,
+) -> None:
+    records = read_records(classified_fixture)
+
+    table = render_category_table(category_rates(records))
+
+    assert "category" in table.splitlines()[0]
+    assert "unclassified" in table
 
 
 def test_rendered_table_shows_benchmark_rate_and_as_of(dataset_fixture: Path) -> None:

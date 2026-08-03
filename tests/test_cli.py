@@ -43,3 +43,46 @@ def test_table_discloses_aggregate_records_it_does_not_show(
 
     out = capsys.readouterr().out
     assert "1 aggregate record" in out
+
+
+def test_table_by_category(
+    classified_fixture: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["table", "--data", str(classified_fixture), "--by-category"])
+
+    out = capsys.readouterr().out
+    assert "bug-fix" in out and "feature-dev" in out and "unclassified" in out
+
+
+def test_classify_with_warm_cache_needs_no_api_key(
+    dataset_fixture: Path, tmp_path: Path,
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    data = tmp_path / "unified.jsonl"
+    shutil.copy(dataset_fixture, data)
+    cache = tmp_path / "cache.json"
+    cache.write_text(
+        '{"polyglot-bench/rust__fix-1": {"category": "feature-dev", "scale": "single-file", "language": "rust"},'
+        ' "swe-bench-verified/django__django-11099": {"category": "bug-fix", "scale": "single-file", "language": "python"},'
+        ' "swe-bench-verified/sympy__sympy-20590": {"category": "bug-fix", "scale": "cross-file", "language": "python"}}'
+    )
+
+    main(["classify", "--data", str(data), "--cache", str(cache)])
+
+    out = capsys.readouterr().out
+    assert "0 LLM call" in out
+    main(["table", "--data", str(data), "--by-category"])
+    assert "bug-fix" in capsys.readouterr().out
+
+
+def test_classify_cache_miss_without_api_key_fails_clearly(
+    dataset_fixture: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    data = tmp_path / "unified.jsonl"
+    shutil.copy(dataset_fixture, data)
+    cache = tmp_path / "cache.json"
+
+    with pytest.raises(SystemExit, match="ANTHROPIC_API_KEY"):
+        main(["classify", "--data", str(data), "--cache", str(cache)])
