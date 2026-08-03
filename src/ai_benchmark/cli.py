@@ -74,7 +74,7 @@ def _table_command(args: argparse.Namespace) -> None:
 def _report_command(args: argparse.Namespace) -> None:
     records = read_records(args.data)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(render_report(pareto_points(records)))
+    args.out.write_text(render_report(pareto_points(records)), encoding="utf-8")
     print(f"wrote Pareto report over {len(records)} records to {args.out}")
 
 
