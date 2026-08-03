@@ -5,22 +5,14 @@ Server-side refusal fallback is enabled by default per Anthropic guidance.
 """
 
 import json
+from typing import get_args
 
 from ai_benchmark.classify import Classifier, Label
 from ai_benchmark.schema import Scale, TaskCategory
 
-CATEGORIES: list[TaskCategory] = [
-    "bug-fix",
-    "feature-dev",
-    "refactor",
-    "test-authoring",
-    "frontend-ui",
-    "infra-config",
-    "codebase-comprehension",
-    "unclassified",
-]
-
-SCALES: list[Scale] = ["single-file", "cross-file", "unknown"]
+# Derived from the schema Literals so the taxonomy has one source of truth.
+CATEGORIES: list[TaskCategory] = list(get_args(TaskCategory))
+SCALES: list[Scale] = list(get_args(Scale))
 
 LABEL_SCHEMA = {
     "type": "object",
@@ -63,9 +55,11 @@ def anthropic_classifier() -> Classifier:
     client = anthropic.Anthropic()
 
     def classify(benchmark: str, instance_id: str) -> Label:
+        # Thinking is on by default on claude-opus-5 and max_tokens caps
+        # thinking + response text together — keep generous headroom.
         response = client.beta.messages.create(
             model="claude-opus-5",
-            max_tokens=4096,
+            max_tokens=16000,
             output_config={
                 "effort": "low",
                 "format": {"type": "json_schema", "schema": LABEL_SCHEMA},
@@ -81,6 +75,13 @@ def anthropic_classifier() -> Classifier:
         )
         if response.stop_reason == "refusal":
             return Label(category="unclassified", scale="unknown", language=None)
+        if response.stop_reason == "max_tokens":
+            # Truncated JSON must not be parsed into a half-right label (it
+            # would be cached); fail loudly instead.
+            raise RuntimeError(
+                f"classification of {benchmark}/{instance_id} was truncated "
+                "(stop_reason=max_tokens); raise max_tokens and re-run"
+            )
         text = next(b.text for b in response.content if b.type == "text")
         data = json.loads(text)
         return Label(

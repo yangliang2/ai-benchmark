@@ -32,6 +32,8 @@ def test_warm_cache_classifies_without_llm_calls(dataset_fixture: Path) -> None:
     assert by_instance["django__django-11099"].category == "bug-fix"
     assert by_instance["django__django-11099"].scale == "single-file"
     assert by_instance["rust__fix-1"].category == "feature-dev"
+    # Labels fill gaps but never overwrite source-derived facts.
+    assert by_instance["rust__fix-1"].language == "rust"
     assert llm_calls == 0
     assert cache_after == cache
 
@@ -83,6 +85,26 @@ def test_already_classified_records_are_left_alone(dataset_fixture: Path) -> Non
 
     assert calls == 0
     assert second == first
+
+
+def test_malformed_cache_label_fails_loudly(dataset_fixture: Path) -> None:
+    """The hand-editable committed cache is an input to the unified dataset;
+    it must pass through the validation seam like any other source."""
+    from ai_benchmark.schema import RecordValidationError
+
+    records = read_records(dataset_fixture)
+    bad_cache = {
+        "polyglot-bench/rust__fix-1": label("feature-dev"),
+        "swe-bench-verified/sympy__sympy-20590": label("bug-fix"),
+        "swe-bench-verified/django__django-11099": {
+            "category": "vibe-coding",  # not in the taxonomy
+            "scale": "single-file",
+            "language": "python",
+        },
+    }
+
+    with pytest.raises(RecordValidationError, match="category"):
+        classify_records(records, bad_cache, never_called)  # type: ignore[arg-type]
 
 
 def test_cache_round_trips_through_disk(tmp_path: Path) -> None:

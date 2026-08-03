@@ -4,7 +4,14 @@ import argparse
 import os
 from pathlib import Path
 
-from ai_benchmark.classify import Label, classify_records, load_cache, write_cache
+from ai_benchmark.classify import (
+    Label,
+    cache_key,
+    classify_records,
+    load_cache,
+    needs_classification,
+    write_cache,
+)
 from ai_benchmark.dataset import merge_records, read_records, write_records
 from ai_benchmark.queries import (
     category_rates,
@@ -45,11 +52,7 @@ def _classify_command(args: argparse.Namespace) -> None:
     records = read_records(args.data)
     cache = load_cache(args.cache) if args.cache.exists() else {}
 
-    misses = {
-        f"{r.benchmark}/{r.instance_id}"
-        for r in records
-        if r.category == "unclassified" and r.instance_id is not None
-    } - cache.keys()
+    misses = {cache_key(r) for r in records if needs_classification(r)} - cache.keys()
     if misses and "ANTHROPIC_API_KEY" not in os.environ:
         raise SystemExit(
             f"{len(misses)} instance(s) need LLM classification but "
@@ -67,9 +70,7 @@ def _classify_command(args: argparse.Namespace) -> None:
     write_records(classified, args.data)
     args.cache.parent.mkdir(parents=True, exist_ok=True)
     write_cache(cache_after, args.cache)
-    unclassified = sum(
-        r.category == "unclassified" and r.instance_id is not None for r in classified
-    )
+    unclassified = sum(needs_classification(r) for r in classified)
     print(
         f"classified {len(classified)} records with {llm_calls} LLM call(s); "
         f"{unclassified} instance record(s) remain unclassified"

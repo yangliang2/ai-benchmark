@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 from typing import NamedTuple
 
-from ai_benchmark.schema import Record
+from ai_benchmark.schema import Record, TaskCategory
 
 
 class CombinationRate(NamedTuple):
@@ -19,7 +19,7 @@ class CombinationRate(NamedTuple):
 
 class CategoryRate(NamedTuple):
     benchmark: str
-    category: str
+    category: TaskCategory
     agent: str
     model: str
     resolved: int
@@ -56,7 +56,7 @@ def category_rates(records: list[Record]) -> list[CategoryRate]:
     """Like resolution_rates, additionally grouped by task category. Records
     still unclassified appear under their own "unclassified" rows — the count
     stays visible rather than being dropped."""
-    groups: dict[tuple[str, str, str, str], list[Record]] = defaultdict(list)
+    groups: dict[tuple[str, TaskCategory, str, str], list[Record]] = defaultdict(list)
     for record in records:
         if record.quality_metric == "resolved" and record.source_type == "per-instance":
             groups[

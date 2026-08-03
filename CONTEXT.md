@@ -47,6 +47,11 @@ Orthogonal to category:
 - **scale** — `single-file` (edits confined to one file), `cross-file` (edits span files), `unknown`.
 - **language** — primary language of the task's repo (lowercase, e.g. `python`, `typescript`), absent when not meaningful.
 
+## Classification vocabulary
+
+- **Label** — the classification verdict for one benchmark instance: a task category plus the task annotations (scale, language). Labels fill gaps in a record; they never overwrite source-derived facts (not: tag, annotation set).
+- **Classification cache** — the committed JSON file keyed by `benchmark/instance_id` holding one label per instance. A warm cache makes classification deterministic and free; an unclassifiable verdict is cached too, so it is never re-asked and never force-fitted.
+
 ## Provenance vocabulary
 
 - **source** — where a record's number came from: a URL, report name, or run id (not: origin, provider).
