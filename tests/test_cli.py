@@ -36,13 +36,31 @@ def test_ingest_preserves_records_from_other_sources(
     assert "polyglot-bench" in out and "swe-bench-verified" in out
 
 
-def test_table_discloses_aggregate_records_it_does_not_show(
+def test_table_shows_aggregate_records_in_their_own_section(
     dataset_fixture: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     main(["table", "--data", str(dataset_fixture)])
 
     out = capsys.readouterr().out
-    assert "1 aggregate record" in out
+    assert "aggregate records" in out
+    assert "resolution-rate" in out  # the aggregate's metric is visible
+
+
+def test_ingest_aider_then_table_shows_costs_and_gaps(
+    swebench_fixture: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    aider_fixture = Path(__file__).parent / "fixtures" / "aider"
+    data = tmp_path / "unified.jsonl"
+
+    main(["ingest-swebench", str(swebench_fixture), "--data", str(data)])
+    main(["ingest-aider", str(aider_fixture), "--data", str(data)])
+
+    main(["table", "--data", str(data)])
+    out = capsys.readouterr().out
+    # Per-instance section: swe-bench rows with honest cost gaps.
+    assert "swe-bench-verified" in out
+    # Aggregate section: aider leaderboard rows with real costs.
+    assert "aider-polyglot" in out and "14.32" in out and "pass-rate" in out
 
 
 def test_table_by_category(

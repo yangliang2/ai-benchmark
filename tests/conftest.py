@@ -18,3 +18,8 @@ def dataset_fixture() -> Path:
 @pytest.fixture
 def classified_fixture() -> Path:
     return FIXTURES / "classified.jsonl"
+
+
+@pytest.fixture
+def aggregates_fixture() -> Path:
+    return FIXTURES / "aggregates.jsonl"

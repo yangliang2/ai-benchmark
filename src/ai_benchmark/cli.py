@@ -12,26 +12,37 @@ from ai_benchmark.classify import (
     needs_classification,
     write_cache,
 )
+from ai_benchmark.aider import ingest_aider
 from ai_benchmark.dataset import merge_records, read_records, write_records
 from ai_benchmark.queries import (
+    aggregate_rows,
     category_rates,
+    render_aggregate_table,
     render_category_table,
     render_table,
     resolution_rates,
 )
+from ai_benchmark.schema import Record
 from ai_benchmark.swebench import ingest_swebench
 
 DEFAULT_DATA = Path("data/unified.jsonl")
 DEFAULT_CACHE = Path("data/classification-cache.json")
 
 
-def _ingest_swebench_command(args: argparse.Namespace) -> None:
-    new = ingest_swebench(args.raw_dir)
-    existing = read_records(args.data) if args.data.exists() else []
-    args.data.parent.mkdir(parents=True, exist_ok=True)
+def _merge_into(new: list[Record], data: Path) -> None:
+    existing = read_records(data) if data.exists() else []
+    data.parent.mkdir(parents=True, exist_ok=True)
     merged = merge_records(existing, new)
-    write_records(merged, args.data)
-    print(f"merged {len(new)} records into {args.data} ({len(merged)} total)")
+    write_records(merged, data)
+    print(f"merged {len(new)} records into {data} ({len(merged)} total)")
+
+
+def _ingest_swebench_command(args: argparse.Namespace) -> None:
+    _merge_into(ingest_swebench(args.raw_dir), args.data)
+
+
+def _ingest_aider_command(args: argparse.Namespace) -> None:
+    _merge_into(ingest_aider(args.raw_dir), args.data)
 
 
 def _table_command(args: argparse.Namespace) -> None:
@@ -40,8 +51,10 @@ def _table_command(args: argparse.Namespace) -> None:
         print(render_category_table(category_rates(records)))
     else:
         print(render_table(resolution_rates(records)))
-    if aggregates := sum(r.source_type == "aggregate" for r in records):
-        print(f"note: {aggregates} aggregate record(s) in the dataset are not shown")
+    if aggregates := aggregate_rows(records):
+        print()
+        print(f"aggregate records ({len(aggregates)}), as published — not pooled above:")
+        print(render_aggregate_table(aggregates))
 
 
 def _never_llm(benchmark: str, instance_id: str) -> Label:
@@ -88,6 +101,14 @@ def main(argv: list[str] | None = None) -> None:
     ingest.add_argument("raw_dir", type=Path)
     ingest.add_argument("--data", type=Path, default=DEFAULT_DATA)
     ingest.set_defaults(command=_ingest_swebench_command)
+
+    ingest_aider_parser = subcommands.add_parser(
+        "ingest-aider",
+        help="merge Aider polyglot leaderboard data into the dataset",
+    )
+    ingest_aider_parser.add_argument("raw_dir", type=Path)
+    ingest_aider_parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
+    ingest_aider_parser.set_defaults(command=_ingest_aider_command)
 
     table = subcommands.add_parser(
         "table", help="print per-instance resolution rates per benchmark x combination"

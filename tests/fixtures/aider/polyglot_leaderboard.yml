@@ -1,0 +1,17 @@
+- dirname: 2026-01-10-14-30-00--sonnet5-diff
+  test_cases: 225
+  model: claude-sonnet-5
+  edit_format: diff
+  pass_rate_2: 88.0
+  total_cost: 14.32
+  seconds_per_case: 33.1
+  date: 2026-01-10
+  versions: 0.72.1
+- dirname: 2026-02-05-09-00-00--gpt6-diff
+  test_cases: 225
+  model: gpt-6
+  edit_format: diff
+  pass_rate_2: 82.2
+  total_cost: 45.10
+  seconds_per_case: 51.0
+  date: 2026-02-05
