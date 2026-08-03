@@ -66,6 +66,18 @@ class Record(BaseModel):
     confidence: Confidence
     as_of: date
 
+    @property
+    def identity_key(self) -> tuple[str, str, str, str, str]:
+        """What makes a record unique in the unified dataset — ingesters replace
+        on this key, and the dataset is ordered by it."""
+        return (
+            self.benchmark,
+            self.instance_id or "",
+            self.agent,
+            self.model,
+            self.quality_metric,
+        )
+
     @model_validator(mode="after")
     def cross_field_rules(self) -> Self:
         if self.source_type != "aggregate" and self.instance_id is None:
