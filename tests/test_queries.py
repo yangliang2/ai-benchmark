@@ -31,6 +31,7 @@ def test_resolution_rates_group_by_benchmark_and_combination(
             benchmark="polyglot-bench",
             agent="claude-code",
             model="claude-sonnet-5",
+            source_type="per-instance",
             resolved=1,
             total=1,
             rate=1.0,
@@ -41,6 +42,7 @@ def test_resolution_rates_group_by_benchmark_and_combination(
             benchmark="swe-bench-verified",
             agent="claude-code",
             model="claude-sonnet-5",
+            source_type="per-instance",
             resolved=1,
             total=2,
             rate=0.5,
@@ -73,6 +75,7 @@ def test_category_rates_group_by_category_and_combination(
             category="bug-fix",
             agent="claude-code",
             model="claude-sonnet-5",
+            source_type="per-instance",
             resolved=1,
             total=2,
             rate=0.5,
@@ -83,6 +86,7 @@ def test_category_rates_group_by_category_and_combination(
             category="bug-fix",
             agent="aider",
             model="gpt-6",
+            source_type="per-instance",
             resolved=0,
             total=1,
             rate=0.0,
@@ -93,6 +97,7 @@ def test_category_rates_group_by_category_and_combination(
             category="feature-dev",
             agent="claude-code",
             model="claude-sonnet-5",
+            source_type="per-instance",
             resolved=1,
             total=1,
             rate=1.0,
@@ -103,6 +108,7 @@ def test_category_rates_group_by_category_and_combination(
             category="unclassified",
             agent="aider",
             model="gpt-6",
+            source_type="per-instance",
             resolved=1,
             total=1,
             rate=1.0,
@@ -187,6 +193,38 @@ def test_first_party_records_pool_into_resolution_rates() -> None:
     assert len(rates) == 1
     assert rates[0].benchmark == "first-party-v0"
     assert rates[0].rate == 0.5
+
+
+def test_first_party_remeasurement_never_pools_with_per_instance_rows() -> None:
+    # The same benchmark instance measured second-hand and first-party must
+    # yield two separate rows — pooling them would double count (ADR-0001).
+    def record(source_type: str, confidence: str, resolved: float) -> Record:
+        return validate_record(
+            {
+                "category": "bug-fix",
+                "scale": "single-file",
+                "agent": "claude-code",
+                "model": "claude-sonnet-5",
+                "benchmark": "swe-bench-verified",
+                "instance_id": "django__django-11099",
+                "quality_metric": "resolved",
+                "quality_value": resolved,
+                "source": "https://example.com",
+                "source_type": source_type,
+                "confidence": confidence,
+                "as_of": "2026-08-03",
+            }
+        )
+
+    rates = resolution_rates(
+        [record("per-instance", "medium", 1.0), record("first-party", "high", 0.0)]
+    )
+
+    assert len(rates) == 2
+    assert {(row.source_type, row.total) for row in rates} == {
+        ("per-instance", 1),
+        ("first-party", 1),
+    }
 
 
 def test_aggregate_rows_surface_cost_and_latency(aggregates_fixture: Path) -> None:

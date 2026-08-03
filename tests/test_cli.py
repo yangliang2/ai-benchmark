@@ -86,16 +86,16 @@ def test_report_command_writes_static_html(
 
 
 def test_eval_replay_then_table_shows_first_party_alongside_aggregates(
-    firstparty_runs: Path, aggregates_fixture: Path, tmp_path: Path,
+    firstparty_fixture: Path, aggregates_fixture: Path, tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     data = tmp_path / "unified.jsonl"
     shutil.copy(aggregates_fixture, data)
     tasks = Path(__file__).parent.parent / "tasks" / "first-party-v0.yaml"
 
-    main(["eval", "--tasks", str(tasks), "--replay", str(firstparty_runs),
+    main(["eval", "--tasks", str(tasks), "--replay", str(firstparty_fixture),
           "--data", str(data)])
-    assert "12" in capsys.readouterr().out
+    assert "evaluated 12 runs over 6 tasks (11 resolved)" in capsys.readouterr().out
 
     main(["table", "--data", str(data)])
     out = capsys.readouterr().out

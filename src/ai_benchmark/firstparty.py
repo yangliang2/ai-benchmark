@@ -2,16 +2,19 @@
 ordinary unified-dataset records with exact cost dimensions (ticket #7).
 
 The raw run log is the provenance boundary. A live run (claude-code headless)
-writes one JSONL row per task x combination with the exact measurements the
-provider API reported, then evaluation reads that log — and only ever such
-logs — so replaying a checked-in log exercises the identical pipeline with no
-live agents. Records carry source_type "first-party" and confidence "high"
-(schema-enforced, ADR-0001); the record's source is the run log itself.
+appends one JSONL row per task x combination the moment that run completes,
+with the exact measurements the claude CLI reported; evaluation reads such
+logs — and only such logs — so replaying a checked-in log exercises the
+identical pipeline with no live agents, and a sweep that dies mid-way keeps
+every measurement already paid for. Records carry source_type "first-party"
+and confidence "high" (schema-enforced, ADR-0001); the record's source is the
+run log itself.
 """
 
 import json
 import re
 import subprocess
+import tempfile
 from collections import Counter
 from datetime import date
 from pathlib import Path
@@ -174,7 +177,7 @@ def run_from_claude_json(
 ) -> Run:
     """Turn one `claude -p --output-format json` payload into a raw run row.
 
-    tokens_in counts every input token the provider processed: fresh input
+    tokens_in counts every input token the model processed: fresh input
     plus cache creation plus cache reads — the cost-bearing total.
     """
     if payload.get("is_error"):
@@ -204,46 +207,81 @@ def run_from_claude_json(
         ) from error
 
 
+_RUN_TIMEOUT_S = 600
+
+
 def run_live(tasks: list[Task], models: list[str], log_path: Path) -> list[Run]:
-    """Run every task through claude-code headless for each model, writing the
-    raw run log before returning — the log, not this process, is the source of
-    record, so every live run is replayable afterwards."""
+    """Run every task through claude-code headless for each model.
+
+    Each row is appended to the raw run log the moment its run completes, so
+    a sweep that fails part-way still leaves a replayable log of everything
+    already measured (and paid for). Runs execute in a fresh empty directory
+    with tools and setting sources disabled: the token count then measures
+    the task, not whichever repository the eval was launched from.
+    """
+    if log_path.exists():
+        raise IngestError(
+            f"run log {log_path} already exists — replay it, or pass a fresh --log"
+        )
     version = _claude_version()
     today = date.today()
+    workdir = Path(tempfile.mkdtemp(prefix="ai-bench-eval-"))
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     runs = []
-    for model in models:
-        for task in tasks:
-            process = subprocess.run(
-                ["claude", "-p", task.prompt, "--model", model,
-                 "--output-format", "json"],
-                capture_output=True,
-                text=True,
-            )
-            if process.returncode != 0:
-                raise IngestError(
-                    f"{task.id} ({model}): claude exited {process.returncode}: "
-                    f"{process.stderr.strip()}"
-                )
-            try:
-                payload = json.loads(process.stdout)
-            except json.JSONDecodeError as error:
-                raise IngestError(
-                    f"{task.id} ({model}): claude output is not JSON: {error}"
-                ) from error
-            runs.append(
-                run_from_claude_json(
+    with log_path.open("x", encoding="utf-8") as log:
+        for model in models:
+            for task in tasks:
+                payload = _claude_headless(task, model, workdir)
+                run = run_from_claude_json(
                     task.id, model, payload, agent_version=version, as_of=today
                 )
-            )
-
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [json.dumps(run.model_dump(mode="json"), sort_keys=True) for run in runs]
-    log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                log.write(json.dumps(run.model_dump(mode="json"), sort_keys=True) + "\n")
+                log.flush()
+                runs.append(run)
     return runs
 
 
-def _claude_version() -> str | None:
-    process = subprocess.run(["claude", "--version"], capture_output=True, text=True)
+def _claude_headless(task: Task, model: str, workdir: Path) -> dict[str, Any]:
+    try:
+        process = subprocess.run(
+            ["claude", "-p", task.prompt, "--model", model, "--output-format", "json",
+             "--tools", "", "--setting-sources", ""],
+            capture_output=True,
+            text=True,
+            cwd=workdir,
+            timeout=_RUN_TIMEOUT_S,
+        )
+    except OSError as error:
+        raise IngestError(
+            f"cannot run the claude CLI (is it installed and on PATH?): {error}"
+        ) from error
+    except subprocess.TimeoutExpired as error:
+        raise IngestError(
+            f"{task.id} ({model}): claude timed out after {_RUN_TIMEOUT_S}s"
+        ) from error
     if process.returncode != 0:
-        return None
-    return process.stdout.strip() or None
+        raise IngestError(
+            f"{task.id} ({model}): claude exited {process.returncode}: "
+            f"{process.stderr.strip()}"
+        )
+    try:
+        payload: dict[str, Any] = json.loads(process.stdout)
+        return payload
+    except json.JSONDecodeError as error:
+        raise IngestError(
+            f"{task.id} ({model}): claude output is not JSON: {error}"
+        ) from error
+
+
+def _claude_version() -> str:
+    try:
+        process = subprocess.run(
+            ["claude", "--version"], capture_output=True, text=True, timeout=30
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise IngestError(
+            f"cannot run the claude CLI (is it installed and on PATH?): {error}"
+        ) from error
+    if process.returncode != 0:
+        raise IngestError(f"claude --version failed: {process.stderr.strip()}")
+    return process.stdout.strip()

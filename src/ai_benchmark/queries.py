@@ -14,6 +14,7 @@ class CombinationRate(NamedTuple):
     benchmark: str
     agent: str
     model: str
+    source_type: str  # instance-level rows of different source types never pool
     resolved: int
     total: int
     rate: float
@@ -26,6 +27,7 @@ class CategoryRate(NamedTuple):
     category: TaskCategory
     agent: str
     model: str
+    source_type: str
     resolved: int
     total: int
     rate: float
@@ -35,27 +37,34 @@ class CategoryRate(NamedTuple):
 def resolution_rates(records: list[Record]) -> list[CombinationRate]:
     """Instance-level resolution rate per benchmark x combination (second-hand
     per-instance and first-party rows alike), best rate first within each
-    benchmark. Aggregate records are never pooled in (they would double-count;
-    see ADR-0001)."""
-    groups: dict[tuple[str, str, str], list[Record]] = defaultdict(list)
+    benchmark. Aggregate records are never pooled in, and a first-party
+    re-measurement never pools with second-hand rows for the same instance —
+    either would double-count (ADR-0001)."""
+    groups: dict[tuple[str, str, str, str], list[Record]] = defaultdict(list)
     for record in records:
         if record.quality_metric == "resolved" and record.source_type in _INSTANCE_LEVEL:
-            groups[(record.benchmark, record.agent, record.model)].append(record)
+            groups[
+                (record.benchmark, record.agent, record.model, record.source_type)
+            ].append(record)
 
     rates = [
         CombinationRate(
             benchmark=benchmark,
             agent=agent,
             model=model,
+            source_type=source_type,
             resolved=int(sum(r.quality_value for r in group)),
             total=len(group),
             rate=sum(r.quality_value for r in group) / len(group),
             cost_usd=_mean_cost(group),
             as_of=max(r.as_of for r in group),
         )
-        for (benchmark, agent, model), group in groups.items()
+        for (benchmark, agent, model, source_type), group in groups.items()
     ]
-    return sorted(rates, key=lambda row: (row.benchmark, -row.rate, row.agent, row.model))
+    return sorted(
+        rates,
+        key=lambda row: (row.benchmark, -row.rate, row.agent, row.model, row.source_type),
+    )
 
 
 def _mean_cost(group: list[Record]) -> float | None:
@@ -104,11 +113,14 @@ def category_rates(records: list[Record]) -> list[CategoryRate]:
     """Like resolution_rates, additionally grouped by task category. Records
     still unclassified appear under their own "unclassified" rows — the count
     stays visible rather than being dropped."""
-    groups: dict[tuple[str, TaskCategory, str, str], list[Record]] = defaultdict(list)
+    groups: dict[tuple[str, TaskCategory, str, str, str], list[Record]] = (
+        defaultdict(list)
+    )
     for record in records:
         if record.quality_metric == "resolved" and record.source_type in _INSTANCE_LEVEL:
             groups[
-                (record.benchmark, record.category, record.agent, record.model)
+                (record.benchmark, record.category, record.agent, record.model,
+                 record.source_type)
             ].append(record)
 
     rates = [
@@ -117,15 +129,19 @@ def category_rates(records: list[Record]) -> list[CategoryRate]:
             category=category,
             agent=agent,
             model=model,
+            source_type=source_type,
             resolved=int(sum(r.quality_value for r in group)),
             total=len(group),
             rate=sum(r.quality_value for r in group) / len(group),
             as_of=max(r.as_of for r in group),
         )
-        for (benchmark, category, agent, model), group in groups.items()
+        for (benchmark, category, agent, model, source_type), group in groups.items()
     ]
     return sorted(
-        rates, key=lambda row: (row.benchmark, row.category, -row.rate, row.agent, row.model)
+        rates,
+        key=lambda row: (
+            row.benchmark, row.category, -row.rate, row.agent, row.model, row.source_type
+        ),
     )
 
 
@@ -146,12 +162,14 @@ def _money(value: float | None) -> str:
 
 def render_table(rates: list[CombinationRate]) -> str:
     return _render(
-        ("benchmark", "agent", "model", "resolved", "total", "rate", "cost/inst", "as-of"),
+        ("benchmark", "agent", "model", "source-type", "resolved", "total", "rate",
+         "cost/inst", "as-of"),
         [
             (
                 row.benchmark,
                 row.agent,
                 row.model,
+                row.source_type,
                 str(row.resolved),
                 str(row.total),
                 f"{row.rate:.1%}",
@@ -197,13 +215,15 @@ def render_aggregate_table(rows: list[AggregateRow]) -> str:
 
 def render_category_table(rates: list[CategoryRate]) -> str:
     return _render(
-        ("benchmark", "category", "agent", "model", "resolved", "total", "rate", "as-of"),
+        ("benchmark", "category", "agent", "model", "source-type", "resolved", "total",
+         "rate", "as-of"),
         [
             (
                 row.benchmark,
                 row.category,
                 row.agent,
                 row.model,
+                row.source_type,
                 str(row.resolved),
                 str(row.total),
                 f"{row.rate:.1%}",

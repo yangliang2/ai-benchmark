@@ -2,7 +2,10 @@
 
 Replay mode is the test surface (acceptance: no live agent runs needed);
 the live path shares everything but the subprocess call, whose JSON payload
-parsing is covered here against a captured real claude CLI result.
+parsing is covered here against a captured real claude CLI result
+(fixtures/firstparty/claude-result.json). The run-log fixture rows are
+synthetic — hand-authored measurements, never merged into data/ — while the
+captured payload keeps the field mapping honest against the real shape.
 """
 
 import json
@@ -33,11 +36,11 @@ def test_task_set_is_classified_and_big_enough() -> None:
     assert len({task.category for task in tasks}) >= 3
 
 
-def test_replay_produces_first_party_records(firstparty_runs: Path) -> None:
+def test_replay_produces_first_party_records(firstparty_fixture: Path) -> None:
     tasks = load_tasks(TASKS)
-    runs = load_runs(firstparty_runs)
+    runs = load_runs(firstparty_fixture)
 
-    records = evaluate(tasks, runs, source=str(firstparty_runs))
+    records = evaluate(tasks, runs, source=str(firstparty_fixture))
 
     assert len(records) == len(runs) == 2 * len(tasks)
     assert {r.source_type for r in records} == {"first-party"}
@@ -53,10 +56,10 @@ def test_replay_produces_first_party_records(firstparty_runs: Path) -> None:
         assert r.as_of == date(2026, 8, 2)
 
 
-def test_replay_grades_outputs_against_task_checks(firstparty_runs: Path) -> None:
+def test_replay_grades_outputs_against_task_checks(firstparty_fixture: Path) -> None:
     tasks = load_tasks(TASKS)
 
-    records = evaluate(tasks, load_runs(firstparty_runs), source="run-log")
+    records = evaluate(tasks, load_runs(firstparty_fixture), source="run-log")
 
     by_key = {(r.instance_id, r.model): r.quality_value for r in records}
     # haiku answered evens-comprehension with the original loop — not resolved.
@@ -65,10 +68,10 @@ def test_replay_grades_outputs_against_task_checks(firstparty_runs: Path) -> Non
     assert sum(by_key.values()) == len(records) - 1
 
 
-def test_task_metadata_lands_on_the_record(firstparty_runs: Path) -> None:
+def test_task_metadata_lands_on_the_record(firstparty_fixture: Path) -> None:
     tasks = load_tasks(TASKS)
 
-    records = evaluate(tasks, load_runs(firstparty_runs), source="run-log")
+    records = evaluate(tasks, load_runs(firstparty_fixture), source="run-log")
 
     [record] = [
         r for r in records
@@ -81,18 +84,18 @@ def test_task_metadata_lands_on_the_record(firstparty_runs: Path) -> None:
     assert record.quality_metric == "resolved"
 
 
-def test_run_for_unknown_task_fails_loudly(firstparty_runs: Path) -> None:
+def test_run_for_unknown_task_fails_loudly(firstparty_fixture: Path) -> None:
     tasks = load_tasks(TASKS)
-    runs = load_runs(firstparty_runs)
+    runs = load_runs(firstparty_fixture)
     orphan = runs[0].model_copy(update={"task_id": "no-such-task"})
 
     with pytest.raises(IngestError, match="no-such-task"):
         evaluate(tasks, [*runs, orphan], source="run-log")
 
 
-def test_duplicate_runs_fail_loudly(firstparty_runs: Path) -> None:
+def test_duplicate_runs_fail_loudly(firstparty_fixture: Path) -> None:
     tasks = load_tasks(TASKS)
-    runs = load_runs(firstparty_runs)
+    runs = load_runs(firstparty_fixture)
 
     with pytest.raises(IngestError, match="duplicate"):
         evaluate(tasks, [*runs, runs[0]], source="run-log")

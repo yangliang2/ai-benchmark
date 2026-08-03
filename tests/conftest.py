@@ -36,5 +36,5 @@ def pareto_fixture() -> Path:
 
 
 @pytest.fixture
-def firstparty_runs() -> Path:
+def firstparty_fixture() -> Path:
     return FIXTURES / "firstparty" / "runs.jsonl"

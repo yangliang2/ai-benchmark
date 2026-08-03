@@ -17,7 +17,7 @@ from collections.abc import Callable
 from functools import partial
 
 from ai_benchmark.aider import ingest_aider
-from ai_benchmark.dataset import merge_records, read_records, write_records
+from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
     evaluate,
@@ -81,14 +81,16 @@ def _table_command(args: argparse.Namespace) -> None:
 
 def _eval_command(args: argparse.Namespace) -> None:
     tasks = load_tasks(args.tasks)
-    if args.replay is not None:
-        runs = load_runs(args.replay)
-        source = str(args.replay)
-    else:
+    if args.live:
         log = args.log or Path("data/first-party-runs") / f"{date.today().isoformat()}.jsonl"
         runs = run_live(tasks, args.model or DEFAULT_MODELS, log)
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
+    else:
+        if args.model or args.log:
+            raise SystemExit("--model and --log apply only to --live runs")
+        runs = load_runs(args.replay)
+        source = str(args.replay)
     records = evaluate(tasks, runs, source=source)
     resolved = int(sum(r.quality_value for r in records))
     print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
@@ -146,7 +148,7 @@ def main(argv: list[str] | None = None) -> None:
         ingest.set_defaults(command=partial(_ingest_command, ingester=ingester))
 
     table = subcommands.add_parser(
-        "table", help="print per-instance resolution rates per benchmark x combination"
+        "table", help="print instance-level resolution rates per benchmark x combination"
     )
     table.add_argument("--data", type=Path, default=DEFAULT_DATA)
     table.add_argument(
@@ -196,4 +198,7 @@ def main(argv: list[str] | None = None) -> None:
     classify.set_defaults(command=_classify_command)
 
     args = parser.parse_args(argv)
-    args.command(args)
+    try:
+        args.command(args)
+    except IngestError as error:
+        raise SystemExit(f"error: {error}") from error

@@ -262,11 +262,10 @@ def _group_figure(points: list[ParetoPoint]) -> str:
         p for p in points if p.cost_usd is not None and not 0.0 <= p.quality_value <= 1.0
     ]
 
-    kind = (
-        "as published aggregates"
-        if points[0].source_type == "aggregate"
-        else "pooled per-instance rate"
-    )
+    kind = {
+        "aggregate": "as published aggregates",
+        "first-party": "first-party pooled rate",
+    }.get(points[0].source_type, "pooled per-instance rate")
     caption = (
         f"{points[0].benchmark} — {points[0].quality_metric} ({kind}), quality vs "
         f"USD per instance (as of {max(p.as_of for p in points).isoformat()})"

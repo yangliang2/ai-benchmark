@@ -52,6 +52,15 @@ Orthogonal to category:
 - **Label** — the classification verdict for one benchmark instance: a task category plus the task annotations (scale, language). Labels fill gaps in a record; they never overwrite source-derived facts (not: tag, annotation set).
 - **Classification cache** — the committed JSON file keyed by `benchmark/instance_id` holding one label per instance. A warm cache makes classification deterministic and free; an unclassifiable verdict is cached too, so it is never re-asked and never force-fitted.
 
+## First-party eval vocabulary
+
+- **task set** — the checked-in file of first-party benchmark instances (e.g. `tasks/first-party-v0.yaml`). Versioned as a whole; its name is the benchmark name.
+- **task** — one first-party benchmark instance: a self-contained prompt plus a **check**.
+- **check** — the static regex that grades a run's final output as resolved or not. v0 limitation: checks demand task-specific content but do not execute anything, so `resolved` on a first-party-v0 record is pattern-verified — weaker evidence than SWE-bench's test-verified `resolved`. Grouping by benchmark keeps the two from ever pooling; a v1 task set should grade by running tests.
+- **run** — one task × combination execution with exact measurements (tokens in/out, cost USD, latency, turns) as reported by the claude CLI.
+- **raw run log** — JSONL, one row per run, appended as each run completes. The provenance boundary: live runs write it, evaluation and replay only ever read it, and a record's source is the log itself.
+- **instance-level** — umbrella for the two source types that carry per-instance rows and may pool into rates (`per-instance`, `first-party`). Rows of different source types never pool together (ADR-0001).
+
 ## Provenance vocabulary
 
 - **source** — where a record's number came from: a URL, report name, or run id (not: origin, provider).

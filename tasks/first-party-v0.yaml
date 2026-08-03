@@ -4,6 +4,11 @@
 # check regex (re.search) grades that output as resolved (1.0) or not (0.0).
 # Every task is classified into taxonomy v0 up front — no unclassified escape
 # hatch here; these tasks exist to fill known capability-matrix cells.
+#
+# Grading limitation (v0, see CONTEXT.md): checks require task-specific
+# content but are still static pattern checks, not execution — weaker
+# evidence than SWE-bench's test-verified resolution. A v1 task set should
+# grade by running tests.
 - id: sumsq-off-by-one
   category: bug-fix
   scale: single-file
@@ -15,7 +20,7 @@
 
         def sumsq(xs):
             return sum(x * x for x in xs[1:])
-  check: 'for x in xs\)'
+  check: 'sum\(\s*(\w+)\s*(?:\*\s*\1|\*\*\s*2)\s+for\s+\1\s+in\s+xs\s*\)'
 - id: slugify-function
   category: feature-dev
   scale: single-file
@@ -25,7 +30,7 @@
     replaces every run of characters that are not a-z or 0-9 with a single
     hyphen, trimming leading/trailing hyphens. Reply with only the function
     definition, no prose.
-  check: 'def slugify\('
+  check: '(?s)^(?=.*def slugify\()(?=.*\.lower\(\))(?=.*-)'
 - id: evens-comprehension
   category: refactor
   scale: single-file
@@ -40,7 +45,7 @@
                 if x % 2 == 0:
                     out.append(x)
             return out
-  check: 'return \[.+ for .+ in .+ if .+\]'
+  check: 'return\s*\[\s*(\w+)\s+for\s+\1\s+in\s+xs\s+if\s+\1\s*%\s*2\s*==\s*0\s*\]'
 - id: gcd-tests
   category: test-authoring
   scale: single-file
@@ -48,7 +53,7 @@
   prompt: |
     Write pytest tests for Python's math.gcd in a single test function,
     asserting gcd(0, 0) == 0 and gcd(12, 18) == 6. Reply with only the code.
-  check: 'def test_[\s\S]*assert'
+  check: '(?s)^(?=.*def test_)(?=.*assert\s+math\.gcd\(0,\s*0\)\s*==\s*0)(?=.*assert\s+math\.gcd\(12,\s*18\)\s*==\s*6)'
 - id: trace-return-value
   category: codebase-comprehension
   scale: single-file
@@ -63,7 +68,7 @@
             return total
 
     What does f(4) return? Reply with only the number.
-  check: '\b12\b'
+  check: '\A\s*12\s*\Z'
 - id: pytest-ci-workflow
   category: infra-config
   scale: single-file
@@ -71,4 +76,4 @@
   prompt: |
     Write a minimal GitHub Actions workflow that runs pytest on every push,
     using Python 3.12. Reply with only the YAML.
-  check: 'runs-on:[\s\S]*pytest'
+  check: '(?s)^(?=.*\bon:)(?=.*push)(?=.*runs-on:)(?=.*3\.12)(?=.*pytest)'
