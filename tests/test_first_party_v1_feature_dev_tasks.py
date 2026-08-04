@@ -36,6 +36,7 @@ FEATURE_DEV_TASKS: dict[str, str] = {
     "docstore-json-pointer": "single-file",
     "jobrunner-dependency-order": "cross-file",
     "matcher-brace-expansion": "single-file",
+    "microtemplate-for-loops": "cross-file",
     "slugger-unique-slugs": "single-file",
     "spans-subtract-gaps": "single-file",
     "tablecli-filter-command": "cross-file",
