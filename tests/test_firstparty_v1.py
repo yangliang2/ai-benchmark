@@ -367,6 +367,28 @@ def test_task_without_a_starting_repo_fails_loudly(tmp_path: Path) -> None:
         load_task_set(tmp_path)
 
 
+def test_a_repo_module_named_after_the_stdlib_fails_loudly(tmp_path: Path) -> None:
+    """Grading keeps the standard library ahead of the workdir on sys.path, so
+    such a module is invisible at grade time. Caught here because the lint
+    cannot catch it: when the stdlib module does not happen to satisfy the
+    grading tests, the task fails pristine like any good task and is also
+    impossible to solve — it would just grade every agent unresolved."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    (task_dir / "repo" / "calendar.py").write_text("MONTHS = 12\n")
+
+    with pytest.raises(IngestError, match="calendar.py"):
+        load_task_set(tmp_path)
+
+
+def test_a_repo_package_named_after_the_stdlib_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    (task_dir / "repo" / "json").mkdir()
+    (task_dir / "repo" / "json" / "__init__.py").write_text("")
+
+    with pytest.raises(IngestError, match="json"):
+        load_task_set(tmp_path)
+
+
 def test_refactor_task_without_behaviour_tests_fails_loudly(tmp_path: Path) -> None:
     task_dir = clone_seed(tmp_path, REFACTOR_SEED, REFACTOR_SEED)
     retitle(task_dir, grading={"behaviour_tests": []})

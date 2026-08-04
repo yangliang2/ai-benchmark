@@ -17,13 +17,19 @@ pytest.ini / tox.ini / setup.cfg / pyproject.toml, because the config is
 pinned outside the workdir and conftest loading is off; a file added to the
 workdir cannot shadow a standard-library module the grading tests measure
 against, because the workdir sits behind the standard library on sys.path;
-and a run that ends before the tests finish cannot pass, because the verdict
-reads a report written outside the workdir rather than the exit status alone.
-Two authoring rules fall out of this: grading tests must be self-contained
-and never rely on a conftest.py, and a starting repository must not name a
-module after one in the standard library. The lint runs the same invocation,
-so it catches the first rule on the pristine repo; it catches the second only
-for refactor tasks, and CONTEXT.md records why the gap matters when authoring.
+and a run that ends before the tests finish cannot pass by accident, because
+the verdict reads a report written outside the workdir rather than the exit
+status alone.
+
+Two authoring rules fall out of this, and both are checked rather than left to
+discipline: grading tests must be self-contained and never rely on a
+conftest.py, which the lint catches on the pristine repo because it runs the
+same invocation; and a starting repository must not name a top-level module
+after one in the standard library, which the loader rejects outright. The
+loader has to do that one, because the lint cannot: when the standard-library
+module does not happen to satisfy the grading tests, such a task fails on the
+pristine repo exactly like a good task, passes the lint, and is then
+impossible for any agent to solve.
 
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
@@ -236,6 +242,13 @@ def _check_task_layout(task: Task) -> None:
             f"{task.id}: {REPO_DIR}/ is missing or empty — a v1 task gives the "
             "agent a starting repository"
         )
+    if collisions := _stdlib_collisions(task.repo_dir):
+        raise IngestError(
+            f"{task.id}: {REPO_DIR}/ names {collisions} after standard-library "
+            "module(s) — grading keeps the standard library ahead of the workdir "
+            "on sys.path, so these are invisible at grade time and the task can "
+            "lint clean while being impossible to solve"
+        )
     if not task.grading_test_paths:
         raise IngestError(
             f"{task.id}: {GRADING_DIR}/ holds no test_*.py — a v1 task is graded "
@@ -253,6 +266,25 @@ def _check_task_layout(task: Task) -> None:
             f"{task.id}: every grading test is a behaviour test, so nothing "
             "asserts that the restructuring happened"
         )
+
+
+def _stdlib_collisions(repo_dir: Path) -> list[str]:
+    """Top-level names in the starting repository the standard library owns.
+
+    Only the top level matters: that is what grading puts on sys.path, and a
+    module deeper in a package is reached through its package name.
+    """
+    collisions = []
+    for entry in sorted(repo_dir.iterdir()):
+        if entry.is_dir():
+            importable = entry.name
+        elif entry.suffix == ".py":
+            importable = entry.stem
+        else:
+            continue
+        if importable in sys.stdlib_module_names:
+            collisions.append(entry.name)
+    return collisions
 
 
 def load_runs(path: Path) -> list[Run]:
