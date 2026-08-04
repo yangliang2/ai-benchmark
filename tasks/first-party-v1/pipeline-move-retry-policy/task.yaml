@@ -1,0 +1,23 @@
+# refactor: move a class into a module of its own. The behaviour tests named
+# below must PASS on the pristine repository; everything else in grading/ is a
+# structural assertion that must FAIL on it until RetryPolicy has moved.
+id: pipeline-move-retry-policy
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  pipeline.py owns both the Pipeline and the RetryPolicy it retries failing
+  steps under.
+
+  Move the RetryPolicy class out of pipeline.py into a new module retry.py,
+  and have pipeline.py import it from there rather than defining it. After
+  the change, `from retry import RetryPolicy` must work and pipeline.py must
+  no longer contain the class — retry.py is where it lives, not a wrapper
+  around pipeline.py. Existing callers keep importing the policy through
+  pipeline, so `from pipeline import RetryPolicy` must keep working too.
+
+  This is a pure refactor: how pipelines run their steps, how often failing
+  steps are retried, and how they fail must be exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_pipeline_behaviour.py

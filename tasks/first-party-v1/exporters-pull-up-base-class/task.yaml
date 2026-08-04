@@ -1,0 +1,24 @@
+# refactor: pull duplicated methods up into a shared base class. The
+# behaviour tests named below must PASS on the pristine repository; everything
+# else in grading/ is a structural assertion that must FAIL on it until the
+# shared bookkeeping is defined exactly once, on the base.
+id: exporters-pull-up-base-class
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  TableExporter and DelimitedExporter in exporters.py duplicate all of their
+  bookkeeping — column validation, row validation and storage, counting —
+  and differ only in how they render.
+
+  Pull the shared parts up into a new base class Exporter that both inherit
+  from, so the shared behaviour is defined exactly once, on the base; each
+  subclass keeps only what is genuinely its own (DelimitedExporter still
+  needs its delimiter, and each keeps its export).
+
+  This is a pure refactor: constructing, filling and exporting either
+  exporter — outputs, validation errors and messages — must behave exactly
+  as today.
+grading:
+  behaviour_tests:
+    - test_exporters_behaviour.py

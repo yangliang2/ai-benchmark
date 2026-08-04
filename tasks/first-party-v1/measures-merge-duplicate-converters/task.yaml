@@ -1,0 +1,25 @@
+# refactor: merge two near-identical modules into one table-driven one. The
+# behaviour tests named below must PASS on the pristine repository; everything
+# else in grading/ is a structural assertion that must FAIL on it until the
+# duplicate modules are genuinely gone.
+id: measures-merge-duplicate-converters
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  lengths.py and weights.py are the same module written twice: each holds a
+  factor table and the same pair of to/from functions over it, differing only
+  in the table and in the unit-family name inside the error message.
+
+  Merge them into a single new module conversion.py: put both tables there as
+  LENGTH_FACTORS and WEIGHT_FACTORS, write one generic
+  convert(value, unit_from, unit_to, factors, kind) whose kind names the
+  unit family in the error message, have measures.py call it with the right
+  table, and delete lengths.py and weights.py.
+
+  This is a pure refactor: convert_length and convert_weight in measures.py
+  must return exactly what they return today, including the exact wording of
+  the two "unknown ... unit" error messages.
+grading:
+  behaviour_tests:
+    - test_measures_behaviour.py
