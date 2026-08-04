@@ -1,0 +1,24 @@
+# refactor: invert a dependency so analysis works on data, not files. The
+# behaviour tests named below must PASS on the pristine repository; everything
+# else in grading/ is a structural assertion that must FAIL on it until
+# analysis.py stops reaching into storage.
+id: spendreport-invert-storage-dependency
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  analysis.py reaches down into storage itself: summarise and over_budget
+  each take a path and load it through storage.load_entries, so nothing in
+  analysis can run on in-memory data and every analysis test needs a file
+  on disk.
+
+  Invert the dependency: summarise and over_budget should take the entries
+  list itself, and analysis.py should not reference storage at all. cli.py
+  already owns the wiring — have report load the file once through storage
+  and pass the entries in.
+
+  This is a pure refactor: report's output for any expense file, and
+  storage.load_entries itself, must behave exactly as today.
+grading:
+  behaviour_tests:
+    - test_spendreport_behaviour.py

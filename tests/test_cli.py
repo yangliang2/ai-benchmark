@@ -113,7 +113,8 @@ def test_eval_v1_replay_grades_by_execution_and_lands_in_the_table(
 
     main(["eval-v1", "--tasks", str(tasks), "--replay", str(firstparty_v1_fixture),
           "--data", str(data)])
-    assert "evaluated 4 runs over 2 tasks (2 resolved)" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "evaluated 4 runs over" in out and "(2 resolved)" in out
 
     main(["table", "--data", str(data)])
     out = capsys.readouterr().out

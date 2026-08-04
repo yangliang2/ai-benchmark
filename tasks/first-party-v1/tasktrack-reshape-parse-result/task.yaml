@@ -1,0 +1,23 @@
+# refactor: reshape a tuple-returning interface into a named result object,
+# updating every call site. The behaviour tests named below must PASS on the
+# pristine repository; everything else in grading/ is a structural assertion
+# that must FAIL on it until parse_task returns a real ParsedTask.
+id: tasktrack-reshape-parse-result
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  parse_task in tasktrack.py returns a bare 4-tuple, and boardview.py and
+  digest.py unpack it positionally at every call site — a reordering waiting
+  to happen.
+
+  Reshape the interface: introduce a ParsedTask class in tasktrack.py with
+  title, priority, tags and done attributes, make parse_task return one, and
+  move every caller to attribute access. A ParsedTask should not be
+  unpackable like the old tuple — retiring positional access is the point.
+
+  This is a pure refactor: the observable behaviour of lane_for, board and
+  daily_digest must be exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_tasktrack_behaviour.py

@@ -1,0 +1,24 @@
+# refactor: split computation from presentation inside one function. The
+# behaviour tests named below must PASS on the pristine repository; everything
+# else in grading/ is a structural assertion that must FAIL on it until the
+# two halves exist as functions of their own.
+id: gradebook-split-compute-from-format
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  summary in gradebook.py computes its statistics and formats the report in
+  one breath, so neither half can be reused or tested alone.
+
+  Split it inside gradebook.py: compute_stats(scores) returns the numbers as
+  a dict with count, mean, median, best and worst (and raises today's
+  ValueError for an empty gradebook), format_summary(stats) renders exactly
+  today's block from such a dict — from the dict it is given, without
+  recomputing anything — and summary(scores) is reduced to composing the
+  two.
+
+  This is a pure refactor: summary's rendered output for any scores, and
+  the empty-gradebook error, must be byte-for-byte what they are today.
+grading:
+  behaviour_tests:
+    - test_gradebook_behaviour.py
