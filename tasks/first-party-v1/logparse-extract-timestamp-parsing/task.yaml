@@ -1,0 +1,23 @@
+# refactor: extract a duplicated block into one helper. The behaviour tests
+# named below must PASS on the pristine repository; everything else in
+# grading/ is a structural assertion that must FAIL on it until the
+# duplication is gone.
+id: logparse-extract-timestamp-parsing
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  Every function in logparse.py starts with the same timestamp-handling
+  block: slice the "YYYY-MM-DD HH:MM:SS" prefix off the line, parse it, and
+  keep the rest.
+
+  Extract that block into a single helper `parse_stamp(line)` in logparse.py
+  that returns the parsed datetime together with the rest of the line, and
+  have all three reader functions go through it. Once the duplication is
+  gone, the timestamp format string should appear exactly once in the module.
+
+  This is a pure refactor: what each reader returns, and the ValueError a
+  malformed stamp raises, must be exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_logparse_behaviour.py
