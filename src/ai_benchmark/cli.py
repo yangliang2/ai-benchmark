@@ -18,6 +18,13 @@ from functools import partial
 
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
+from ai_benchmark.instances import (
+    InstanceContext,
+    fetch_swebench_rows,
+    load_instances,
+    swebench_context_from_rows,
+    write_instances,
+)
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
     evaluate,
@@ -39,6 +46,7 @@ from ai_benchmark.swebench import ingest_swebench
 
 DEFAULT_DATA = Path("data/unified.jsonl")
 DEFAULT_CACHE = Path("data/classification-cache.json")
+DEFAULT_INSTANCES = Path("data/instance-context.json")
 
 
 def _merge_into(new: list[Record], data: Path) -> None:
@@ -104,13 +112,35 @@ def _report_command(args: argparse.Namespace) -> None:
     print(f"wrote Pareto report over {len(records)} records to {args.out}")
 
 
-def _never_llm(benchmark: str, instance_id: str) -> Label:
+def _never_llm(
+    benchmark: str, instance_id: str, context: InstanceContext | None
+) -> Label:
     raise AssertionError("warm cache must not reach the LLM")
+
+
+def _fetch_swebench_context_command(args: argparse.Namespace) -> None:
+    records = read_records(args.data)
+    wanted = {
+        r.instance_id
+        for r in records
+        if r.benchmark == "swe-bench-verified" and r.instance_id is not None
+    }
+    fetched = swebench_context_from_rows(
+        row for row in fetch_swebench_rows() if row["instance_id"] in wanted
+    )
+    existing = load_instances(args.out) if args.out.exists() else {}
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    write_instances(existing | fetched, args.out)
+    print(
+        f"fetched context for {len(fetched)} of {len(wanted)} swe-bench-verified "
+        f"instance(s) into {args.out}"
+    )
 
 
 def _classify_command(args: argparse.Namespace) -> None:
     records = read_records(args.data)
     cache = load_cache(args.cache) if args.cache.exists() else {}
+    instances = load_instances(args.instances) if args.instances.exists() else {}
 
     misses = {cache_key(r) for r in records if needs_classification(r)} - cache.keys()
     if misses and "ANTHROPIC_API_KEY" not in os.environ:
@@ -126,7 +156,7 @@ def _classify_command(args: argparse.Namespace) -> None:
     else:
         llm = _never_llm
 
-    classified, cache_after, llm_calls = classify_records(records, cache, llm)
+    classified, cache_after, llm_calls = classify_records(records, cache, llm, instances)
     write_records(classified, args.data)
     args.cache.parent.mkdir(parents=True, exist_ok=True)
     write_cache(cache_after, args.cache)
@@ -195,7 +225,22 @@ def main(argv: list[str] | None = None) -> None:
     )
     classify.add_argument("--data", type=Path, default=DEFAULT_DATA)
     classify.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
+    classify.add_argument(
+        "--instances",
+        type=Path,
+        default=DEFAULT_INSTANCES,
+        help="instance-context store (problem statements + patch file lists)",
+    )
     classify.set_defaults(command=_classify_command)
+
+    fetch = subcommands.add_parser(
+        "fetch-swebench-context",
+        help="fetch problem statements + patch file lists for swe-bench-verified "
+        "instances in the dataset from the HuggingFace datasets-server",
+    )
+    fetch.add_argument("--data", type=Path, default=DEFAULT_DATA)
+    fetch.add_argument("--out", type=Path, default=DEFAULT_INSTANCES)
+    fetch.set_defaults(command=_fetch_swebench_context_command)
 
     args = parser.parse_args(argv)
     try:

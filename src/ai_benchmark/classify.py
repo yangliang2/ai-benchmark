@@ -10,6 +10,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TypedDict, cast
 
+from ai_benchmark.instances import InstanceContext, Instances, scale_from_patch_files
 from ai_benchmark.schema import Record, Scale, TaskCategory, validate_record
 
 
@@ -21,7 +22,7 @@ class Label(TypedDict):
 
 Cache = dict[str, Label]
 
-Classifier = Callable[[str, str], Label]
+Classifier = Callable[[str, str, InstanceContext | None], Label]
 
 
 def load_cache(path: Path) -> Cache:
@@ -55,9 +56,17 @@ def _apply(record: Record, label: Label) -> Record:
 
 
 def classify_records(
-    records: list[Record], cache: Cache, llm: Classifier
+    records: list[Record],
+    cache: Cache,
+    llm: Classifier,
+    instances: Instances | None = None,
 ) -> tuple[list[Record], Cache, int]:
-    """Returns (classified records, updated cache, number of LLM calls made)."""
+    """Returns (classified records, updated cache, number of LLM calls made).
+
+    Instance context, when available, is passed to the LLM on misses; its patch
+    file list makes `scale` mechanical and always beats an LLM guess. Cached
+    entries are preserved — only "unknown" scale is re-derived (#8).
+    """
     updated_cache = dict(cache)
     llm_calls = 0
 
@@ -67,12 +76,18 @@ def classify_records(
             classified.append(record)
             continue
         key = cache_key(record)
+        context = instances.get(key) if instances else None
         if key not in updated_cache:
-            updated_cache[key] = llm(record.benchmark, record.instance_id)
+            updated_cache[key] = llm(record.benchmark, record.instance_id, context)
             llm_calls += 1
         label = updated_cache[key]
-        if label["category"] == "unclassified":
-            classified.append(record)
-        else:
-            classified.append(_apply(record, label))
+        if label["scale"] == "unknown" and context is not None:
+            mechanical = scale_from_patch_files(context["patch_files"])
+            if mechanical != "unknown":
+                label = updated_cache[key] = Label(
+                    category=label["category"],
+                    scale=mechanical,
+                    language=label["language"],
+                )
+        classified.append(_apply(record, label))
     return classified, updated_cache, llm_calls

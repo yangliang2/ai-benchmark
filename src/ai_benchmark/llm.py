@@ -8,6 +8,7 @@ import json
 from typing import get_args
 
 from ai_benchmark.classify import Classifier, Label
+from ai_benchmark.instances import InstanceContext
 from ai_benchmark.schema import Scale, TaskCategory
 
 # Derived from the schema Literals so the taxonomy has one source of truth.
@@ -29,7 +30,7 @@ PROMPT = """Classify this software-engineering benchmark instance into the task 
 
 Benchmark: {benchmark}
 Instance id: {instance_id}
-
+{context}
 Categories (pick exactly one, by the primary deliverable of the task):
 - bug-fix: correct existing behaviour that is wrong (SWE-bench-style issue->patch)
 - feature-dev: add new user-visible capability
@@ -48,13 +49,41 @@ Also give:
   or null if unknown
 """
 
+# Enough to convey the ask without blowing up cost on long issue threads.
+_PROBLEM_STATEMENT_LIMIT = 4000
+
+
+def build_prompt(
+    benchmark: str, instance_id: str, context: InstanceContext | None
+) -> str:
+    """Fold whatever instance evidence we have into the prompt (#8)."""
+    parts = []
+    if context is not None:
+        if statement := context["problem_statement"]:
+            parts.append(
+                "Problem statement:\n" + statement[:_PROBLEM_STATEMENT_LIMIT] + "\n"
+            )
+        if files := context["patch_files"]:
+            parts.append(
+                "Files changed by the reference solution:\n"
+                + "\n".join(f"- {f}" for f in files)
+                + "\n"
+            )
+    return PROMPT.format(
+        benchmark=benchmark,
+        instance_id=instance_id,
+        context="\n" + "\n".join(parts) if parts else "",
+    )
+
 
 def anthropic_classifier() -> Classifier:
     import anthropic
 
     client = anthropic.Anthropic()
 
-    def classify(benchmark: str, instance_id: str) -> Label:
+    def classify(
+        benchmark: str, instance_id: str, context: InstanceContext | None
+    ) -> Label:
         # Thinking is on by default on claude-opus-5 and max_tokens caps
         # thinking + response text together — keep generous headroom.
         response = client.beta.messages.create(
@@ -69,7 +98,7 @@ def anthropic_classifier() -> Classifier:
             messages=[
                 {
                     "role": "user",
-                    "content": PROMPT.format(benchmark=benchmark, instance_id=instance_id),
+                    "content": build_prompt(benchmark, instance_id, context),
                 }
             ],
         )
