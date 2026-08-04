@@ -163,7 +163,10 @@ def test_eval_v1_live_end_to_end(
         f'    with open(workdir / "wordcount.py", "a") as source:\n'
         f"        source.write({solution!r})\n"
     )
-    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    checked_in = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    tasks = tmp_path / "tasks"
+    for seed in ("wordcount-top-words", "ledger-split-formatting"):
+        shutil.copytree(checked_in / seed, tasks / seed)
     data = tmp_path / "unified.jsonl"
     log = tmp_path / "runs.jsonl"
 
