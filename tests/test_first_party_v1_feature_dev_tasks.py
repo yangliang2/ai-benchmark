@@ -32,6 +32,7 @@ SOLUTION_DIR = "solution"
 # Task id -> the scale its reference solution honestly has.
 FEATURE_DEV_TASKS: dict[str, str] = {
     "calc-infix-evaluator": "single-file",
+    "matcher-brace-expansion": "single-file",
     "slugger-unique-slugs": "single-file",
     "spans-subtract-gaps": "single-file",
 }
