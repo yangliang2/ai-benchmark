@@ -1,0 +1,23 @@
+# refactor seed task. grading/ is split: the behaviour tests named below must
+# PASS on the pristine repository (the restructuring preserves behaviour), and
+# everything else in grading/ is a structural assertion that must FAIL on it
+# (the restructuring has not happened yet). The task-set lint enforces both.
+id: ledger-split-formatting
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  This repository has an expense ledger in ledger.py that also owns its own
+  money formatting.
+
+  Move the two money-formatting helpers, `format_amount` and `format_line`,
+  out of ledger.py into a new module `formatting.py`, and have ledger.py
+  import them from there rather than defining them. After the change,
+  `from formatting import format_amount, format_line` must work and ledger.py
+  must no longer contain the definitions.
+
+  This is a pure refactor: the observable behaviour of `Ledger` — its entries,
+  totals and rendered output — must be exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_ledger_behaviour.py

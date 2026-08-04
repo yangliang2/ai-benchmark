@@ -1,0 +1,494 @@
+"""Dataset-seam tests for first-party v1: the checked-in task set plus a raw
+run log carrying workdir diffs in, execution-verified records out.
+
+Diffs are built the way the live runner (#11) will build them — copy the
+pristine repo, git init + commit, edit, `git add -A && git diff --cached` —
+so the grader is exercised against genuine patches (added, modified and
+deleted files), not hand-written hunks that could drift from git's output.
+"""
+
+import shutil
+import subprocess
+import textwrap
+from collections.abc import Callable
+from datetime import date
+from pathlib import Path
+
+import pytest
+import yaml
+
+from ai_benchmark.dataset import IngestError
+from ai_benchmark.firstparty_v1 import (
+    BENCHMARK,
+    Run,
+    Task,
+    evaluate,
+    lint_task_set,
+    load_runs,
+    load_task_set,
+)
+
+TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+FEATURE_SEED = "wordcount-top-words"
+REFACTOR_SEED = "ledger-split-formatting"
+
+
+def clone_seed(root: Path, seed: str, task_id: str) -> Path:
+    """Copy a seed task into root under a new id, ready to be broken."""
+    destination = root / task_id
+    shutil.copytree(TASKS / seed, destination)
+    return destination
+
+
+def retitle(task_dir: Path, **fields: object) -> None:
+    """Rewrite fields of a cloned task's task.yaml in place."""
+    spec = yaml.safe_load((task_dir / "task.yaml").read_text())
+    spec.update(fields)
+    (task_dir / "task.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
+
+
+def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
+    """The diff a run would log: pristine repo, edited, captured against the
+    initial commit exactly as the live runner will capture it."""
+    workdir = Path(subprocess.run(["mktemp", "-d"], capture_output=True, text=True,
+                                  check=True).stdout.strip())
+    shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
+    git = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
+    subprocess.run([*git, "init", "-q", "."], cwd=workdir, check=True)
+    subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
+    subprocess.run([*git, "commit", "-qm", "pristine"], cwd=workdir, check=True)
+    edit(workdir)
+    subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
+    return subprocess.run(
+        [*git, "diff", "--cached"], cwd=workdir, capture_output=True, text=True,
+        check=True,
+    ).stdout
+
+
+def run_for(task: Task, diff: str, *, model: str = "claude-sonnet-5") -> Run:
+    """A raw run-log row for one task, carrying the workdir diff it produced."""
+    return Run(
+        task_id=task.id,
+        agent="claude-code",
+        agent_version="2.1.220",
+        model=model,
+        output="done",
+        diff=diff,
+        tokens_in=41000,
+        tokens_out=1500,
+        cost_usd=0.21,
+        latency_s=64.5,
+        turns=7,
+        as_of=date(2026, 8, 4),
+    )
+
+
+def task_by_id(task_id: str) -> Task:
+    [task] = [t for t in load_task_set(TASKS) if t.id == task_id]
+    return task
+
+
+def append(path: Path, source: str) -> None:
+    path.write_text(path.read_text() + textwrap.dedent(source))
+
+
+# --- what a solving and a failing agent do to each seed task -------------------
+
+
+def solve_wordcount(workdir: Path) -> None:
+    append(workdir / "wordcount.py", '''
+        def top_words(text, n):
+            """The n most frequent words, most frequent first, ties alphabetical."""
+            counts = word_counts(text)
+            ordered = sorted(counts, key=lambda word: (-counts[word], word))
+            return ordered[:n]
+        ''')
+
+
+def half_solve_wordcount(workdir: Path) -> None:
+    """Frequency right, tie-break forgotten — the common near-miss."""
+    append(workdir / "wordcount.py", '''
+        def top_words(text, n):
+            counts = word_counts(text)
+            return sorted(counts, key=lambda word: -counts[word])[:n]
+        ''')
+
+
+def solve_wordcount_across_files(workdir: Path) -> None:
+    """A cross-file solution: one file modified, one added, one deleted."""
+    (workdir / "ordering.py").write_text(textwrap.dedent('''
+        """Ordering helpers for word counts."""
+
+
+        def by_frequency(counts):
+            """Words most frequent first, ties broken alphabetically."""
+            return sorted(counts, key=lambda word: (-counts[word], word))
+        '''))
+    append(workdir / "wordcount.py", '''
+        from ordering import by_frequency
+
+
+        def top_words(text, n):
+            """The n most frequent words, most frequent first."""
+            return by_frequency(word_counts(text))[:n]
+        ''')
+    (workdir / "README.md").unlink()
+
+
+def solve_ledger(workdir: Path) -> None:
+    (workdir / "formatting.py").write_text(textwrap.dedent('''
+        """Money formatting for the ledger."""
+
+
+        def format_amount(cents):
+            """Render an integer number of cents as a signed currency string."""
+            sign = "-" if cents < 0 else ""
+            whole, remainder = divmod(abs(cents), 100)
+            return f"{sign}${whole}.{remainder:02d}"
+
+
+        def format_line(description, cents):
+            """Render one ledger line as "<description>: <amount>"."""
+            return f"{description}: {format_amount(cents)}"
+        '''))
+    (workdir / "ledger.py").write_text(textwrap.dedent('''
+        """A tiny expense ledger."""
+
+        from formatting import format_line
+
+
+        class Ledger:
+            """An ordered list of (description, cents) entries."""
+
+            def __init__(self):
+                self.entries = []
+
+            def add(self, description, cents):
+                """Append one entry."""
+                self.entries.append((description, cents))
+
+            def total(self):
+                """The sum of every entry's amount, in cents."""
+                return sum(cents for _, cents in self.entries)
+
+            def render(self):
+                """Render every entry, then a total line."""
+                lines = [format_line(d, c) for d, c in self.entries]
+                lines.append(format_line("total", self.total()))
+                return "\\n".join(lines)
+        '''))
+
+
+def fake_solve_ledger(workdir: Path) -> None:
+    """formatting.py exists and imports cleanly, but nothing actually moved."""
+    (workdir / "formatting.py").write_text(
+        "from ledger import format_amount, format_line  # noqa: F401\n"
+    )
+
+
+def overwrite_the_grading_tests(workdir: Path) -> None:
+    """An agent that writes its own tests at the grading files' paths."""
+    for name in ("test_formatting_module.py", "test_ledger_behaviour.py"):
+        (workdir / name).write_text("def test_everything_is_fine():\n    assert True\n")
+
+
+# --- task format and loader ---------------------------------------------------
+
+
+def test_task_set_loads_one_classified_task_per_seed_category() -> None:
+    tasks = load_task_set(TASKS)
+
+    assert {task.category for task in tasks} == {"feature-dev", "refactor"}
+    assert len({task.id for task in tasks}) == len(tasks)
+    for task in tasks:
+        assert task.category != "unclassified"
+        assert task.language == "python"
+        assert list(task.repo_dir.iterdir())
+        assert list(task.grading_dir.rglob("test_*.py"))
+
+
+def test_refactor_task_names_its_behaviour_tests() -> None:
+    [refactor] = [t for t in load_task_set(TASKS) if t.category == "refactor"]
+
+    assert refactor.grading.behaviour_tests
+    for name in refactor.grading.behaviour_tests:
+        assert (refactor.grading_dir / name).exists()
+    # Something is left over to assert the restructuring actually happened.
+    assert set(refactor.grading_test_paths) > set(refactor.behaviour_test_paths)
+
+
+def test_duplicate_task_ids_fail_loudly(tmp_path: Path) -> None:
+    clone_seed(tmp_path, FEATURE_SEED, "one")
+    clone_seed(tmp_path, FEATURE_SEED, "two")  # keeps the seed's id
+
+    with pytest.raises(IngestError, match="duplicate"):
+        load_task_set(tmp_path)
+
+
+def test_malformed_task_yaml_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, category="not-a-category")
+
+    with pytest.raises(IngestError, match="category"):
+        load_task_set(tmp_path)
+
+
+def test_unclassified_task_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, category="unclassified")
+
+    with pytest.raises(IngestError, match="unclassified"):
+        load_task_set(tmp_path)
+
+
+def test_task_without_grading_tests_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    for path in task_dir.glob("grading/test_*.py"):
+        path.unlink()
+
+    with pytest.raises(IngestError, match="grading"):
+        load_task_set(tmp_path)
+
+
+def test_task_without_a_starting_repo_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    shutil.rmtree(task_dir / "repo")
+
+    with pytest.raises(IngestError, match="repo"):
+        load_task_set(tmp_path)
+
+
+def test_refactor_task_without_behaviour_tests_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, REFACTOR_SEED, REFACTOR_SEED)
+    retitle(task_dir, grading={"behaviour_tests": []})
+
+    with pytest.raises(IngestError, match="behaviour"):
+        load_task_set(tmp_path)
+
+
+def test_behaviour_test_naming_a_missing_file_fails_loudly(tmp_path: Path) -> None:
+    task_dir = clone_seed(tmp_path, REFACTOR_SEED, REFACTOR_SEED)
+    retitle(task_dir, grading={"behaviour_tests": ["test_nowhere.py"]})
+
+    with pytest.raises(IngestError, match="test_nowhere.py"):
+        load_task_set(tmp_path)
+
+
+def test_feature_dev_task_naming_behaviour_tests_fails_loudly(tmp_path: Path) -> None:
+    """Only refactor tasks split their suite; anywhere else the split would
+    quietly exempt those files from the must-fail-pristine invariant."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, grading={"behaviour_tests": ["test_top_words.py"]})
+
+    with pytest.raises(IngestError, match="behaviour"):
+        load_task_set(tmp_path)
+
+
+# --- execution-verified grading ------------------------------------------------
+
+
+def test_solved_and_unsolved_runs_of_both_seed_tasks_are_graded_by_execution() -> None:
+    tasks = load_task_set(TASKS)
+    wordcount, ledger = task_by_id(FEATURE_SEED), task_by_id(REFACTOR_SEED)
+    runs = [
+        run_for(wordcount, workdir_diff(wordcount, solve_wordcount)),
+        run_for(wordcount, workdir_diff(wordcount, half_solve_wordcount),
+                model="claude-haiku-4-5"),
+        run_for(ledger, workdir_diff(ledger, solve_ledger)),
+        run_for(ledger, workdir_diff(ledger, fake_solve_ledger),
+                model="claude-haiku-4-5"),
+    ]
+
+    records = evaluate(tasks, runs, source="run-log")
+
+    graded = {(r.instance_id, r.model): r.quality_value for r in records}
+    assert graded[(FEATURE_SEED, "claude-sonnet-5")] == 1.0
+    assert graded[(FEATURE_SEED, "claude-haiku-4-5")] == 0.0
+    assert graded[(REFACTOR_SEED, "claude-sonnet-5")] == 1.0
+    # formatting.py imports cleanly, but ledger.py still defines the helpers.
+    assert graded[(REFACTOR_SEED, "claude-haiku-4-5")] == 0.0
+
+
+def test_an_empty_diff_leaves_the_task_unresolved() -> None:
+    wordcount = task_by_id(FEATURE_SEED)
+
+    [record] = evaluate([wordcount], [run_for(wordcount, "")], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+def test_agent_edits_to_grading_test_files_have_no_effect() -> None:
+    """The canonical grading files overwrite same-path files in the workdir,
+    so rewriting them buys an agent nothing."""
+    ledger = task_by_id(REFACTOR_SEED)
+    tampered = workdir_diff(ledger, overwrite_the_grading_tests)
+    assert "test_formatting_module.py" in tampered  # the tamper really is in the diff
+
+    [record] = evaluate([ledger], [run_for(ledger, tampered)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+def test_a_diff_that_adds_modifies_and_deletes_files_applies_in_full() -> None:
+    """Every hunk kind reaches the graded copy — a hunk git could not apply
+    fails loudly rather than scoring 0.0, so a resolved verdict here means the
+    whole patch landed."""
+    wordcount = task_by_id(FEATURE_SEED)
+    diff = workdir_diff(wordcount, solve_wordcount_across_files)
+    assert "new file mode" in diff and "deleted file mode" in diff
+
+    [record] = evaluate([wordcount], [run_for(wordcount, diff)], source="run-log")
+
+    assert record.quality_value == 1.0
+
+
+def test_a_diff_that_does_not_apply_fails_loudly() -> None:
+    wordcount = task_by_id(FEATURE_SEED)
+    corrupt = workdir_diff(wordcount, solve_wordcount).replace("wordcount.py", "gone.py")
+
+    with pytest.raises(IngestError, match="diff"):
+        evaluate([wordcount], [run_for(wordcount, corrupt)], source="run-log")
+
+
+def test_grading_patches_only_its_own_temp_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """git apply walks up to the enclosing repository, so a temp dir that
+    happens to sit inside one must not let a logged diff escape into it."""
+    import tempfile
+
+    enclosing = tmp_path / "enclosing-repo"
+    (enclosing / "tmp").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "."], cwd=enclosing, check=True)
+    (enclosing / "wordcount.py").write_text("sentinel\n")
+    monkeypatch.setattr(tempfile, "tempdir", str(enclosing / "tmp"))
+    wordcount = task_by_id(FEATURE_SEED)
+
+    [record] = evaluate(
+        [wordcount],
+        [run_for(wordcount, workdir_diff(wordcount, solve_wordcount))],
+        source="run-log",
+    )
+
+    assert record.quality_value == 1.0
+    assert (enclosing / "wordcount.py").read_text() == "sentinel\n"
+
+
+def test_grading_that_never_finishes_is_unresolved_not_a_hang() -> None:
+    wordcount = task_by_id(FEATURE_SEED)
+
+    def loop_forever(workdir: Path) -> None:
+        append(workdir / "wordcount.py", """
+            while True:
+                pass
+            """)
+
+    [record] = evaluate(
+        [wordcount], [run_for(wordcount, workdir_diff(wordcount, loop_forever))],
+        source="run-log", timeout_s=5,
+    )
+
+    assert record.quality_value == 0.0
+
+
+# --- records at the unified-dataset seam ---------------------------------------
+
+
+def test_records_carry_v1_benchmark_and_first_party_provenance() -> None:
+    ledger = task_by_id(REFACTOR_SEED)
+
+    [record] = evaluate(
+        [ledger],
+        [run_for(ledger, workdir_diff(ledger, solve_ledger))],
+        source="data/first-party-v1-runs/2026-08-04.jsonl",
+    )
+
+    assert record.benchmark == BENCHMARK == "first-party-v1"
+    assert record.source_type == "first-party"
+    assert record.confidence == "high"
+    assert record.instance_id == REFACTOR_SEED
+    assert record.quality_metric == "resolved"
+    assert record.category == "refactor"
+    assert record.scale == "cross-file"
+    assert record.language == "python"
+    assert record.agent == "claude-code" and record.agent_version == "2.1.220"
+    assert (record.tokens_in, record.tokens_out) == (41000, 1500)
+    assert (record.cost_usd, record.latency_s, record.turns) == (0.21, 64.5, 7)
+    assert record.as_of == date(2026, 8, 4)
+
+
+def test_run_for_an_unknown_task_fails_loudly() -> None:
+    wordcount = task_by_id(FEATURE_SEED)
+    orphan = run_for(wordcount, "").model_copy(update={"task_id": "no-such-task"})
+
+    with pytest.raises(IngestError, match="no-such-task"):
+        evaluate([wordcount], [orphan], source="run-log")
+
+
+def test_the_checked_in_run_log_carries_a_diff_per_run(
+    firstparty_v1_fixture: Path,
+) -> None:
+    runs = load_runs(firstparty_v1_fixture)
+
+    assert len(runs) == 4
+    assert all(run.diff.startswith("diff --git") for run in runs)
+
+
+def test_a_malformed_run_log_fails_loudly(tmp_path: Path) -> None:
+    log = tmp_path / "runs.jsonl"
+    log.write_text('{"task_id": "wordcount-top-words", "agent": "claude-code"}\n')
+
+    with pytest.raises(IngestError, match="diff"):
+        load_runs(log)
+
+
+def test_duplicate_runs_fail_loudly() -> None:
+    wordcount = task_by_id(FEATURE_SEED)
+    run = run_for(wordcount, "")
+
+    with pytest.raises(IngestError, match="duplicate"):
+        evaluate([wordcount], [run, run], source="run-log")
+
+
+# --- task-set lint: the authoring invariants, checked by running them ----------
+
+
+def test_the_seed_tasks_pass_the_lint() -> None:
+    assert lint_task_set(load_task_set(TASKS)) == []
+
+
+def test_lint_rejects_a_feature_dev_task_that_is_already_solved(
+    tmp_path: Path,
+) -> None:
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    solve_wordcount(task_dir / "repo")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert FEATURE_SEED in problem and "pristine" in problem
+
+
+def test_lint_rejects_a_refactor_task_whose_behaviour_is_already_broken(
+    tmp_path: Path,
+) -> None:
+    task_dir = clone_seed(tmp_path, REFACTOR_SEED, REFACTOR_SEED)
+    ledger = task_dir / "repo" / "ledger.py"
+    ledger.write_text(ledger.read_text().replace('sign = "-" if cents < 0 else ""',
+                                                 'sign = ""'))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert REFACTOR_SEED in problem and "behaviour" in problem
+
+
+def test_lint_rejects_a_refactor_task_that_is_already_restructured(
+    tmp_path: Path,
+) -> None:
+    """The structural assertions must fail pristine too, or the task is done."""
+    task_dir = clone_seed(tmp_path, REFACTOR_SEED, REFACTOR_SEED)
+    solve_ledger(task_dir / "repo")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert REFACTOR_SEED in problem and "pristine" in problem

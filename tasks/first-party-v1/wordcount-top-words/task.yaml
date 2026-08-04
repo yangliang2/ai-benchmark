@@ -1,0 +1,19 @@
+# feature-dev seed task. The held-out grading tests in grading/ exercise
+# top_words, which does not exist in repo/ — so they fail on the pristine
+# repository, as the task-set lint requires of every feature-dev task.
+id: wordcount-top-words
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small word-frequency module in wordcount.py.
+
+  Add a function `top_words(text, n)` to wordcount.py that returns the n most
+  frequently occurring words in text, as a list of plain strings ordered most
+  frequent first. Words are whatever the module's existing `words()` helper
+  produces. Break ties between equally frequent words alphabetically. If n is
+  larger than the number of distinct words, return every word. Return an empty
+  list for empty text.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
