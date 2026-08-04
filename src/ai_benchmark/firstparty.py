@@ -285,15 +285,18 @@ def claude_headless_json(
     A tools-enabled run must also be *granted* something: headless runs
     auto-deny any tool use not allowed up front, and --setting-sources ""
     discards user-level grants, so without explicit flags the agent is billed
-    in full while every edit is denied. acceptEdits covers file edits; Bash
-    must be allowed separately (running the repo's tests is part of realistic
-    coding work). Probed against the real CLI as the narrowest grant that
-    makes both work — notably not bypassPermissions.
+    in full while every edit is denied. The grant is bypassPermissions: the
+    narrower acceptEdits-plus-Bash grant aborted a real sweep when a model
+    tried to Read outside its workdir — denials driven by model behaviour
+    recur on retry, so any per-tool allowlist turns paid sweeps into a
+    guessing game. The workdir is a throwaway temp dir and the not-a-sandbox
+    stance is already documented (and ticketed as #15), so the blanket grant
+    changes measurement, not exposure.
     """
     command = ["claude", "-p", prompt, "--model", model, "--output-format", "json",
                "--setting-sources", ""]
     if tools:
-        command += ["--permission-mode", "acceptEdits", "--allowedTools", "Bash"]
+        command += ["--permission-mode", "bypassPermissions"]
     else:
         command += ["--tools", ""]
     try:

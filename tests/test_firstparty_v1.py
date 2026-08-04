@@ -803,15 +803,16 @@ def test_live_runs_append_replayable_rows_with_exact_measurements(
     assert graded == {"claude-sonnet-5": 1.0, "claude-haiku-4-5": 0.0}
 
 
-def test_live_runs_grant_edits_and_bash_but_not_setting_sources(
+def test_live_runs_grant_all_tools_but_not_setting_sources(
     fake_claude: FakeClaude, tmp_path: Path,
 ) -> None:
     """v1 runs are genuinely multi-turn: tools stay on (no --tools ""), and —
     because headless runs auto-deny whatever was not granted up front, while
     --setting-sources "" discards any user-level grants — the runner must
-    itself grant file edits and shell commands, or the agent is billed in
-    full and every edit is denied. Probed against the real CLI: acceptEdits
-    alone still denies Bash, so both flags are load-bearing."""
+    grant tool use itself or the agent is billed in full while every action
+    is denied. The grant is bypassPermissions: a real sweep died when a model
+    Read outside its workdir under the narrower acceptEdits+Bash grant, and
+    behaviour-driven denials recur on retry."""
     argv_log = fake_claude("")
     wordcount = task_by_id(FEATURE_SEED)
 
@@ -820,8 +821,8 @@ def test_live_runs_grant_edits_and_bash_but_not_setting_sources(
     [argv] = [json.loads(line) for line in argv_log.read_text().splitlines()]
     assert "--tools" not in argv
     assert argv[argv.index("--setting-sources") + 1] == ""
-    assert argv[argv.index("--permission-mode") + 1] == "acceptEdits"
-    assert argv[argv.index("--allowedTools") + 1] == "Bash"
+    assert argv[argv.index("--permission-mode") + 1] == "bypassPermissions"
+    assert "--allowedTools" not in argv
     assert argv[argv.index("-p") + 1] == wordcount.prompt
 
 
