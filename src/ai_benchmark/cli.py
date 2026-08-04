@@ -3,7 +3,6 @@
 import argparse
 import os
 from collections.abc import Callable
-from datetime import date
 from functools import partial
 from pathlib import Path
 
@@ -23,6 +22,7 @@ from ai_benchmark.firstparty import (
     evaluate,
     load_runs,
     load_tasks,
+    local_today,
     run_live,
 )
 from ai_benchmark.instances import (
@@ -91,7 +91,7 @@ def _table_command(args: argparse.Namespace) -> None:
 def _eval_command(args: argparse.Namespace) -> None:
     tasks = load_tasks(args.tasks)
     if args.live:
-        log = args.log or Path("data/first-party-runs") / f"{date.today().isoformat()}.jsonl"
+        log = args.log or Path("data/first-party-runs") / f"{local_today().isoformat()}.jsonl"
         runs = run_live(tasks, args.model or DEFAULT_MODELS, log)
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
@@ -107,12 +107,32 @@ def _eval_command(args: argparse.Namespace) -> None:
 
 
 def _eval_v1_command(args: argparse.Namespace) -> None:
-    """Replay a v1 raw run log: each logged workdir diff is re-graded by
-    execution. Live v1 running is ticket #11; until then replay is the only
-    way in, and it is the same pipeline either way."""
+    """Run the v1 eval: live (tools-enabled claude-code in a fresh workdir per
+    run, workdir diffs captured into the raw run log) or replay of such a log.
+    Grading is the same pipeline either way — each logged diff, by execution."""
     tasks = firstparty_v1.load_task_set(args.tasks)
-    runs = firstparty_v1.load_runs(args.replay)
-    records = firstparty_v1.evaluate(tasks, runs, source=str(args.replay))
+    if args.live:
+        log = (
+            args.log
+            or Path("data/first-party-v1-runs") / f"{local_today().isoformat()}.jsonl"
+        )
+        runs = firstparty_v1.run_live(
+            tasks,
+            args.model or DEFAULT_MODELS,
+            log,
+            timeout_s=(
+                args.timeout if args.timeout is not None
+                else firstparty_v1.RUN_TIMEOUT_S
+            ),
+        )
+        source = str(log)
+        print(f"ran {len(runs)} live runs; raw log written to {log}")
+    else:
+        if args.model or args.log or args.timeout is not None:
+            raise SystemExit("--model, --log and --timeout apply only to --live runs")
+        runs = firstparty_v1.load_runs(args.replay)
+        source = str(args.replay)
+    records = firstparty_v1.evaluate(tasks, runs, source=source)
     resolved = int(sum(r.quality_value for r in records))
     print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
     _merge_into(records, args.data)
@@ -249,12 +269,34 @@ def main(argv: list[str] | None = None) -> None:
 
     evaluate_v1 = subcommands.add_parser(
         "eval-v1",
-        help="replay a first-party v1 raw run log, grading each logged workdir "
-        "diff by running the task's held-out tests, and merge the records",
+        help="run the first-party v1 eval (live via tools-enabled claude-code, "
+        "or replay a raw run log), grading each workdir diff by running the "
+        "task's held-out tests, and merge the records",
     )
     evaluate_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
     evaluate_v1.add_argument("--data", type=Path, default=DEFAULT_DATA)
-    evaluate_v1.add_argument("--replay", type=Path, required=True)
+    v1_mode = evaluate_v1.add_mutually_exclusive_group(required=True)
+    v1_mode.add_argument(
+        "--replay", type=Path, help="replay a raw run log instead of running live"
+    )
+    v1_mode.add_argument(
+        "--live", action="store_true",
+        help="run live via the claude CLI, tools enabled",
+    )
+    evaluate_v1.add_argument(
+        "--model",
+        action="append",
+        help=f"live model (repeatable; default: {', '.join(DEFAULT_MODELS)})",
+    )
+    evaluate_v1.add_argument(
+        "--log", type=Path, help="where a live run writes its raw log"
+    )
+    evaluate_v1.add_argument(
+        "--timeout",
+        type=int,
+        help="per-run live timeout in seconds "
+        f"(default: {firstparty_v1.RUN_TIMEOUT_S})",
+    )
     evaluate_v1.set_defaults(command=_eval_v1_command)
 
     lint_v1 = subcommands.add_parser(

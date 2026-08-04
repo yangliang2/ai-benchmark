@@ -7,6 +7,7 @@ so the grader is exercised against genuine patches (added, modified and
 deleted files), not hand-written hunks that could drift from git's output.
 """
 
+import json
 import shutil
 import subprocess
 import tempfile
@@ -19,6 +20,8 @@ import pytest
 import yaml
 
 from ai_benchmark.dataset import IngestError
+from ai_benchmark.firstparty import load_runs as load_v0_runs
+from ai_benchmark.firstparty import local_today
 from ai_benchmark.firstparty_v1 import (
     BENCHMARK,
     Run,
@@ -27,6 +30,7 @@ from ai_benchmark.firstparty_v1 import (
     lint_task_set,
     load_runs,
     load_task_set,
+    run_live,
 )
 
 TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
@@ -697,3 +701,178 @@ def test_lint_rejects_a_refactor_task_that_is_already_restructured(
     [problem] = lint_task_set(load_task_set(tmp_path))
 
     assert REFACTOR_SEED in problem and "pristine" in problem
+
+
+# --- live runner: tools-enabled claude-code, workdir diff into the run log -----
+
+
+# What the fake agent appends to wordcount.py when it solves the seed task.
+SOLUTION = (
+    "\n\ndef top_words(text, n):\n"
+    "    counts = word_counts(text)\n"
+    "    return sorted(counts, key=lambda w: (-counts[w], w))[:n]\n"
+)
+
+# Every act also leaves the droppings a real agent leaves after running the
+# repo's tests in its workdir: bytecode caches (binary!) and pytest state.
+PYTEST_DROPPINGS = """\
+(workdir / "__pycache__").mkdir(exist_ok=True)
+(workdir / "__pycache__" / "wordcount.cpython-313.pyc").write_bytes(bytes(range(256)))
+(workdir / ".pytest_cache").mkdir(exist_ok=True)
+(workdir / ".pytest_cache" / "lastfailed").write_text("busted")
+"""
+
+SOLVE_AS_SONNET_ACT = f"""\
+if model == "claude-sonnet-5":
+    with open(workdir / "wordcount.py", "a") as source:
+        source.write({SOLUTION!r})
+{PYTEST_DROPPINGS}"""
+
+FakeClaude = Callable[[str], Path]
+
+
+def test_live_runs_append_replayable_rows_with_exact_measurements(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """The whole live loop against a faked CLI: sonnet solves, haiku changes
+    nothing, both run pytest and litter the workdir — and every row lands in
+    the log with the CLI's own measurements and a diff that replays."""
+    fake_claude(SOLVE_AS_SONNET_ACT)
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    runs = run_live([wordcount], ["claude-sonnet-5", "claude-haiku-4-5"], log)
+
+    assert load_runs(log) == runs
+    sonnet, haiku = runs
+    assert (sonnet.model, haiku.model) == ("claude-sonnet-5", "claude-haiku-4-5")
+    for run in runs:
+        assert run.task_id == FEATURE_SEED
+        assert run.agent == "claude-code"
+        assert run.agent_version == "2.1.220 (Claude Code)"
+        assert run.output == "done"
+        # Exact CLI-reported measurements, tokens_in summed over cache tiers.
+        assert run.tokens_in == 12 + 30000 + 11000
+        assert run.tokens_out == 900
+        assert run.cost_usd == 0.19
+        assert run.latency_s == 42.5
+        assert run.turns == 6
+        assert run.as_of == local_today()
+        # The test droppings never reach the graded artifact.
+        assert "__pycache__" not in run.diff
+        assert ".pytest_cache" not in run.diff
+        assert ".gitignore" not in run.diff
+    assert haiku.diff == ""  # ran pytest, changed nothing
+
+    records = evaluate([wordcount], runs, source=str(log))
+
+    graded = {record.model: record.quality_value for record in records}
+    # A run that changed nothing is unresolved, not an error.
+    assert graded == {"claude-sonnet-5": 1.0, "claude-haiku-4-5": 0.0}
+
+
+def test_live_runs_enable_tools_and_disable_setting_sources(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """v1 runs are genuinely multi-turn: tools stay on (no --tools ""), while
+    setting sources stay off so the run measures the task, not local config."""
+    argv_log = fake_claude("")
+    wordcount = task_by_id(FEATURE_SEED)
+
+    run_live([wordcount], ["claude-sonnet-5"], tmp_path / "runs.jsonl")
+
+    [argv] = [json.loads(line) for line in argv_log.read_text().splitlines()]
+    assert "--tools" not in argv
+    assert argv[argv.index("--setting-sources") + 1] == ""
+    assert argv[argv.index("-p") + 1] == wordcount.prompt
+
+
+def test_a_sweep_that_dies_mid_way_keeps_the_rows_already_paid_for(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    fake_claude(
+        SOLVE_AS_SONNET_ACT
+        + 'if model == "claude-haiku-4-5":\n'
+        + '    print("overloaded", file=sys.stderr)\n'
+        + "    raise SystemExit(3)\n"
+    )
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    with pytest.raises(IngestError, match="claude exited 3"):
+        run_live([wordcount], ["claude-sonnet-5", "claude-haiku-4-5"], log)
+
+    [row] = load_runs(log)
+    assert row.model == "claude-sonnet-5"
+    assert "top_words" in row.diff
+
+
+def test_run_live_refuses_to_overwrite_an_existing_log(tmp_path: Path) -> None:
+    log = tmp_path / "runs.jsonl"
+    log.write_text("")
+
+    with pytest.raises(IngestError, match="already exists"):
+        run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log)
+
+
+def test_a_live_run_that_exceeds_the_timeout_fails_loudly(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    fake_claude("time.sleep(30)\n")
+
+    with pytest.raises(IngestError, match="timed out after 1s"):
+        run_live(
+            [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"],
+            tmp_path / "runs.jsonl", timeout_s=1,
+        )
+
+
+def test_an_agent_authored_binary_file_survives_capture_and_replay(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """Caches are excluded by name, not by being binary: a binary file the
+    agent deliberately wrote is captured with --binary, so the logged diff
+    still applies at replay instead of aborting evaluation as unapplyable."""
+    fake_claude(
+        SOLVE_AS_SONNET_ACT
+        + r'(workdir / "golden.bin").write_bytes(b"\x00\xff" * 16)' + "\n"
+    )
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+
+    assert "GIT binary patch" in run.diff
+    [record] = evaluate([wordcount], [run], source=str(log))
+    assert record.quality_value == 1.0
+
+
+def test_the_runner_owns_the_ignore_file_even_if_the_agent_deletes_it(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """Deleting the runner's .gitignore must neither let cache files into the
+    diff nor log a .gitignore deletion that cannot apply to the pristine repo."""
+    fake_claude(
+        '(workdir / ".gitignore").unlink()\n' + SOLVE_AS_SONNET_ACT
+    )
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+
+    assert ".gitignore" not in run.diff
+    assert "__pycache__" not in run.diff
+    [record] = evaluate([wordcount], [run], source=str(log))
+    assert record.quality_value == 1.0
+
+
+def test_v0_and_v1_run_logs_never_mix_silently(
+    firstparty_fixture: Path, firstparty_v1_fixture: Path,
+) -> None:
+    """A v1 row carries a diff a v0 row must not have, and vice versa — so
+    loading a log with the wrong pipeline fails loudly instead of grading
+    the wrong artifact."""
+    with pytest.raises(IngestError, match="diff"):
+        load_v0_runs(firstparty_v1_fixture)
+    with pytest.raises(IngestError, match="diff"):
+        load_runs(firstparty_fixture)

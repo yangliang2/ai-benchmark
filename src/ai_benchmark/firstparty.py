@@ -16,7 +16,7 @@ import re
 import subprocess
 import tempfile
 from collections import Counter
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Self
 
@@ -210,6 +210,13 @@ def run_from_claude_json(
 _RUN_TIMEOUT_S = 600
 
 
+def local_today() -> date:
+    """The local calendar date a run's as_of carries (what date.today()
+    returns), spelled through an aware datetime so the timezone handling is
+    explicit."""
+    return datetime.now(UTC).astimezone().date()
+
+
 def run_live(tasks: list[Task], models: list[str], log_path: Path) -> list[Run]:
     """Run every task through claude-code headless for each model.
 
@@ -223,15 +230,18 @@ def run_live(tasks: list[Task], models: list[str], log_path: Path) -> list[Run]:
         raise IngestError(
             f"run log {log_path} already exists — replay it, or pass a fresh --log"
         )
-    version = _claude_version()
-    today = date.today()
+    version = claude_version()
+    today = local_today()
     workdir = Path(tempfile.mkdtemp(prefix="ai-bench-eval-"))
     log_path.parent.mkdir(parents=True, exist_ok=True)
     runs = []
     with log_path.open("x", encoding="utf-8") as log:
         for model in models:
             for task in tasks:
-                payload = _claude_headless(task, model, workdir)
+                payload = claude_headless_json(
+                    task.id, task.prompt, model, workdir,
+                    tools=False, timeout_s=_RUN_TIMEOUT_S,
+                )
                 run = run_from_claude_json(
                     task.id, model, payload, agent_version=version, as_of=today
                 )
@@ -241,15 +251,35 @@ def run_live(tasks: list[Task], models: list[str], log_path: Path) -> list[Run]:
     return runs
 
 
-def _claude_headless(task: Task, model: str, workdir: Path) -> dict[str, Any]:
+def claude_headless_json(
+    task_id: str,
+    prompt: str,
+    model: str,
+    workdir: Path,
+    *,
+    tools: bool,
+    timeout_s: int,
+) -> dict[str, Any]:
+    """One claude-code headless run in workdir, as its parsed JSON payload.
+
+    v0 disables tools (its tasks are self-contained prompts); v1 enables them
+    (its tasks are repositories to edit). Setting sources stay disabled either
+    way, so the run measures the task, not local configuration. CLI absence, a
+    timeout, a non-zero exit and non-JSON output each fail loudly rather than
+    logging a corrupt row.
+    """
+    command = ["claude", "-p", prompt, "--model", model, "--output-format", "json",
+               "--setting-sources", ""]
+    if not tools:
+        command += ["--tools", ""]
     try:
         process = subprocess.run(
-            ["claude", "-p", task.prompt, "--model", model, "--output-format", "json",
-             "--tools", "", "--setting-sources", ""],
+            command,
             capture_output=True,
             text=True,
             cwd=workdir,
-            timeout=_RUN_TIMEOUT_S,
+            timeout=timeout_s,
+            check=False,
         )
     except OSError as error:
         raise IngestError(
@@ -257,11 +287,11 @@ def _claude_headless(task: Task, model: str, workdir: Path) -> dict[str, Any]:
         ) from error
     except subprocess.TimeoutExpired as error:
         raise IngestError(
-            f"{task.id} ({model}): claude timed out after {_RUN_TIMEOUT_S}s"
+            f"{task_id} ({model}): claude timed out after {timeout_s}s"
         ) from error
     if process.returncode != 0:
         raise IngestError(
-            f"{task.id} ({model}): claude exited {process.returncode}: "
+            f"{task_id} ({model}): claude exited {process.returncode}: "
             f"{process.stderr.strip()}"
         )
     try:
@@ -269,14 +299,15 @@ def _claude_headless(task: Task, model: str, workdir: Path) -> dict[str, Any]:
         return payload
     except json.JSONDecodeError as error:
         raise IngestError(
-            f"{task.id} ({model}): claude output is not JSON: {error}"
+            f"{task_id} ({model}): claude output is not JSON: {error}"
         ) from error
 
 
-def _claude_version() -> str:
+def claude_version() -> str:
     try:
         process = subprocess.run(
-            ["claude", "--version"], capture_output=True, text=True, timeout=30
+            ["claude", "--version"], capture_output=True, text=True, timeout=30,
+            check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
         raise IngestError(

@@ -1,6 +1,7 @@
-"""First-party eval v1: task directories and execution-verified grading
-(ticket #10). Sits beside v0 rather than replacing it — the two are separate
-benchmarks and must never pool.
+"""First-party eval v1: task directories, execution-verified grading
+(ticket #10) and the tools-enabled live runner (ticket #11). Sits beside v0
+rather than replacing it — the two are separate benchmarks and must never
+pool.
 
 Where a v0 task is a prompt plus a check regex, a v1 task is a directory: the
 prompt, a small hand-authored starting repository the agent works in, and
@@ -61,6 +62,12 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from ai_benchmark.dataset import IngestError
+from ai_benchmark.firstparty import (
+    claude_headless_json,
+    claude_version,
+    local_today,
+    run_from_claude_json,
+)
 from ai_benchmark.schema import (
     LanguageStr,
     NonEmptyStr,
@@ -347,8 +354,14 @@ def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
 
 
 def _git(
-    task: Task, arguments: list[str], workdir: Path, *, stdin: str | None = None
-) -> None:
+    task: Task,
+    arguments: list[str],
+    workdir: Path,
+    *,
+    stdin: str | None = None,
+    extra_env: dict[str, str] | None = None,
+    doing: str = "on the logged diff",
+) -> str:
     try:
         process = subprocess.run(
             ["git", *arguments],
@@ -358,6 +371,7 @@ def _git(
             cwd=workdir,
             timeout=60,
             check=False,
+            env=(os.environ | extra_env) if extra_env else None,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
         raise IngestError(
@@ -365,9 +379,10 @@ def _git(
         ) from error
     if process.returncode != 0:
         raise IngestError(
-            f"{task.id}: git {arguments[0]} failed on the logged diff: "
+            f"{task.id}: git {arguments[0]} failed {doing}: "
             f"{process.stderr.strip()}"
         )
+    return process.stdout
 
 
 def _pytest_passes(
@@ -551,3 +566,116 @@ def evaluate(
                 f"{run.task_id} ({run.agent} x {run.model}): {error}"
             ) from error
     return records
+
+
+# --- live runner: tools-enabled claude-code in a fresh workdir per run ---------
+
+
+RUN_TIMEOUT_S = 600
+
+# Written into the workdir before the initial commit. A v1 agent is expected
+# to run the repo's tests, and the bytecode caches that leaves behind are
+# binary junk: not part of any solution, and (unlike a deliberate binary file,
+# which --binary capture preserves) worth keeping out of the graded artifact
+# entirely rather than dragging through every replay.
+_WORKDIR_IGNORE = "__pycache__/\n*.pyc\n.pytest_cache/\n"
+_IGNORE_FILE = ".gitignore"
+
+# The initial commit must succeed on machines with no git identity configured,
+# and must not consult user config that could block it (signing, hooks).
+_COMMIT_IDENTITY = {
+    "GIT_AUTHOR_NAME": "ai-bench",
+    "GIT_AUTHOR_EMAIL": "eval@ai-bench.invalid",
+    "GIT_COMMITTER_NAME": "ai-bench",
+    "GIT_COMMITTER_EMAIL": "eval@ai-bench.invalid",
+}
+
+
+def run_live(
+    tasks: list[Task],
+    models: list[str],
+    log_path: Path,
+    *,
+    timeout_s: int = RUN_TIMEOUT_S,
+) -> list[Run]:
+    """Run every task through tools-enabled claude-code headless per model.
+
+    Each run gets a fresh isolated workdir seeded from the task's starting
+    repository, and its row — the workdir diff against the initial commit as
+    the graded artifact, plus the CLI's exact measurements — is appended to
+    the raw run log the moment the run completes, so a sweep that dies
+    part-way keeps every run already paid for. Unlike v0, tools stay enabled:
+    the run is genuinely multi-turn, editing the repository it was given.
+    Setting sources stay disabled.
+    """
+    if log_path.exists():
+        raise IngestError(
+            f"run log {log_path} already exists — replay it, or pass a fresh --log"
+        )
+    version = claude_version()
+    today = local_today()
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    runs = []
+    with log_path.open("x", encoding="utf-8") as log:
+        for model in models:
+            for task in tasks:
+                run = _run_task_live(
+                    task, model,
+                    agent_version=version, as_of=today, timeout_s=timeout_s,
+                )
+                log.write(json.dumps(run.model_dump(mode="json"), sort_keys=True) + "\n")
+                log.flush()
+                runs.append(run)
+    return runs
+
+
+def _run_task_live(
+    task: Task, model: str, *, agent_version: str, as_of: date, timeout_s: int
+) -> Run:
+    with tempfile.TemporaryDirectory(prefix="ai-bench-live-") as name:
+        workdir = Path(name) / "workdir"
+        shutil.copytree(task.repo_dir, workdir)
+        initial = _commit_pristine(task, workdir)
+        payload = claude_headless_json(
+            task.id, task.prompt, model, workdir, tools=True, timeout_s=timeout_s
+        )
+        diff = _capture_workdir_diff(task, workdir, initial)
+    base = run_from_claude_json(
+        task.id, model, payload, agent_version=agent_version, as_of=as_of
+    )
+    return Run(**base.model_dump(), diff=diff)
+
+
+def _commit_pristine(task: Task, workdir: Path) -> str:
+    """Make the workdir a repository whose initial commit is the pristine
+    starting repository (plus the runner's ignore file), returning that
+    commit's id — the fixed point every capture diffs against, whatever the
+    agent later does to HEAD."""
+    (workdir / _IGNORE_FILE).write_text(_WORKDIR_IGNORE, encoding="utf-8")
+    doing = "seeding the workdir"
+    _git(task, ["init", "-q", "."], workdir, doing=doing)
+    _git(task, ["add", "-A"], workdir, doing=doing)
+    _git(
+        task,
+        ["commit", "-qm", "pristine", "--no-gpg-sign", "--no-verify"],
+        workdir,
+        extra_env=_COMMIT_IDENTITY,
+        doing=doing,
+    )
+    return _git(task, ["rev-parse", "HEAD"], workdir, doing=doing).strip()
+
+
+def _capture_workdir_diff(task: Task, workdir: Path, initial: str) -> str:
+    """The workdir's full diff against the initial commit: modified, added and
+    deleted files, with --binary so any deliberate binary file round-trips —
+    the capture must never write a log row that replay refuses to apply.
+
+    The ignore file is the runner's, not the agent's: it is restored before
+    staging, so it can never appear in the diff (it is not in the pristine
+    repository grading applies the diff to) and deleting it cannot let cache
+    files back in.
+    """
+    (workdir / _IGNORE_FILE).write_text(_WORKDIR_IGNORE, encoding="utf-8")
+    doing = "capturing the workdir diff"
+    _git(task, ["add", "-A"], workdir, doing=doing)
+    return _git(task, ["diff", "--cached", "--binary", initial], workdir, doing=doing)

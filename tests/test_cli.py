@@ -1,6 +1,7 @@
 """End-to-end at the command surface: ingest merges into the dataset, table reads it."""
 
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -142,6 +143,50 @@ def test_eval_v1_leaves_v0_records_untouched(
     main(["table", "--data", str(data)])
     out = capsys.readouterr().out
     assert "first-party-v0" in out and "first-party-v1" in out
+
+
+def test_eval_v1_live_end_to_end(
+    fake_claude: Callable[[str], Path], tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Live v1 at the command surface, against a faked claude CLI: the fake
+    solves the wordcount seed and leaves the ledger seed untouched, and both
+    rows land in the log, grade by execution, and reach the table."""
+    solution = (
+        "\n\ndef top_words(text, n):\n"
+        "    counts = word_counts(text)\n"
+        "    return sorted(counts, key=lambda w: (-counts[w], w))[:n]\n"
+    )
+    fake_claude(
+        f'if (workdir / "wordcount.py").exists():\n'
+        f'    with open(workdir / "wordcount.py", "a") as source:\n'
+        f"        source.write({solution!r})\n"
+    )
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    data = tmp_path / "unified.jsonl"
+    log = tmp_path / "runs.jsonl"
+
+    main(["eval-v1", "--tasks", str(tasks), "--live", "--model", "claude-sonnet-5",
+          "--log", str(log), "--timeout", "120", "--data", str(data)])
+
+    out = capsys.readouterr().out
+    assert f"ran 2 live runs; raw log written to {log}" in out
+    assert "evaluated 2 runs over 2 tasks (1 resolved)" in out
+    assert log.exists()
+
+    main(["table", "--data", str(data)])
+    assert "first-party-v1" in capsys.readouterr().out
+
+
+def test_eval_v1_replay_rejects_live_only_flags(
+    firstparty_v1_fixture: Path, tmp_path: Path,
+) -> None:
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+    with pytest.raises(SystemExit, match="--live"):
+        main(["eval-v1", "--tasks", str(tasks), "--replay",
+              str(firstparty_v1_fixture), "--model", "claude-sonnet-5",
+              "--data", str(tmp_path / "unified.jsonl")])
 
 
 def test_lint_v1_passes_on_the_checked_in_task_set(
