@@ -1,0 +1,34 @@
+# feature-dev: the grading tests construct machines with a context, register
+# guards and hooks, and reopen tickets — none of which exist in repo/ — so
+# they fail on the pristine repository as the lint requires.
+id: workflow-guarded-transitions
+category: feature-dev
+scale: cross-file
+language: python
+prompt: |
+  fsm.py is a minimal finite-state machine and tickets.py builds the ticket
+  workflow on top of it (new -> triaged -> in-progress -> done). Two things
+  are needed.
+
+  In fsm.py, machines must learn guarded transitions and history:
+
+  - `Machine(initial, transitions, context=None)` — a machine now carries a
+    `context` dict (empty by default) for guards and hooks to read and
+    write; it is available as the `context` attribute.
+  - `add_guard(state, event, predicate)` — when that transition is about to
+    fire, the predicate is called with the context; a falsy return blocks
+    the event: the state does not change and `fire` returns False. An
+    unguarded or allowed `fire` performs the transition and returns True.
+    Firing an event with no transition from the current state still raises
+    ValueError.
+  - `add_hook(state, event, callback)` — after that transition fires
+    successfully, the callback is called with the context.
+  - `history` — a list of (state_before, event, state_after) triples, one
+    per successful fire, in order. Blocked fires leave no trace.
+
+  In tickets.py, use this to let tickets be reopened: a "reopen" event takes
+  a done ticket back to in-progress, but a ticket may only be reopened twice
+  — further reopens are blocked, not errors. Track the count in the ticket's
+  context under the key "reopens".
+
+  Keep the rest of the existing behaviour unchanged, standard library only.
