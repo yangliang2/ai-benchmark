@@ -9,6 +9,7 @@ deleted files), not hand-written hunks that could drift from git's output.
 
 import shutil
 import subprocess
+import tempfile
 import textwrap
 from collections.abc import Callable
 from datetime import date
@@ -51,19 +52,19 @@ def retitle(task_dir: Path, **fields: object) -> None:
 def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
     """The diff a run would log: pristine repo, edited, captured against the
     initial commit exactly as the live runner will capture it."""
-    workdir = Path(subprocess.run(["mktemp", "-d"], capture_output=True, text=True,
-                                  check=True).stdout.strip())
-    shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
     git = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
-    subprocess.run([*git, "init", "-q", "."], cwd=workdir, check=True)
-    subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
-    subprocess.run([*git, "commit", "-qm", "pristine"], cwd=workdir, check=True)
-    edit(workdir)
-    subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
-    return subprocess.run(
-        [*git, "diff", "--cached"], cwd=workdir, capture_output=True, text=True,
-        check=True,
-    ).stdout
+    with tempfile.TemporaryDirectory(prefix="ai-bench-test-") as name:
+        workdir = Path(name)
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
+        subprocess.run([*git, "init", "-q", "."], cwd=workdir, check=True)
+        subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
+        subprocess.run([*git, "commit", "-qm", "pristine"], cwd=workdir, check=True)
+        edit(workdir)
+        subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
+        return subprocess.run(
+            [*git, "diff", "--cached"], cwd=workdir, capture_output=True, text=True,
+            check=True,
+        ).stdout
 
 
 def run_for(task: Task, diff: str, *, model: str = "claude-sonnet-5") -> Run:
@@ -193,6 +194,43 @@ def overwrite_the_grading_tests(workdir: Path) -> None:
         (workdir / name).write_text("def test_everything_is_fine():\n    assert True\n")
 
 
+def forge_exit_status_via_conftest(workdir: Path) -> None:
+    """No work done; a conftest hook rewrites pytest's exit status to 0."""
+    (workdir / "conftest.py").write_text(
+        "def pytest_sessionfinish(session, exitstatus):\n"
+        "    session.exitstatus = 0\n"
+    )
+
+
+def inject_the_missing_symbol_via_conftest(workdir: Path) -> None:
+    """No work done; a conftest defines the wanted function at collection."""
+    (workdir / "conftest.py").write_text(
+        "import wordcount\n"
+        "wordcount.top_words = lambda text, n: sorted(\n"
+        "    wordcount.word_counts(text),\n"
+        "    key=lambda word: (-wordcount.word_counts(text)[word], word))[:n]\n"
+    )
+
+
+def forge_exit_status_via_pyproject(workdir: Path) -> None:
+    """No work done; a config file's addopts loads a plugin that forges the
+    exit status. pytest.ini, tox.ini and setup.cfg are the same vector."""
+    (workdir / "pyproject.toml").write_text(
+        '[tool.pytest.ini_options]\naddopts = "-p forge"\n'
+    )
+    (workdir / "forge.py").write_text(
+        "def pytest_sessionfinish(session, exitstatus):\n"
+        "    session.exitstatus = 0\n"
+    )
+
+
+def solve_wordcount_and_leave_a_broken_conftest(workdir: Path) -> None:
+    """A real solution plus a plausible honest artefact: a leftover conftest
+    importing a helper the agent decided not to ship."""
+    solve_wordcount(workdir)
+    (workdir / "conftest.py").write_text("from helpers import fixture_text  # noqa\n")
+
+
 # --- task format and loader ---------------------------------------------------
 
 
@@ -218,11 +256,14 @@ def test_refactor_task_names_its_behaviour_tests() -> None:
     assert set(refactor.grading_test_paths) > set(refactor.behaviour_test_paths)
 
 
-def test_duplicate_task_ids_fail_loudly(tmp_path: Path) -> None:
+def test_a_task_id_must_match_its_directory_name(tmp_path: Path) -> None:
+    """Which is also what makes duplicate ids unexpressible: the two clones
+    below cannot both answer to the seed's id, because the filesystem already
+    refuses to give two directories the same name."""
     clone_seed(tmp_path, FEATURE_SEED, "one")
-    clone_seed(tmp_path, FEATURE_SEED, "two")  # keeps the seed's id
+    clone_seed(tmp_path, FEATURE_SEED, "two")  # both keep the seed's id
 
-    with pytest.raises(IngestError, match="duplicate"):
+    with pytest.raises(IngestError, match="directory name"):
         load_task_set(tmp_path)
 
 
@@ -330,6 +371,48 @@ def test_agent_edits_to_grading_test_files_have_no_effect() -> None:
     assert record.quality_value == 0.0
 
 
+def test_a_conftest_cannot_forge_the_exit_status() -> None:
+    """The verdict comes from the held-out tests, never from agent-authored
+    pytest configuration — a conftest hook must not be able to force a pass."""
+    wordcount = task_by_id(FEATURE_SEED)
+    diff = workdir_diff(wordcount, forge_exit_status_via_conftest)
+
+    [record] = evaluate([wordcount], [run_for(wordcount, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+def test_a_conftest_cannot_define_the_work_away() -> None:
+    wordcount = task_by_id(FEATURE_SEED)
+    diff = workdir_diff(wordcount, inject_the_missing_symbol_via_conftest)
+
+    [record] = evaluate([wordcount], [run_for(wordcount, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+def test_a_config_file_cannot_smuggle_in_addopts() -> None:
+    """pyproject.toml here; pytest.ini, tox.ini and setup.cfg are the same
+    vector, all shut off by pinning the config file grading runs under."""
+    wordcount = task_by_id(FEATURE_SEED)
+    diff = workdir_diff(wordcount, forge_exit_status_via_pyproject)
+
+    [record] = evaluate([wordcount], [run_for(wordcount, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+def test_a_stray_broken_conftest_does_not_sink_a_correct_solution() -> None:
+    """The false-negative direction of the same rule: agent-authored pytest
+    configuration is ignored, so a leftover conftest cannot cost a real fix."""
+    wordcount = task_by_id(FEATURE_SEED)
+    diff = workdir_diff(wordcount, solve_wordcount_and_leave_a_broken_conftest)
+
+    [record] = evaluate([wordcount], [run_for(wordcount, diff)], source="run-log")
+
+    assert record.quality_value == 1.0
+
+
 def test_a_diff_that_adds_modifies_and_deletes_files_applies_in_full() -> None:
     """Every hunk kind reaches the graded copy — a hunk git could not apply
     fails loudly rather than scoring 0.0, so a resolved verdict here means the
@@ -356,8 +439,6 @@ def test_grading_patches_only_its_own_temp_dir(
 ) -> None:
     """git apply walks up to the enclosing repository, so a temp dir that
     happens to sit inside one must not let a logged diff escape into it."""
-    import tempfile
-
     enclosing = tmp_path / "enclosing-repo"
     (enclosing / "tmp").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "."], cwd=enclosing, check=True)

@@ -2,9 +2,13 @@
 
 import argparse
 import os
+from collections.abc import Callable
 from datetime import date
+from functools import partial
 from pathlib import Path
 
+from ai_benchmark import firstparty_v1
+from ai_benchmark.aider import ingest_aider
 from ai_benchmark.classify import (
     Label,
     cache_key,
@@ -13,10 +17,6 @@ from ai_benchmark.classify import (
     needs_classification,
     write_cache,
 )
-from collections.abc import Callable
-from functools import partial
-
-from ai_benchmark.aider import ingest_aider
 from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
@@ -25,7 +25,6 @@ from ai_benchmark.firstparty import (
     load_tasks,
     run_live,
 )
-from ai_benchmark import firstparty_v1
 from ai_benchmark.instances import (
     SWEBENCH_BENCHMARK,
     InstanceContext,

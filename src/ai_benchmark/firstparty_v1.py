@@ -10,9 +10,19 @@ canonical grading files over any same-path files the agent touched, run
 pytest in a fresh temp dir with a timeout — so `resolved` is
 execution-verified, the same standard as SWE-bench, not pattern-verified.
 
-Accepted limitation (CONTEXT.md): grading executes agent-written code in a
-local subprocess with a timeout, not a sandbox. Task repositories are
-stdlib-only, so grading needs no network and no installs.
+What the verdict is guaranteed to depend on: the held-out grading files, run
+under a config pinned outside the workdir and with conftest loading off. An
+agent cannot reach the verdict by writing tests at the grading files' paths
+(they are overwritten), by hooking pytest from a conftest.py, or by smuggling
+`addopts` through pytest.ini / tox.ini / setup.cfg / pyproject.toml. The
+authoring rule that falls out of this: grading tests must be self-contained
+and must never rely on a conftest.py. The lint runs the same invocation, so a
+task that breaks the rule is caught on the pristine repo.
+
+What it is not: a sandbox. Grading executes agent-written code in a local
+subprocess with a timeout — the accepted limitation recorded in CONTEXT.md,
+the same exposure as any local SWE-bench-style eval. Starting repositories
+are stdlib-only, so grading needs no network and no installs.
 """
 
 import importlib.util
@@ -48,6 +58,9 @@ REPO_DIR = "repo"
 GRADING_DIR = "grading"
 
 GRADE_TIMEOUT_S = 300
+
+# The config grading runs under, pinned so nothing in the workdir is consulted.
+_GRADING_CONFIG = "[pytest]\naddopts =\n"
 
 
 class Grading(BaseModel):
@@ -153,18 +166,13 @@ def load_task_set(root: Path) -> list[Task]:
 
     Anything malformed — an unreadable spec, an unclassified task, a missing
     starting repository, a behaviour test naming a file that is not there —
-    fails loudly here, before any paid run reaches it.
+    fails loudly here, before any paid run reaches it. Ids are unique by
+    construction, because each must match its own directory name.
     """
     task_dirs = sorted(path for path in root.iterdir() if path.is_dir())
     if not task_dirs:
         raise IngestError(f"{root}: no task directories found")
-    tasks = [_load_task(task_dir) for task_dir in task_dirs]
-    duplicates = [
-        task_id for task_id, count in Counter(t.id for t in tasks).items() if count > 1
-    ]
-    if duplicates:
-        raise IngestError(f"{root}: duplicate task id(s): {sorted(duplicates)}")
-    return tasks
+    return [_load_task(task_dir) for task_dir in task_dirs]
 
 
 def _load_task(task_dir: Path) -> Task:
@@ -183,6 +191,12 @@ def _load_task(task_dir: Path) -> Task:
         task = Task.model_validate(spec | {"directory": task_dir})
     except ValidationError as error:
         raise IngestError(f"{spec_path}: {error}") from error
+    if task.id != task_dir.name:
+        raise IngestError(
+            f"{spec_path}: id {task.id!r} does not match its directory name "
+            f"{task_dir.name!r} — a task is found by its directory, and records "
+            "carry the id, so the two drifting apart makes runs untraceable"
+        )
     _check_task_layout(task)
     return task
 
@@ -244,13 +258,18 @@ def _run_grading(
 ) -> bool:
     _require_pytest()
     with tempfile.TemporaryDirectory(prefix="ai-bench-grade-") as name:
-        workdir = Path(name)
+        # The pinned config sits beside the workdir rather than in it: a diff
+        # can only write inside the workdir, so it can never reach this file.
+        config = Path(name) / "grading-pytest.ini"
+        config.write_text(_GRADING_CONFIG, encoding="utf-8")
+        workdir = Path(name) / "workdir"
+        workdir.mkdir()
         shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
         _apply_diff(task, diff, workdir)
         # Canonical last: whatever the agent wrote at a grading file's path is
-        # overwritten, so editing the tests can never change the verdict.
+        # overwritten, so the graded tests are always the held-out ones.
         shutil.copytree(task.grading_dir, workdir, dirs_exist_ok=True)
-        return _pytest_passes(workdir, targets, timeout_s=timeout_s)
+        return _pytest_passes(workdir, targets, config=config, timeout_s=timeout_s)
 
 
 def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
@@ -288,11 +307,24 @@ def _git(
         )
 
 
-def _pytest_passes(workdir: Path, targets: Sequence[str], *, timeout_s: int) -> bool:
-    """Run the named tests in workdir. True only on a clean exit 0."""
+def _pytest_passes(
+    workdir: Path, targets: Sequence[str], *, config: Path, timeout_s: int
+) -> bool:
+    """Run the named tests in workdir. True only on a clean exit 0.
+
+    The verdict must depend on the held-out tests alone, so pytest is given no
+    chance to read anything the agent wrote outside them: `-c` pins the config
+    file, which stops pytest.ini / tox.ini / setup.cfg / pyproject.toml in the
+    workdir from contributing `addopts` (and with it arbitrary plugins), and
+    `--noconftest` stops conftest.py at any depth from running hooks. Both
+    directions matter: without them a conftest can forge exit status 0, and a
+    stray broken one can sink a correct solution.
+    """
     try:
         process = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *targets],
+            [sys.executable, "-m", "pytest", "-q",
+             "-c", str(config), "--noconftest", "--rootdir", str(workdir),
+             "-p", "no:cacheprovider", *targets],
             capture_output=True,
             text=True,
             cwd=workdir,
