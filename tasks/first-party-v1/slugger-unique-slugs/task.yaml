@@ -1,0 +1,20 @@
+# feature-dev: the grading tests exercise unique_slugs, which does not exist
+# in repo/, so they fail on the pristine repository as the lint requires.
+id: slugger-unique-slugs
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small URL-slug module in slugger.py.
+
+  Add a function `unique_slugs(titles)` to slugger.py that turns a list of
+  titles into a list of slugs of the same length, in order, where every slug
+  is unique. Each title is slugified with the module's existing `slugify()`;
+  a title that slugifies to the empty string gets the slug "untitled"
+  instead. The first time a slug comes up it is used as is; when a slug is
+  already taken, append "-2", then "-3", and so on, using the first numbered
+  variant that is itself not taken — note a later title may slugify directly
+  to something like "report-2", so numbered variants can be taken too.
+
+  Keep the existing function and its behaviour unchanged, and keep the module
+  dependency-free (standard library only).
