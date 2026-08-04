@@ -55,11 +55,22 @@ Orthogonal to category:
 
 ## First-party eval vocabulary
 
-- **task set** — the checked-in file of first-party benchmark instances (e.g. `tasks/first-party-v0.yaml`). Versioned as a whole; its name is the benchmark name.
-- **task** — one first-party benchmark instance: a self-contained prompt plus a **check**.
-- **check** — the static regex that grades a run's final output as resolved or not. v0 limitation: checks demand task-specific content but do not execute anything, so `resolved` on a first-party-v0 record is pattern-verified — weaker evidence than SWE-bench's test-verified `resolved`. Grouping by benchmark keeps the two from ever pooling; a v1 task set should grade by running tests.
-- **run** — one task × combination execution with exact measurements (tokens in/out, cost USD, latency, turns) as reported by the claude CLI.
+- **task set** — the checked-in collection of first-party benchmark instances (the file `tasks/first-party-v0.yaml`; the directory `tasks/first-party-v1/`). Versioned as a whole; its name is the benchmark name.
+- **task** — one first-party benchmark instance. v0: a self-contained prompt plus a **check**. v1: a **task directory**.
+- **check** — the static regex that grades a run's final output as resolved or not. v0 limitation: checks demand task-specific content but do not execute anything, so `resolved` on a first-party-v0 record is pattern-verified — weaker evidence than SWE-bench's test-verified `resolved`. Grouping by benchmark keeps v0, v1 and SWE-bench from ever pooling.
+- **run** — one task × combination execution with exact measurements (tokens in/out, cost USD, latency, turns) as reported by the claude CLI. A v1 run also carries its **workdir diff**.
 - **raw run log** — JSONL, one row per run, appended as each run completes. The provenance boundary: live runs write it, evaluation and replay only ever read it, and a record's source is the log itself.
+
+### v1: execution-verified grading
+
+- **task directory** — one v1 task: `task.yaml` (id, category, scale, language, prompt, grading config), `repo/`, and `grading/`.
+- **starting repository** — the `repo/` directory, a small hand-authored stdlib-only repo copied fresh into the agent's workdir. What the agent sees and edits.
+- **grading tests** — the held-out tests in `grading/`, which the agent never sees. Canonical: at grade time they are copied *over* the workdir, so a file the agent wrote at a grading test's path is overwritten and edited tests cannot change a verdict.
+- **workdir diff** — `git diff` of the agent's workdir against the pristine starting repository. The graded artifact of a v1 run, and what makes replay exact; a v1 run's final message is metadata, not evidence.
+- **execution-verified** — the v1 grading standard, replacing v0's pattern-verified checks: copy `repo/` to a fresh temp directory, apply the run's workdir diff, overlay `grading/`, run the grading tests with a timeout. `resolved` is 1.0 iff they exit 0 — the same standard as SWE-bench's `resolved`.
+  Accepted limitation: grading executes agent-written code in a **local subprocess with a timeout, not a sandbox** — the same exposure as any local SWE-bench-style eval. Starting repositories are stdlib-only, so grading needs no network and no installs.
+- **behaviour tests / structural assertions** — the two halves of a refactor task's grading suite. Behaviour tests, named explicitly in `task.yaml`, assert the behaviour the restructuring must preserve; every other grading test is a structural assertion that the restructuring actually happened.
+- **task-set lint** — the authoring invariants, checked by running the grading tests on the pristine starting repository before any paid run: grading tests must fail pristine (nothing is left to do otherwise), and a refactor task's behaviour tests must pass pristine (only its structural assertions may fail).
 - **instance-level** — umbrella for the two source types that carry per-instance rows and may pool into rates (`per-instance`, `first-party`). Rows of different source types never pool together (ADR-0001).
 
 ## Provenance vocabulary
