@@ -11,7 +11,7 @@ DOC = {
 
 
 def test_the_empty_pointer_is_the_whole_document():
-    assert resolve(DOC, "") is DOC
+    assert resolve(DOC, "") == DOC
 
 
 def test_stepping_into_dicts_by_key():
@@ -61,7 +61,7 @@ def test_fetch_resolves_inside_a_stored_document():
     assert store.fetch("paper", "/authors/0/name") == "Ada"
 
 
-def test_existing_get_is_unchanged():
+def test_existing_behaviour_is_preserved():
     store = DocStore()
     store.put("paper", DOC)
     assert store.get("paper") is DOC

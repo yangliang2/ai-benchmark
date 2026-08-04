@@ -1,6 +1,6 @@
 # slugger
 
-URL slug helpers, standard library only.
+Standard-library URL-slug helpers.
 
 - `slugify(title)` — lowercase the title and squeeze everything that is not
   a letter or digit into single hyphens.

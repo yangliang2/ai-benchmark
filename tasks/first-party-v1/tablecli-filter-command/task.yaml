@@ -17,12 +17,12 @@ prompt: |
     the value as numbers and raise ValueError when either is not numeric.
     A condition naming a column the row does not have raises ValueError
     naming that column, and a condition with no recognisable operator
-    raises ValueError. Take care that the two-character operators are not
-    misread as their one-character prefixes.
+    raises ValueError.
   - cli.py gains a "filter" command taking one or more condition arguments:
     `main(["filter", "age>30", "team=red"], text)` returns the table
-    re-rendered (header line included, column order kept) with only the
-    rows meeting every condition. "filter" with no conditions raises
-    ValueError.
+    re-rendered exactly as `render()` produces it (header line included,
+    column order kept) with only the rows meeting every condition. "filter"
+    with no conditions raises ValueError.
 
-  Keep the existing commands working unchanged, standard library only.
+  Keep the existing commands and their behaviour unchanged, and keep the
+  modules dependency-free (standard library only).

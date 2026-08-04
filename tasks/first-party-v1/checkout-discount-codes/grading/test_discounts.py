@@ -57,5 +57,5 @@ def test_applying_the_same_code_twice_is_rejected():
         cart.apply("SAVE10")
 
 
-def test_existing_subtotal_is_unchanged():
+def test_existing_behaviour_is_preserved():
     assert cart_with("apple").subtotal() == 40

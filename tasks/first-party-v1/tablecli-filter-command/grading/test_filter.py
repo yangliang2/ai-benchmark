@@ -68,6 +68,6 @@ def test_filter_without_conditions_raises():
         main(["filter"], TEXT)
 
 
-def test_existing_commands_are_unchanged():
+def test_existing_behaviour_is_preserved():
     assert main(["columns"], TEXT) == "name\nage\nteam"
     assert main(["count"], TEXT) == "3"

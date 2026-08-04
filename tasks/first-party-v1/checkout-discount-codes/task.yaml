@@ -21,4 +21,5 @@ prompt: |
   and never goes below zero. A cart with no codes applied totals its
   subtotal.
 
-  Keep the existing behaviour unchanged and everything standard-library only.
+  Keep the existing behaviour unchanged, and keep the modules
+  dependency-free (standard library only).

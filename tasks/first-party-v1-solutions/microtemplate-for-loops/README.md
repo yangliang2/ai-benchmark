@@ -1,6 +1,6 @@
 # microtemplate
 
-A tiny template language, standard library only.
+A standard-library template language.
 
 - `template.render(text, context)` — substitute "{{ name }}" placeholders,
   optionally piped through a filter: "{{ name|upper }}"

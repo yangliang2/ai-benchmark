@@ -7,18 +7,19 @@ def match(pattern, name):
     return _match(pattern, 0, name, 0)
 
 
-def _match(pattern, p, name, n):
-    if p == len(pattern):
-        return n == len(name)
-    character = pattern[p]
+def _match(pattern, pattern_index, name, name_index):
+    if pattern_index == len(pattern):
+        return name_index == len(name)
+    character = pattern[pattern_index]
     if character == "*":
         return any(
-            _match(pattern, p + 1, name, i) for i in range(n, len(name) + 1)
+            _match(pattern, pattern_index + 1, name, skip_to)
+            for skip_to in range(name_index, len(name) + 1)
         )
-    if n == len(name):
+    if name_index == len(name):
         return False
-    if character == "?" or character == name[n]:
-        return _match(pattern, p + 1, name, n + 1)
+    if character == "?" or character == name[name_index]:
+        return _match(pattern, pattern_index + 1, name, name_index + 1)
     return False
 
 

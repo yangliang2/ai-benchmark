@@ -31,4 +31,5 @@ prompt: |
   — further reopens are blocked, not errors. Track the count in the ticket's
   context under the key "reopens".
 
-  Keep the rest of the existing behaviour unchanged, standard library only.
+  Keep the rest of the existing behaviour unchanged, and keep the modules
+  dependency-free (standard library only).

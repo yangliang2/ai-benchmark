@@ -36,5 +36,5 @@ def test_an_empty_list_gives_an_empty_list():
     assert unique_slugs([]) == []
 
 
-def test_existing_slugify_is_unchanged():
+def test_existing_behaviour_is_preserved():
     assert slugify("Hello, World!") == "hello-world"

@@ -56,7 +56,7 @@ def test_history_records_successful_fires_in_order():
     ]
 
 
-def test_an_unknown_event_still_raises():
+def test_existing_behaviour_is_preserved():
     with pytest.raises(ValueError):
         Machine("locked", TRANSITIONS).fire("push")
 

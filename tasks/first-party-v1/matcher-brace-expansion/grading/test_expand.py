@@ -44,6 +44,6 @@ def test_a_stray_closing_brace_raises():
         expand("a}b")
 
 
-def test_existing_match_is_unchanged():
+def test_existing_behaviour_is_preserved():
     assert match("*.txt", "notes.txt")
     assert not match("?.txt", "notes.txt")

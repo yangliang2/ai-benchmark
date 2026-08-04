@@ -1,6 +1,6 @@
 # docstore
 
-An in-memory store of named JSON-like documents, standard library only.
+A standard-library in-memory store of named JSON-like documents.
 
 - `DocStore.put(name, document)` / `DocStore.get(name)` / `DocStore.names()`
 

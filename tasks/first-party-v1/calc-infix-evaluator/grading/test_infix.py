@@ -50,5 +50,5 @@ def test_malformed_expressions_raise_value_error(bad):
         evaluate(bad)
 
 
-def test_existing_rpn_evaluator_is_unchanged():
+def test_existing_behaviour_is_preserved():
     assert evaluate_rpn(["2", "3", "+", "4", "*"]) == 20.0

@@ -1,6 +1,6 @@
 # calc
 
-A tiny calculator, standard library only.
+A standard-library calculator.
 
 - `evaluate_rpn(tokens)` — evaluate a list of reverse Polish tokens.
 

@@ -33,5 +33,5 @@ def test_an_empty_window_is_never_free():
     assert free([(0, 2)], (4, 4)) == []
 
 
-def test_existing_merge_is_unchanged():
+def test_existing_behaviour_is_preserved():
     assert merge([(1, 3), (2, 5), (7, 8)]) == [(1, 5), (7, 8)]

@@ -14,7 +14,8 @@ prompt: |
   - Alternatives may be empty, so "img{,-2x}.png" gives both "img.png" and
     "img-2x.png".
   - Groups may be nested, as in "{a,b{c,d}}", and a pattern may contain
-    several groups, expanded left to right.
+    several groups, expanded left to right with the rightmost group varying
+    fastest — "{a,b}{1,2}" gives ["a1", "a2", "b1", "b2"].
   - A backslash escapes the character after it, making "\{", "\}" and "\,"
     literal braces and commas; the backslash itself does not appear in the
     result. A comma outside any group is literal anyway.

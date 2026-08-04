@@ -1,6 +1,6 @@
 # tablecli
 
-Comma-separated tables and commands over them, standard library only.
+Standard-library comma-separated tables and commands over them.
 
 - `tabular.parse(text)` / `tabular.render(headers, rows)`
 - `cli.main(argv, text)` — commands: "columns", "count"

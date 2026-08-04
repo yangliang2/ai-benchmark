@@ -2,12 +2,11 @@ import pytest
 from template import render
 
 
-def test_plain_placeholders_still_render():
+def test_existing_behaviour_is_preserved():
     assert render("Hello {{ name }}", {"name": "Ada"}) == "Hello Ada"
-
-
-def test_filters_still_apply():
     assert render("{{ name|upper }}", {"name": "ada"}) == "ADA"
+    with pytest.raises(KeyError):
+        render("{{ ghost }}", {})
 
 
 def test_the_title_filter():
@@ -54,8 +53,3 @@ def test_an_unclosed_loop_raises():
 def test_a_stray_endfor_raises():
     with pytest.raises(ValueError):
         render("a{% endfor %}", {})
-
-
-def test_a_missing_name_still_raises_key_error():
-    with pytest.raises(KeyError):
-        render("{{ ghost }}", {})

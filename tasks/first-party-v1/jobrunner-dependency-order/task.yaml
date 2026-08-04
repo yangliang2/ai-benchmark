@@ -17,9 +17,10 @@ prompt: |
     whenever several jobs are ready to run, the highest priority goes first,
     ties broken alphabetically by name — so the order is fully deterministic.
   - A job naming a dependency that is not in the list raises ValueError
-    naming the missing job; a dependency cycle raises ValueError with a
-    message containing the word "cycle".
+    naming the missing job; a dependency cycle — a job that needs itself
+    included — raises ValueError with a message containing the word "cycle".
   - `run_all(jobs)` now runs the jobs in that computed order, still
     returning the names in run order.
 
-  Keep everything dependency-free (standard library only).
+  Keep the existing behaviour otherwise unchanged, and keep the modules
+  dependency-free (standard library only).
