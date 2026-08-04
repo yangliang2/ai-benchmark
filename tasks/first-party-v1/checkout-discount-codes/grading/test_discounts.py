@@ -1,5 +1,4 @@
 import pytest
-
 from cart import Cart
 from discounts import available_codes
 

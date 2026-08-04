@@ -1,5 +1,4 @@
 import pytest
-
 from cli import main
 from tabular import matches, parse
 

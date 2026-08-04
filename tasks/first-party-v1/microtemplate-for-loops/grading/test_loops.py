@@ -1,5 +1,4 @@
 import pytest
-
 from template import render
 
 

@@ -1,5 +1,4 @@
 import pytest
-
 from jobs import Job
 from runner import execution_order, run_all
 

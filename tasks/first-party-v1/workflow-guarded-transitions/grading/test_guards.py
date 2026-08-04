@@ -1,5 +1,4 @@
 import pytest
-
 from fsm import Machine
 from tickets import new_ticket
 

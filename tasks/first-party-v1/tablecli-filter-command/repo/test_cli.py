@@ -1,5 +1,4 @@
 import pytest
-
 from cli import main
 
 TEXT = """\

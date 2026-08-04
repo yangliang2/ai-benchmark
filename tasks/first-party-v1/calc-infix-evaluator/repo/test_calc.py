@@ -1,5 +1,4 @@
 import pytest
-
 from calc import evaluate_rpn
 
 

@@ -1,5 +1,4 @@
 import pytest
-
 from matchers import expand, match
 
 
