@@ -38,6 +38,7 @@ FEATURE_DEV_TASKS: dict[str, str] = {
     "matcher-brace-expansion": "single-file",
     "slugger-unique-slugs": "single-file",
     "spans-subtract-gaps": "single-file",
+    "tablecli-filter-command": "cross-file",
     "workflow-guarded-transitions": "cross-file",
 }
 
