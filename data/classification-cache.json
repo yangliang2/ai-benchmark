@@ -17,6 +17,6 @@
   "swe-bench-verified/sympy__sympy-20590": {
     "category": "bug-fix",
     "language": "python",
-    "scale": "unknown"
+    "scale": "single-file"
   }
 }

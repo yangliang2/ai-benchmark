@@ -186,7 +186,8 @@ def test_cache_miss_passes_context_to_llm_and_mechanical_scale_wins(
         benchmark: str, instance_id: str, context: InstanceContext | None
     ) -> Label:
         seen[f"{benchmark}/{instance_id}"] = context
-        return Label(category="bug-fix", scale="unknown", language="python")
+        # A confident wrong guess: the one-file patch list must still win.
+        return Label(category="bug-fix", scale="cross-file", language="python")
 
     instances = {
         "swe-bench-verified/django__django-11099": InstanceContext(
@@ -203,10 +204,36 @@ def test_cache_miss_passes_context_to_llm_and_mechanical_scale_wins(
         "swe-bench-verified/django__django-11099"
     ]
     assert seen["polyglot-bench/rust__fix-1"] is None
-    # The LLM said "unknown"; the patch file list is ground truth.
+    # The LLM guessed "cross-file"; the one-file patch list is ground truth.
     assert cache_after["swe-bench-verified/django__django-11099"]["scale"] == "single-file"
     by_instance = {r.instance_id: r for r in classified if r.instance_id}
     assert by_instance["django__django-11099"].scale == "single-file"
+
+
+def test_unclassified_verdict_without_context_leaves_the_record_untouched(
+    dataset_fixture: Path,
+) -> None:
+    """An unclassified verdict's own scale/language answers come from the same
+    low-information state as the category it declined to call — without a
+    patch file list they contribute nothing (pre-#8 behaviour preserved)."""
+    records = read_records(dataset_fixture)
+    cache = {
+        "polyglot-bench/rust__fix-1": label("feature-dev"),
+        "swe-bench-verified/django__django-11099": Label(
+            category="unclassified", scale="cross-file", language="go"
+        ),
+        "swe-bench-verified/sympy__sympy-20590": label("bug-fix"),
+    }
+
+    classified, cache_after, llm_calls = classify_records(
+        records, cache, never_called, instances=None
+    )
+
+    original = next(r for r in records if r.instance_id == "django__django-11099")
+    after = next(r for r in classified if r.instance_id == "django__django-11099")
+    assert after == original  # notably scale stays "unknown", not "cross-file"
+    assert llm_calls == 0
+    assert cache_after == cache
 
 
 def test_mechanical_scale_applies_even_when_category_stays_unclassified(

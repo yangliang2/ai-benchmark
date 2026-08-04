@@ -18,19 +18,20 @@ from functools import partial
 
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
-from ai_benchmark.instances import (
-    InstanceContext,
-    fetch_swebench_rows,
-    load_instances,
-    swebench_context_from_rows,
-    write_instances,
-)
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
     evaluate,
     load_runs,
     load_tasks,
     run_live,
+)
+from ai_benchmark.instances import (
+    SWEBENCH_BENCHMARK,
+    InstanceContext,
+    fetch_swebench_rows,
+    load_instances,
+    swebench_context_from_rows,
+    write_instances,
 )
 from ai_benchmark.queries import (
     category_rates,
@@ -119,12 +120,25 @@ def _never_llm(
 
 
 def _fetch_swebench_context_command(args: argparse.Namespace) -> None:
-    records = read_records(args.data)
+    """Context is wanted for every SWE-bench instance we hold a record or a
+    cached label for — the cache matters because the committed cache outlives
+    any locally built dataset."""
+    records = read_records(args.data) if args.data.exists() else []
+    prefix = f"{SWEBENCH_BENCHMARK}/"
     wanted = {
         r.instance_id
         for r in records
-        if r.benchmark == "swe-bench-verified" and r.instance_id is not None
+        if r.benchmark == SWEBENCH_BENCHMARK and r.instance_id is not None
     }
+    if args.cache.exists():
+        wanted |= {
+            key.removeprefix(prefix)
+            for key in load_cache(args.cache)
+            if key.startswith(prefix)
+        }
+    if not wanted:
+        print(f"no {SWEBENCH_BENCHMARK} instances in {args.data} or {args.cache}")
+        return
     fetched = swebench_context_from_rows(
         row for row in fetch_swebench_rows() if row["instance_id"] in wanted
     )
@@ -132,7 +146,7 @@ def _fetch_swebench_context_command(args: argparse.Namespace) -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     write_instances(existing | fetched, args.out)
     print(
-        f"fetched context for {len(fetched)} of {len(wanted)} swe-bench-verified "
+        f"fetched context for {len(fetched)} of {len(wanted)} {SWEBENCH_BENCHMARK} "
         f"instance(s) into {args.out}"
     )
 
@@ -239,6 +253,7 @@ def main(argv: list[str] | None = None) -> None:
         "instances in the dataset from the HuggingFace datasets-server",
     )
     fetch.add_argument("--data", type=Path, default=DEFAULT_DATA)
+    fetch.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     fetch.add_argument("--out", type=Path, default=DEFAULT_INSTANCES)
     fetch.set_defaults(command=_fetch_swebench_context_command)
 

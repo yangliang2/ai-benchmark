@@ -79,6 +79,14 @@ def fetch_swebench_rows(dataset: str = SWEBENCH_DATASET) -> Iterator[dict[str, A
         with urllib.request.urlopen(f"{DATASETS_SERVER}?{query}") as response:
             page = json.loads(response.read())
         for row in page["rows"]:
+            if row["truncated_cells"]:
+                # A truncated patch would parse to too few files and become a
+                # wrong "mechanical" scale — refuse rather than mislabel.
+                raise RuntimeError(
+                    f"datasets-server truncated {row['truncated_cells']} for "
+                    f"instance {row['row'].get('instance_id', '?')}; refusing to "
+                    "derive context from incomplete rows"
+                )
             yield cast(dict[str, Any], row["row"])
         offset += len(page["rows"])
         if offset >= page["num_rows_total"] or not page["rows"]:

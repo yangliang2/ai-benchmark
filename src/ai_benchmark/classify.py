@@ -63,9 +63,14 @@ def classify_records(
 ) -> tuple[list[Record], Cache, int]:
     """Returns (classified records, updated cache, number of LLM calls made).
 
-    Instance context, when available, is passed to the LLM on misses; its patch
-    file list makes `scale` mechanical and always beats an LLM guess. Cached
-    entries are preserved — only "unknown" scale is re-derived (#8).
+    Instance context, when available, is passed to the LLM on misses, and its
+    patch file list makes `scale` mechanical (#8). On a fresh miss the
+    mechanical scale always beats the LLM's answer — the file list is fact,
+    the model is guessing. Pre-existing cache entries are preserved: only an
+    "unknown" scale is re-derived, in place. An unclassified verdict
+    contributes nothing to the record except the mechanical scale — its own
+    scale/language answers come from the same low-information state as the
+    category it declined to call.
     """
     updated_cache = dict(cache)
     llm_calls = 0
@@ -77,17 +82,33 @@ def classify_records(
             continue
         key = cache_key(record)
         context = instances.get(key) if instances else None
+        mechanical = scale_from_patch_files(context["patch_files"]) if context else "unknown"
         if key not in updated_cache:
-            updated_cache[key] = llm(record.benchmark, record.instance_id, context)
-            llm_calls += 1
-        label = updated_cache[key]
-        if label["scale"] == "unknown" and context is not None:
-            mechanical = scale_from_patch_files(context["patch_files"])
+            label = llm(record.benchmark, record.instance_id, context)
             if mechanical != "unknown":
-                label = updated_cache[key] = Label(
+                label = Label(
                     category=label["category"],
                     scale=mechanical,
                     language=label["language"],
                 )
-        classified.append(_apply(record, label))
+            updated_cache[key] = label
+            llm_calls += 1
+        label = updated_cache[key]
+        if label["scale"] == "unknown" and mechanical != "unknown":
+            label = updated_cache[key] = Label(
+                category=label["category"],
+                scale=mechanical,
+                language=label["language"],
+            )
+        if label["category"] != "unclassified":
+            classified.append(_apply(record, label))
+        elif mechanical != "unknown":
+            classified.append(
+                _apply(
+                    record,
+                    Label(category="unclassified", scale=mechanical, language=None),
+                )
+            )
+        else:
+            classified.append(record)
     return classified, updated_cache, llm_calls

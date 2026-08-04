@@ -60,9 +60,9 @@ def build_prompt(
     parts = []
     if context is not None:
         if statement := context["problem_statement"]:
-            parts.append(
-                "Problem statement:\n" + statement[:_PROBLEM_STATEMENT_LIMIT] + "\n"
-            )
+            if len(statement) > _PROBLEM_STATEMENT_LIMIT:
+                statement = statement[:_PROBLEM_STATEMENT_LIMIT] + "\n[truncated]"
+            parts.append("Problem statement:\n" + statement + "\n")
         if files := context["patch_files"]:
             parts.append(
                 "Files changed by the reference solution:\n"

@@ -51,6 +51,7 @@ Orthogonal to category:
 
 - **Label** — the classification verdict for one benchmark instance: a task category plus the task annotations (scale, language). Labels fill gaps in a record; they never overwrite source-derived facts (not: tag, annotation set).
 - **Classification cache** — the committed JSON file keyed by `benchmark/instance_id` holding one label per instance. A warm cache makes classification deterministic and free; an unclassifiable verdict is cached too, so it is never re-asked and never force-fitted.
+- **Instance context** — the committed JSON file (`data/instance-context.json`, keyed like the classification cache) holding what an instance actually asked for: its **problem statement** and the **patch file list** (files changed by the reference solution). The problem statement is classifier evidence; the patch file list makes scale mechanical (one file → `single-file`, several → `cross-file`) with no LLM call, and a mechanical scale always beats an LLM guess.
 
 ## First-party eval vocabulary
 
