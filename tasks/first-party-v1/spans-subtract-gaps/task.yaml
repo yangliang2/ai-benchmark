@@ -1,0 +1,20 @@
+# feature-dev: the grading tests exercise free, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: spans-subtract-gaps
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  spans.py works with half-open integer spans: (start, end) pairs covering
+  start up to but not including end.
+
+  Add a function `free(spans, window)` to spans.py that returns the parts of
+  `window` — itself a (start, end) pair — not covered by any of the given
+  spans, as a list of disjoint spans in ascending order. Input spans may be
+  unsorted and overlapping, may reach beyond the window, and empty spans
+  cover nothing. Zero-length gaps must not appear in the result, and an
+  empty window has no free room at all. Reuse the module's existing helpers
+  where they help.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
