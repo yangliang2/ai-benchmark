@@ -1,12 +1,14 @@
-"""The hand-authored feature-dev tasks (ticket #12): every task lints clean,
-its reference solution grades resolved, and doing nothing grades unresolved —
-all through the same execution-verified pipeline real runs go through.
+"""The hand-authored feature-dev tasks (ticket #12): every checked-in task
+lints clean, its reference solution grades resolved, and doing nothing grades
+unresolved — all through the same execution-verified pipeline real runs go
+through. The two seed tasks are held to the same reference-solution
+invariants here as the ten feature-dev tasks.
 
-Reference solutions live in each task directory under solution/, a sibling of
-repo/ that the loader tolerates and the runner never copies — the agent only
-ever receives repo/. A solution is a set of files laid over the pristine
-repository; the diff graded here is captured with git exactly as the live
-runner captures a workdir diff.
+Reference solutions are full solved trees under
+tasks/first-party-v1-solutions/<task-id>/, outside the task directory, so the
+loader, the runner, the lint and pytest collection never see them. The diff
+graded here is the solved tree laid over the pristine repository, captured
+with git exactly as the live runner captures a workdir diff.
 """
 
 import shutil
@@ -26,8 +28,7 @@ from ai_benchmark.firstparty_v1 import (
 )
 
 TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
-
-SOLUTION_DIR = "solution"
+SOLUTIONS = Path(__file__).parent.parent / "tasks" / "first-party-v1-solutions"
 
 # Task id -> the scale its reference solution honestly has.
 FEATURE_DEV_TASKS: dict[str, str] = {
@@ -43,6 +44,11 @@ FEATURE_DEV_TASKS: dict[str, str] = {
     "workflow-guarded-transitions": "cross-file",
 }
 
+# The seed tasks (ticket #10) hold to the same reference-solution invariants.
+SEED_TASKS = ("ledger-split-formatting", "wordcount-top-words")
+
+SOLVED_TASKS = sorted([*FEATURE_DEV_TASKS, *SEED_TASKS])
+
 
 def task_by_id(task_id: str) -> Task:
     [task] = [task for task in load_task_set(TASKS) if task.id == task_id]
@@ -50,9 +56,9 @@ def task_by_id(task_id: str) -> Task:
 
 
 def solution_diff(task: Task) -> str:
-    """The workdir diff the reference solution produces: pristine repo,
-    solution files laid over it, captured against the initial commit exactly
-    as the live runner captures a run's diff."""
+    """The workdir diff the reference solution produces: pristine repo, the
+    solved tree laid over it, captured against the initial commit exactly as
+    the live runner captures a run's diff."""
     git = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
     with tempfile.TemporaryDirectory(prefix="ai-bench-solution-") as name:
         workdir = Path(name)
@@ -60,7 +66,7 @@ def solution_diff(task: Task) -> str:
         subprocess.run([*git, "init", "-q", "."], cwd=workdir, check=True)
         subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
         subprocess.run([*git, "commit", "-qm", "pristine"], cwd=workdir, check=True)
-        shutil.copytree(task.directory / SOLUTION_DIR, workdir, dirs_exist_ok=True)
+        shutil.copytree(SOLUTIONS / task.id, workdir, dirs_exist_ok=True)
         subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
         captured = subprocess.run(
             [*git, "diff", "--cached"],
@@ -97,12 +103,12 @@ def test_task_is_declared_as_designed(task_id: str) -> None:
     assert task.scale == FEATURE_DEV_TASKS[task_id]
 
 
-@pytest.mark.parametrize("task_id", sorted(FEATURE_DEV_TASKS))
+@pytest.mark.parametrize("task_id", SOLVED_TASKS)
 def test_task_lints_clean(task_id: str) -> None:
     assert lint_task_set([task_by_id(task_id)]) == []
 
 
-@pytest.mark.parametrize("task_id", sorted(FEATURE_DEV_TASKS))
+@pytest.mark.parametrize("task_id", SOLVED_TASKS)
 def test_reference_solution_resolves_and_doing_nothing_does_not(
     task_id: str,
 ) -> None:
@@ -118,7 +124,7 @@ def test_reference_solution_resolves_and_doing_nothing_does_not(
     assert graded == {"reference": 1.0, "empty": 0.0}
 
 
-@pytest.mark.parametrize("task_id", sorted(FEATURE_DEV_TASKS))
+@pytest.mark.parametrize("task_id", SOLVED_TASKS)
 def test_declared_scale_matches_the_reference_solution(task_id: str) -> None:
     """Scale is honest to the canonical solution: a single-file solution
     touches exactly one file, a cross-file one touches several."""
