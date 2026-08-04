@@ -10,24 +10,31 @@ canonical grading files over any same-path files the agent touched, run
 pytest in a fresh temp dir with a timeout — so `resolved` is
 execution-verified, the same standard as SWE-bench, not pattern-verified.
 
-What the verdict is guaranteed to depend on: the held-out grading files, and
-what the task's own modules actually do when they run. An agent cannot reach
-the verdict by writing tests at the grading files' paths (they are
-overwritten), by hooking pytest from a conftest.py or smuggling `addopts`
-through pytest.ini / tox.ini / setup.cfg / pyproject.toml (the config is
-pinned outside the workdir and conftest loading is off), by shadowing a
-standard-library module the grading tests measure against (the workdir sits
-behind the standard library on sys.path), or by ending the process early to
-fake a clean exit (the verdict reads a report written outside the workdir,
-not the exit status alone). The authoring rule that falls out of this:
-grading tests must be self-contained and must never rely on a conftest.py.
-The lint runs the same invocation, so a task that breaks the rule is caught
-on the pristine repo.
+What the verdict does not depend on: anything the agent wrote *around* the
+grading tests. Tests written at a grading file's path are overwritten; a
+conftest.py cannot hook the run and `addopts` cannot be smuggled through
+pytest.ini / tox.ini / setup.cfg / pyproject.toml, because the config is
+pinned outside the workdir and conftest loading is off; a file added to the
+workdir cannot shadow a standard-library module the grading tests measure
+against, because the workdir sits behind the standard library on sys.path;
+and a run that ends before the tests finish cannot pass, because the verdict
+reads a report written outside the workdir rather than the exit status alone.
+Two authoring rules fall out of this: grading tests must be self-contained
+and never rely on a conftest.py, and a starting repository must not name a
+module after one in the standard library. The lint runs the same invocation,
+so it catches the first rule on the pristine repo; it catches the second only
+for refactor tasks, and CONTEXT.md records why the gap matters when authoring.
 
-What it is not: a sandbox. Grading executes agent-written code in a local
-subprocess with a timeout — the accepted limitation recorded in CONTEXT.md,
-the same exposure as any local SWE-bench-style eval. Starting repositories
-are stdlib-only, so grading needs no network and no installs.
+What it is not: a sandbox — and that is a real limit, not a formality.
+Grading executes agent-written code in the same process tree as the oracle,
+so those defences stop an honest-but-messy agent, not a deliberately
+adversarial one: code that runs during a test can still reach the report the
+verdict is read from (an atexit handler that rewrites it, say) and forge a
+pass. Ruling that out needs process-level isolation, which this grader does
+not have. That residual is exactly what the accepted not-a-sandbox limitation
+recorded in CONTEXT.md means in practice — the same exposure as any local
+SWE-bench-style eval. Starting repositories are stdlib-only, so grading needs
+no network and no installs.
 """
 
 import importlib.util
@@ -267,10 +274,12 @@ def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
 
     The whole grading suite runs against a fresh copy of the pristine repo
     with the diff applied and the canonical grading files laid over the top.
-    Resolved means every grading test ran and passed; a failure, a collection
-    error, a skip, a run that ended early and a timeout all mean unresolved. A
-    diff git cannot apply is not a verdict at all — it is a broken run log,
-    and fails loudly.
+    Resolved means every grading test ran and passed, as far as a grader that
+    shares a process tree with the code it is grading can tell: a failure, a
+    collection error, a skip, a run that ended early and a timeout all mean
+    unresolved, but a deliberately adversarial diff can still forge a pass
+    from inside that process (see the module docstring). A diff git cannot
+    apply is not a verdict at all — it is a broken run log, and fails loudly.
     """
     return _run_grading(task, diff, task.grading_test_paths, timeout_s=timeout_s)
 
@@ -348,7 +357,9 @@ def _pytest_passes(
       measure against, while the task's own modules stay importable.
     - the report is checked rather than the exit status alone, because agent
       code runs during collection and one os._exit(0) there is otherwise
-      indistinguishable from a clean pass.
+      indistinguishable from a clean pass. This catches an accidental early
+      exit and a corrupted run, not an adversary: the report is written by
+      the same process tree, so code that means to can rewrite it.
     """
     config = root / "grading-pytest.ini"
     config.write_text(_GRADING_CONFIG, encoding="utf-8")
@@ -385,11 +396,13 @@ def _pytest_passes(
 
 
 def _report_shows_every_test_passed(report: Path) -> bool:
-    """Positive evidence from outside the workdir that the tests really ran.
+    """Evidence from outside the workdir that the tests really ran.
 
     pytest writes the report when the session ends, so a run that killed the
     process part-way leaves none — and a run that finished but skipped
-    everything leaves one that says so.
+    everything leaves one that says so. Evidence, not proof: the report is
+    written by the graded process itself, so it is only as trustworthy as
+    that process (see _pytest_passes).
     """
     try:
         suites = list(ElementTree.parse(report).getroot().iter("testsuite"))
