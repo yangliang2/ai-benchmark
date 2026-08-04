@@ -11,7 +11,7 @@ from logparse import parse_stamp
 def test_parse_stamp_returns_the_moment_and_the_rest():
     moment, rest = parse_stamp("2026-08-04 12:30:05 INFO cache warmed")
 
-    assert moment == datetime(2026, 8, 4, 12, 30, 5)
+    assert moment == datetime(2026, 8, 4, 12, 30, 5)  # noqa: DTZ001
     assert rest == "INFO cache warmed"
 
 

@@ -4,7 +4,6 @@ extraction, so it touches only the three readers."""
 from datetime import datetime
 
 import pytest
-
 from logparse import entries_between, entry_level, entry_message
 
 
@@ -29,7 +28,7 @@ def test_entries_between_is_inclusive_at_both_ends():
     ]
 
     kept = entries_between(
-        lines, datetime(2026, 8, 4, 9, 0, 0), datetime(2026, 8, 4, 12, 0, 0)
+        lines, datetime(2026, 8, 4, 9, 0, 0), datetime(2026, 8, 4, 12, 0, 0)  # noqa: DTZ001
     )
 
     assert kept == ["INFO started", "WARN slow"]
@@ -39,5 +38,5 @@ def test_a_malformed_stamp_raises_value_error():
     with pytest.raises(ValueError):
         entry_level("yesterday-ish 12:30:05 INFO nope")
     with pytest.raises(ValueError):
-        entries_between(["not a stamp at all INFO x"], datetime(2026, 1, 1),
-                        datetime(2026, 12, 31))
+        entries_between(["not a stamp at all INFO x"], datetime(2026, 1, 1),  # noqa: DTZ001
+                        datetime(2026, 12, 31))  # noqa: DTZ001

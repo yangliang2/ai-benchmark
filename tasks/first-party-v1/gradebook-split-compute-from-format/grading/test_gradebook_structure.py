@@ -3,9 +3,8 @@ their own. Fails on the pristine repo, where neither function exists."""
 
 import inspect
 
-import pytest
-
 import gradebook
+import pytest
 from gradebook import compute_stats, format_summary
 
 

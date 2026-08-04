@@ -2,7 +2,6 @@
 split, so it pins summary's rendered block and error only."""
 
 import pytest
-
 from gradebook import summary
 
 

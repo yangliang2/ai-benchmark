@@ -3,7 +3,6 @@ inversion, so it goes through storage and cli only — analysis's signatures
 are exactly what changes."""
 
 import pytest
-
 from cli import report
 from storage import load_entries
 

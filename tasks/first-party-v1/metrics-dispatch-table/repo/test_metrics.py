@@ -1,5 +1,4 @@
 import pytest
-
 from metrics import format_metric, metric_row
 
 

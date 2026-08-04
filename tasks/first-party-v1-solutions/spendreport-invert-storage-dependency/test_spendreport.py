@@ -1,5 +1,4 @@
 import pytest
-
 from cli import report
 from storage import load_entries
 

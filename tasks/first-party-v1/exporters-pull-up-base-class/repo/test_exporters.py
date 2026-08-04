@@ -1,5 +1,4 @@
 import pytest
-
 from exporters import DelimitedExporter, TableExporter
 
 

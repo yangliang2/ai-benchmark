@@ -5,10 +5,9 @@ where conversion.py does not exist."""
 import importlib.util
 import inspect
 
-import pytest
-
 import conversion
 import measures
+import pytest
 
 
 def test_the_duplicate_modules_are_gone():

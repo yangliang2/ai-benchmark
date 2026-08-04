@@ -1,5 +1,4 @@
 import pytest
-
 from gradebook import summary
 
 

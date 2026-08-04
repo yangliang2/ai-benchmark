@@ -2,7 +2,6 @@
 real ParsedTask. Fails on the pristine repo, where the class is missing."""
 
 import pytest
-
 from tasktrack import ParsedTask, parse_task
 
 
@@ -32,4 +31,4 @@ def test_the_tuple_shape_is_retired():
 
     assert not isinstance(task, tuple)
     with pytest.raises(TypeError):
-        title, priority, tags, done = task
+        _title, _priority, _tags, _done = task

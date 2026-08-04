@@ -2,7 +2,6 @@
 pull-up, so it exercises the two exporters' public behaviour only."""
 
 import pytest
-
 from exporters import DelimitedExporter, TableExporter
 
 

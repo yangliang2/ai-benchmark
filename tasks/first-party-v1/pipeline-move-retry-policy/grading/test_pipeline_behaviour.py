@@ -2,7 +2,6 @@
 so it touches only what pipeline.py keeps exporting."""
 
 import pytest
-
 from pipeline import Pipeline, RetryPolicy
 
 

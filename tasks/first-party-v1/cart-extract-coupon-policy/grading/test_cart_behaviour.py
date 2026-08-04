@@ -2,7 +2,6 @@
 extraction, so it touches only Cart's public interface."""
 
 import pytest
-
 from cart import Cart
 
 

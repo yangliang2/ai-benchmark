@@ -313,14 +313,16 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
         assert list(task.grading_dir.rglob("test_*.py"))
 
 
-def test_refactor_task_names_its_behaviour_tests() -> None:
-    [refactor] = [t for t in load_task_set(TASKS) if t.category == "refactor"]
+def test_refactor_tasks_name_their_behaviour_tests() -> None:
+    refactors = [t for t in load_task_set(TASKS) if t.category == "refactor"]
 
-    assert refactor.grading.behaviour_tests
-    for name in refactor.grading.behaviour_tests:
-        assert (refactor.grading_dir / name).exists()
-    # Something is left over to assert the restructuring actually happened.
-    assert set(refactor.grading_test_paths) > set(refactor.behaviour_test_paths)
+    assert refactors
+    for refactor in refactors:
+        assert refactor.grading.behaviour_tests
+        for name in refactor.grading.behaviour_tests:
+            assert (refactor.grading_dir / name).exists()
+        # Something is left over to assert the restructuring actually happened.
+        assert set(refactor.grading_test_paths) > set(refactor.behaviour_test_paths)
 
 
 def test_a_task_id_must_match_its_directory_name(tmp_path: Path) -> None:

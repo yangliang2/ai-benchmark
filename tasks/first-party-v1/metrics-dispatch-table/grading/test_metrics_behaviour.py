@@ -2,7 +2,6 @@
 dispatch-table rewrite, so it pins rendered strings and errors only."""
 
 import pytest
-
 from metrics import format_metric, metric_row
 
 
