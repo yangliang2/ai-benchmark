@@ -25,6 +25,7 @@ from ai_benchmark.firstparty import (
     load_tasks,
     run_live,
 )
+from ai_benchmark import firstparty_v1
 from ai_benchmark.instances import (
     SWEBENCH_BENCHMARK,
     InstanceContext,
@@ -104,6 +105,25 @@ def _eval_command(args: argparse.Namespace) -> None:
     resolved = int(sum(r.quality_value for r in records))
     print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
     _merge_into(records, args.data)
+
+
+def _eval_v1_command(args: argparse.Namespace) -> None:
+    """Replay a v1 raw run log: each logged workdir diff is re-graded by
+    execution. Live v1 running is ticket #11; until then replay is the only
+    way in, and it is the same pipeline either way."""
+    tasks = firstparty_v1.load_task_set(args.tasks)
+    runs = firstparty_v1.load_runs(args.replay)
+    records = firstparty_v1.evaluate(tasks, runs, source=str(args.replay))
+    resolved = int(sum(r.quality_value for r in records))
+    print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
+    _merge_into(records, args.data)
+
+
+def _lint_v1_command(args: argparse.Namespace) -> None:
+    tasks = firstparty_v1.load_task_set(args.tasks)
+    if problems := firstparty_v1.lint_task_set(tasks):
+        raise SystemExit("\n".join([f"error: {problem}" for problem in problems]))
+    print(f"lint clean: {len(tasks)} task(s) in {args.tasks}")
 
 
 def _report_command(args: argparse.Namespace) -> None:
@@ -225,6 +245,26 @@ def main(argv: list[str] | None = None) -> None:
         "--log", type=Path, help="where a live run writes its raw log"
     )
     evaluate_parser.set_defaults(command=_eval_command)
+
+    v1_tasks_default = Path("tasks/first-party-v1")
+
+    evaluate_v1 = subcommands.add_parser(
+        "eval-v1",
+        help="replay a first-party v1 raw run log, grading each logged workdir "
+        "diff by running the task's held-out tests, and merge the records",
+    )
+    evaluate_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    evaluate_v1.add_argument("--data", type=Path, default=DEFAULT_DATA)
+    evaluate_v1.add_argument("--replay", type=Path, required=True)
+    evaluate_v1.set_defaults(command=_eval_v1_command)
+
+    lint_v1 = subcommands.add_parser(
+        "lint-v1",
+        help="check the first-party v1 task set's authoring invariants by "
+        "running each task's grading tests on its pristine repository",
+    )
+    lint_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    lint_v1.set_defaults(command=_lint_v1_command)
 
     report = subcommands.add_parser(
         "report",

@@ -105,6 +105,69 @@ def test_eval_replay_then_table_shows_first_party_alongside_aggregates(
     assert "aider-polyglot" in out
 
 
+def test_eval_v1_replay_grades_by_execution_and_lands_in_the_table(
+    firstparty_v1_fixture: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    data = tmp_path / "unified.jsonl"
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+    main(["eval-v1", "--tasks", str(tasks), "--replay", str(firstparty_v1_fixture),
+          "--data", str(data)])
+    assert "evaluated 4 runs over 2 tasks (2 resolved)" in capsys.readouterr().out
+
+    main(["table", "--data", str(data)])
+    out = capsys.readouterr().out
+    # v1 is its own benchmark: sonnet solved both tasks, haiku neither.
+    assert "first-party-v1" in out
+    assert "100.0%" in out and "0.0%" in out
+
+
+def test_eval_v1_leaves_v0_records_untouched(
+    firstparty_fixture: Path, firstparty_v1_fixture: Path, tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    data = tmp_path / "unified.jsonl"
+    v0_tasks = Path(__file__).parent.parent / "tasks" / "first-party-v0.yaml"
+    v1_tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+    main(["eval", "--tasks", str(v0_tasks), "--replay", str(firstparty_fixture),
+          "--data", str(data)])
+    v0_rows = data.read_text().splitlines()
+
+    main(["eval-v1", "--tasks", str(v1_tasks), "--replay", str(firstparty_v1_fixture),
+          "--data", str(data)])
+
+    capsys.readouterr()
+    assert set(v0_rows) < set(data.read_text().splitlines())
+    main(["table", "--data", str(data)])
+    out = capsys.readouterr().out
+    assert "first-party-v0" in out and "first-party-v1" in out
+
+
+def test_lint_v1_passes_on_the_checked_in_task_set(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+    main(["lint-v1", "--tasks", str(tasks)])
+
+    assert "2 task(s)" in capsys.readouterr().out
+
+
+def test_lint_v1_exits_non_zero_on_a_broken_task(tmp_path: Path) -> None:
+    seed = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    shutil.copytree(seed / "wordcount-top-words", tmp_path / "wordcount-top-words")
+    solved = tmp_path / "wordcount-top-words" / "repo" / "wordcount.py"
+    solved.write_text(
+        solved.read_text() + "\n\ndef top_words(text, n):\n"
+        "    counts = word_counts(text)\n"
+        "    return sorted(counts, key=lambda w: (-counts[w], w))[:n]\n"
+    )
+
+    with pytest.raises(SystemExit, match="pristine"):
+        main(["lint-v1", "--tasks", str(tmp_path)])
+
+
 def test_classify_with_warm_cache_needs_no_api_key(
     dataset_fixture: Path, tmp_path: Path,
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch,
