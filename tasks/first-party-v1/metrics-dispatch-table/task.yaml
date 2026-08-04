@@ -1,0 +1,22 @@
+# refactor: replace a conditional chain with a dispatch table. The behaviour
+# tests named below must PASS on the pristine repository; everything else in
+# grading/ is a structural assertion that must FAIL on it until format_metric
+# genuinely dispatches through the table.
+id: metrics-dispatch-table
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  format_metric in metrics.py is an if/elif chain over the metric kind, and
+  it has to grow another branch every time a kind is added.
+
+  Replace the chain with a module-level dispatch table FORMATTERS mapping
+  each kind to its own small formatting function, and reduce format_metric
+  to a lookup plus a call. Adding a kind should then mean adding one entry
+  to the table, nothing else.
+
+  This is a pure refactor: every rendered string, and the exact KeyError a
+  metric of unknown kind raises, must be as it is today.
+grading:
+  behaviour_tests:
+    - test_metrics_behaviour.py

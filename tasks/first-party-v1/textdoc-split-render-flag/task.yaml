@@ -1,0 +1,21 @@
+# refactor: split a boolean-flag function, updating every caller. The
+# behaviour tests named below must PASS on the pristine repository; everything
+# else in grading/ is a structural assertion that must FAIL on it until
+# render is gone and each format has its own function.
+id: textdoc-split-render-flag
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  render(doc, as_html) in textdoc.py is a boolean-flag function: every
+  caller passes a literal True or False, and the two branches share no code.
+
+  Split it into render_html(doc) and render_text(doc), remove render
+  altogether, and update every caller — summary.py, export.py, preview.py
+  and the tests — to call the right one directly.
+
+  This is a pure refactor: the rendered output must be byte-for-byte
+  identical to today's, HTML escaping included.
+grading:
+  behaviour_tests:
+    - test_textdoc_behaviour.py
