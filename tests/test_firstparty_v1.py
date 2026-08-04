@@ -224,6 +224,73 @@ def forge_exit_status_via_pyproject(workdir: Path) -> None:
     )
 
 
+def synthetic_task(root: Path) -> Task:
+    """A task whose grading oracle is a stdlib import.
+
+    The two shipped seeds happen not to be exploitable this way; the 18 tasks
+    #12/#13 will author are the reason the class has to be closed, so the
+    attack is proven against the shape those will have.
+    """
+    task_dir = root / "exact-ratio"
+    (task_dir / "repo").mkdir(parents=True)
+    (task_dir / "grading").mkdir()
+    (task_dir / "task.yaml").write_text(textwrap.dedent("""\
+        id: exact-ratio
+        category: feature-dev
+        scale: single-file
+        language: python
+        prompt: |
+          Add ratio(a, b) to calc.py, returning a / b as an exact fraction.
+        """))
+    (task_dir / "repo" / "calc.py").write_text("def half(x):\n    return x / 2\n")
+    (task_dir / "grading" / "test_ratio.py").write_text(textwrap.dedent("""\
+        from fractions import Fraction
+
+        from calc import ratio
+
+
+        def test_ratio_is_exact():
+            assert ratio(1, 3) == Fraction(1, 3)
+        """))
+    [task] = load_task_set(root)
+    return task
+
+
+def solve_exact_ratio(workdir: Path) -> None:
+    append(workdir / "calc.py", """
+        from fractions import Fraction
+
+
+        def ratio(a, b):
+            return Fraction(a, b)
+        """)
+
+
+def shadow_the_oracle(workdir: Path) -> None:
+    """Implements ratio wrongly, then replaces the standard-library module the
+    grading test measures it against."""
+    append(workdir / "calc.py", """
+        def ratio(a, b):
+            return "not a fraction at all"
+        """)
+    (workdir / "fractions.py").write_text(textwrap.dedent("""\
+        class Fraction:
+            def __init__(self, *args):
+                pass
+
+            def __eq__(self, other):
+                return True
+        """))
+
+
+def forge_success_by_exiting(workdir: Path) -> None:
+    """No work done; the repo module kills the process with a zero status the
+    moment the grading test imports it."""
+    (workdir / "calc.py").write_text(
+        "import os\n\nos._exit(0)\n\n\ndef half(x):\n    return x / 2\n"
+    )
+
+
 def solve_wordcount_and_leave_a_broken_conftest(workdir: Path) -> None:
     """A real solution plus a plausible honest artefact: a leftover conftest
     importing a helper the agent decided not to ship."""
@@ -411,6 +478,41 @@ def test_a_stray_broken_conftest_does_not_sink_a_correct_solution() -> None:
     [record] = evaluate([wordcount], [run_for(wordcount, diff)], source="run-log")
 
     assert record.quality_value == 1.0
+
+
+def test_a_shadowed_stdlib_module_cannot_become_the_oracle(tmp_path: Path) -> None:
+    """The workdir must not precede the standard library on sys.path: a task
+    whose grading test measures against a stdlib type is otherwise graded by a
+    module the agent wrote."""
+    task = synthetic_task(tmp_path)
+    assert lint_task_set([task]) == []  # a well-formed task, not a broken one
+    diff = workdir_diff(task, shadow_the_oracle)
+
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+def test_a_task_repo_module_is_still_importable(tmp_path: Path) -> None:
+    """The control for the rule above: keeping the workdir behind the standard
+    library must not stop the grading tests importing what they are grading."""
+    task = synthetic_task(tmp_path)
+    diff = workdir_diff(task, solve_exact_ratio)
+
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+
+    assert record.quality_value == 1.0
+
+
+def test_agent_code_cannot_short_circuit_the_test_run(tmp_path: Path) -> None:
+    """Exit status alone is not evidence of a pass: agent code runs during
+    collection, and one os._exit(0) there looks exactly like a clean run."""
+    task = synthetic_task(tmp_path)
+    diff = workdir_diff(task, forge_success_by_exiting)
+
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
 
 
 def test_a_diff_that_adds_modifies_and_deletes_files_applies_in_full() -> None:

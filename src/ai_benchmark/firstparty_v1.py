@@ -10,14 +10,19 @@ canonical grading files over any same-path files the agent touched, run
 pytest in a fresh temp dir with a timeout — so `resolved` is
 execution-verified, the same standard as SWE-bench, not pattern-verified.
 
-What the verdict is guaranteed to depend on: the held-out grading files, run
-under a config pinned outside the workdir and with conftest loading off. An
-agent cannot reach the verdict by writing tests at the grading files' paths
-(they are overwritten), by hooking pytest from a conftest.py, or by smuggling
-`addopts` through pytest.ini / tox.ini / setup.cfg / pyproject.toml. The
-authoring rule that falls out of this: grading tests must be self-contained
-and must never rely on a conftest.py. The lint runs the same invocation, so a
-task that breaks the rule is caught on the pristine repo.
+What the verdict is guaranteed to depend on: the held-out grading files, and
+what the task's own modules actually do when they run. An agent cannot reach
+the verdict by writing tests at the grading files' paths (they are
+overwritten), by hooking pytest from a conftest.py or smuggling `addopts`
+through pytest.ini / tox.ini / setup.cfg / pyproject.toml (the config is
+pinned outside the workdir and conftest loading is off), by shadowing a
+standard-library module the grading tests measure against (the workdir sits
+behind the standard library on sys.path), or by ending the process early to
+fake a clean exit (the verdict reads a report written outside the workdir,
+not the exit status alone). The authoring rule that falls out of this:
+grading tests must be self-contained and must never rely on a conftest.py.
+The lint runs the same invocation, so a task that breaks the rule is caught
+on the pristine repo.
 
 What it is not: a sandbox. Grading executes agent-written code in a local
 subprocess with a timeout — the accepted limitation recorded in CONTEXT.md,
@@ -27,6 +32,7 @@ are stdlib-only, so grading needs no network and no installs.
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -36,6 +42,7 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 from typing import Self
+from xml.etree import ElementTree
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
@@ -61,6 +68,20 @@ GRADE_TIMEOUT_S = 300
 
 # The config grading runs under, pinned so nothing in the workdir is consulted.
 _GRADING_CONFIG = "[pytest]\naddopts =\n"
+
+# Loaded with -p from outside the workdir. Python is started with -P and pytest
+# with --import-mode=importlib so that nothing puts the workdir on sys.path;
+# this puts it back at the end, behind the standard library.
+_PATH_PLUGIN_NAME = "gradingpath"
+_PATH_PLUGIN = """\
+import sys
+
+WORKDIR = {workdir!r}
+
+
+def pytest_configure(config):
+    sys.path.append(WORKDIR)
+"""
 
 
 class Grading(BaseModel):
@@ -246,9 +267,10 @@ def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
 
     The whole grading suite runs against a fresh copy of the pristine repo
     with the diff applied and the canonical grading files laid over the top.
-    Resolved means pytest exited 0; a failure, a collection error or a timeout
-    all mean unresolved. A diff git cannot apply is not a verdict at all — it
-    is a broken run log, and fails loudly.
+    Resolved means every grading test ran and passed; a failure, a collection
+    error, a skip, a run that ended early and a timeout all mean unresolved. A
+    diff git cannot apply is not a verdict at all — it is a broken run log,
+    and fails loudly.
     """
     return _run_grading(task, diff, task.grading_test_paths, timeout_s=timeout_s)
 
@@ -258,18 +280,18 @@ def _run_grading(
 ) -> bool:
     _require_pytest()
     with tempfile.TemporaryDirectory(prefix="ai-bench-grade-") as name:
-        # The pinned config sits beside the workdir rather than in it: a diff
-        # can only write inside the workdir, so it can never reach this file.
-        config = Path(name) / "grading-pytest.ini"
-        config.write_text(_GRADING_CONFIG, encoding="utf-8")
-        workdir = Path(name) / "workdir"
+        # Everything the grader relies on sits beside the workdir rather than
+        # in it: a diff can only write inside the workdir, so it cannot reach
+        # the pinned config, the sys.path plugin, or the report.
+        root = Path(name)
+        workdir = root / "workdir"
         workdir.mkdir()
         shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
         _apply_diff(task, diff, workdir)
         # Canonical last: whatever the agent wrote at a grading file's path is
         # overwritten, so the graded tests are always the held-out ones.
         shutil.copytree(task.grading_dir, workdir, dirs_exist_ok=True)
-        return _pytest_passes(workdir, targets, config=config, timeout_s=timeout_s)
+        return _pytest_passes(root, workdir, targets, timeout_s=timeout_s)
 
 
 def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
@@ -308,34 +330,78 @@ def _git(
 
 
 def _pytest_passes(
-    workdir: Path, targets: Sequence[str], *, config: Path, timeout_s: int
+    root: Path, workdir: Path, targets: Sequence[str], *, timeout_s: int
 ) -> bool:
-    """Run the named tests in workdir. True only on a clean exit 0.
+    """Run the named tests in workdir. True only if they all actually passed.
 
     The verdict must depend on the held-out tests alone, so pytest is given no
-    chance to read anything the agent wrote outside them: `-c` pins the config
-    file, which stops pytest.ini / tox.ini / setup.cfg / pyproject.toml in the
-    workdir from contributing `addopts` (and with it arbitrary plugins), and
-    `--noconftest` stops conftest.py at any depth from running hooks. Both
-    directions matter: without them a conftest can forge exit status 0, and a
-    stray broken one can sink a correct solution.
+    chance to read anything else the agent wrote:
+
+    - `-c` pins the config file, so pytest.ini / tox.ini / setup.cfg /
+      pyproject.toml in the workdir cannot contribute `addopts` (and with it
+      arbitrary plugins), and `--noconftest` stops conftest.py at any depth
+      from running hooks. Both directions matter: without them a conftest can
+      forge exit status 0, and a stray broken one can sink a correct solution.
+    - `-P` and `--import-mode=importlib` keep the workdir off sys.path, and
+      the pinned plugin appends it again *behind* the standard library. A file
+      the agent added cannot then shadow a stdlib module the grading tests
+      measure against, while the task's own modules stay importable.
+    - the report is checked rather than the exit status alone, because agent
+      code runs during collection and one os._exit(0) there is otherwise
+      indistinguishable from a clean pass.
     """
+    config = root / "grading-pytest.ini"
+    config.write_text(_GRADING_CONFIG, encoding="utf-8")
+    harness = root / "harness"
+    harness.mkdir()
+    (harness / f"{_PATH_PLUGIN_NAME}.py").write_text(
+        _PATH_PLUGIN.format(workdir=str(workdir)), encoding="utf-8"
+    )
+    report = root / "report.xml"
+    inherited = os.environ.get("PYTHONPATH")
     try:
         process = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q",
+            [sys.executable, "-P", "-m", "pytest", "-q",
              "-c", str(config), "--noconftest", "--rootdir", str(workdir),
-             "-p", "no:cacheprovider", *targets],
+             "--import-mode=importlib", f"--junitxml={report}",
+             "-p", _PATH_PLUGIN_NAME, "-p", "no:cacheprovider", *targets],
             capture_output=True,
             text=True,
             cwd=workdir,
             timeout=timeout_s,
             check=False,
+            env=os.environ
+            | {
+                "PYTHONPATH": os.pathsep.join(
+                    [str(harness), *([inherited] if inherited else [])]
+                )
+            },
         )
     except subprocess.TimeoutExpired:
         return False
     except OSError as error:
         raise IngestError(f"cannot run pytest: {error}") from error
-    return process.returncode == 0
+    return process.returncode == 0 and _report_shows_every_test_passed(report)
+
+
+def _report_shows_every_test_passed(report: Path) -> bool:
+    """Positive evidence from outside the workdir that the tests really ran.
+
+    pytest writes the report when the session ends, so a run that killed the
+    process part-way leaves none — and a run that finished but skipped
+    everything leaves one that says so.
+    """
+    try:
+        suites = list(ElementTree.parse(report).getroot().iter("testsuite"))
+    except (OSError, ElementTree.ParseError):
+        return False
+    counts = {
+        field: sum(int(suite.get(field, "0")) for suite in suites)
+        for field in ("tests", "failures", "errors", "skipped")
+    }
+    return counts["tests"] > 0 and not any(
+        counts[field] for field in ("failures", "errors", "skipped")
+    )
 
 
 def _require_pytest() -> None:
