@@ -1,0 +1,20 @@
+# feature-dev: the grading tests exercise evaluate, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: calc-infix-evaluator
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  calc.py evaluates arithmetic handed to it as reverse Polish token lists,
+  but users want to type ordinary arithmetic.
+
+  Add a function `evaluate(expression)` to calc.py that evaluates an infix
+  expression string and returns the result as a float. It must support +, -,
+  * and / with the usual precedence and left associativity, parentheses,
+  unary minus (as in "-3", "2*-3" or "-(1+2)"), and decimal numbers like
+  "1.5". Whitespace between tokens is allowed and never required. Malformed
+  input — unbalanced parentheses, a missing operand or operator, characters
+  that belong to no token — raises ValueError.
+
+  Keep the existing function and its behaviour unchanged, and keep the module
+  dependency-free (standard library only).

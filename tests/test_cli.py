@@ -114,6 +114,8 @@ def test_eval_v1_replay_grades_by_execution_and_lands_in_the_table(
 
     main(["eval-v1", "--tasks", str(tasks), "--replay", str(firstparty_v1_fixture),
           "--data", str(data)])
+    # The checked-in task directory keeps growing as content tickets land, so
+    # the assertion pins the fixture's runs and verdicts, not the task count.
     out = capsys.readouterr().out
     assert "evaluated 4 runs over" in out and "(2 resolved)" in out
 

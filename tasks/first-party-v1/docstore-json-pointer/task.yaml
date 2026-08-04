@@ -1,0 +1,28 @@
+# feature-dev: the grading tests exercise resolve and DocStore.fetch, which
+# do not exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: docstore-json-pointer
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  docstore.py keeps named JSON-like documents (nested dicts and lists) in
+  memory, but callers can only fetch whole documents. Add JSON Pointer
+  addressing (RFC 6901) to docstore.py:
+
+  - A module-level function `resolve(document, pointer)` returning the value
+    the pointer designates inside the document. The empty pointer designates
+    the whole document; otherwise the pointer is "/"-separated reference
+    tokens, each stepping into a dict by key or into a list by zero-based
+    index. Inside a token, "~1" stands for "/" and "~0" for "~" — mind the
+    decoding order: the token "~01" means the two characters "~1", not "/".
+  - A method `DocStore.fetch(name, pointer)` resolving a pointer inside a
+    stored document.
+
+  A non-empty pointer that does not start with "/" is malformed and raises
+  ValueError, as is a list step that is not a plain base-10 integer without
+  leading zeros or a sign. A missing dict key or an index beyond the end of
+  a list raises KeyError.
+
+  Keep the existing methods and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).

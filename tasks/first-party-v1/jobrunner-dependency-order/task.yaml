@@ -1,0 +1,26 @@
+# feature-dev: the grading tests construct jobs with needs/priority and call
+# execution_order, none of which exist in repo/, so they fail on the pristine
+# repository as the lint requires.
+id: jobrunner-dependency-order
+category: feature-dev
+scale: cross-file
+language: python
+prompt: |
+  This repository is a tiny job runner: jobs.py defines Job, and runner.py
+  runs a list of jobs in the order given. Jobs need dependency ordering.
+
+  - Job gains two optional keyword arguments: `needs`, a collection of names
+    of jobs that must run first (default none), and `priority`, an integer
+    (default 0).
+  - runner.py gains `execution_order(jobs)` returning the job names in the
+    order they will run: a job never runs before something it needs, and
+    whenever several jobs are ready to run, the highest priority goes first,
+    ties broken alphabetically by name — so the order is fully deterministic.
+  - A job naming a dependency that is not in the list raises ValueError
+    naming the missing job; a dependency cycle — a job that needs itself
+    included — raises ValueError with a message containing the word "cycle".
+  - `run_all(jobs)` now runs the jobs in that computed order, still
+    returning the names in run order.
+
+  Keep the existing behaviour otherwise unchanged, and keep the modules
+  dependency-free (standard library only).

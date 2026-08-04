@@ -1,0 +1,31 @@
+# feature-dev: the grading tests render loop blocks and use the title/trim
+# filters, none of which exist in repo/, so they fail on the pristine
+# repository as the lint requires.
+id: microtemplate-for-loops
+category: feature-dev
+scale: cross-file
+language: python
+prompt: |
+  This repository is a tiny template language: template.py renders
+  "{{ name }}" placeholders from a context dict, and filters.py holds the
+  filters a placeholder can pipe its value through ("{{ name|upper }}").
+  Two additions are needed.
+
+  template.py must learn loop blocks:
+
+      {% for item in items %}...{% endfor %}
+
+  renders its body once per element of the list the context (or an
+  enclosing loop) holds under the name after "in", with the loop variable
+  available to placeholders and nested loops inside the body. Loops nest to
+  any depth. Inside the body the loop variable shadows any context entry of
+  the same name, and after the loop the outer value is visible again.
+  Looping over an empty list renders nothing. A "{% for %}" without its
+  "{% endfor %}", or an "{% endfor %}" with no loop open, raises ValueError.
+
+  filters.py needs two more filters, available to templates under these
+  names: "title" (each word capitalised, the rest of it lowered, as
+  str.title does) and "trim" (surrounding whitespace removed).
+
+  Keep existing templates rendering exactly as before, and keep the modules
+  dependency-free (standard library only).
