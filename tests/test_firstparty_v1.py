@@ -190,7 +190,7 @@ def fake_solve_ledger(workdir: Path) -> None:
 
 def overwrite_the_grading_tests(workdir: Path) -> None:
     """An agent that writes its own tests at the grading files' paths."""
-    for name in ("test_formatting_module.py", "test_ledger_behaviour.py"):
+    for name in ("test_ledger_structure.py", "test_ledger_behaviour.py"):
         (workdir / name).write_text("def test_everything_is_fine():\n    assert True\n")
 
 
@@ -455,7 +455,7 @@ def test_agent_edits_to_grading_test_files_have_no_effect() -> None:
     so rewriting them buys an agent nothing."""
     ledger = task_by_id(REFACTOR_SEED)
     tampered = workdir_diff(ledger, overwrite_the_grading_tests)
-    assert "test_formatting_module.py" in tampered  # the tamper really is in the diff
+    assert "test_ledger_structure.py" in tampered  # the tamper really is in the diff
 
     [record] = evaluate([ledger], [run_for(ledger, tampered)], source="run-log")
 

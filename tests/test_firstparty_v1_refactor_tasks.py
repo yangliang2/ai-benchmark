@@ -119,9 +119,26 @@ def test_all_ten_tasks_are_checked_in_and_annotated() -> None:
         assert task.language == "python"
         assert task.behaviour_test_paths
         assert (SOLUTIONS / task.id).is_dir()
-    # Both scales are represented, honestly per task: module splits, merges
-    # and caller updates span files; extractions inside one module do not.
+    # Both scales are represented; per-task honesty is asserted mechanically
+    # against each reference solution's diff below.
     assert {task.scale for task in tasks} == {"single-file", "cross-file"}
+
+
+@pytest.mark.parametrize("task_id", REFACTOR_TASKS)
+def test_the_scale_annotation_matches_the_reference_solution(task_id: str) -> None:
+    """Scale is honest to the canonical solution, checked the mechanical way:
+    one touched file means single-file, more than one means cross-file."""
+    task = task_by_id(task_id)
+    touched = [
+        line
+        for line in solution_diff(task).splitlines()
+        if line.startswith("diff --git ")
+    ]
+
+    if task.scale == "single-file":
+        assert len(touched) == 1
+    else:
+        assert len(touched) > 1
 
 
 def test_all_ten_tasks_lint_clean() -> None:

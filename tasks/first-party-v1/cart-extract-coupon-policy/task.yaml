@@ -13,9 +13,10 @@ prompt: |
 
   Extract that bookkeeping into a CouponPolicy class in the same file. Give
   it register(code, percent), apply(code) and percent_off() so a policy is
-  usable on its own, and have Cart hold one as `self.policy` and delegate
-  its existing coupon methods to it — the policy's state must be the only
-  coupon state, not a copy of Cart's.
+  usable on its own — constructed with no arguments, and reporting zero
+  percent off until a coupon is applied — and have Cart hold one as
+  `self.policy` and delegate its existing coupon methods to it. The policy's
+  state must be the only coupon state, not a copy of Cart's.
 
   This is a pure refactor: Cart's public interface and behaviour — add_item,
   register_coupon, apply_coupon, subtotal, discount, total, the error types

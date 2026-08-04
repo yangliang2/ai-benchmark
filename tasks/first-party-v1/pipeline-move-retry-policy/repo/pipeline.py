@@ -42,7 +42,7 @@ class Pipeline:
                 time.sleep(delay)
             try:
                 return step(value)
-            except Exception as exc:  # noqa: BLE001 - retrying is this wrapper's job
+            except Exception as exc:
                 error = exc
         raise RuntimeError(
             f"step {name!r} failed after {self.policy.attempts} attempts"

@@ -21,7 +21,7 @@ def test_entries_between_keeps_lines_inside_the_window():
     ]
 
     kept = entries_between(
-        lines, datetime(2026, 8, 4, 9, 0, 0), datetime(2026, 8, 4, 12, 0, 0)  # noqa: DTZ001
+        lines, datetime(2026, 8, 4, 9, 0, 0), datetime(2026, 8, 4, 12, 0, 0)
     )
 
     assert kept == ["INFO started", "WARN slow"]

@@ -13,7 +13,8 @@ prompt: |
   and have pipeline.py import it from there rather than defining it. After
   the change, `from retry import RetryPolicy` must work and pipeline.py must
   no longer contain the class — retry.py is where it lives, not a wrapper
-  around pipeline.py.
+  around pipeline.py. Existing callers keep importing the policy through
+  pipeline, so `from pipeline import RetryPolicy` must keep working too.
 
   This is a pure refactor: how pipelines run their steps, how often failing
   steps are retried, and how they fail must be exactly as it is today.

@@ -5,7 +5,7 @@ from datetime import datetime
 
 def parse_stamp(line):
     """The parsed timestamp of one log line, and the rest of the line."""
-    moment = datetime.strptime(line[:19], "%Y-%m-%d %H:%M:%S")  # noqa: DTZ007
+    moment = datetime.strptime(line[:19], "%Y-%m-%d %H:%M:%S")
     return moment, line[20:]
 
 
