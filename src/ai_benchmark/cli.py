@@ -19,6 +19,7 @@ from ai_benchmark.classify import (
 from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
+    RUN_TIMEOUT_S,
     evaluate,
     load_runs,
     load_tasks,
@@ -110,20 +111,20 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
     """Run the v1 eval: live (tools-enabled claude-code in a fresh workdir per
     run, workdir diffs captured into the raw run log) or replay of such a log.
     Grading is the same pipeline either way — each logged diff, by execution."""
+    if args.timeout is not None and args.timeout <= 0:
+        # Checked before anything runs: a non-positive timeout would kill
+        # every run after billing had already started.
+        raise SystemExit("error: --timeout must be a positive number of seconds")
     tasks = firstparty_v1.load_task_set(args.tasks)
     if args.live:
         log = (
             args.log
             or Path("data/first-party-v1-runs") / f"{local_today().isoformat()}.jsonl"
         )
+        # The default timeout lives on run_live alone; None means "not given".
+        timeout = {} if args.timeout is None else {"timeout_s": args.timeout}
         runs = firstparty_v1.run_live(
-            tasks,
-            args.model or DEFAULT_MODELS,
-            log,
-            timeout_s=(
-                args.timeout if args.timeout is not None
-                else firstparty_v1.RUN_TIMEOUT_S
-            ),
+            tasks, args.model or DEFAULT_MODELS, log, **timeout
         )
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
@@ -294,8 +295,7 @@ def main(argv: list[str] | None = None) -> None:
     evaluate_v1.add_argument(
         "--timeout",
         type=int,
-        help="per-run live timeout in seconds "
-        f"(default: {firstparty_v1.RUN_TIMEOUT_S})",
+        help=f"per-run live timeout in seconds (default: {RUN_TIMEOUT_S})",
     )
     evaluate_v1.set_defaults(command=_eval_v1_command)
 

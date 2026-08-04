@@ -184,6 +184,22 @@ def run_from_claude_json(
         raise IngestError(
             f"{task_id} ({model}): claude reported an error: {payload.get('result')!r}"
         )
+    if denials := payload.get("permission_denials"):
+        # The harness refused the agent a tool, whatever flags were passed:
+        # the run measured the environment, not the model, and logging it
+        # would grade that. Broken run, loud stop.
+        denied = sorted(
+            {
+                str(denial.get("tool_name", "unknown"))
+                for denial in denials
+                if isinstance(denial, dict)
+            }
+        ) or ["unknown"]
+        raise IngestError(
+            f"{task_id} ({model}): the environment denied the agent permission "
+            f"to use {', '.join(denied)} — a blocked run is a broken run, not "
+            "a verdict"
+        )
     try:
         usage = payload["usage"]
         return Run(
@@ -207,13 +223,11 @@ def run_from_claude_json(
         ) from error
 
 
-_RUN_TIMEOUT_S = 600
+RUN_TIMEOUT_S = 600
 
 
 def local_today() -> date:
-    """The local calendar date a run's as_of carries (what date.today()
-    returns), spelled through an aware datetime so the timezone handling is
-    explicit."""
+    """The local calendar date a run's as_of carries."""
     return datetime.now(UTC).astimezone().date()
 
 
@@ -240,7 +254,7 @@ def run_live(tasks: list[Task], models: list[str], log_path: Path) -> list[Run]:
             for task in tasks:
                 payload = claude_headless_json(
                     task.id, task.prompt, model, workdir,
-                    tools=False, timeout_s=_RUN_TIMEOUT_S,
+                    tools=False, timeout_s=RUN_TIMEOUT_S,
                 )
                 run = run_from_claude_json(
                     task.id, model, payload, agent_version=version, as_of=today
@@ -267,10 +281,20 @@ def claude_headless_json(
     way, so the run measures the task, not local configuration. CLI absence, a
     timeout, a non-zero exit and non-JSON output each fail loudly rather than
     logging a corrupt row.
+
+    A tools-enabled run must also be *granted* something: headless runs
+    auto-deny any tool use not allowed up front, and --setting-sources ""
+    discards user-level grants, so without explicit flags the agent is billed
+    in full while every edit is denied. acceptEdits covers file edits; Bash
+    must be allowed separately (running the repo's tests is part of realistic
+    coding work). Probed against the real CLI as the narrowest grant that
+    makes both work — notably not bypassPermissions.
     """
     command = ["claude", "-p", prompt, "--model", model, "--output-format", "json",
                "--setting-sources", ""]
-    if not tools:
+    if tools:
+        command += ["--permission-mode", "acceptEdits", "--allowedTools", "Bash"]
+    else:
         command += ["--tools", ""]
     try:
         process = subprocess.run(

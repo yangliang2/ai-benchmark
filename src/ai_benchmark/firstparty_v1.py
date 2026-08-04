@@ -63,6 +63,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
+    RUN_TIMEOUT_S,
     claude_headless_json,
     claude_version,
     local_today,
@@ -83,6 +84,10 @@ BENCHMARK = "first-party-v1"
 TASK_SPEC = "task.yaml"
 REPO_DIR = "repo"
 GRADING_DIR = "grading"
+
+# The workdir's ignore file belongs to the live runner (which writes and owns
+# it), so the loader refuses tasks that ship one of their own.
+_IGNORE_FILE = ".gitignore"
 
 GRADE_TIMEOUT_S = 300
 
@@ -256,6 +261,13 @@ def _check_task_layout(task: Task) -> None:
             "on sys.path, so these are invisible at grade time and the task can "
             "lint clean while being impossible to solve"
         )
+    if (task.repo_dir / _IGNORE_FILE).exists():
+        raise IngestError(
+            f"{task.id}: {REPO_DIR}/ ships a {_IGNORE_FILE} — the live runner "
+            "owns the workdir's ignore file and would silently replace this "
+            "one, so the agent would see a repository that differs from the "
+            "pristine one grading applies the diff to"
+        )
     if not task.grading_test_paths:
         raise IngestError(
             f"{task.id}: {GRADING_DIR}/ holds no test_*.py — a v1 task is graded "
@@ -349,8 +361,20 @@ def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
     # by walking up from the workdir. Making the workdir a repository of its own
     # stops that walk here, so a temp dir that happens to sit inside a checkout
     # cannot let a logged diff escape into it.
-    _git(task, ["init", "-q", "."], workdir)
-    _git(task, ["apply", "--whitespace=nowarn"], workdir, stdin=diff)
+    doing = "on the logged diff"
+    _git(task, ["init", "-q", "."], workdir, doing=doing)
+    _git(task, ["apply", "--whitespace=nowarn"], workdir, stdin=diff, doing=doing)
+
+
+# Every git call — grading and live capture alike — runs with the operator's
+# global and system configuration masked out. Otherwise the artifact varies
+# with the machine: a global diff.noprefix strips the a/ b/ prefixes replay's
+# `git apply` expects (silent at capture, an IngestError at grading), and a
+# core.excludesFile silently drops agent-written files from the diff.
+_GIT_ISOLATION = {
+    "GIT_CONFIG_GLOBAL": os.devnull,
+    "GIT_CONFIG_SYSTEM": os.devnull,
+}
 
 
 def _git(
@@ -360,7 +384,7 @@ def _git(
     *,
     stdin: str | None = None,
     extra_env: dict[str, str] | None = None,
-    doing: str = "on the logged diff",
+    doing: str,
 ) -> str:
     try:
         process = subprocess.run(
@@ -371,11 +395,20 @@ def _git(
             cwd=workdir,
             timeout=60,
             check=False,
-            env=(os.environ | extra_env) if extra_env else None,
+            env=os.environ | _GIT_ISOLATION | (extra_env or {}),
         )
     except (OSError, subprocess.TimeoutExpired) as error:
         raise IngestError(
             f"{task.id}: cannot run git {arguments[0]}: {error}"
+        ) from error
+    except UnicodeDecodeError as error:
+        # No NUL bytes, so git diffed it as text — but the bytes are not
+        # UTF-8, and the run log is UTF-8 JSON. Refusing loudly beats logging
+        # a row that cannot round-trip through the log.
+        raise IngestError(
+            f"{task.id}: git {arguments[0]} produced output that is not UTF-8 "
+            f"({error}) — an agent-written file is non-UTF-8 text, which a v1 "
+            "run log cannot carry"
         ) from error
     if process.returncode != 0:
         raise IngestError(
@@ -571,15 +604,12 @@ def evaluate(
 # --- live runner: tools-enabled claude-code in a fresh workdir per run ---------
 
 
-RUN_TIMEOUT_S = 600
-
-# Written into the workdir before the initial commit. A v1 agent is expected
-# to run the repo's tests, and the bytecode caches that leaves behind are
-# binary junk: not part of any solution, and (unlike a deliberate binary file,
-# which --binary capture preserves) worth keeping out of the graded artifact
-# entirely rather than dragging through every replay.
+# Written into the workdir as _IGNORE_FILE before the initial commit. A v1
+# agent is expected to run the repo's tests, and the bytecode caches that
+# leaves behind are binary junk: not part of any solution, and (unlike a
+# deliberate binary file, which --binary capture preserves) worth keeping out
+# of the graded artifact entirely rather than dragging through every replay.
 _WORKDIR_IGNORE = "__pycache__/\n*.pyc\n.pytest_cache/\n"
-_IGNORE_FILE = ".gitignore"
 
 # The initial commit must succeed on machines with no git identity configured,
 # and must not consult user config that could block it (signing, hooks).
@@ -643,6 +673,10 @@ def _run_task_live(
     base = run_from_claude_json(
         task.id, model, payload, agent_version=agent_version, as_of=as_of
     )
+    # A v1 Run is v0's fields plus the diff, and the dump keeps that coupling
+    # in one place. mypy cannot see through the **dump, but Run's
+    # extra="forbid" turns any v0 field this model does not declare into a
+    # loud runtime error rather than silent drift.
     return Run(**base.model_dump(), diff=diff)
 
 
@@ -672,8 +706,10 @@ def _capture_workdir_diff(task: Task, workdir: Path, initial: str) -> str:
 
     The ignore file is the runner's, not the agent's: it is restored before
     staging, so it can never appear in the diff (it is not in the pristine
-    repository grading applies the diff to) and deleting it cannot let cache
-    files back in.
+    repository grading applies the diff to) and deleting or editing it cannot
+    let cache files back in. Top-level only: an agent that plants a nested
+    .gitignore or edits .git/info/exclude is hiding its own work from its own
+    run — self-harm, not a capture defence's problem.
     """
     (workdir / _IGNORE_FILE).write_text(_WORKDIR_IGNORE, encoding="utf-8")
     doing = "capturing the workdir diff"

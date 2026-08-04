@@ -1,10 +1,10 @@
 """End-to-end at the command surface: ingest merges into the dataset, table reads it."""
 
 import shutil
-from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from conftest import FakeClaude
 
 from ai_benchmark.cli import main
 
@@ -146,7 +146,7 @@ def test_eval_v1_leaves_v0_records_untouched(
 
 
 def test_eval_v1_live_end_to_end(
-    fake_claude: Callable[[str], Path], tmp_path: Path,
+    fake_claude: FakeClaude, tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Live v1 at the command surface, against a faked claude CLI: the fake
@@ -176,6 +176,16 @@ def test_eval_v1_live_end_to_end(
 
     main(["table", "--data", str(data)])
     assert "first-party-v1" in capsys.readouterr().out
+
+
+def test_eval_v1_rejects_a_non_positive_timeout(tmp_path: Path) -> None:
+    """Validated before anything runs: a zero timeout would otherwise kill
+    every run after billing had already started."""
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+    with pytest.raises(SystemExit, match="timeout"):
+        main(["eval-v1", "--tasks", str(tasks), "--live", "--timeout", "0",
+              "--data", str(tmp_path / "unified.jsonl")])
 
 
 def test_eval_v1_replay_rejects_live_only_flags(

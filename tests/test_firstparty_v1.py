@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from conftest import FakeClaude
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import load_runs as load_v0_runs
@@ -393,6 +394,17 @@ def test_a_repo_package_named_after_the_stdlib_fails_loudly(tmp_path: Path) -> N
         load_task_set(tmp_path)
 
 
+def test_a_task_shipping_its_own_gitignore_fails_loudly(tmp_path: Path) -> None:
+    """The live runner owns the workdir's .gitignore and would silently
+    replace a task-shipped one — the agent would then work in a repository
+    that differs from the pristine one grading applies the diff to."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    (task_dir / "repo" / ".gitignore").write_text("*.tmp\n")
+
+    with pytest.raises(IngestError, match="gitignore"):
+        load_task_set(tmp_path)
+
+
 def test_refactor_task_without_behaviour_tests_fails_loudly(tmp_path: Path) -> None:
     task_dir = clone_seed(tmp_path, REFACTOR_SEED, REFACTOR_SEED)
     retitle(task_dir, grading={"behaviour_tests": []})
@@ -728,7 +740,25 @@ if model == "claude-sonnet-5":
         source.write({SOLUTION!r})
 {PYTEST_DROPPINGS}"""
 
-FakeClaude = Callable[[str], Path]
+# A cross-file solution whose new file is what a hostile ignore rule would
+# silently drop: the tests for capture completeness hinge on ordering.py
+# being an *added* file, not an edit to a tracked one.
+NEW_FILE_SOLUTION = (
+    "\n\nfrom ordering import by_frequency\n\n\n"
+    "def top_words(text, n):\n"
+    "    return by_frequency(word_counts(text))[:n]\n"
+)
+ORDERING_MODULE = (
+    '"""Ordering helpers for word counts."""\n\n\n'
+    "def by_frequency(counts):\n"
+    "    return sorted(counts, key=lambda word: (-counts[word], word))\n"
+)
+
+SOLVE_WITH_NEW_FILE_ACT = f"""\
+with open(workdir / "wordcount.py", "a") as source:
+    source.write({NEW_FILE_SOLUTION!r})
+(workdir / "ordering.py").write_text({ORDERING_MODULE!r})
+"""
 
 
 def test_live_runs_append_replayable_rows_with_exact_measurements(
@@ -771,11 +801,15 @@ def test_live_runs_append_replayable_rows_with_exact_measurements(
     assert graded == {"claude-sonnet-5": 1.0, "claude-haiku-4-5": 0.0}
 
 
-def test_live_runs_enable_tools_and_disable_setting_sources(
+def test_live_runs_grant_edits_and_bash_but_not_setting_sources(
     fake_claude: FakeClaude, tmp_path: Path,
 ) -> None:
-    """v1 runs are genuinely multi-turn: tools stay on (no --tools ""), while
-    setting sources stay off so the run measures the task, not local config."""
+    """v1 runs are genuinely multi-turn: tools stay on (no --tools ""), and —
+    because headless runs auto-deny whatever was not granted up front, while
+    --setting-sources "" discards any user-level grants — the runner must
+    itself grant file edits and shell commands, or the agent is billed in
+    full and every edit is denied. Probed against the real CLI: acceptEdits
+    alone still denies Bash, so both flags are load-bearing."""
     argv_log = fake_claude("")
     wordcount = task_by_id(FEATURE_SEED)
 
@@ -784,7 +818,131 @@ def test_live_runs_enable_tools_and_disable_setting_sources(
     [argv] = [json.loads(line) for line in argv_log.read_text().splitlines()]
     assert "--tools" not in argv
     assert argv[argv.index("--setting-sources") + 1] == ""
+    assert argv[argv.index("--permission-mode") + 1] == "acceptEdits"
+    assert argv[argv.index("--allowedTools") + 1] == "Bash"
     assert argv[argv.index("-p") + 1] == wordcount.prompt
+
+
+def test_a_run_the_environment_blocked_fails_loudly_not_as_a_verdict(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """A payload reporting permission denials means the harness, not the
+    model, decided the outcome — logging it would grade the environment.
+    The row is not written: a blocked run is a broken run, not a 0.0."""
+    fake_claude(
+        SOLVE_AS_SONNET_ACT
+        + 'denials.append({"tool_name": "Bash",'
+        ' "tool_use_id": "toolu_01Xy",'
+        ' "tool_input": {"command": "pytest -q"}})\n'
+    )
+    log = tmp_path / "runs.jsonl"
+
+    with pytest.raises(IngestError, match="Bash"):
+        run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log)
+
+    assert load_runs(log) == []
+
+
+def test_capture_is_immune_to_hostile_operator_git_config(
+    fake_claude: FakeClaude, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The graded artifact must not vary with the operator's machine:
+    diff.noprefix strips the a/ b/ prefixes replay's git apply expects
+    (silent at capture, explodes at grading), and core.excludesFile silently
+    drops agent-written files from the diff. Both neutralised."""
+    excludes = tmp_path / "hostile-excludes"
+    excludes.write_text("*.py\n")
+    hostile = tmp_path / "hostile-gitconfig"
+    hostile.write_text(
+        f"[diff]\n\tnoprefix = true\n[core]\n\texcludesFile = {excludes}\n"
+    )
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(hostile))
+    monkeypatch.setenv("GIT_CONFIG_SYSTEM", str(hostile))
+    fake_claude(SOLVE_WITH_NEW_FILE_ACT)
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+
+    assert "diff --git a/" in run.diff  # noprefix did not shape the artifact
+    assert "ordering.py" in run.diff  # excludesFile did not drop the new file
+    [record] = evaluate([wordcount], [run], source=str(log))
+    assert record.quality_value == 1.0
+
+
+def test_an_agent_file_that_is_not_utf8_fails_loudly(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """Latin-1 text has no NUL bytes, so git diffs it as text and the capture
+    cannot decode it. v1 run logs are UTF-8 JSON; rather than logging a row
+    that cannot round-trip, the run fails loudly and attributably."""
+    fake_claude(r'(workdir / "notes.txt").write_bytes(b"caf\xe9\n")' + "\n")
+
+    with pytest.raises(IngestError, match="UTF-8"):
+        run_live(
+            [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"],
+            tmp_path / "runs.jsonl",
+        )
+
+
+def test_a_file_the_agent_deleted_is_captured_and_applies_at_replay(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    fake_claude(SOLVE_AS_SONNET_ACT + '(workdir / "README.md").unlink()\n')
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+
+    assert "deleted file mode" in run.diff
+    [record] = evaluate([wordcount], [run], source=str(log))
+    assert record.quality_value == 1.0
+
+
+def test_edits_the_agent_committed_mid_run_are_still_captured(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """The capture diffs against the recorded initial commit, not HEAD: an
+    agent that commits part-way and keeps editing loses nothing."""
+    fake_claude(
+        SOLVE_AS_SONNET_ACT
+        + "import subprocess\n"
+        + 'agent_git = ["git", "-c", "user.email=agent@x", "-c",'
+        ' "user.name=agent"]\n'
+        + 'subprocess.run([*agent_git, "add", "-A"], check=True)\n'
+        + 'subprocess.run([*agent_git, "commit", "-qm", "wip"], check=True)\n'
+        + '(workdir / "notes.md").write_text("still experimenting")\n'
+    )
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+
+    assert "top_words" in run.diff  # the committed edit
+    assert "notes.md" in run.diff  # the edit after the commit
+    [record] = evaluate([wordcount], [run], source=str(log))
+    assert record.quality_value == 1.0
+
+
+def test_an_agent_modified_ignore_file_is_neutralised(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """Appending *.py to the runner's .gitignore would silently drop an added
+    solution file from the capture; the restore before staging prevents it."""
+    fake_claude(
+        'with open(workdir / ".gitignore", "a") as ignore:\n'
+        '    ignore.write("*.py\\n")\n'
+        + SOLVE_WITH_NEW_FILE_ACT
+    )
+    wordcount = task_by_id(FEATURE_SEED)
+    log = tmp_path / "runs.jsonl"
+
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+
+    assert ".gitignore" not in run.diff
+    assert "ordering.py" in run.diff
+    [record] = evaluate([wordcount], [run], source=str(log))
+    assert record.quality_value == 1.0
 
 
 def test_a_sweep_that_dies_mid_way_keeps_the_rows_already_paid_for(
