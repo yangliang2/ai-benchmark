@@ -1,0 +1,24 @@
+# feature-dev: the grading tests import the discounts module and call
+# Cart.apply/Cart.total, none of which exist in repo/, so they fail on the
+# pristine repository as the lint requires.
+id: checkout-discount-codes
+category: feature-dev
+scale: cross-file
+language: python
+prompt: |
+  The shop's cart (cart.py, prices in whole cents from catalog.py) needs
+  discount codes at checkout.
+
+  Define the codes in a new module, discounts.py, with a function
+  `available_codes()` returning the sorted list of known codes. The launch
+  codes: SAVE10 and SAVE25 take 10% and 25% off the subtotal, and TENOFF
+  takes a flat 1000 cents off.
+
+  Extend Cart with `apply(code)` and `total()`. Applying an unknown code, or
+  the same code a second time, raises ValueError. `total()` starts from the
+  subtotal, applies percentage codes first — their percentages add up, and
+  the combined deduction is rounded down to a whole cent — then flat codes,
+  and never goes below zero. A cart with no codes applied totals its
+  subtotal.
+
+  Keep the existing behaviour unchanged and everything standard-library only.
