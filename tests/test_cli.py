@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from conftest import FakeClaude
 
+from ai_benchmark import firstparty_v1
 from ai_benchmark.cli import main
 
 
@@ -208,11 +209,15 @@ def test_eval_v1_replay_rejects_live_only_flags(
 def test_lint_v1_passes_on_the_checked_in_task_set(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Every checked-in task, however many there are by now: the count is
+    read from the task set rather than pinned, so authoring a new task does
+    not have to touch this test."""
     tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    checked_in = len(firstparty_v1.load_task_set(tasks))
 
     main(["lint-v1", "--tasks", str(tasks)])
 
-    assert "2 task(s)" in capsys.readouterr().out
+    assert f"lint clean: {checked_in} task(s)" in capsys.readouterr().out
 
 
 def test_lint_v1_exits_non_zero_on_a_broken_task(tmp_path: Path) -> None:

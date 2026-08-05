@@ -1,0 +1,40 @@
+# K1 family settings-merge-layers, level 2 of 3: the change is described
+# rather than specified — the decisions are derivable from the description
+# plus the module, but none is handed over as a criterion. The repo, the
+# grading suite and the reference solution are identical across the three
+# variants — the prompt is the only thing that varies.
+#
+# feature-dev: the grading tests exercise merged, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: settings-merge-layers-l2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small layered-settings module in settings.py.
+
+  Applications built on it assemble their configuration in layers: packaged
+  defaults first, then a config file, then environment overrides. Add a
+  function `merged(layers)` to settings.py that collapses such a sequence,
+  ordered from least to most specific, into the single settings mapping the
+  application should actually use.
+
+  Overriding one leaf of a section must not cost that section's other
+  leaves, however deeply the section is nested — but a section and a plain
+  value are different kinds of thing, and a later one of either simply takes
+  the place of the earlier. Whatever the module already does to the mappings
+  it is handed, `merged` should do too.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: description
+  family: settings-merge-layers
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the merge semantics are described in prose and only have to be turned
+      into code, and the one decision left out — copy-on-write — is the
+      convention the module docstring and set_value already announce

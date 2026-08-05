@@ -25,6 +25,7 @@ from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import load_runs as load_v0_runs
 from ai_benchmark.firstparty import local_today
 from ai_benchmark.firstparty_v1 import (
+    BASELINE_TASK_IDS,
     BENCHMARK,
     Task,
     evaluate,
@@ -453,8 +454,12 @@ def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
 
 def test_the_baseline_tasks_declare_no_construction() -> None:
     """Absence of the block is what makes the 22 pre-experiment tasks
-    zero-knob baseline controls; reconciliation reads them that way."""
-    assert all(task.construction is None for task in load_task_set(TASKS))
+    zero-knob baseline controls; reconciliation reads them that way, so
+    nothing may quietly give one of them a knob."""
+    baseline = [t for t in load_task_set(TASKS) if t.id in BASELINE_TASK_IDS]
+
+    assert len(baseline) == len(BASELINE_TASK_IDS)
+    assert all(task.construction is None for task in baseline)
 
 
 def test_an_unknown_knob_id_fails_loudly(tmp_path: Path) -> None:

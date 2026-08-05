@@ -1,0 +1,47 @@
+# K1 family settings-merge-layers, level 1 of 3: every decision the change
+# turns on is stated as an acceptance criterion, so nothing has to be
+# inferred from the repository. The repo, the grading suite and the reference
+# solution are identical across the three variants — the prompt is the only
+# thing that varies.
+#
+# feature-dev: the grading tests exercise merged, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: settings-merge-layers-l1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small layered-settings module in settings.py.
+
+  Add a function `merged(layers)` to settings.py that combines an ordered
+  sequence of settings mappings into the one mapping they add up to. It must
+  satisfy all of the following:
+
+  - `merged([])` is `{}`.
+  - A key more than one layer sets takes the value from the last layer that
+    sets it; a key only one layer sets is kept as it is.
+  - When a key holds a mapping both in the settings accumulated so far and in
+    the layer being applied, the two are merged key by key rather than one
+    replacing the other, and that holds at every depth.
+  - When a key holds a mapping on one side and something else on the other,
+    the later value replaces the earlier one outright. Lists are values, not
+    sections: they replace, and are never concatenated or merged
+    element-wise.
+  - No layer is modified, and no mapping inside the returned settings is one
+    a layer still holds: assigning into a section of the result, at any
+    depth, must leave every layer exactly as it was. This holds when there is
+    only one layer too.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+  family: settings-merge-layers
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated as an acceptance criterion, leaving
+      transcription rather than design — the level the solved baseline
+      feature-dev tasks are written at

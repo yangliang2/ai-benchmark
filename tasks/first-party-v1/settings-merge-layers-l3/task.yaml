@@ -1,0 +1,38 @@
+# K1 family settings-merge-layers, level 3 of 3: the intent and the gap are
+# stated, and nothing else. The signature is named because grading has to be
+# able to call the function at all; every decision behind it — recursive
+# section merge, sections against values, copy-on-write — has to be inferred
+# from the module. The repo, the grading suite and the reference solution are
+# identical across the three variants — the prompt is the only thing that
+# varies.
+#
+# feature-dev: the grading tests exercise merged, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: settings-merge-layers-l3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small layered-settings module in settings.py.
+
+  Applications built on it assemble their configuration in layers: packaged
+  defaults first, then a config file, then environment overrides. What they
+  need from the module and cannot get today is the single effective settings
+  mapping those layers add up to.
+
+  Add a function `merged(layers)` to settings.py that closes that gap,
+  taking the layers in order from least to most specific.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: intent
+  family: settings-merge-layers
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      nothing about the merge is stated, so recursive section merge,
+      list replacement and copy-on-write all have to be read off the module,
+      and a shallow dict update is the natural first answer
