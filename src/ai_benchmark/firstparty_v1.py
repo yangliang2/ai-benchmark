@@ -888,10 +888,13 @@ def _pair_problems(tasks: list[Task]) -> list[str]:
 
     A pair id records that two tasks are meant to be read against each other —
     a planted crux and the control built beside it. Exactly two, because "the
-    pair" names nothing once a third task joins it; and starting from the same
+    pair" names nothing once a third task joins it; starting from the same
     repository, because a control pitched on different terrain controls for
-    the terrain as well as for the knob. Nothing else is asked of it: the
-    levels the two declare are the knob's business, not the grouping's.
+    the terrain as well as for the knob; and classified the same way, because
+    records inherit the task's annotations, so a pair that disagrees about
+    them is read across capability-matrix cells that are never compared.
+    Nothing else is asked of it: the levels the two declare are the knob's
+    business, not the grouping's.
     """
     paired: dict[str, list[Task]] = {}
     for task in tasks:
@@ -909,6 +912,18 @@ def _pair_problems(tasks: list[Task]) -> list[str]:
             )
             continue
         one, other = sorted(members, key=lambda task: task.id)
+        held, variant = _annotations(one), _annotations(other)
+        divergence = next(
+            (field for field, value in held.items() if variant[field] != value), None
+        )
+        if divergence is not None:
+            problems.append(
+                f"pair {pair!r} does not hold {divergence} constant: {one.id} "
+                f"declares {held[divergence]!r} and {other.id} declares "
+                f"{variant[divergence]!r} — a crux task and its control are one "
+                "reading, so they belong in one capability-matrix cell"
+            )
+            continue
         if _tree_bytes(one.repo_dir) != _tree_bytes(other.repo_dir):
             problems.append(
                 f"pair {pair!r} members {ids} do not start from the same "

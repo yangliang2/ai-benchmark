@@ -36,8 +36,8 @@ NAMES = sorted(QUEUES)
 
 def given(name):
     """One set of tracks, handed over as a copy of its own, so that a
-    solution working through the sequence it was given is graded on the queue
-    it built rather than on what it had left over."""
+    solution which works through the sequence it was given and consumes it
+    fails the one test that rule has and not the ones about something else."""
     return list(QUEUES[name])
 
 
@@ -52,6 +52,15 @@ def test_no_artist_is_heard_twice_in_a_row(name):
 
     for earlier, later in zip(played, played[1:]):
         assert earlier.artist != later.artist
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_the_tracks_the_caller_passed_in_are_left_alone(name):
+    tracks = given(name)
+
+    spread(tracks)
+
+    assert tracks == QUEUES[name]
 
 
 def test_an_artist_holding_more_than_half_the_queue_is_refused():

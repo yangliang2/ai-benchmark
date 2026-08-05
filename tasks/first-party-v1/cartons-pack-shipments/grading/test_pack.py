@@ -42,8 +42,8 @@ def packed(name):
     """The cartons `pack` produces for one shipment, as plain lists.
 
     The shipment is handed over as a copy of its own, so that a solution
-    working through the sequence it was given is graded on what it packed
-    rather than on what it had left over.
+    which works through the sequence it was given and consumes it fails the
+    one test that rule has and not the ones about something else.
     """
     return [list(carton) for carton in pack(list(SHIPMENTS[name]), CAPACITY)]
 
@@ -66,6 +66,15 @@ def test_no_two_cartons_could_have_travelled_as_one(name):
     weighs nothing and so could always have travelled with another."""
     for one, another in combinations(packed(name), 2):
         assert weighed(one) + weighed(another) > CAPACITY
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_the_shipment_the_caller_passed_in_is_left_alone(name):
+    shipment = list(SHIPMENTS[name])
+
+    pack(shipment, CAPACITY)
+
+    assert shipment == SHIPMENTS[name]
 
 
 def test_an_item_heavier_than_the_capacity_is_refused():

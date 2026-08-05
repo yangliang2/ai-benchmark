@@ -1230,6 +1230,21 @@ def test_lint_rejects_a_pair_starting_from_different_repositories(
     assert "crux-and-control" in problem and "repo/" in problem
 
 
+def test_lint_rejects_a_pair_whose_members_declare_different_scales(
+    tmp_path: Path,
+) -> None:
+    """The same terrain is not enough if the two classify themselves apart:
+    records inherit the task's annotations, so a crux task and its control
+    that disagree are compared across cells that never meet."""
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+    retitle(tmp_path / "control-task", scale="cross-file")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "crux-and-control" in problem and "scale" in problem
+    assert "control-task" in problem and "crux-task" in problem
+
+
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----
 
 
