@@ -6,7 +6,7 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
-from ai_benchmark import firstparty_v1
+from ai_benchmark import firstparty_v1, reconcile_v1
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.classify import (
     Label,
@@ -49,6 +49,7 @@ from ai_benchmark.swebench import ingest_swebench
 DEFAULT_DATA = Path("data/unified.jsonl")
 DEFAULT_CACHE = Path("data/classification-cache.json")
 DEFAULT_INSTANCES = Path("data/instance-context.json")
+DEFAULT_V1_RUNS = Path("data/first-party-v1-runs")
 
 
 def _merge_into(new: list[Record], data: Path) -> None:
@@ -144,6 +145,22 @@ def _lint_v1_command(args: argparse.Namespace) -> None:
     if problems := firstparty_v1.lint_task_set(tasks):
         raise SystemExit("\n".join([f"error: {problem}" for problem in problems]))
     print(f"lint clean: {len(tasks)} task(s) in {args.tasks}")
+
+
+def _reconcile_v1_command(args: argparse.Namespace) -> None:
+    """Report what the task set predicted against what the sweeps did.
+
+    Reads the raw run logs and the task set, and writes nothing: no record is
+    merged, no log is appended to. Verdicts come from replaying each logged
+    diff against its task's held-out tests — the same computation eval-v1
+    --replay does, and the only way a rung is derivable from a log at all,
+    since a run-log row carries the diff but no verdict. No agent, no LLM and
+    no network are involved, so the report stays recomputable from checked-in
+    artifacts by this one command.
+    """
+    tasks = firstparty_v1.load_task_set(args.tasks)
+    logs = reconcile_v1.collect_logs(args.replay or [DEFAULT_V1_RUNS])
+    print(reconcile_v1.reconcile(tasks, args.tasks, logs))
 
 
 def _report_command(args: argparse.Namespace) -> None:
@@ -306,6 +323,33 @@ def main(argv: list[str] | None = None) -> None:
     )
     lint_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
     lint_v1.set_defaults(command=_lint_v1_command)
+
+    reconcile_v1_parser = subcommands.add_parser(
+        "reconcile-v1",
+        help="report the v1 task set's pre-registered difficulty predictions "
+        "against what the sweeps did: hit-rate, per-knob/per-level grouping "
+        "against the zero-knob baseline, family ladders, crux/control pairs "
+        "and no-separation flags",
+        description=(
+            "Read the raw run logs and the task set, and report predictions "
+            "against outcomes. Writes nothing: no record is merged and no log "
+            "is appended to. A run-log row carries the workdir diff but no "
+            "verdict, so the observed rungs are obtained by replaying each "
+            "logged diff against its task's held-out grading tests — the same "
+            "computation `eval-v1 --replay` performs, with no agent, no LLM "
+            "and no network, which is what keeps every number here "
+            "recomputable from checked-in artifacts by this one command."
+        ),
+    )
+    reconcile_v1_parser.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    reconcile_v1_parser.add_argument(
+        "--replay",
+        type=Path,
+        action="append",
+        help="a raw run log, or a directory of them (repeatable; default: "
+        f"{DEFAULT_V1_RUNS})",
+    )
+    reconcile_v1_parser.set_defaults(command=_reconcile_v1_command)
 
     report = subcommands.add_parser(
         "report",
