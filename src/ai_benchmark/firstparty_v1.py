@@ -139,7 +139,12 @@ KNOB_LEVELS: dict[str, tuple[str, ...]] = {
     "K6": (),  # haunted areas
     "K7": (),  # invariant density
     "K8": ("covered", "partial", "bare", "misleading"),  # safety-net quality
-    "K9": (),  # crux depth
+    # Crux depth. The note enumerates this one in the same breath as it names
+    # it — "exactly one inventive decision, rest mechanical; zero-crux
+    # controls" — so the two levels are its own, not a vocabulary invented
+    # here: `none` is a control whose every decision is stated or derivable,
+    # `single` plants exactly one decision that is neither.
+    "K9": ("none", "single"),
     "K10": (),  # coordination width
     "K11": (),  # detection distance
 }
