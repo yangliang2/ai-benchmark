@@ -1,7 +1,12 @@
-# feature-dev with K7 at dense, on a vendored pysm snapshot carried over
-# unmodified: the invariant density this task is pitched on is the library's
-# own, so the modifications list below is empty. The edit itself is a couple
-# of lines, and it lands in the middle of the statechart contracts — the exit
+# feature-dev with K7 at dense, on a vendored pysm snapshot carrying no
+# knob-setting edit: the invariant density this task is pitched on is the
+# library's own, so the modifications list below is empty. Empty is not the
+# same as untouched — what was left out of all three snapshots for reasons
+# answering to no knob is recorded in
+# docs/research/substrate-candidate-repos.md, down to the two
+# MicroPython-fallback import tests dropped for reaching for pysm/pysm.py
+# through the upstream test/ layout. The edit itself is a couple of lines,
+# and it lands in the middle of the statechart contracts — the exit
 # walk up the hierarchy, the state_stack push, the reset that decides where an
 # entry path starts, leaf_state agreeing with the stack — none of which the
 # prompt restates and all of which the held-out tests check.
@@ -45,7 +50,9 @@ construction:
       _exit_states, four frames away from the constructor keyword, and
       _enter_states rebuilds its path by descending through .state, so an
       implementation that remembers the substate anywhere else has to restore
-      it before that descent or resume at the wrong leaf
+      it before that descent or resume at the wrong leaf; unlike the two
+      refactor tasks on this snapshot, nothing here can be recognised —
+      upstream pysm has no history feature, so the read set has to be read
   substrate:
     origin: https://github.com/pgularski/pysm
     commit: 0c47a5067974951c75a498ee4ed025cf881f48fd

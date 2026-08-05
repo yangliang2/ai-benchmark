@@ -854,8 +854,9 @@ class StateMachine(State):
         '''Move to the leaf state on top of the history, and return it.
 
         Returns `None` and moves nothing when there is no history to go back
-        to. The history itself is left alone: what the two public methods do
-        with `leaf_state_stack` afterwards is their own business.
+        to. It pops nothing off `leaf_state_stack` — it goes through
+        `_exit_states`, which pushes one entry on the way — so what each
+        public method takes off afterwards is its own business.
 
         '''
         if event is not None:

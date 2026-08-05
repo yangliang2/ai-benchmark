@@ -111,6 +111,28 @@ def test_after_sees_the_arrival_state_across_two_levels_too():
     assert seen == {"before": fixture.typing, "after": fixture.away}
 
 
+def test_after_sees_the_leaf_when_the_target_is_a_composite_state():
+    """The target of a transition need not be the state the machine ends up
+    in: naming a composite state means the entry path keeps descending to its
+    substate, and `after` runs at the end of that descent. So what it is
+    handed is the leaf arrived at, not the state the transition names.
+    """
+    fixture = machine()
+    seen = {}
+    fixture.root.add_transition(fixture.work, fixture.away, events=["leave"])
+    fixture.root.add_transition(
+        fixture.away, fixture.work, events=["back"],
+        after=lambda state, event: seen.setdefault("after", state),
+    )
+    fixture.root.initialize()
+
+    fixture.root.dispatch(Event("leave"))
+    fixture.root.dispatch(Event("back"))
+
+    assert seen == {"after": fixture.typing}
+    assert fixture.root.leaf_state is fixture.typing
+
+
 def test_exit_and_entry_handlers_walk_the_hierarchy():
     fixture = machine()
     seen = []

@@ -19,9 +19,14 @@ asserted to keep the repository green *and* to satisfy every structural
 assertion before it is asserted to grade 0.0, because a net that caught the
 mistake would say nothing about K8.
 
-The third sets K7 — invariant density — and its snapshot is carried over
-unmodified, so its modifications list is empty on purpose: the density it is
-pitched on is the library's own.
+The third sets K7 — invariant density — and its snapshot carries no
+knob-setting edit, so its modifications list is empty on purpose: the density
+it is pitched on is the library's own. Empty is not the same as untouched:
+what was left out of all three snapshots for reasons answering to no knob —
+down to the two MicroPython-fallback import tests that reach for `pysm/pysm.py`
+through the upstream `test/` layout — is recorded in
+`docs/research/substrate-candidate-repos.md`, because `modifications` is not
+the place for it.
 
 Every task is also probed with an answer that solves the same prompt
 differently and must grade 1.0, so the structural assertions describe the

@@ -21,11 +21,20 @@ class Fixture(NamedTuple):
     away: State
 
 
-def machine(history):
+NOT_ASKED_FOR = object()
+
+
+def machine(history=NOT_ASKED_FOR):
     """root -> {work -> {typing, reviewing}, away}, with work optionally
-    remembering which substate it was in."""
+    remembering which substate it was in. Called with no argument, the keyword
+    is not passed at all — the way every machine already in the wild is built.
+    """
     root = StateMachine("root")
-    work = StateMachine("work", history=history)
+    work = (
+        StateMachine("work")
+        if history is NOT_ASKED_FOR
+        else StateMachine("work", history=history)
+    )
     typing, reviewing, away = State("typing"), State("reviewing"), State("away")
     work.add_state(typing, initial=True)
     work.add_state(reviewing)
@@ -59,10 +68,26 @@ def test_a_machine_without_history_starts_from_its_initial_substate_again():
 
 
 def test_history_is_off_unless_it_is_asked_for():
-    """The keyword defaults to False, so every machine in the wild keeps the
-    behaviour it has today without being touched."""
-    assert StateMachine("plain").history is False
-    assert StateMachine("remembering", history=True).history is True
+    """The keyword defaults to off, so every machine in the wild keeps the
+    behaviour it has today without being touched: built without asking for
+    history, `work` resets to its initial substate on the way out and the
+    entry path back in stops at that one, exactly as it does today.
+    """
+    fixture = machine()
+    seen = []
+    for state in fixture:
+        state.handlers = {
+            "enter": lambda held, event, name=state.name: seen.append(name),
+        }
+
+    fixture.root.dispatch(Event("review"))
+    del seen[:]
+    fixture.root.dispatch(Event("leave"))
+    fixture.root.dispatch(Event("back"))
+
+    assert seen == ["away", "work", "typing"]
+    assert fixture.root.leaf_state is fixture.typing
+    assert fixture.work.state is fixture.typing
 
 
 def test_a_history_machine_not_yet_entered_starts_at_its_initial_state():

@@ -39,7 +39,10 @@ construction:
       the repo's own tests are green and thorough-looking, and after both
       deletions not one of them checks which state a transition callback is
       handed, so passing leaf_state_before to after — the argument already in
-      hand — reads as tidying and the visible suite never objects
+      hand — reads as tidying and the visible suite never objects. pysm's
+      core is decade-old public MIT code models may well have seen, so
+      dispatch may be recognised rather than read; what is graded here is the
+      contract inside it, which is the part no visible test states
   substrate:
     origin: https://github.com/pgularski/pysm
     commit: 0c47a5067974951c75a498ee4ed025cf881f48fd

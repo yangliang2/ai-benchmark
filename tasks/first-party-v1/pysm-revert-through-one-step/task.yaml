@@ -22,9 +22,9 @@ prompt: |
 
   It moves to the leaf state on top of the history and returns that state,
   or returns None and moves nothing when there is no history to go back to.
-  It leaves leaf_state_stack alone. Each public method then becomes that call
-  plus whatever bookkeeping is its own, and revert_to_previous_leaf_state no
-  longer goes through set_previous_leaf_state.
+  Each public method then becomes that call plus whatever bookkeeping is its
+  own, and revert_to_previous_leaf_state no longer goes through
+  set_previous_leaf_state.
 
   This is a pure refactor: what either method does to the machine and to the
   history stack must be exactly what it does today.
@@ -41,8 +41,13 @@ construction:
       after both deletions no visible test exercises revert at all, so the
       suite stays green whatever the new step does to the stack, and the
       count that has to survive the move is the least obvious thing in the
-      method — one pop per state reverted is the reading the prompt's own
-      wording invites, and only the held-out tests ever say otherwise
+      method — two pops for one state reverted only reads as right once you
+      have noticed that _exit_states pushes an entry on the way through, so
+      one pop per state reverted is the count a careful reading still lands
+      on, and only the held-out tests ever say otherwise. pysm's core is
+      decade-old public MIT code models may well have seen, though what
+      training would have shown them is the double pop as it stands, not the
+      split this asks for
   substrate:
     origin: https://github.com/pgularski/pysm
     commit: 0c47a5067974951c75a498ee4ed025cf881f48fd

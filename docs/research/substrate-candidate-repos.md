@@ -332,7 +332,8 @@ was left out of the snapshot in the first place.
 `pytest` in the workdir then finds the package without a `conftest.py` putting
 the root on `sys.path`, and a top-level `test/` would sit next to a
 standard-library package name in a tree that grading keeps *behind* the
-standard library.
+standard library. Upstream's `conftest.py` was dropped for that first reason:
+the flattened layout is what makes it unnecessary, not packaging hygiene.
 
 **Kept:** `pysm/*.py` (all six modules — stdlib-only, verified import by
 import), `LICENSE`, `README.rst`, and 12 of the 14 upstream `test_*.py` files.
@@ -340,8 +341,8 @@ import), `LICENSE`, `README.rst`, and 12 of the 14 upstream `test_*.py` files.
 **Dropped, and why — none of it knob-motivated:**
 
 - `.git`, `.github/`, `docs/`, `examples/`, `setup.py`, `setup.cfg`,
-  `.pylintrc`, `.readthedocs.yaml`, `CHANGELOG.md`, `conftest.py` — VCS
-  metadata, CI, and packaging.
+  `.pylintrc`, `.readthedocs.yaml`, `CHANGELOG.md` — VCS metadata, CI, and
+  packaging. (`conftest.py` went too, for the layout reason above.)
 - `pysm/*.pyi` and `pysm/py.typed` — typing metadata, not needed to run, and
   keeping them would make every reference solution a cross-file diff for
   stub-only reasons.
