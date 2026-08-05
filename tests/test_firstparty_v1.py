@@ -1,10 +1,10 @@
 """Dataset-seam tests for first-party v1: the checked-in task set plus a raw
 run log carrying workdir diffs in, execution-verified records out.
 
-Diffs are built the way the live runner (#11) will build them — copy the
-pristine repo, git init + commit, edit, `git add -A && git diff --cached` —
-so the grader is exercised against genuine patches (added, modified and
-deleted files), not hand-written hunks that could drift from git's output.
+Diffs are built by v1_tasks.workdir_diff, the way the live runner (#11)
+builds them, so the grader is exercised against genuine patches (added,
+modified and deleted files) rather than hand-written hunks that could drift
+from git's output.
 """
 
 import json
@@ -12,20 +12,19 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
-from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
 import pytest
 import yaml
 from conftest import FakeClaude
+from v1_tasks import TASKS, run_for, task_by_id, workdir_diff
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import load_runs as load_v0_runs
 from ai_benchmark.firstparty import local_today
 from ai_benchmark.firstparty_v1 import (
     BENCHMARK,
-    Run,
     Task,
     evaluate,
     lint_task_set,
@@ -33,8 +32,6 @@ from ai_benchmark.firstparty_v1 import (
     load_task_set,
     run_live,
 )
-
-TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
 
 FEATURE_SEED = "wordcount-top-words"
 REFACTOR_SEED = "ledger-split-formatting"
@@ -52,47 +49,6 @@ def retitle(task_dir: Path, **fields: object) -> None:
     spec = yaml.safe_load((task_dir / "task.yaml").read_text())
     spec.update(fields)
     (task_dir / "task.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
-
-
-def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
-    """The diff a run would log: pristine repo, edited, captured against the
-    initial commit exactly as the live runner will capture it."""
-    git = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
-    with tempfile.TemporaryDirectory(prefix="ai-bench-test-") as name:
-        workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
-        subprocess.run([*git, "init", "-q", "."], cwd=workdir, check=True)
-        subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
-        subprocess.run([*git, "commit", "-qm", "pristine"], cwd=workdir, check=True)
-        edit(workdir)
-        subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
-        return subprocess.run(
-            [*git, "diff", "--cached"], cwd=workdir, capture_output=True, text=True,
-            check=True,
-        ).stdout
-
-
-def run_for(task: Task, diff: str, *, model: str = "claude-sonnet-5") -> Run:
-    """A raw run-log row for one task, carrying the workdir diff it produced."""
-    return Run(
-        task_id=task.id,
-        agent="claude-code",
-        agent_version="2.1.220",
-        model=model,
-        output="done",
-        diff=diff,
-        tokens_in=41000,
-        tokens_out=1500,
-        cost_usd=0.21,
-        latency_s=64.5,
-        turns=7,
-        as_of=date(2026, 8, 4),
-    )
-
-
-def task_by_id(task_id: str) -> Task:
-    [task] = [t for t in load_task_set(TASKS) if t.id == task_id]
-    return task
 
 
 def append(path: Path, source: str) -> None:

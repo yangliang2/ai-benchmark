@@ -13,27 +13,20 @@ agent, and the loader — which reads tasks/first-party-v1/ alone — never sees
 it either.
 """
 
-import shutil
-import subprocess
-import tempfile
 from collections.abc import Callable
-from datetime import date
 from pathlib import Path
 
 import pytest
+from v1_tasks import SOLUTIONS, TASKS, run_for, solution_diff, task_by_id
 
 from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
-    Run,
     Task,
     _run_grading,
     evaluate,
     lint_task_set,
     load_task_set,
 )
-
-TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
-SOLUTIONS = Path(__file__).parent.parent / "tasks" / "first-party-v1-solutions"
 
 REFACTOR_TASKS = (
     "cart-extract-coupon-policy",
@@ -47,56 +40,6 @@ REFACTOR_TASKS = (
     "tasktrack-reshape-parse-result",
     "textdoc-split-render-flag",
 )
-
-
-def task_by_id(task_id: str) -> Task:
-    [task] = [task for task in load_task_set(TASKS) if task.id == task_id]
-    return task
-
-
-def solution_diff(task: Task, mutate: Callable[[Path], None] | None = None) -> str:
-    """The workdir diff a run that produced the reference solution would log:
-    pristine repo committed, the tree replaced by the solved tree (optionally
-    mutated), the diff captured the way the live runner captures it."""
-    git = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
-    with tempfile.TemporaryDirectory(prefix="ai-bench-refactor-") as name:
-        workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
-        subprocess.run([*git, "init", "-q", "."], cwd=workdir, check=True)
-        subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
-        subprocess.run([*git, "commit", "-qm", "pristine"], cwd=workdir, check=True)
-        for entry in workdir.iterdir():
-            if entry.name == ".git":
-                continue
-            if entry.is_dir():
-                shutil.rmtree(entry)
-            else:
-                entry.unlink()
-        shutil.copytree(SOLUTIONS / task.id, workdir, dirs_exist_ok=True)
-        if mutate is not None:
-            mutate(workdir)
-        subprocess.run([*git, "add", "-A"], cwd=workdir, check=True)
-        return subprocess.run(
-            [*git, "diff", "--cached"], cwd=workdir, capture_output=True,
-            text=True, check=True,
-        ).stdout
-
-
-def run_for(task: Task, diff: str) -> Run:
-    return Run(
-        task_id=task.id,
-        agent="claude-code",
-        agent_version="2.1.220",
-        model="claude-sonnet-5",
-        output="done",
-        diff=diff,
-        tokens_in=41000,
-        tokens_out=1500,
-        cost_usd=0.21,
-        latency_s=64.5,
-        turns=7,
-        as_of=date(2026, 8, 4),
-    )
 
 
 def structural_half_passes(task: Task, diff: str) -> bool:
