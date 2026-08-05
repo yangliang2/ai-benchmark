@@ -1,0 +1,47 @@
+# K1 family inventory-consume-lots, level 1 of 3: every decision the change
+# turns on is stated as an acceptance criterion, so nothing has to be inferred
+# from the repository. The repo, the grading suite and the reference solution
+# are identical across the three variants — the prompt is the only thing that
+# varies.
+#
+# feature-dev: the grading tests exercise consume, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: inventory-consume-lots-l1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small inventory module in inventory.py.
+
+  Add a function `consume(lots, quantity)` to inventory.py that draws
+  `quantity` units out of the stock and returns a pair: the stock that is
+  left, as a tuple of lots, and what the units drawn cost to buy. It must
+  satisfy all of the following:
+
+  - Units are drawn from the oldest lot first, which is the order `receive`
+    keeps the stock in — including for two lots received on the same day.
+  - A draw that empties one lot carries on into the next.
+  - What the units cost is the number drawn from each lot times that lot's
+    `unit_cost`, added up over the lots drawn from.
+  - A lot drawn down only in part stays in the stock with its quantity
+    reduced and its received date and unit cost unchanged.
+  - A lot drawn down to nothing is gone from the stock that is left; it is
+    not kept there at a quantity of zero.
+  - `consume(lots, 0)` gives the stock back as it is, at a cost of 0.
+  - Drawing more units than are on hand raises `ValueError`, and so does a
+    negative quantity. A refused draw takes nothing.
+  - The stock handed in is not modified.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+  family: inventory-consume-lots
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the draw order, the cost basis, what becomes of a part-drawn and an
+      emptied lot and both refusals are all stated as criteria, leaving one
+      loop over the lots to write

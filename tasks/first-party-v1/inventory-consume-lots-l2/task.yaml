@@ -1,0 +1,41 @@
+# K1 family inventory-consume-lots, level 2 of 3: the change is described
+# rather than specified — the draw order and the refusals are derivable from
+# the description plus the module, but none of it is handed over as a
+# criterion, and what becomes of an emptied lot is left to the module's own
+# rule that a lot holding no units is not a lot. The repo, the grading suite
+# and the reference solution are identical across the three variants — the
+# prompt is the only thing that varies.
+#
+# feature-dev: the grading tests exercise consume, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: inventory-consume-lots-l2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small inventory module in inventory.py.
+
+  The module can take stock in and add it up, but nothing takes stock back
+  out again. Add a function `consume(lots, quantity)` to inventory.py that
+  fills an order of `quantity` units out of the stock, reporting both the
+  stock that is left and what the units it drew cost to buy — the figure an
+  accountant books the sale against.
+
+  Which lots the order eats into is what decides that figure, and the module
+  already holds the stock in the order it is drawn. An order that runs past
+  the end of one lot carries on into the next; an order the stock cannot
+  fill is not filled at all.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: description
+  family: inventory-consume-lots
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the draw order is pointed at and the refusal is described, but what
+      becomes of a lot drawn down to nothing is not, and keeping it in the
+      stock at a quantity of zero is the natural way to write the loop

@@ -1,0 +1,39 @@
+# K1 family inventory-consume-lots, level 3 of 3: the intent and the gap are
+# stated, and nothing else. The signature is named because grading has to be
+# able to call the function at all; every decision behind it — oldest lot
+# first, the cost basis that follows from it, what becomes of an emptied lot,
+# and that an order the stock cannot fill is refused outright — has to be
+# inferred from the module. The repo, the grading suite and the reference
+# solution are identical across the three variants — the prompt is the only
+# thing that varies.
+#
+# feature-dev: the grading tests exercise consume, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: inventory-consume-lots-l3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small inventory module in inventory.py.
+
+  Stock goes into the module and can be counted and priced there, but
+  nothing takes it back out again: when an order ships, there is no way to
+  say what the stock became and what the units that left cost to buy.
+
+  Add a function `consume(lots, quantity)` to inventory.py that closes that
+  gap.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: intent
+  family: inventory-consume-lots
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the draw order and both refusals have to be read off the module
+      docstring and receive, and the same emptied-lot decision the described
+      variant leaves open is left open here too, so no further separation is
+      expected above it

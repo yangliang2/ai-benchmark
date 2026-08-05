@@ -70,6 +70,24 @@ def parse(text):
     )
 '''
 
+# Oldest lot first and the cost basis right, but a lot drawn down to nothing
+# stays in the stock holding nothing, and an order larger than the stock is
+# filled as far as it goes instead of being refused.
+KEEP_EMPTY_LOTS = '''
+
+def consume(lots, quantity):
+    """The stock left after drawing `quantity` units, and what they cost."""
+    remaining = []
+    cost = 0
+    left = quantity
+    for lot in lots:
+        drawn = min(left, lot.quantity)
+        left -= drawn
+        cost += drawn * lot.unit_cost
+        remaining.append(lot._replace(quantity=lot.quantity - drawn))
+    return tuple(remaining), cost
+'''
+
 
 class Family(NamedTuple):
     """One K1 family, and what is pinned about it here.
@@ -105,6 +123,16 @@ FAMILIES = (
         },
         touched="duration.py",
         probe=FINDALL_SUM,
+    ),
+    Family(
+        stem="inventory-consume-lots",
+        rungs={
+            "acceptance": "haiku-solvable",
+            "description": "sonnet-only",
+            "intent": "sonnet-only",
+        },
+        touched="inventory.py",
+        probe=KEEP_EMPTY_LOTS,
     ),
 )
 
