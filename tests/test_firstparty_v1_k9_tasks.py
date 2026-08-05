@@ -29,7 +29,6 @@ pre-registration the experiment rests on: each rung is pinned here, and the
 claim the pairs make is that the crux costs exactly one rung.
 """
 
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -38,25 +37,26 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-from firstparty_v1_tasks import SOLUTIONS, run_for, solution_diff, task_by_id
-from pydantic import ValidationError
+from firstparty_v1_tasks import (
+    TASKS,
+    copy_solution,
+    run_for,
+    solution_diff,
+    task_by_id,
+)
 
 from ai_benchmark.firstparty_v1 import (
-    KNOB_LEVELS,
-    KnobActivation,
+    GRADE_TIMEOUT_S,
     Rung,
     Task,
     evaluate,
     lint_task_set,
+    load_task_set,
 )
 
 # The operational difficulty ladder, easiest rung first, so a pair's claim can
 # be compared and not only pinned.
 RUNGS: tuple[Rung, ...] = ("haiku-solvable", "sonnet-only", "unsolved")
-
-# Bytecode is a byproduct of having run something; these helpers copy solution
-# trees directly, so they drop it rather than let it reach a diff.
-_BYTECODE = shutil.ignore_patterns("__pycache__", "*.pyc")
 
 
 # --- the crux, resolved a second way -------------------------------------------
@@ -232,8 +232,8 @@ print(sorted(tuple(t) for t in settle({"ana": 700, "ben": 300,
 """
 
 
-class Pair(NamedTuple):
-    """One planted-crux task, its zero-crux control, and what is pinned here.
+class Probes(NamedTuple):
+    """How one pair is examined, which is the part no metadata could carry.
 
     `module` is the file both tasks' reference solutions add a function to,
     and `crux_definition` / `control_definition` are where those functions
@@ -244,8 +244,6 @@ class Pair(NamedTuple):
     predictions.
     """
 
-    crux_id: str
-    control_id: str
     module: str
     crux_definition: str
     control_definition: str
@@ -257,10 +255,8 @@ class Pair(NamedTuple):
     answers: str
 
 
-PAIRS = (
-    Pair(
-        crux_id="cartons-pack-shipments",
-        control_id="cartons-label-shipments",
+PROBES: dict[str, Probes] = {
+    "cartons": Probes(
         module="cartons.py",
         crux_definition="def pack(",
         control_definition="def labels(",
@@ -271,9 +267,7 @@ PAIRS = (
         careless=LABELS_WITHOUT_PADDING,
         answers=PACKED,
     ),
-    Pair(
-        crux_id="playlist-space-out-artists",
-        control_id="playlist-trim-to-length",
+    "playlist": Probes(
         module="playlist.py",
         crux_definition="def spread(",
         control_definition="def trimmed(",
@@ -284,9 +278,7 @@ PAIRS = (
         careless=TRIM_BY_SKIPPING,
         answers=SPREAD_OUT,
     ),
-    Pair(
-        crux_id="settleup-settle-debts",
-        control_id="settleup-apply-expense",
+    "settleup": Probes(
         module="settleup.py",
         crux_definition="def settle(",
         control_definition="def applied(",
@@ -297,7 +289,49 @@ PAIRS = (
         careless=APPLY_IN_PLACE,
         answers=SETTLED,
     ),
-)
+}
+
+
+class Pair(NamedTuple):
+    """One planted-crux task, its zero-crux control, and how they are probed.
+
+    Which two tasks those are is read off the task set rather than written
+    down here: the pairing is construction metadata, and a table of it in the
+    suite would be a second copy free to disagree with the tasks themselves.
+    """
+
+    crux_id: str
+    control_id: str
+    probes: Probes
+
+
+def _pairs() -> tuple[Pair, ...]:
+    """The pairs this suite probes, assembled from what each side knows.
+
+    The task set says which tasks a pair id groups and which of them plants
+    the crux — that is what its K9 level means — so nothing but the probes
+    themselves is named here.
+    """
+    grouped: dict[str, dict[str, str]] = {}
+    for task in load_task_set(TASKS):
+        construction = task.construction
+        if construction is None or construction.pair is None:
+            continue
+        grouped.setdefault(construction.pair, {})[
+            construction.levels.get("K9", "")
+        ] = task.id
+
+    pairs = []
+    for pair, probes in sorted(PROBES.items()):
+        members = grouped.get(pair, {})
+        assert set(members) == {"none", "single"}, (
+            f"pair {pair!r} is not one K9 crux task and one control: {members}"
+        )
+        pairs.append(Pair(members["single"], members["none"], probes))
+    return tuple(pairs)
+
+
+PAIRS = _pairs()
 
 BY_PAIR = [pytest.param(pair, id=pair.crux_id) for pair in PAIRS]
 
@@ -334,13 +368,13 @@ def answer_of(task: Task, snippet: str, edit: Callable[[Path], None] | None) -> 
     """
     with tempfile.TemporaryDirectory(prefix="ai-bench-k9-") as name:
         tree = Path(name)
-        shutil.copytree(SOLUTIONS / task.id, tree, dirs_exist_ok=True,
-                        ignore=_BYTECODE)
+        copy_solution(task, tree)
         if edit is not None:
             edit(tree)
         return subprocess.run(
             [sys.executable, "-c", snippet],
-            cwd=tree, capture_output=True, text=True, check=True, timeout=60,
+            cwd=tree, capture_output=True, text=True, check=True,
+            timeout=GRADE_TIMEOUT_S,
         ).stdout
 
 
@@ -379,14 +413,16 @@ def test_the_crux_task_plants_one_and_its_control_plants_none(pair: Pair) -> Non
         # and varies the prompt, and these two ask for different functions.
         assert task.construction is not None
         assert task.construction.family is None
+        # What does group them, and what this suite reads the pairing off.
+        assert task.construction.pair in PROBES
 
 
 @pytest.mark.parametrize("pair", BY_PAIR)
 def test_the_pair_starts_from_the_same_repository(pair: Pair) -> None:
     """What makes the control a control: same terrain, same matrix cell, so a
     difference in outcome is a difference in what was asked, not in where it
-    was asked. The family lint would check this if these were a family; they
-    are not, so it is checked here."""
+    was asked. The pair lint checks it across the whole task set; it is
+    checked here too, against these six directly."""
     crux, control = task_by_id(pair.crux_id), task_by_id(pair.control_id)
 
     def tree(root: Path) -> dict[str, bytes]:
@@ -458,7 +494,10 @@ def test_a_second_resolution_of_the_crux_also_resolves(pair: Pair) -> None:
     """
     task = task_by_id(pair.crux_id)
     diff = solution_diff(
-        task, mutate=answering(pair.module, pair.crux_definition, pair.another_way)
+        task,
+        mutate=answering(
+            pair.probes.module, pair.probes.crux_definition, pair.probes.another_way
+        ),
     )
 
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")
@@ -474,11 +513,13 @@ def test_the_two_resolutions_really_do_answer_differently(pair: Pair) -> None:
     run and their answers compared."""
     task = task_by_id(pair.crux_id)
 
-    reference = answer_of(task, pair.answers, None)
+    reference = answer_of(task, pair.probes.answers, None)
     another = answer_of(
         task,
-        pair.answers,
-        answering(pair.module, pair.crux_definition, pair.another_way),
+        pair.probes.answers,
+        answering(
+            pair.probes.module, pair.probes.crux_definition, pair.probes.another_way
+        ),
     )
 
     assert reference.strip() and reference != another
@@ -492,7 +533,10 @@ def test_not_making_the_decision_does_not_resolve(pair: Pair) -> None:
     change except the rule the decision exists to meet."""
     task = task_by_id(pair.crux_id)
     diff = solution_diff(
-        task, mutate=answering(pair.module, pair.crux_definition, pair.not_an_answer)
+        task,
+        mutate=answering(
+            pair.probes.module, pair.probes.crux_definition, pair.probes.not_an_answer
+        ),
     )
 
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")
@@ -507,7 +551,10 @@ def test_a_careless_reading_of_the_control_does_not_resolve(pair: Pair) -> None:
     so a control that graded anything would not be a control at all."""
     task = task_by_id(pair.control_id)
     diff = solution_diff(
-        task, mutate=answering(pair.module, pair.control_definition, pair.careless)
+        task,
+        mutate=answering(
+            pair.probes.module, pair.probes.control_definition, pair.probes.careless
+        ),
     )
 
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")
@@ -530,8 +577,8 @@ def test_the_registered_rungs_are_the_k9_claim() -> None:
         task_id: rung
         for pair in PAIRS
         for task_id, rung in (
-            (pair.crux_id, pair.crux_rung),
-            (pair.control_id, pair.control_rung),
+            (pair.crux_id, pair.probes.crux_rung),
+            (pair.control_id, pair.probes.control_rung),
         )
     }
 
@@ -542,7 +589,7 @@ def test_every_pair_claims_the_crux_costs_a_rung(pair: Pair) -> None:
     task reads as the contradiction it is. A crux task predicted no harder
     than its control would be claiming the knob does nothing, which is a
     result the sweep may deliver but not one an author may register."""
-    assert RUNGS.index(pair.crux_rung) > RUNGS.index(pair.control_rung)
+    assert RUNGS.index(pair.probes.crux_rung) > RUNGS.index(pair.probes.control_rung)
 
 
 @pytest.mark.parametrize("task_id", BY_TASK)
@@ -556,16 +603,3 @@ def test_every_prediction_names_the_decision_it_turns_on(task_id: str) -> None:
     rationale = task.construction.prediction.rationale
     assert len(rationale.split()) >= 15
     assert any(word in rationale for word in ("open", "stated", "decision"))
-
-
-# --- the ladder this knob is set on ---------------------------------------------
-
-
-def test_the_k9_ladder_is_the_two_levels_the_design_note_names() -> None:
-    """K9 got an enumerated ladder with these tasks, so a level off it is
-    refused rather than recorded — reconciliation groups outcomes by level,
-    and a free-text level is a group of one."""
-    assert KNOB_LEVELS["K9"] == ("none", "single")
-
-    with pytest.raises(ValidationError, match="not one of"):
-        KnobActivation(id="K9", level="planted")

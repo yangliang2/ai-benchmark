@@ -187,9 +187,9 @@ difficulty-theory validation become the same activity. Knobs:
   K6 haunted areas (load-bearing weird code, Chesterton's fence),
   K7 invariant density, K8 safety-net quality (covered / partial / bare /
   **misleading** — green tests that don't cover the graded behaviour).
-- Solution side: K9 crux depth (exactly one inventive decision, rest
-  mechanical; zero-crux controls), K10 coordination width (N consistent
-  edit sites).
+- Solution side: K9 crux depth (none / **single** — exactly one inventive
+  decision, rest mechanical, against the zero-crux control it is paired
+  with), K10 coordination width (N consistent edit sites).
 - Verification side: K11 detection distance (how late failure manifests).
 
 Post-hoc mapping: calc-infix = natural high-K9; jobrunner's 21 haiku turns

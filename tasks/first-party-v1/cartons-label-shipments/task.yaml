@@ -43,6 +43,7 @@ construction:
   knobs:
     - id: K9
       level: none
+  pair: cartons
   prediction:
     rung: haiku-solvable
     rationale: >-

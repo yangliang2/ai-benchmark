@@ -28,6 +28,7 @@ from firstparty_v1_tasks import (
     task_by_id,
     workdir_diff,
 )
+from pydantic import ValidationError
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import load_runs as load_v0_runs
@@ -35,6 +36,8 @@ from ai_benchmark.firstparty import local_today
 from ai_benchmark.firstparty_v1 import (
     BASELINE_TASK_IDS,
     BENCHMARK,
+    KNOB_LEVELS,
+    KnobActivation,
     Task,
     evaluate,
     lint_task_set,
@@ -486,7 +489,9 @@ def a_vendored_block(**overrides: object) -> dict[str, object]:
 def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
     tmp_path: Path,
 ) -> None:
-    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(family="a-family"))
+    clone_constructed(
+        tmp_path, "knobbed-task", a_vendored_block(family="a-family", pair="a-pair")
+    )
 
     [task] = load_task_set(tmp_path)
 
@@ -496,6 +501,7 @@ def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
         ("K8", "bare"),
     ]
     assert task.construction.family == "a-family"
+    assert task.construction.pair == "a-pair"
     assert task.construction.prediction.rung == "haiku-solvable"
     assert task.construction.prediction.rationale.startswith("every decision")
     assert task.construction.substrate is not None
@@ -533,11 +539,21 @@ def test_a_knob_level_off_its_ladder_fails_loudly(tmp_path: Path) -> None:
         load_task_set(tmp_path)
 
 
+def test_the_k9_ladder_is_the_two_levels_the_design_note_names() -> None:
+    """K9 got an enumerated ladder with the planted-crux tasks, so a level off
+    it is refused rather than recorded — reconciliation groups outcomes by
+    level, and a free-text level is a group of one."""
+    assert KNOB_LEVELS["K9"] == ("none", "single")
+
+    with pytest.raises(ValidationError, match="not one of"):
+        KnobActivation(id="K9", level="planted")
+
+
 def test_a_knob_whose_ladder_is_not_enumerated_takes_a_free_text_level(
     tmp_path: Path,
 ) -> None:
-    """The design note enumerates K1's and K8's levels and no others; a knob
-    it has not pinned down yet records its level as written."""
+    """The design note enumerates K1's, K8's and K9's levels and no others; a
+    knob it has not pinned down yet records its level as written."""
     clone_constructed(tmp_path, "knobbed-task", a_construction_block(
         knobs=[{"id": "K7", "level": "dense"}],
     ))
@@ -980,7 +996,7 @@ def test_lint_rejects_a_refactor_task_that_is_already_restructured(
     assert REFACTOR_SEED in problem and "pristine" in problem
 
 
-# --- task-set lint: construction metadata and family completeness --------------
+# --- task-set lint: construction metadata, families and pairs ------------------
 
 
 def clone_k1_family(root: Path, family: str, levels: Sequence[str]) -> None:
@@ -1169,6 +1185,49 @@ def test_lint_rejects_a_family_whose_members_share_a_prompt(
 
     assert "spec-ladder" in problem and "same prompt" in problem
     assert "spec-ladder-1" in problem and "spec-ladder-2" in problem
+
+
+def clone_pair(root: Path, pair: str, task_ids: Sequence[str]) -> None:
+    """One cloned task per named id, all declaring the same pair."""
+    for task_id in task_ids:
+        clone_constructed(root, task_id, a_construction_block(pair=pair))
+
+
+def test_lint_accepts_two_tasks_paired_on_one_repository(tmp_path: Path) -> None:
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+
+    assert lint_task_set(load_task_set(tmp_path)) == []
+
+
+def test_lint_rejects_a_pair_with_a_third_member(tmp_path: Path) -> None:
+    """A pair id says which two tasks are read against each other, and a third
+    member leaves it saying nothing about any of them."""
+    clone_pair(
+        tmp_path, "crux-and-control", ["crux-task", "control-task", "spare-task"]
+    )
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "crux-and-control" in problem and "spare-task" in problem
+
+
+def test_lint_rejects_a_pair_starting_from_different_repositories(
+    tmp_path: Path,
+) -> None:
+    """The shared terrain is what makes the second task a control: a pair
+    pitched on two repositories measures where the work was asked as well as
+    what was asked, which is the one thing pairing them was for."""
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+    append(tmp_path / "control-task" / "repo" / "wordcount.py", """
+
+
+        def unrelated_helper(text):
+            return text.strip()
+        """)
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "crux-and-control" in problem and "repo/" in problem
 
 
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----

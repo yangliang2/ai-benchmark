@@ -42,6 +42,7 @@ construction:
   knobs:
     - id: K9
       level: single
+  pair: cartons
   prediction:
     rung: sonnet-only
     rationale: >-

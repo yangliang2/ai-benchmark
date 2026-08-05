@@ -43,6 +43,11 @@ def task_by_id(task_id: str) -> Task:
     return task
 
 
+def copy_solution(task: Task, into: Path) -> None:
+    """Lay this task's reference solution into an existing directory."""
+    shutil.copytree(SOLUTIONS / task.id, into, dirs_exist_ok=True, ignore=_BYTECODE)
+
+
 def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
     """The workdir diff a run that made this edit would log."""
     with tempfile.TemporaryDirectory(prefix="ai-bench-test-") as name:
@@ -79,9 +84,7 @@ def solved_tree(
                 shutil.rmtree(entry)
             else:
                 entry.unlink()
-        shutil.copytree(
-            SOLUTIONS / task.id, workdir, dirs_exist_ok=True, ignore=_BYTECODE
-        )
+        copy_solution(task, workdir)
         if mutate is not None:
             mutate(workdir)
 

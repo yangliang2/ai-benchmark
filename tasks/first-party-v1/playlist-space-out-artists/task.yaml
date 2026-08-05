@@ -38,6 +38,7 @@ construction:
   knobs:
     - id: K9
       level: single
+  pair: playlist
   prediction:
     rung: sonnet-only
     rationale: >-

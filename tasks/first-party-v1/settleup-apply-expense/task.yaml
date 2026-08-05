@@ -36,6 +36,7 @@ construction:
   knobs:
     - id: K9
       level: none
+  pair: settleup
   prediction:
     rung: haiku-solvable
     rationale: >-

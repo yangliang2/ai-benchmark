@@ -139,12 +139,7 @@ KNOB_LEVELS: dict[str, tuple[str, ...]] = {
     "K6": (),  # haunted areas
     "K7": (),  # invariant density
     "K8": ("covered", "partial", "bare", "misleading"),  # safety-net quality
-    # Crux depth. The note enumerates this one in the same breath as it names
-    # it — "exactly one inventive decision, rest mechanical; zero-crux
-    # controls" — so the two levels are its own, not a vocabulary invented
-    # here: `none` is a control whose every decision is stated or derivable,
-    # `single` plants exactly one decision that is neither.
-    "K9": ("none", "single"),
+    "K9": ("none", "single"),  # crux depth
     "K10": (),  # coordination width
     "K11": (),  # detection distance
 }
@@ -278,8 +273,8 @@ class Substrate(BaseModel):
 
 class Construction(BaseModel):
     """How a task was built: which difficulty knobs it sets, which family it
-    belongs to, what its author predicted, and — for a vendored starting
-    repository — where that repository came from.
+    belongs to, which task it is paired with, what its author predicted, and —
+    for a vendored starting repository — where that repository came from.
 
     A task with no construction block at all is a zero-knob baseline control.
     """
@@ -288,6 +283,11 @@ class Construction(BaseModel):
 
     knobs: tuple[KnobActivation, ...]
     family: NonEmptyStr | None = None
+    # A free grouping id shared by the two tasks meant to be read against each
+    # other — a crux task and its control. Nothing but the grouping: unlike a
+    # family it constrains no level, it only records the pairing, which would
+    # otherwise live in a table outside the task set and drift from it.
+    pair: NonEmptyStr | None = None
     prediction: Prediction
     substrate: Substrate | None = None
 
@@ -764,7 +764,7 @@ def lint_task_set(
     once the outcome is known is not a prediction, and a sweep is only paid
     for once.
     """
-    problems = _family_problems(tasks)
+    problems = _family_problems(tasks) + _pair_problems(tasks)
     for task in tasks:
         problems.extend(_construction_problems(task))
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
@@ -880,6 +880,42 @@ def _family_problems(tasks: list[Task]) -> list[str]:
         gradient = _shared_prompt_problem(family, variants)
         if gradient is not None:
             problems.append(gradient)
+    return problems
+
+
+def _pair_problems(tasks: list[Task]) -> list[str]:
+    """What is wrong with each declared pair, if anything.
+
+    A pair id records that two tasks are meant to be read against each other —
+    a planted crux and the control built beside it. Exactly two, because "the
+    pair" names nothing once a third task joins it; and starting from the same
+    repository, because a control pitched on different terrain controls for
+    the terrain as well as for the knob. Nothing else is asked of it: the
+    levels the two declare are the knob's business, not the grouping's.
+    """
+    paired: dict[str, list[Task]] = {}
+    for task in tasks:
+        if task.construction is not None and task.construction.pair is not None:
+            paired.setdefault(task.construction.pair, []).append(task)
+
+    problems = []
+    for pair, members in sorted(paired.items()):
+        ids = sorted(task.id for task in members)
+        if len(members) != 2:
+            problems.append(
+                f"pair {pair!r} holds {ids} — a pair is the two tasks read "
+                "against each other, and any other number leaves it undefined "
+                "which two are being compared"
+            )
+            continue
+        one, other = sorted(members, key=lambda task: task.id)
+        if _tree_bytes(one.repo_dir) != _tree_bytes(other.repo_dir):
+            problems.append(
+                f"pair {pair!r} members {ids} do not start from the same "
+                f"{REPO_DIR}/ — a difference in outcome between them is then a "
+                "difference in where the work was asked as well as in what was "
+                "asked, which is the one thing a pair exists to rule out"
+            )
     return problems
 
 

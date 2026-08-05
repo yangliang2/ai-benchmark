@@ -33,6 +33,7 @@ construction:
   knobs:
     - id: K9
       level: none
+  pair: playlist
   prediction:
     rung: haiku-solvable
     rationale: >-
