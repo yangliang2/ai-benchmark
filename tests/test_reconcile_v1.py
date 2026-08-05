@@ -162,29 +162,46 @@ def pairs_block(out: str) -> str:
     return out.split("4. crux/control pairs")[1].split("5. no-separation flags")[0]
 
 
-# --- the demo: the checked-in first sweep against the checked-in task set ------
+# --- the demo: the checked-in sweeps against the checked-in task set ----------
 
 
-def test_reconcile_v1_reports_the_checked_in_first_sweep(
+def test_reconcile_v1_reports_the_checked_in_sweeps(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The command's reason to exist, run on real artifacts: the first sweep
-    covered the 22 zero-knob baseline tasks and none of the 25 constructed
-    ones, so every prediction is still unswept and no knob is assessable
-    yet."""
+    """The command's reason to exist, run on real artifacts: round 1 swept the
+    22 zero-knob baseline tasks and round 2 swept every Track-A constructed
+    one, so those predictions are scored against an observed rung.
+
+    What this pins is what a later round can only add to. A cell is swept once
+    and a log is only ever appended to, so a task that carries a verdict here
+    carries it for good — where the counts of tasks, rounds and scored
+    predictions all move as soon as the next sweep lands, and pinning them
+    would make this test a running total to be edited rather than a claim
+    about the report."""
     main(checked_in_argv())
 
     out = capsys.readouterr().out
-    assert "22 zero-knob baseline, 25 constructed" in out
-    assert "data/first-party-v1-runs/2026-08-04.jsonl" in out
-    assert "data/first-party-v1-runs/2026-08-04-resume.jsonl" in out
-    # Every constructed task is unswept, and says so rather than vanishing.
-    assert "25 constructed task(s): 0 swept, 25 unswept" in out
+    assert "22 zero-knob baseline" in out
+    for log in ("2026-08-04.jsonl", "2026-08-04-resume.jsonl",
+                "2026-08-05-dry.jsonl", "2026-08-05-haiku.jsonl",
+                "2026-08-05-haiku-resume.jsonl", "2026-08-05-sonnet.jsonl"):
+        assert f"data/first-party-v1-runs/{log}" in out
+    assert re.search(r"hit-rate: \d+/\d+ scored", out)
+
+    # Every constructed task is on the page rather than vanishing, swept or
+    # not — an unswept one keeps its row (asserted on a fixture next to this,
+    # where a sweep cannot come along and settle it).
     for constructed_id in ("settleup-settle-debts", "alerts-rule-table",
                            "billing-split-by-weight-l3",
                            "pysm-remember-substate-history"):
         assert constructed_id in out
-    assert "hit-rate: 0/0" in out
+    # The Track-A tasks are scored: predicted and observed rung, then a
+    # verdict, rather than the `unswept` their rows read before round 2.
+    for swept_id in ("settleup-settle-debts", "alerts-rule-table",
+                     "billing-split-by-weight-l3"):
+        assert re.search(
+            rf"^ +{swept_id} +\S+ +\S+ +(hit|miss)$", out, re.MULTILINE
+        ), f"{swept_id} is swept and should carry a scored verdict"
 
     # The baseline is on the page as every knob's comparison row, and round 1
     # swept all of it: no baseline row has a task it did not sweep.
