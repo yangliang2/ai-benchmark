@@ -55,7 +55,7 @@ from collections import Counter
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 from xml.etree import ElementTree
 
 import yaml
@@ -109,6 +109,192 @@ def pytest_configure(config):
 """
 
 
+# --- construction metadata: how a task was built, and what it predicts ---------
+
+# The difficulty knobs of docs/design/task-difficulty-and-ex-ante-profiles.md
+# section 9, and the levels each one is settable to. A knob maps to () when
+# the design note has not enumerated its ladder yet: its level is then recorded
+# as written, and a family varying it cannot be checked for completeness. Only
+# knobs the note actually enumerates get a ladder here — inventing one would
+# silently fix a vocabulary the experiment has not chosen.
+KNOB_LEVELS: dict[str, tuple[str, ...]] = {
+    "K1": ("acceptance", "description", "intent"),  # decision openness
+    "K2": (),  # implicit requirements
+    "K3": (),  # contradiction traps
+    "K4": (),  # read-set / write-set ratio
+    "K5": (),  # with or against the architectural grain
+    "K6": (),  # haunted areas
+    "K7": (),  # invariant density
+    "K8": ("covered", "partial", "bare", "misleading"),  # safety-net quality
+    "K9": (),  # crux depth
+    "K10": (),  # coordination width
+    "K11": (),  # detection distance
+}
+
+# The operational difficulty ladder a prediction is expressed against: the
+# rungs of the model ladder the first sweep already measures, so a prediction
+# is checkable against run logs without any new measurement.
+Rung = Literal["haiku-solvable", "sonnet-only", "unsolved"]
+
+# The 22 tasks authored before the knob experiment. Their *absence* of a
+# construction block is what "zero-knob baseline control" means, so the set has
+# to be frozen and named: without it the lint cannot tell a baseline control
+# from a knob-experiment task whose author declared nothing.
+BASELINE_TASK_IDS = frozenset({
+    "calc-infix-evaluator",
+    "cart-extract-coupon-policy",
+    "checkout-discount-codes",
+    "docstore-json-pointer",
+    "exporters-pull-up-base-class",
+    "gradebook-split-compute-from-format",
+    "jobrunner-dependency-order",
+    "ledger-split-formatting",
+    "logparse-extract-timestamp-parsing",
+    "matcher-brace-expansion",
+    "measures-merge-duplicate-converters",
+    "metrics-dispatch-table",
+    "microtemplate-for-loops",
+    "pipeline-move-retry-policy",
+    "slugger-unique-slugs",
+    "spans-subtract-gaps",
+    "spendreport-invert-storage-dependency",
+    "tablecli-filter-command",
+    "tasktrack-reshape-parse-result",
+    "textdoc-split-render-flag",
+    "wordcount-top-words",
+    "workflow-guarded-transitions",
+})
+
+
+def _known_knob(knob_id: str) -> str:
+    if knob_id not in KNOB_LEVELS:
+        raise ValueError(
+            f"unknown difficulty knob {knob_id!r} — the knobs are "
+            f"{sorted(KNOB_LEVELS, key=lambda name: int(name[1:]))}, defined in "
+            "docs/design/task-difficulty-and-ex-ante-profiles.md section 9"
+        )
+    return knob_id
+
+
+class KnobActivation(BaseModel):
+    """One difficulty knob this task sets, and the level it is set to."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: NonEmptyStr
+    level: NonEmptyStr
+
+    @model_validator(mode="after")
+    def level_is_on_the_knobs_ladder(self) -> Self:
+        levels = KNOB_LEVELS[_known_knob(self.id)]
+        if levels and self.level not in levels:
+            raise ValueError(
+                f"{self.id} level {self.level!r} is not one of {list(levels)} — "
+                "reconciliation groups outcomes by level, and a free-text level "
+                "would be a group of one"
+            )
+        return self
+
+
+class Prediction(BaseModel):
+    """The author's pre-registered difficulty prediction for this task.
+
+    Registered before the task's first paid run, which is what makes the knob
+    theory falsifiable rather than fitted to the sweep afterwards; the run
+    log's append-only timeline is the audit trail that it came first.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rung: Rung
+    rationale: NonEmptyStr
+
+
+class Modification(BaseModel):
+    """One surgical edit made to a vendored substrate, and the knob it sets.
+
+    Naming the knob is the point: an edit that answers to no knob is
+    difficulty the experiment cannot attribute to anything.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    knob: NonEmptyStr
+    description: NonEmptyStr
+
+    @model_validator(mode="after")
+    def modification_names_a_knob(self) -> Self:
+        _known_knob(self.knob)
+        return self
+
+
+class Substrate(BaseModel):
+    """Where a vendored starting repository came from, and what we did to it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    origin: NonEmptyStr
+    commit: NonEmptyStr
+    license: NonEmptyStr
+    modifications: tuple[Modification, ...] = ()
+
+    @model_validator(mode="after")
+    def provenance_is_followable_and_pinned(self) -> Self:
+        if not self.origin.startswith(("http://", "https://")):
+            raise ValueError(
+                f"substrate origin {self.origin!r} is not an http(s) URL — "
+                "provenance has to be followable by whoever audits the snapshot"
+            )
+        if len(self.commit) != 40 or set(self.commit) - set("0123456789abcdef"):
+            raise ValueError(
+                f"substrate commit {self.commit!r} is not a full 40-character "
+                "commit id — a branch or tag moves under the vendored snapshot, "
+                "so only a full id pins it"
+            )
+        return self
+
+
+class Construction(BaseModel):
+    """How a task was built: which difficulty knobs it sets, which family it
+    belongs to, what its author predicted, and — for a vendored starting
+    repository — where that repository came from.
+
+    A task with no construction block at all is a zero-knob baseline control.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    knobs: tuple[KnobActivation, ...]
+    family: NonEmptyStr | None = None
+    prediction: Prediction
+    substrate: Substrate | None = None
+
+    @property
+    def levels(self) -> dict[str, str]:
+        """The level each knob is set to, keyed by knob id."""
+        return {knob.id: knob.level for knob in self.knobs}
+
+    @model_validator(mode="after")
+    def each_knob_set_once_and_at_least_one(self) -> Self:
+        if not self.knobs:
+            raise ValueError(
+                "a construction block sets at least one knob — a task that sets "
+                "none is a zero-knob baseline control, which is expressed by "
+                "carrying no construction block at all"
+            )
+        repeated = sorted(
+            knob_id
+            for knob_id, count in Counter(knob.id for knob in self.knobs).items()
+            if count > 1
+        )
+        if repeated:
+            raise ValueError(
+                f"knob(s) {repeated} set more than once — a task sets each knob "
+                "to one level, or the level it was run at is ambiguous"
+            )
+        return self
+
+
 class Grading(BaseModel):
     """Which held-out grading files assert behaviour rather than structure.
 
@@ -136,6 +322,7 @@ class Task(BaseModel):
     language: LanguageStr | None = None
     prompt: NonEmptyStr
     grading: Grading = Grading()
+    construction: Construction | None = None
     directory: Path
 
     @property
@@ -515,14 +702,21 @@ def lint_task_set(
 ) -> list[str]:
     """Check every task's authoring invariants and describe what is wrong.
 
-    The invariants are checked by running the grading tests on the pristine
+    Most of them are checked by running the grading tests on the pristine
     repository, not by reading them: a task whose grading tests already pass
     grades every agent as resolved, and a refactor whose behaviour tests
     already fail can never be solved. Both are cheap to catch here and
     expensive to discover in the middle of a paid sweep.
+
+    The construction invariants are read rather than run, but belong here for
+    the same reason: an undeclared knob, an unregistered prediction or a
+    family with a hole in it costs nothing to catch now and cannot be repaired
+    afterwards — a prediction registered once the outcome is known is not a
+    prediction, and a sweep is only paid for once.
     """
-    problems = []
+    problems = _family_problems(tasks)
     for task in tasks:
+        problems.extend(_construction_problems(task))
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
             problems.append(
                 f"{task.id}: the grading tests already pass on the pristine repo — "
@@ -534,6 +728,79 @@ def lint_task_set(
             problems.append(
                 f"{task.id}: the behaviour tests fail on the pristine repo — a "
                 "refactor task must start from behaviour that already works"
+            )
+    return problems
+
+
+def _construction_problems(task: Task) -> list[str]:
+    """Whether a task that is not a baseline control declares how it was built."""
+    if task.construction is None and task.id not in BASELINE_TASK_IDS:
+        return [(
+            f"{task.id}: no construction block — a task authored after the "
+            "zero-knob baseline declares which difficulty knob(s) it sets and "
+            "its pre-registered difficulty prediction, because absence of the "
+            "block already means baseline control"
+        )]
+    return []
+
+
+def _family_problems(tasks: list[Task]) -> list[str]:
+    """Whether each declared task family is a complete one-knob sweep.
+
+    A family exists to isolate one knob: one underlying change authored as
+    several variants, one knob varied across its levels, everything else held
+    constant. A family varying two knobs attributes its outcomes to neither,
+    and one missing a level is a sweep with a hole in it — neither is
+    repairable once the runs are paid for.
+    """
+    families: dict[str, dict[str, Construction]] = {}
+    for task in tasks:
+        if task.construction is not None and task.construction.family is not None:
+            families.setdefault(task.construction.family, {})[task.id] = (
+                task.construction
+            )
+
+    problems = []
+    for family, members in sorted(families.items()):
+        ids = sorted(members)
+        levels = [members[task_id].levels for task_id in ids]
+        if len(ids) < 2:
+            problems.append(
+                f"family {family!r} holds only {ids} — a family isolates a knob "
+                "by varying it, which takes at least two variants"
+            )
+            continue
+        if len({frozenset(level) for level in levels}) > 1:
+            problems.append(
+                f"family {family!r} members {ids} do not set the same knobs, so "
+                "nothing across the family is held constant"
+            )
+            continue
+        varied = sorted(
+            knob_id
+            for knob_id in levels[0]
+            if len({level[knob_id] for level in levels}) > 1
+        )
+        if len(varied) != 1:
+            problems.append(
+                f"family {family!r} varies {varied} across {ids} — a family "
+                "varies exactly one knob and holds the rest constant"
+            )
+            continue
+        [knob_id] = varied
+        set_to = [level[knob_id] for level in levels]
+        if len(set(set_to)) != len(set_to):
+            problems.append(
+                f"family {family!r} has two members at the same level of "
+                f"{knob_id} ({sorted(set_to)} across {ids}) — one level is one "
+                "variant, however many task directories say otherwise"
+            )
+        missing = [level for level in KNOB_LEVELS[knob_id] if level not in set_to]
+        if missing:
+            problems.append(
+                f"family {family!r} leaves {knob_id} level(s) {missing} unused "
+                f"across {ids} — a sweep with a hole in it cannot say where "
+                "along the ladder the rung changed"
             )
     return problems
 

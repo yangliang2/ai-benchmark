@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
+from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 
@@ -202,6 +203,13 @@ def synthetic_task(root: Path) -> Task:
         language: python
         prompt: |
           Add ratio(a, b) to calc.py, returning a / b as an exact fraction.
+        construction:
+          knobs:
+            - id: K1
+              level: acceptance
+          prediction:
+            rung: haiku-solvable
+            rationale: one named function with its return type stated
         """))
     (task_dir / "repo" / "calc.py").write_text("def half(x):\n    return x / 2\n")
     (task_dir / "grading" / "test_ratio.py").write_text(textwrap.dedent("""\
@@ -386,6 +394,212 @@ def test_feature_dev_task_naming_behaviour_tests_fails_loudly(tmp_path: Path) ->
     retitle(task_dir, grading={"behaviour_tests": ["test_top_words.py"]})
 
     with pytest.raises(IngestError, match="behaviour"):
+        load_task_set(tmp_path)
+
+
+# --- construction metadata: knobs, families, predictions, provenance -----------
+
+
+def a_construction_block(**overrides: object) -> dict[str, object]:
+    """A well-formed construction block, ready to be broken one field at a
+    time: one knob activation and the pre-registered difficulty prediction."""
+    return {
+        "knobs": [{"id": "K1", "level": "acceptance"}],
+        "prediction": {
+            "rung": "haiku-solvable",
+            "rationale": "every decision is stated as an acceptance criterion",
+        },
+    } | overrides
+
+
+def clone_constructed(
+    root: Path, task_id: str, construction: object, *, seed: str = FEATURE_SEED
+) -> Path:
+    """A seed task cloned under a knob-experiment id, carrying construction
+    metadata — the shape every task authored after the baseline must have."""
+    task_dir = clone_seed(root, seed, task_id)
+    retitle(task_dir, id=task_id, construction=construction)
+    return task_dir
+
+
+A_SUBSTRATE = {
+    "origin": "https://github.com/example/tiny-lib",
+    "commit": "0f8c2b9a1d4e6f70a3b5c8d9e2f1a4b6c7d8e9f0",
+    "license": "MIT",
+    "modifications": [
+        {"knob": "K8", "description": "deleted the module's own test suite"}
+    ],
+}
+
+
+def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
+    tmp_path: Path,
+) -> None:
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        family="a-family", substrate=A_SUBSTRATE,
+    ))
+
+    [task] = load_task_set(tmp_path)
+
+    assert task.construction is not None
+    assert [(k.id, k.level) for k in task.construction.knobs] == [("K1", "acceptance")]
+    assert task.construction.family == "a-family"
+    assert task.construction.prediction.rung == "haiku-solvable"
+    assert task.construction.prediction.rationale.startswith("every decision")
+    assert task.construction.substrate is not None
+    assert task.construction.substrate.license == "MIT"
+    assert [m.knob for m in task.construction.substrate.modifications] == ["K8"]
+
+
+def test_the_baseline_tasks_declare_no_construction() -> None:
+    """Absence of the block is what makes the 22 pre-experiment tasks
+    zero-knob baseline controls; reconciliation reads them that way."""
+    assert all(task.construction is None for task in load_task_set(TASKS))
+
+
+def test_an_unknown_knob_id_fails_loudly(tmp_path: Path) -> None:
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        knobs=[{"id": "K99", "level": "acceptance"}],
+    ))
+
+    with pytest.raises(IngestError, match="unknown difficulty knob 'K99'"):
+        load_task_set(tmp_path)
+
+
+def test_a_knob_level_off_its_ladder_fails_loudly(tmp_path: Path) -> None:
+    """K1's levels are an enumerated ladder, so a free-text level would make
+    the family sweep and the per-level reconciliation grouping meaningless."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        knobs=[{"id": "K1", "level": "quite-vague"}],
+    ))
+
+    with pytest.raises(IngestError, match="quite-vague"):
+        load_task_set(tmp_path)
+
+
+def test_a_knob_whose_ladder_is_not_enumerated_takes_a_free_text_level(
+    tmp_path: Path,
+) -> None:
+    """The design note enumerates K1's and K8's levels and no others; a knob
+    it has not pinned down yet records its level as written."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        knobs=[{"id": "K7", "level": "dense"}],
+    ))
+
+    [task] = load_task_set(tmp_path)
+
+    assert task.construction is not None
+    assert task.construction.knobs[0].level == "dense"
+
+
+def test_a_construction_block_setting_no_knob_fails_loudly(tmp_path: Path) -> None:
+    """Setting no knob is what having no block already means."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(knobs=[]))
+
+    with pytest.raises(IngestError, match="at least one knob"):
+        load_task_set(tmp_path)
+
+
+def test_the_same_knob_set_twice_fails_loudly(tmp_path: Path) -> None:
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(knobs=[
+        {"id": "K1", "level": "acceptance"},
+        {"id": "K1", "level": "intent"},
+    ]))
+
+    with pytest.raises(IngestError, match=r"\['K1'\] set more than once"):
+        load_task_set(tmp_path)
+
+
+def test_a_construction_block_without_a_prediction_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """A knob activation with no prediction is unfalsifiable: the theory would
+    be fitted to the sweep after the fact."""
+    block = a_construction_block()
+    del block["prediction"]
+    clone_constructed(tmp_path, "knobbed-task", block)
+
+    with pytest.raises(IngestError, match="prediction"):
+        load_task_set(tmp_path)
+
+
+def test_a_prediction_rung_off_the_ladder_fails_loudly(tmp_path: Path) -> None:
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction={"rung": "opus-only", "rationale": "a hunch"},
+    ))
+
+    with pytest.raises(IngestError, match="rung"):
+        load_task_set(tmp_path)
+
+
+def test_a_prediction_without_a_rationale_fails_loudly(tmp_path: Path) -> None:
+    """The rationale is what a missed prediction teaches: which knob level was
+    misjudged, and why the author expected otherwise."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction={"rung": "unsolved", "rationale": ""},
+    ))
+
+    with pytest.raises(IngestError, match="rationale"):
+        load_task_set(tmp_path)
+
+
+def test_an_unknown_construction_field_fails_loudly(tmp_path: Path) -> None:
+    """The task model forbids extras, so a misspelt field is a loud failure
+    rather than metadata that silently never reaches reconciliation."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        familly="a-typo",
+    ))
+
+    with pytest.raises(IngestError, match="familly"):
+        load_task_set(tmp_path)
+
+
+def test_substrate_provenance_missing_its_license_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Provenance is what keeps a vendored snapshot redistributable and
+    auditable, so a partial record is no record."""
+    substrate = dict(A_SUBSTRATE)
+    del substrate["license"]
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        substrate=substrate,
+    ))
+
+    with pytest.raises(IngestError, match="license"):
+        load_task_set(tmp_path)
+
+
+def test_a_substrate_pinned_to_a_moving_ref_fails_loudly(tmp_path: Path) -> None:
+    """A branch name moves under the task; only a full commit id is a pin."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        substrate=A_SUBSTRATE | {"commit": "main"},
+    ))
+
+    with pytest.raises(IngestError, match="commit"):
+        load_task_set(tmp_path)
+
+
+def test_a_substrate_origin_that_is_not_a_url_fails_loudly(tmp_path: Path) -> None:
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        substrate=A_SUBSTRATE | {"origin": "somebody's laptop"},
+    ))
+
+    with pytest.raises(IngestError, match="origin"):
+        load_task_set(tmp_path)
+
+
+def test_a_substrate_modification_naming_no_known_knob_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Every surgical edit to a vendored repository has to be traceable to a
+    knob, or the substrate carries difficulty nothing accounts for."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        substrate=A_SUBSTRATE | {
+            "modifications": [{"knob": "tidying", "description": "general cleanup"}]
+        },
+    ))
+
+    with pytest.raises(IngestError, match="unknown difficulty knob 'tidying'"):
         load_task_set(tmp_path)
 
 
@@ -671,6 +885,96 @@ def test_lint_rejects_a_refactor_task_that_is_already_restructured(
     [problem] = lint_task_set(load_task_set(tmp_path))
 
     assert REFACTOR_SEED in problem and "pristine" in problem
+
+
+# --- task-set lint: construction metadata and family completeness --------------
+
+
+def clone_k1_family(root: Path, family: str, levels: Sequence[str]) -> None:
+    """One cloned task per named K1 level, all declaring the same family."""
+    for index, level in enumerate(levels, start=1):
+        clone_constructed(root, f"{family}-{index}", a_construction_block(
+            family=family, knobs=[{"id": "K1", "level": level}],
+        ))
+
+
+def test_lint_requires_construction_metadata_outside_the_baseline(
+    tmp_path: Path,
+) -> None:
+    """A knob-experiment task that declares nothing would silently join the
+    baseline controls, and its sweep result would explain nothing."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, "undeclared-task")
+    retitle(task_dir, id="undeclared-task")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "undeclared-task" in problem and "construction" in problem
+
+
+def test_lint_accepts_a_complete_one_knob_family(tmp_path: Path) -> None:
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
+
+    assert lint_task_set(load_task_set(tmp_path)) == []
+
+
+def test_lint_rejects_a_family_missing_a_level(tmp_path: Path) -> None:
+    """A sweep with a hole in it cannot say where along the ladder the rung
+    changed."""
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "intent"])
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "description" in problem
+
+
+def test_lint_rejects_a_family_of_one(tmp_path: Path) -> None:
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance"])
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "spec-ladder-1" in problem
+
+
+def test_lint_rejects_a_family_that_varies_two_knobs(tmp_path: Path) -> None:
+    """Two knobs moving at once attributes the difference to neither."""
+    for index, (spec, net) in enumerate(
+        [("acceptance", "covered"), ("intent", "misleading")], start=1
+    ):
+        clone_constructed(tmp_path, f"muddled-{index}", a_construction_block(
+            family="muddled",
+            knobs=[{"id": "K1", "level": spec}, {"id": "K8", "level": net}],
+        ))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "muddled" in problem and "K1" in problem and "K8" in problem
+
+
+def test_lint_rejects_a_family_whose_members_set_different_knobs(
+    tmp_path: Path,
+) -> None:
+    clone_constructed(tmp_path, "mixed-1", a_construction_block(
+        family="mixed", knobs=[{"id": "K1", "level": "acceptance"}],
+    ))
+    clone_constructed(tmp_path, "mixed-2", a_construction_block(
+        family="mixed", knobs=[{"id": "K8", "level": "misleading"}],
+    ))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "mixed" in problem and "mixed-1" in problem and "mixed-2" in problem
+
+
+def test_lint_rejects_a_family_with_two_members_at_the_same_level(
+    tmp_path: Path,
+) -> None:
+    """Two variants at one level are one variant; the family looks fuller than
+    the evidence it can produce."""
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "acceptance", "intent"])
+
+    problems = lint_task_set(load_task_set(tmp_path))
+
+    assert any("spec-ladder" in p and "same level" in p for p in problems)
 
 
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----
