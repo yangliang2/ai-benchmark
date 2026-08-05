@@ -809,12 +809,14 @@ def _family_problems(tasks: list[Task]) -> list[str]:
     """What is wrong with each declared task family, if anything.
 
     A family exists to isolate one knob: one underlying change authored as
-    several variants, one knob varied, everything else held constant. Both
-    halves are checked, because both halves are what "isolate" means — a
-    family varying two knobs attributes its outcomes to neither, and one whose
-    variants start from different repositories or grade against different
-    tests varies the diff target alongside the knob. Neither is repairable
-    once the runs are paid for.
+    several variants, one knob varied, everything else held constant. All
+    three of those are checked, because all three are what "isolate" means — a
+    family varying two knobs attributes its outcomes to neither; one whose
+    variants start from different repositories, grade against different tests
+    or classify themselves differently varies the diff target and the matrix
+    cell alongside the knob; and one whose variants are identical where the
+    knob is supposed to move declares a gradient none of them produce. None of
+    it is repairable once the runs are paid for.
 
     What is deliberately not required is a full ladder: a family may sweep
     part of one (K8 covered→bare→misleading, skipping partial) as long as its
@@ -822,7 +824,7 @@ def _family_problems(tasks: list[Task]) -> list[str]:
     that is the author's call to make.
     """
     families: dict[str, dict[str, Construction]] = {}
-    directory_of = {task.id: task.directory for task in tasks}
+    task_of = {task.id: task for task in tasks}
     for task in tasks:
         if task.construction is not None and task.construction.family is not None:
             families.setdefault(task.construction.family, {})[task.id] = (
@@ -833,15 +835,14 @@ def _family_problems(tasks: list[Task]) -> list[str]:
     for family, members in sorted(families.items()):
         ids = sorted(members)
         levels = [members[task_id].levels for task_id in ids]
+        variants = {task_id: task_of[task_id] for task_id in ids}
         if len(ids) < 2:
             problems.append(
                 f"family {family!r} holds only {ids} — a family isolates a knob "
                 "by varying it, which takes at least two variants"
             )
             continue
-        divergence = _divergence_problem(
-            family, {task_id: directory_of[task_id] for task_id in ids}
-        )
+        divergence = _constancy_problem(family, variants)
         if divergence is not None:
             problems.append(divergence)
             continue
@@ -870,24 +871,54 @@ def _family_problems(tasks: list[Task]) -> list[str]:
                 f"{knob_id} ({sorted(set_to)} across {ids}) — one level is one "
                 "variant, however many task directories say otherwise"
             )
+            continue
+        gradient = _shared_prompt_problem(family, variants)
+        if gradient is not None:
+            problems.append(gradient)
     return problems
 
 
-def _divergence_problem(family: str, directories: dict[str, Path]) -> str | None:
-    """The first place two members of a family differ outside their spec.
+def _annotations(task: Task) -> dict[str, str | None]:
+    """What places a task in the capability matrix, as the family lint reads
+    it: the classification a record inherits and groups by."""
+    return {
+        "category": task.category,
+        "scale": task.scale,
+        "language": task.language,
+    }
 
-    Held constant is read from the bytes on disk rather than trusted to
-    authoring discipline: the variants are deliberately self-contained copies
-    of one starting repository and one grading suite, so nothing but a check
-    like this stops them drifting apart — and a family whose variants have
-    drifted still lints clean on every knob rule while measuring a different
-    change in every member.
+
+def _constancy_problem(family: str, members: dict[str, Task]) -> str | None:
+    """The first thing two members of a family differ in but must not.
+
+    Held constant is read off the tasks rather than trusted to authoring
+    discipline. The variants are deliberately self-contained copies of one
+    starting repository and one grading suite, so nothing but a check like
+    this stops them drifting apart, and a family whose variants have drifted
+    still lints clean on every knob rule while measuring a different change in
+    each member. The annotations go with them: records inherit category, scale
+    and language from the task, so variants that disagree scatter one family
+    across capability-matrix cells that are never compared — and since the
+    repositories and grading suites are identical, at least one of those
+    annotations is simply wrong.
     """
-    [first, *rest] = sorted(directories)
+    [first, *rest] = sorted(members)
+    held_annotations = _annotations(members[first])
+    for task_id in rest:
+        variant_annotations = _annotations(members[task_id])
+        for field, held_value in held_annotations.items():
+            if variant_annotations[field] != held_value:
+                return (
+                    f"family {family!r} does not hold {field} constant: {first} "
+                    f"declares {held_value!r} and {task_id} declares "
+                    f"{variant_annotations[field]!r} — the variants of one "
+                    "family are one change at several knob levels, so they "
+                    "belong in one capability-matrix cell"
+                )
     for name in (REPO_DIR, GRADING_DIR):
-        held = _tree_bytes(directories[first] / name)
+        held = _tree_bytes(members[first].directory / name)
         for task_id in rest:
-            variant = _tree_bytes(directories[task_id] / name)
+            variant = _tree_bytes(members[task_id].directory / name)
             differing = sorted(
                 path
                 for path in held.keys() | variant.keys()
@@ -900,6 +931,31 @@ def _divergence_problem(family: str, directories: dict[str, Path]) -> str | None
                     "underlying change seen at several knob levels, so a variant "
                     "that starts or grades differently varies the diff target too"
                 )
+    return None
+
+
+def _shared_prompt_problem(family: str, members: dict[str, Task]) -> str | None:
+    """Two members of a family given the very same prompt.
+
+    Everything else about a family is held identical on purpose, so the prompt
+    is where a spec-side knob is actually set: two variants declaring
+    different levels of it while shipping the same prompt describe a gradient
+    that exists in the metadata and nowhere in what the agent is asked. The
+    sweep would then read the two identical runs as evidence about the knob —
+    either separation that is noise, or none, killing a knob that was never
+    turned.
+    """
+    written_by: dict[str, str] = {}
+    for task_id in sorted(members):
+        prompt = members[task_id].prompt
+        if prompt in written_by:
+            return (
+                f"family {family!r} gives {written_by[prompt]} and {task_id} the "
+                "same prompt while declaring different levels — with everything "
+                "else held constant the prompt is where the knob moves, so the "
+                "declared gradient is not in anything the agent is asked"
+            )
+        written_by[prompt] = task_id
     return None
 
 

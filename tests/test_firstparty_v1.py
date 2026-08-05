@@ -949,10 +949,19 @@ def test_lint_rejects_a_refactor_task_that_is_already_restructured(
 
 
 def clone_k1_family(root: Path, family: str, levels: Sequence[str]) -> None:
-    """One cloned task per named K1 level, all declaring the same family."""
+    """One cloned task per named K1 level, all declaring the same family.
+
+    Each variant gets its own prompt, the way a real K1 family does: the
+    clones are identical everywhere else, so a shared prompt would be a
+    declared spec gradient with nothing behind it.
+    """
     for index, level in enumerate(levels, start=1):
-        clone_constructed(root, f"{family}-{index}", a_construction_block(
+        task_dir = clone_constructed(root, f"{family}-{index}", a_construction_block(
             family=family, knobs=[{"id": "K1", "level": level}],
+        ))
+        retitle(task_dir, prompt=(
+            f"Add top_words(text, n) to wordcount.py, specified at the {level} "
+            f"level (variant {index})."
         ))
 
 
@@ -1082,6 +1091,49 @@ def test_lint_rejects_a_family_whose_members_grade_differently(
     [problem] = lint_task_set(load_task_set(tmp_path))
 
     assert "spec-ladder" in problem and "test_top_words.py" in problem
+
+
+def test_lint_rejects_a_family_whose_members_classify_themselves_differently(
+    tmp_path: Path,
+) -> None:
+    """Records inherit the task's annotations, so variants that disagree land
+    in capability-matrix cells that are never compared — and with identical
+    repositories and grading suites, one of the two is simply wrong."""
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
+    retitle(tmp_path / "spec-ladder-2", category="bug-fix")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "category" in problem
+    assert "spec-ladder-1" in problem and "spec-ladder-2" in problem
+
+
+def test_lint_rejects_a_family_whose_members_declare_different_scales(
+    tmp_path: Path,
+) -> None:
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
+    retitle(tmp_path / "spec-ladder-3", scale="cross-file")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "scale" in problem
+    assert "spec-ladder-1" in problem and "spec-ladder-3" in problem
+
+
+def test_lint_rejects_a_family_whose_members_share_a_prompt(
+    tmp_path: Path,
+) -> None:
+    """With everything else held identical, the prompt is where a K1 family's
+    knob actually moves: two variants declaring different levels of it while
+    shipping the same prompt have declared a gradient the agent never sees."""
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
+    for index in (1, 2):
+        retitle(tmp_path / f"spec-ladder-{index}", prompt="Add top_words(text, n).")
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "same prompt" in problem
+    assert "spec-ladder-1" in problem and "spec-ladder-2" in problem
 
 
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----
