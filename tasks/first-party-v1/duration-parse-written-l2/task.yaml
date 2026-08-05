@@ -1,0 +1,42 @@
+# K1 family duration-parse-written, level 2 of 3: the change is described
+# rather than specified — what is accepted and what is refused are derivable
+# from the description plus the module, but neither is handed over as a
+# criterion. The repo, the grading suite and the reference solution are
+# identical across the three variants — the prompt is the only thing that
+# varies.
+#
+# feature-dev: the grading tests exercise parse, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: duration-parse-written-l2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small duration module in duration.py.
+
+  Durations reach this module from wherever people type them — a config
+  file, a `--timeout 1h30m` on a command line — and the module can write a
+  duration out but cannot read one back in. Add a function `parse(text)` to
+  duration.py that turns a written duration into the whole number of seconds
+  it is worth, undoing what `format_duration` does.
+
+  People are careless about the spaces and about the case of the units, and
+  a count they write need not be one `format_duration` would ever have
+  chosen. What they are not careless about is the units themselves: a
+  written duration names each of them at most once and works down from the
+  largest, and text that does not read that way is not a duration for the
+  module to make the best of.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: description
+  family: duration-parse-written
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the tolerances and the refusals are both described in prose and only
+      have to be turned into code, and the one form left unmentioned — text
+      with no part in it at all — is refused by the same check as the rest

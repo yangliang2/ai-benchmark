@@ -1,0 +1,47 @@
+# K1 family duration-parse-written, level 1 of 3: every decision the change
+# turns on is stated as an acceptance criterion, so nothing has to be inferred
+# from the repository. The repo, the grading suite and the reference solution
+# are identical across the three variants — the prompt is the only thing that
+# varies.
+#
+# feature-dev: the grading tests exercise parse, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: duration-parse-written-l1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small duration module in duration.py.
+
+  Add a function `parse(text)` to duration.py that reads a duration written
+  out and returns the whole number of seconds it is worth. It must satisfy
+  all of the following:
+
+  - A duration is a run of parts, each a count of digits followed by its
+    unit, and it is worth the sum of its parts: `parse("1h 30m")` is 5400.
+  - The units are the ones in `UNITS`, read without regard to case, so
+    `parse("1H 30M")` is 5400 as well.
+  - The space between two parts is optional, and space around the parts or
+    between them is ignored: `parse("1h30m")` and `parse("  1h   30m  ")`
+    are both 5400.
+  - A count need not fit inside its own unit: `parse("90m")` is 5400.
+  - Whatever `format_duration` writes reads back as the number it was given,
+    `parse("0s")` being 0 among the rest.
+  - Anything that is not a duration written that way raises `ValueError`:
+    units out of order (`"30m 1h"`), a unit used twice (`"1h 2h"`), a count
+    with no unit (`"90"`), a unit with no count (`"h"`), a unit the module
+    does not know (`"1y"`), and the empty string.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+  family: duration-parse-written
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the accepted forms and the refused ones are both enumerated as
+      criteria, so what is left is transcribing a scanner rather than
+      deciding what counts as a duration

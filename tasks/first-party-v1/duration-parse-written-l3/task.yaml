@@ -1,0 +1,38 @@
+# K1 family duration-parse-written, level 3 of 3: the intent and the gap are
+# stated, and nothing else. The signature is named because grading has to be
+# able to call the function at all; every decision behind it — which spacing
+# and casing are tolerated, that units run largest first and appear once, that
+# text which does not read that way is refused rather than salvaged — has to
+# be inferred from the module. The repo, the grading suite and the reference
+# solution are identical across the three variants — the prompt is the only
+# thing that varies.
+#
+# feature-dev: the grading tests exercise parse, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: duration-parse-written-l3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small duration module in duration.py.
+
+  Durations reach this module from wherever people type them — a config
+  file, a command-line flag — and what it cannot do today is take one back
+  the other way: it writes a duration out, but nothing reads one in.
+
+  Add a function `parse(text)` to duration.py that closes that gap.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: intent
+  family: duration-parse-written
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      nothing is said about what to refuse, so the whole refusal surface has
+      to be read off the module docstring, and scanning out the counts and
+      units and adding them up is the natural first answer — it refuses none
+      of it
