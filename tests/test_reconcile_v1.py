@@ -165,43 +165,77 @@ def pairs_block(out: str) -> str:
 # --- the demo: the checked-in sweeps against the checked-in task set ----------
 
 
+def checked_in_tasks_and_swept_ids() -> tuple[list[firstparty_v1.Task], set[str]]:
+    """The checked-in task set, and the ids some checked-in log has a run for.
+
+    Read from the same artifacts the command reads, so that what this file
+    expects of the report moves when the artifacts move. Sweeps are the thing
+    that keeps arriving here — round 1 covered the baseline, round 2 the
+    Track-A tasks, Track B is next — and every count the report prints is a
+    count of them. Pinned as literals they would be a running total edited
+    once per round, and a number edited to match the output it is checking has
+    stopped testing anything."""
+    tasks = firstparty_v1.load_task_set(_REPO / "tasks" / "first-party-v1")
+    logs = reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
+    swept = {run.task_id for log in logs for run in firstparty_v1.load_runs(log)}
+    return tasks, swept
+
+
 def test_reconcile_v1_reports_the_checked_in_sweeps(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The command's reason to exist, run on real artifacts: round 1 swept the
-    22 zero-knob baseline tasks and round 2 swept every Track-A constructed
-    one, so those predictions are scored against an observed rung.
+    """The command's reason to exist, run on real artifacts: every constructed
+    task the checked-in logs have a run for is reported as swept and scored
+    against an observed rung, and every one they do not is still on the page
+    saying so.
 
-    What this pins is what a later round can only add to. A cell is swept once
-    and a log is only ever appended to, so a task that carries a verdict here
-    carries it for good — where the counts of tasks, rounds and scored
-    predictions all move as soon as the next sweep lands, and pinning them
-    would make this test a running total to be edited rather than a claim
-    about the report."""
+    The numbers are derived from those artifacts rather than pinned, so a
+    later round adds rows here instead of breaking the test. What is asserted
+    is that the report accounts for exactly what the logs and the task set
+    contain — a task dropped from a section, or counted in the header and
+    missing from section 1, is what this is watching for."""
+    tasks, swept_ids = checked_in_tasks_and_swept_ids()
+    constructed = [task for task in tasks if task.construction is not None]
+    baseline = [task for task in tasks if task.construction is None]
+    swept = [task for task in constructed if task.id in swept_ids]
+    unswept = [task for task in constructed if task.id not in swept_ids]
+    assert swept, "the demo has nothing to show until a round has been swept"
+
     main(checked_in_argv())
-
     out = capsys.readouterr().out
-    assert "22 zero-knob baseline" in out
-    for log in ("2026-08-04.jsonl", "2026-08-04-resume.jsonl",
-                "2026-08-05-dry.jsonl", "2026-08-05-haiku.jsonl",
-                "2026-08-05-haiku-resume.jsonl", "2026-08-05-sonnet.jsonl"):
-        assert f"data/first-party-v1-runs/{log}" in out
-    assert re.search(r"hit-rate: \d+/\d+ scored", out)
 
-    # Every constructed task is on the page rather than vanishing, swept or
-    # not — an unswept one keeps its row (asserted on a fixture next to this,
-    # where a sweep cannot come along and settle it).
-    for constructed_id in ("settleup-settle-debts", "alerts-rule-table",
-                           "billing-split-by-weight-l3",
-                           "pysm-remember-substate-history"):
-        assert constructed_id in out
-    # The Track-A tasks are scored: predicted and observed rung, then a
-    # verdict, rather than the `unswept` their rows read before round 2.
-    for swept_id in ("settleup-settle-debts", "alerts-rule-table",
-                     "billing-split-by-weight-l3"):
+    # The header's census and section 1's agree, and both agree with the disk.
+    assert (
+        f"{len(tasks)} task(s): {len(baseline)} zero-knob baseline, "
+        f"{len(constructed)} constructed"
+    ) in out
+    assert (
+        f"{len(constructed)} constructed task(s): {len(swept)} swept, "
+        f"{len(unswept)} unswept"
+    ) in out
+    for log in reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"]):
+        assert f"data/first-party-v1-runs/{log.name}" in out
+
+    predictions = out.split("1. prediction reconciliation")[1]
+    predictions = predictions.split("2. knob grouping")[0]
+    # Every constructed task keeps a row whether or not a sweep has reached
+    # it, and a swept one is scored: predicted rung, observed rung, verdict.
+    for task in constructed:
+        assert task.id in predictions, f"{task.id} vanished from the report"
+    for task in swept:
         assert re.search(
-            rf"^ +{swept_id} +\S+ +\S+ +(hit|miss)$", out, re.MULTILINE
-        ), f"{swept_id} is swept and should carry a scored verdict"
+            rf"^ +{task.id} +\S+ +\S+ +(hit|miss)$", predictions, re.MULTILINE
+        ), f"{task.id} has runs logged and should carry a scored verdict"
+    for task in unswept:
+        assert re.search(
+            rf"^ +{task.id} +\S+ +unswept +unswept$", predictions, re.MULTILINE
+        ), f"{task.id} has no runs logged and should say so"
+
+    # Only a swept task can be scored, so the hit-rate cannot outrun them.
+    rate = re.search(r"hit-rate: (\d+)/(\d+) scored", predictions)
+    assert rate
+    hits, scored = int(rate[1]), int(rate[2])
+    assert hits <= scored <= len(swept)
 
     # The baseline is on the page as every knob's comparison row, and round 1
     # swept all of it: no baseline row has a task it did not sweep.
@@ -209,8 +243,10 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     rows = [line for line in grouping.splitlines() if "(baseline)" in line]
     assert rows
     for row in rows:
-        _, category, tasks_in_row, swept, *_ = row.split()
-        assert tasks_in_row == swept, f"{category} baseline not fully swept: {row}"
+        _, category, tasks_in_row, swept_in_row, *_ = row.split()
+        assert tasks_in_row == swept_in_row, (
+            f"{category} baseline not fully swept: {row}"
+        )
 
 
 def test_reconcile_v1_defaults_to_the_checked_in_task_set_and_run_logs(
