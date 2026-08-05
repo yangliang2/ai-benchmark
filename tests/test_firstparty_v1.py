@@ -1,8 +1,8 @@
 """Dataset-seam tests for first-party v1: the checked-in task set plus a raw
 run log carrying workdir diffs in, execution-verified records out.
 
-Diffs are built by v1_tasks.workdir_diff, the way the live runner (#11)
-builds them, so the grader is exercised against genuine patches (added,
+Diffs are built by firstparty_v1_tasks.workdir_diff, the way the live runner
+(#11) builds them, so the grader is exercised against genuine patches (added,
 modified and deleted files) rather than hand-written hunks that could drift
 from git's output.
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 import yaml
 from conftest import FakeClaude
-from v1_tasks import TASKS, run_for, task_by_id, workdir_diff
+from firstparty_v1_tasks import TASKS, run_for, task_by_id, workdir_diff
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import load_runs as load_v0_runs
@@ -433,17 +433,33 @@ A_SUBSTRATE = {
 }
 
 
+def a_vendored_block(**overrides: object) -> dict[str, object]:
+    """A construction block for a vendored starting repository.
+
+    It activates K8 as well as K1 because A_SUBSTRATE's one modification sets
+    K8: a planted edit has to answer to a knob the task itself declares.
+    """
+    return a_construction_block(
+        knobs=[
+            {"id": "K1", "level": "acceptance"},
+            {"id": "K8", "level": "bare"},
+        ],
+        substrate=A_SUBSTRATE,
+    ) | overrides
+
+
 def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
     tmp_path: Path,
 ) -> None:
-    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
-        family="a-family", substrate=A_SUBSTRATE,
-    ))
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(family="a-family"))
 
     [task] = load_task_set(tmp_path)
 
     assert task.construction is not None
-    assert [(k.id, k.level) for k in task.construction.knobs] == [("K1", "acceptance")]
+    assert [(k.id, k.level) for k in task.construction.knobs] == [
+        ("K1", "acceptance"),
+        ("K8", "bare"),
+    ]
     assert task.construction.family == "a-family"
     assert task.construction.prediction.rung == "haiku-solvable"
     assert task.construction.prediction.rationale.startswith("every decision")
@@ -566,9 +582,7 @@ def test_substrate_provenance_missing_its_license_fails_loudly(
     auditable, so a partial record is no record."""
     substrate = dict(A_SUBSTRATE)
     del substrate["license"]
-    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
-        substrate=substrate,
-    ))
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(substrate=substrate))
 
     with pytest.raises(IngestError, match="license"):
         load_task_set(tmp_path)
@@ -576,7 +590,7 @@ def test_substrate_provenance_missing_its_license_fails_loudly(
 
 def test_a_substrate_pinned_to_a_moving_ref_fails_loudly(tmp_path: Path) -> None:
     """A branch name moves under the task; only a full commit id is a pin."""
-    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(
         substrate=A_SUBSTRATE | {"commit": "main"},
     ))
 
@@ -584,12 +598,36 @@ def test_a_substrate_pinned_to_a_moving_ref_fails_loudly(tmp_path: Path) -> None
         load_task_set(tmp_path)
 
 
+def test_a_substrate_commit_pinned_in_uppercase_hex_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Same commit, other spelling: the pin is written one canonical way so
+    that two records of one snapshot cannot read as two snapshots."""
+    commit = str(A_SUBSTRATE["commit"]).upper()
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(
+        substrate=A_SUBSTRATE | {"commit": commit},
+    ))
+
+    with pytest.raises(IngestError, match="lowercase"):
+        load_task_set(tmp_path)
+
+
 def test_a_substrate_origin_that_is_not_a_url_fails_loudly(tmp_path: Path) -> None:
-    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(
         substrate=A_SUBSTRATE | {"origin": "somebody's laptop"},
     ))
 
     with pytest.raises(IngestError, match="origin"):
+        load_task_set(tmp_path)
+
+
+def test_a_substrate_origin_naming_no_host_fails_loudly(tmp_path: Path) -> None:
+    """A scheme on its own is a URL nobody can follow back to the snapshot."""
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(
+        substrate=A_SUBSTRATE | {"origin": "https://"},
+    ))
+
+    with pytest.raises(IngestError, match="host"):
         load_task_set(tmp_path)
 
 
@@ -598,13 +636,28 @@ def test_a_substrate_modification_naming_no_known_knob_fails_loudly(
 ) -> None:
     """Every surgical edit to a vendored repository has to be traceable to a
     knob, or the substrate carries difficulty nothing accounts for."""
-    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(
         substrate=A_SUBSTRATE | {
             "modifications": [{"knob": "tidying", "description": "general cleanup"}]
         },
     ))
 
     with pytest.raises(IngestError, match="unknown difficulty knob 'tidying'"):
+        load_task_set(tmp_path)
+
+
+def test_a_substrate_modification_setting_an_unactivated_knob_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Naming a known knob is not enough. The edit deletes the repository's
+    test suite, so the task has to activate K8 — a task that plants the edit
+    without declaring the knob has planted difficulty its profile denies, and
+    reconciliation would credit the outcome to the knobs it does declare."""
+    clone_constructed(tmp_path, "knobbed-task", a_vendored_block(
+        knobs=[{"id": "K1", "level": "acceptance"}],
+    ))
+
+    with pytest.raises(IngestError, match=r"\['K8'\] this task does not activate"):
         load_task_set(tmp_path)
 
 
@@ -916,20 +969,32 @@ def test_lint_requires_construction_metadata_outside_the_baseline(
     assert "undeclared-task" in problem and "construction" in problem
 
 
+def test_lint_rejects_a_baseline_task_that_declares_construction(
+    tmp_path: Path,
+) -> None:
+    """The other direction of the same rule: absence of the block is the whole
+    of what makes a baseline task a control, so one that declares knobs is
+    neither control nor knob-experiment task."""
+    clone_constructed(tmp_path, FEATURE_SEED, a_construction_block())
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert FEATURE_SEED in problem and "baseline" in problem
+
+
 def test_lint_accepts_a_complete_one_knob_family(tmp_path: Path) -> None:
     clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
 
     assert lint_task_set(load_task_set(tmp_path)) == []
 
 
-def test_lint_rejects_a_family_missing_a_level(tmp_path: Path) -> None:
-    """A sweep with a hole in it cannot say where along the ladder the rung
-    changed."""
+def test_lint_accepts_a_family_sweeping_part_of_a_ladder(tmp_path: Path) -> None:
+    """A family need not use every enumerated level: the planned K8 family
+    runs covered → bare → misleading and skips partial. Such a family says
+    less than a full sweep would, which is the author's call, not the lint's."""
     clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "intent"])
 
-    [problem] = lint_task_set(load_task_set(tmp_path))
-
-    assert "spec-ladder" in problem and "description" in problem
+    assert lint_task_set(load_task_set(tmp_path)) == []
 
 
 def test_lint_rejects_a_family_of_one(tmp_path: Path) -> None:
@@ -980,6 +1045,43 @@ def test_lint_rejects_a_family_with_two_members_at_the_same_level(
     problems = lint_task_set(load_task_set(tmp_path))
 
     assert any("spec-ladder" in p and "same level" in p for p in problems)
+
+
+def test_lint_rejects_a_family_whose_members_start_from_different_repos(
+    tmp_path: Path,
+) -> None:
+    """Varying one knob is only half of what isolating it means: the variants
+    are self-contained copies of one underlying change, and copies drift
+    silently, so the lint reads the trees rather than trusting the author."""
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
+    append(tmp_path / "spec-ladder-2" / "repo" / "wordcount.py", """
+
+
+        def unrelated_helper(text):
+            return text.strip()
+        """)
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "wordcount.py" in problem
+
+
+def test_lint_rejects_a_family_whose_members_grade_differently(
+    tmp_path: Path,
+) -> None:
+    """Same for the held-out suite: a variant graded against different tests
+    is measuring a different change, however identical its knob list."""
+    clone_k1_family(tmp_path, "spec-ladder", ["acceptance", "description", "intent"])
+    append(tmp_path / "spec-ladder-3" / "grading" / "test_top_words.py", """
+
+
+        def test_ties_break_alphabetically():
+            assert top_words("b a a b c", 2) == ["a", "b"]
+        """)
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "spec-ladder" in problem and "test_top_words.py" in problem
 
 
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----

@@ -4,7 +4,10 @@ underlying change authored as three spec-completeness variants.
 A family only isolates its knob if everything else is held constant, so that
 is what these tests check first: the three variants ship byte-identical
 starting repositories, grading suites and reference solutions, and differ in
-their prompt and their declared K1 level alone. The rest is what every
+their prompt and their declared K1 level alone. The first two of those the
+task-set lint now enforces for every family, so the lint run below carries
+them; the reference solutions live outside the task directories, out of the
+lint's reach, and are compared here. The rest is what every
 checked-in task has to prove — lints clean, reference solution grades
 resolved, doing nothing grades unresolved — plus the pre-registration the
 experiment rests on: each variant's difficulty prediction is pinned here, so
@@ -14,7 +17,13 @@ a sweep that disagrees is a visible miss rather than a quiet rewrite.
 from pathlib import Path
 
 import pytest
-from v1_tasks import SOLUTIONS, run_for, solution_diff, task_by_id, workdir_diff
+from firstparty_v1_tasks import (
+    SOLUTIONS,
+    run_for,
+    solution_diff,
+    task_by_id,
+    workdir_diff,
+)
 
 from ai_benchmark.firstparty_v1 import Task, evaluate, lint_task_set
 
@@ -72,15 +81,15 @@ def test_the_family_is_three_variants_of_one_change() -> None:
         assert task.language == "python"
 
 
-def test_every_variant_ships_the_same_repo_grading_suite_and_solution() -> None:
+def test_every_variant_ships_the_same_reference_solution() -> None:
     """Self-contained copies rather than shared directories, so no run can be
     shaped by another variant — but identical copies, or the family would be
-    varying the diff target as well as the spec."""
+    varying the diff target as well as the spec. The repo/ and grading/ halves
+    are the task-set lint's job now (below); the reference solutions sit
+    outside the task directories, where the lint cannot see them."""
     [first, *rest] = variants()
 
     for task in rest:
-        assert tree(task.repo_dir) == tree(first.repo_dir)
-        assert tree(task.grading_dir) == tree(first.grading_dir)
         assert tree(SOLUTIONS / task.id) == tree(SOLUTIONS / first.id)
 
 
@@ -99,8 +108,9 @@ def test_the_spec_ladder_runs_from_stated_to_unstated() -> None:
 
 
 def test_the_family_lints_clean_as_a_whole() -> None:
-    """Which covers the family invariants too: one knob varied, every level
-    of it used once."""
+    """Which covers the family invariants too: one knob varied, each of its
+    levels used once, and byte-identical starting repositories and grading
+    suites across the three variants."""
     assert lint_task_set(variants()) == []
 
 

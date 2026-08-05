@@ -204,6 +204,16 @@ the required tier ("how to make this ticket delegable" as a product
 feature). Same family pattern applies to K8 (net good/broken/misleading)
 and K11.
 
+**K1/K2 overlap, recorded before any sweep so the caveat cannot be invented
+afterwards:** the ladder's L3 (intent-only) does not delete the withheld
+decisions, it relocates them — an intent-level prompt makes the agent recover
+from repo conventions what L1 stated outright, which is exactly K2's lever.
+So an L1→L3 rung difference is attributable to "spec completeness including
+its K2 shadow", not to K1 alone, and a K1 family is not a clean K1 instrument
+however carefully everything else is held constant. The clean K2 instrument is
+a pure-K2 task: constraints living in conventions while the spec stays at
+acceptance level, where K1 is pinned at L1 and only K2 moves.
+
 Guards: difficulty must come from a named knob traceable to a real
 architect experience (no puzzle difficulty, no obfuscation); one knob at a
 time (baseline + single-knob deviations + a few realistic composites, no

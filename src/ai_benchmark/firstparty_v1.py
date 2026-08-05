@@ -32,6 +32,18 @@ module does not happen to satisfy the grading tests, such a task fails on the
 pristine repo exactly like a good task, passes the lint, and is then
 impossible for any agent to solve.
 
+A third group of rules is checked here for the same reason, though it is read
+rather than run: the construction metadata recording how a task was built.
+Which knob a task sets, what its author predicted before the first paid run,
+where a vendored starting repository came from and which knob each edit to it
+sets are all claims that cost nothing to check now and cannot be repaired once
+the sweep is paid for — a prediction registered after the outcome is not a
+prediction, and a task family whose variants differ in more than the one knob
+they vary explains nothing. So the loader validates each task's block, and the
+lint checks what only the set as a whole can show: that every task outside the
+frozen baseline declares one, that no baseline control quietly acquires one,
+and that each family is one underlying change with one knob moving across it.
+
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
 so those defences stop an honest-but-messy agent, not a deliberately
@@ -56,6 +68,7 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 from typing import Literal, Self
+from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import yaml
@@ -114,9 +127,9 @@ def pytest_configure(config):
 # The difficulty knobs of docs/design/task-difficulty-and-ex-ante-profiles.md
 # section 9, and the levels each one is settable to. A knob maps to () when
 # the design note has not enumerated its ladder yet: its level is then recorded
-# as written, and a family varying it cannot be checked for completeness. Only
-# knobs the note actually enumerates get a ladder here — inventing one would
-# silently fix a vocabulary the experiment has not chosen.
+# as written, and nothing can check that two tasks setting it mean the same
+# thing. Only knobs the note actually enumerates get a ladder here — inventing
+# one would silently fix a vocabulary the experiment has not chosen.
 KNOB_LEVELS: dict[str, tuple[str, ...]] = {
     "K1": ("acceptance", "description", "intent"),  # decision openness
     "K2": (),  # implicit requirements
@@ -240,16 +253,20 @@ class Substrate(BaseModel):
 
     @model_validator(mode="after")
     def provenance_is_followable_and_pinned(self) -> Self:
-        if not self.origin.startswith(("http://", "https://")):
+        origin = urlparse(self.origin)
+        if origin.scheme not in ("http", "https") or not origin.netloc:
             raise ValueError(
-                f"substrate origin {self.origin!r} is not an http(s) URL — "
-                "provenance has to be followable by whoever audits the snapshot"
+                f"substrate origin {self.origin!r} is not an http(s) URL naming a "
+                "host — provenance has to be followable by whoever audits the "
+                "snapshot, and a scheme on its own leads nowhere"
             )
         if len(self.commit) != 40 or set(self.commit) - set("0123456789abcdef"):
             raise ValueError(
                 f"substrate commit {self.commit!r} is not a full 40-character "
-                "commit id — a branch or tag moves under the vendored snapshot, "
-                "so only a full id pins it"
+                "lowercase hex commit id — a branch or tag moves under the "
+                "vendored snapshot and only a full id pins it, and the pin is "
+                "written the one canonical way so two records of one commit "
+                "cannot read as two commits"
             )
         return self
 
@@ -291,6 +308,33 @@ class Construction(BaseModel):
             raise ValueError(
                 f"knob(s) {repeated} set more than once — a task sets each knob "
                 "to one level, or the level it was run at is ambiguous"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def every_modification_sets_a_knob_this_task_activates(self) -> Self:
+        """A planted edit answers to one of this task's own knob activations.
+
+        Naming any known knob is not enough: an edit setting a knob the task
+        never activates is difficulty that reaches the agent while sitting
+        outside the task's declared profile, so reconciliation attributes the
+        outcome to knobs the substrate has quietly gone beyond.
+        """
+        if self.substrate is None:
+            return self
+        unactivated = sorted(
+            {
+                modification.knob
+                for modification in self.substrate.modifications
+                if modification.knob not in self.levels
+            }
+        )
+        if unactivated:
+            raise ValueError(
+                f"substrate modification(s) set knob(s) {unactivated} this task "
+                f"does not activate — it activates {sorted(self.levels)}, and an "
+                "edit outside that set plants difficulty the task's own profile "
+                "does not declare"
             )
         return self
 
@@ -710,9 +754,10 @@ def lint_task_set(
 
     The construction invariants are read rather than run, but belong here for
     the same reason: an undeclared knob, an unregistered prediction or a
-    family with a hole in it costs nothing to catch now and cannot be repaired
-    afterwards — a prediction registered once the outcome is known is not a
-    prediction, and a sweep is only paid for once.
+    family whose variants differ in more than the knob they vary costs nothing
+    to catch now and cannot be repaired afterwards — a prediction registered
+    once the outcome is known is not a prediction, and a sweep is only paid
+    for once.
     """
     problems = _family_problems(tasks)
     for task in tasks:
@@ -733,27 +778,51 @@ def lint_task_set(
 
 
 def _construction_problems(task: Task) -> list[str]:
-    """Whether a task that is not a baseline control declares how it was built."""
-    if task.construction is None and task.id not in BASELINE_TASK_IDS:
+    """What is wrong with this task's declaration of how it was built.
+
+    The rule runs both ways, because the two states mean opposite things and
+    each is expressed by the presence or absence of the same block: a task
+    outside the frozen baseline must declare its construction, and a baseline
+    task must not, or reconciliation can read it as neither control nor
+    knob-experiment task.
+    """
+    declared = task.construction is not None
+    baseline = task.id in BASELINE_TASK_IDS
+    if not declared and not baseline:
         return [(
             f"{task.id}: no construction block — a task authored after the "
             "zero-knob baseline declares which difficulty knob(s) it sets and "
             "its pre-registered difficulty prediction, because absence of the "
             "block already means baseline control"
         )]
+    if declared and baseline:
+        return [(
+            f"{task.id}: a zero-knob baseline control carries a construction "
+            "block — the absence of the block is the whole of what makes these "
+            "22 tasks controls, so one that declares knobs is a control "
+            "reconciliation would read against itself"
+        )]
     return []
 
 
 def _family_problems(tasks: list[Task]) -> list[str]:
-    """Whether each declared task family is a complete one-knob sweep.
+    """What is wrong with each declared task family, if anything.
 
     A family exists to isolate one knob: one underlying change authored as
-    several variants, one knob varied across its levels, everything else held
-    constant. A family varying two knobs attributes its outcomes to neither,
-    and one missing a level is a sweep with a hole in it — neither is
-    repairable once the runs are paid for.
+    several variants, one knob varied, everything else held constant. Both
+    halves are checked, because both halves are what "isolate" means — a
+    family varying two knobs attributes its outcomes to neither, and one whose
+    variants start from different repositories or grade against different
+    tests varies the diff target alongside the knob. Neither is repairable
+    once the runs are paid for.
+
+    What is deliberately not required is a full ladder: a family may sweep
+    part of one (K8 covered→bare→misleading, skipping partial) as long as its
+    levels are distinct. It then says less than a complete sweep would, and
+    that is the author's call to make.
     """
     families: dict[str, dict[str, Construction]] = {}
+    directory_of = {task.id: task.directory for task in tasks}
     for task in tasks:
         if task.construction is not None and task.construction.family is not None:
             families.setdefault(task.construction.family, {})[task.id] = (
@@ -769,6 +838,12 @@ def _family_problems(tasks: list[Task]) -> list[str]:
                 f"family {family!r} holds only {ids} — a family isolates a knob "
                 "by varying it, which takes at least two variants"
             )
+            continue
+        divergence = _divergence_problem(
+            family, {task_id: directory_of[task_id] for task_id in ids}
+        )
+        if divergence is not None:
+            problems.append(divergence)
             continue
         if len({frozenset(level) for level in levels}) > 1:
             problems.append(
@@ -795,14 +870,46 @@ def _family_problems(tasks: list[Task]) -> list[str]:
                 f"{knob_id} ({sorted(set_to)} across {ids}) — one level is one "
                 "variant, however many task directories say otherwise"
             )
-        missing = [level for level in KNOB_LEVELS[knob_id] if level not in set_to]
-        if missing:
-            problems.append(
-                f"family {family!r} leaves {knob_id} level(s) {missing} unused "
-                f"across {ids} — a sweep with a hole in it cannot say where "
-                "along the ladder the rung changed"
-            )
     return problems
+
+
+def _divergence_problem(family: str, directories: dict[str, Path]) -> str | None:
+    """The first place two members of a family differ outside their spec.
+
+    Held constant is read from the bytes on disk rather than trusted to
+    authoring discipline: the variants are deliberately self-contained copies
+    of one starting repository and one grading suite, so nothing but a check
+    like this stops them drifting apart — and a family whose variants have
+    drifted still lints clean on every knob rule while measuring a different
+    change in every member.
+    """
+    [first, *rest] = sorted(directories)
+    for name in (REPO_DIR, GRADING_DIR):
+        held = _tree_bytes(directories[first] / name)
+        for task_id in rest:
+            variant = _tree_bytes(directories[task_id] / name)
+            differing = sorted(
+                path
+                for path in held.keys() | variant.keys()
+                if held.get(path) != variant.get(path)
+            )
+            if differing:
+                return (
+                    f"family {family!r} does not hold {name}/ constant: {first} "
+                    f"and {task_id} differ at {differing[0]!r} — a family is one "
+                    "underlying change seen at several knob levels, so a variant "
+                    "that starts or grades differently varies the diff target too"
+                )
+    return None
+
+
+def _tree_bytes(root: Path) -> dict[str, bytes]:
+    """Every file under root by relative path, for comparing whole trees."""
+    return {
+        str(path.relative_to(root)): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
 
 
 def evaluate(

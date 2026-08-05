@@ -12,7 +12,7 @@ captured with git exactly as the live runner captures a workdir diff.
 """
 
 import pytest
-from v1_tasks import run_for, solution_diff, task_by_id
+from firstparty_v1_tasks import run_for, solution_diff, task_by_id
 
 from ai_benchmark.firstparty_v1 import evaluate, lint_task_set
 

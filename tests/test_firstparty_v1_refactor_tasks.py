@@ -17,7 +17,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from v1_tasks import SOLUTIONS, TASKS, run_for, solution_diff, task_by_id
+from firstparty_v1_tasks import SOLUTIONS, TASKS, run_for, solution_diff, task_by_id
 
 from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
