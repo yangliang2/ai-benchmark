@@ -1,9 +1,15 @@
 # Task difficulty and ex-ante profiles — working notes
 
-**Status: DRAFT / discussion in progress — not accepted, not an ADR.**
-The user's last verdict on this design was "still not good enough"; the open
-questions at the bottom are where the next conversation picks up. Nothing here
-is committed to; no tickets exist for it.
+**Status: DRAFT — direction converged 2026-08-05, not yet an ADR, no tickets.**
+The earlier "still not good enough" gap was identified as open question 5:
+the user wanted one coherent object, framed as *how a top human architect
+judges requirement complexity*. The 2026-08-05 session produced the architect
+decomposition, a knob-based task-construction framework derived from it, and
+a substrate strategy (see "Converged direction" below). The user's closing
+stance: don't over-plan substrate selection — pick several base repos and
+let experiments decide ("我们也不可能一次想明白的,多找一些基地仓库,多做
+一点实验"). Formalization was explicitly deferred; next step is experiments,
+not schema work.
 
 ## The question this must serve
 
@@ -125,27 +131,133 @@ calc-infix (both), docstore + jobrunner (haiku only). Replay reproduces all
 records byte-for-byte. Repeat-sampling would need a run-index schema decision
 (pass@k vs mean) — parked.
 
-## Open questions — the user is not yet satisfied ("还是不够好")
+## Converged direction (2026-08-05 session)
 
-Dissatisfaction voiced after each iteration: too convoluted; must support
-ex-ante decisions (addressed); needs business mapping (addressed in
-direction); the engineering-method pass still "not good enough" — the *what*
-is missing is not yet articulated. Candidate gaps to probe next session:
+### 7. The gap was open question 5 — architect-mediated judgment
 
-1. Is the profile too coarse to be decision-grade? (4 dims × coarse levels
-   may not separate real tickets; the lead-questions framing may need to be
-   the primary system rather than a projection.)
-2. Is there a missing quantitative backbone — e.g. an explicit probabilistic
-   model P(resolve | profile, combination) with stated uncertainty, rather
-   than cell lookup + threshold?
-3. Should difficulty/profile be validated against *external* ground truth
-   (human time-to-fix on a sample; real org ticket data) before trusting
-   internal calibration at all?
-4. Is the step-0 falsification plan itself the wrong first move in the
-   user's eyes — do they want the full system designed top-down first?
-5. Unstated aesthetic: the user may want one coherent formal object (a
-   single model tying profile → prediction → recommendation → feedback)
-   rather than a set of mechanisms.
+The user confirmed the missing piece: model the process by which a top
+human architect judges requirement complexity. Key insight: the architect's
+judgment is *mediated by a cheap mental solution sketch* — complexity is a
+property of the imagined solution path, not of the requirement text. The
+earlier 4-dim profile skipped this mediating object, which is why the design
+read as a bag of mechanisms. A sketch-centred chain (π = Sketch(S,R) →
+features φ(π) → P(resolve | φ, combo) → recommend → feedback comparing
+sketch to realized diff) was proposed and resonated, but **formalization is
+deferred by explicit user instruction** — decompose and experiment first.
+
+### 8. Architect decomposition (the source of truth for difficulty factors)
+
+Steps, iterative not linear: (0) frame the problem — real intent vs stated
+ask, reversibility/stakes decide recon depth, self-check familiarity;
+(1) interrogate the spec — decisions closed vs left open, implicit
+requirements, boundary cases, decidable acceptance, spec stability,
+contradiction detection; (2) reconnoiter the terrain — touch-set (read-set
+vs write-set), with/against the architectural grain, haunted areas,
+invariant density, safety-net quality, code archaeology; (3) sketch the
+solution and locate the crux — classify its uncertainty (known-hard /
+known-unknown → spike / unknown-unknown → outside view), classify each step
+mechanical/derivable/inventive, identify external dependencies (often the
+dominant schedule-variance source, orthogonal to technical difficulty);
+(4) outside view — nearest-neighbour past cases, base-rate correction,
+asking the person who knows; (5) pre-mortem — four failure modes (can't
+build / breaks something else / builds the wrong thing / can't verify),
+detection distance per mode, stop-loss checkpoints; (6) match the executor —
+difficulty is relational (crux type × executor profile); **active
+difficulty reduction**: architects rewrite the task (pre-decide the crux,
+add scaffolding) to downgrade it to a delegable level; (7) output — a
+distribution not a point, explicit assumption list, staged commitment
+(spike before full estimate), calibration record. Scenario table: bug-fix
+crux = localization; refactor crux = behaviour-preservation verification;
+perf crux = measurement; migration crux = data/rollback; vague ask crux =
+negotiation into a decidable spec; dependency-heavy crux = coordination.
+
+### 9. Knob framework: task construction = experimental design
+
+Each architect factor becomes an independently settable knob; a task's
+metadata records which knob at which level it activates, plus the author's
+**pre-registered difficulty prediction** (expected ladder rung + which knob
+justifies it). Sweep results then confirm/kill knobs — task authoring and
+difficulty-theory validation become the same activity. Knobs:
+
+- Spec side: K1 decision openness (acceptance/description/intent spec
+  ladder), K2 implicit requirements (constraints live in repo conventions,
+  not the ticket — the recorded "convention-driven difficulty" lever),
+  K3 contradiction traps (correct behaviour = flag, not implement).
+- Terrain side: K4 read-set/write-set ratio, K5 with/against grain,
+  K6 haunted areas (load-bearing weird code, Chesterton's fence),
+  K7 invariant density, K8 safety-net quality (covered / partial / bare /
+  **misleading** — green tests that don't cover the graded behaviour).
+- Solution side: K9 crux depth (exactly one inventive decision, rest
+  mechanical; zero-crux controls), K10 coordination width (N consistent
+  edit sites).
+- Verification side: K11 detection distance (how late failure manifests).
+
+Post-hoc mapping: calc-infix = natural high-K9; jobrunner's 21 haiku turns
+= K11; refactor saturation = K7/K8 set too kind (natural refactor crux is
+behaviour-preservation verification; current tasks give too good a net).
+
+**Task families** — the highest-value construction trick: one underlying
+change + one reference solution, N spec variants (L1 crux-pre-decided /
+L2 hints / L3 intent-only). Clean K1 isolation, amortized authoring cost,
+and directly tests the product hypothesis that rewriting a ticket downgrades
+the required tier ("how to make this ticket delegable" as a product
+feature). Same family pattern applies to K8 (net good/broken/misleading)
+and K11.
+
+Guards: difficulty must come from a named knob traceable to a real
+architect experience (no puzzle difficulty, no obfuscation); one knob at a
+time (baseline + single-knob deviations + a few realistic composites, no
+full factorial); honest-variant probes as in #12/#13; knobs face the same
+kill discipline as profile dims — no separation after two sweeps → demoted.
+Ladder coverage is a design goal: anchors at every rung incl. headroom
+(expected all-fail) tasks; the existing 22 tasks serve as baseline controls.
+
+### 10. Substrate spectrum — construction method is one, substrate varies
+
+```
+fully authored  ←—  modified OSS (mainline)  —→  as-is OSS (optional)
+(substrate=artifact)  (substrate=raw material)     (substrate=found site)
+```
+
+Route B is NOT history replay (that lane already exists via meta-aggregation
+and is contaminated); the repo is somebody else's, the requirement is ours,
+and — the user's sharpening — **the substrate is editable**: surgically set
+terrain knobs on a real repo (delete/degrade tests for K8, inject a
+convention for K2, plant a load-bearing oddity along real grain for K6).
+Control and organic mass at the same time; prospecting risk (finding
+perfect natural sites) largely dissolves. Residual concerns, recorded not
+blocking: familiarity imbalance across models (pick cold repos, record
+provenance), heavy-handed edits killing the organic quality (edits sparse,
+along the grain, each traceable to a knob), one-time engineering cost for
+env pinning (vendor at pinned SHA into the existing task format — repo/
+tree + held-out grading/ — dependencies pinned, network stripped).
+
+Sequencing agreed loose (user: don't over-plan): first knob-family batch
+(K1 families, K8-misleading, K9) can start on existing authored repos with
+zero new engineering; in parallel, vendor several cold small OSS substrates
+(few kloc, Python, thin deps) and set K7/K8 knobs there — plural substrates
+by design, selection mistakes are cheap. As-is OSS prospecting deferred
+until modified-substrate results show whether planted knobs differ
+systematically from natural sites. Bonus: agreement between authored and
+OSS substrates on knob → difficulty ordering is itself the external-validity
+check open question 3 asked for.
+
+## Open questions (superseded list resolved 2026-08-05)
+
+Of the five candidate gaps: #5 confirmed as the real gap (architect
+framing, above); #1 and #2 dissolve inside the sketch-centred chain
+(feature granularity follows the sketch; P(resolve|φ,combo) is the
+backbone) — *when* formalization resumes; #3 partially addressed by
+cross-substrate agreement; #4 moot (falsification-first survives, now
+testing the knob framework). Remaining genuinely open:
+
+1. Sketcher instrument (which model/prompt, versioned like the classifier)
+   — deferred with formalization.
+2. Multi-turn negotiation tasks (vague-ask scenario, oracle answering
+   questions) — has a place in the knob framework, far future.
+3. Prospecting efficiency on as-is OSS — only matters if modified
+   substrates prove insufficient.
+4. Repeat-sampling / run-index schema (pass@k vs mean) — still parked.
 
 ## Related repo state (for whoever picks this up)
 
