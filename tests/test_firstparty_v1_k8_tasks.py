@@ -61,6 +61,19 @@ def order_alert_rules_by_severity(workdir: Path) -> None:
     alerts.write_text(source.replace(muted, "").replace(notice, notice + muted))
 
 
+def settle_leaderboard_ties_by_name(workdir: Path) -> None:
+    """The ordering rule in one place, and made a total order while it is
+    being written down — so a tie is settled alphabetically rather than left
+    to the order the players were entered in."""
+    leaderboard = workdir / "leaderboard.py"
+    source = leaderboard.read_text()
+    total_only = "    return -player.total()\n"
+    assert total_only in source
+    leaderboard.write_text(
+        source.replace(total_only, "    return (-player.total(), player.name)\n")
+    )
+
+
 def copy_shelving_shallowly(workdir: Path) -> None:
     """The copy given one home, spelled the way relabel already spells it —
     which is right for relabel and hands the caller's own lists to place and
@@ -70,6 +83,19 @@ def copy_shelving_shallowly(workdir: Path) -> None:
     per_shelf = "    return {name: list(items) for name, items in shelves.items()}\n"
     assert per_shelf in source
     shelving.write_text(source.replace(per_shelf, "    return dict(shelves)\n"))
+
+
+def expire_sessions_a_second_late(workdir: Path) -> None:
+    """The predicate written as the negation of the comparison it replaces,
+    off by the boundary: a session whose whole allowance has gone by is still
+    treated as usable."""
+    expiry = workdir / "expiry.py"
+    source = expiry.read_text()
+    inclusive = "    return now - session.started_at >= TTL_SECONDS\n"
+    assert inclusive in source
+    expiry.write_text(
+        source.replace(inclusive, "    return now - session.started_at > TTL_SECONDS\n")
+    )
 
 
 class K8Task(NamedTuple):
@@ -94,10 +120,22 @@ K8_TASKS = (
         bend=order_alert_rules_by_severity,
     ),
     K8Task(
+        task_id="leaderboard-extract-rank-key",
+        touched=frozenset({"leaderboard.py"}),
+        rung="unsolved",
+        bend=settle_leaderboard_ties_by_name,
+    ),
+    K8Task(
         task_id="stockroom-extract-shelf-copy",
         touched=frozenset({"stockroom.py", "shelving.py"}),
         rung="sonnet-only",
         bend=copy_shelving_shallowly,
+    ),
+    K8Task(
+        task_id="sessions-extract-expiry",
+        touched=frozenset({"sessions.py", "expiry.py"}),
+        rung="sonnet-only",
+        bend=expire_sessions_a_second_late,
     ),
 )
 

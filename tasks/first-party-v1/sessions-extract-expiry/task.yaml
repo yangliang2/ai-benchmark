@@ -1,0 +1,39 @@
+# refactor with K8 at misleading: every session in repo/test_sessions.py is
+# either minutes old or hours old, so the repo's tests are green whether a
+# session ends the moment its time is up or one second later — and the change
+# asks for exactly the comparison whose negation decides that. Which side of
+# the boundary the session is on lives only in the held-out behaviour tests
+# named below, which must PASS on the pristine repository; everything else in
+# grading/ is a structural assertion that must FAIL on it until the rule has
+# moved.
+id: sessions-extract-expiry
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  sessions.py works out whether a session is still usable in three places,
+  each written as its own comparison against TTL_SECONDS, and one of them
+  says it the other way round.
+
+  Turn that into a new module expiry.py owning TTL_SECONDS and a predicate
+  `is_expired(session, now)`, and have active, resolve and prune ask it
+  instead of comparing. After the change, `from expiry import is_expired`
+  must work; callers keep reading the limit through sessions, so
+  `from sessions import TTL_SECONDS` must keep working too.
+
+  This is a pure refactor: which sessions each of the three functions treats
+  as usable must be exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_sessions_behaviour.py
+construction:
+  knobs:
+    - id: K8
+      level: misleading
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      naming the predicate for expiry rather than for survival means writing
+      the negation of what is there, and the repo never puts a session on the
+      boundary the negation turns on, so `>` passes every visible test that
+      `>=` does

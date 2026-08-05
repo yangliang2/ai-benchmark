@@ -1,0 +1,36 @@
+# refactor with K8 at misleading: no two players in repo/test_leaderboard.py
+# finish on the same total, so the repo's tests say nothing whatever about what
+# happens when two do — and stay green under a rank key that settles ties by
+# name. What the pristine sort actually does with a tie lives only in the
+# held-out behaviour tests named below, which must PASS on the pristine
+# repository; everything else in grading/ is a structural assertion that must
+# FAIL on it until the ordering rule is a function of its own.
+id: leaderboard-extract-rank-key
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  standings, top and rank_of in leaderboard.py each sort by the same
+  ordering rule, spelled out inline three times, so a change to the rule
+  means finding all three.
+
+  Pull the rule into a module-level function rank_key(player) and have all
+  three sort through it, so `sorted(players, key=rank_key)` is the one place
+  the ordering is decided.
+
+  This is a pure refactor: the order every one of the three functions puts
+  players in must be exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_leaderboard_behaviour.py
+construction:
+  knobs:
+    - id: K8
+      level: misleading
+  prediction:
+    rung: unsolved
+    rationale: >-
+      being asked for a rank key invites a total order, and settling ties by
+      name looks strictly better than leaving them to the sort's stability —
+      nothing in the module, its docstrings or its tests ever shows a tie, so
+      nothing pushes back
