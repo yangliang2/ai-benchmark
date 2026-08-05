@@ -20,6 +20,10 @@ BOOKS = {
     "pair": {"ana": 500, "ben": -500},
     "two-and-two": {"ana": 700, "ben": 300, "cal": -400, "dee": -600},
     "with-the-square": {"ana": 250, "ben": -250, "cal": 0},
+    # The person already square comes first by name: a scheme that chooses
+    # whom to route everything through before dropping the people already
+    # settled chooses them, and asks for payments they have no part in.
+    "square-first": {"ana": 0, "ben": 500, "cal": -500},
     "one-creditor": {"ana": 999, "ben": -333, "cal": -333, "dee": -333},
     "chain": {"ana": 120, "ben": -450, "cal": 800, "dee": -470},
     "all-square": {"ana": 0, "ben": 0},

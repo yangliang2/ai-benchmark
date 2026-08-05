@@ -28,7 +28,8 @@ prompt: |
     added together must come to more than `capacity`;
   - an item heavier than `capacity` cannot be despatched at all — raise
     ValueError;
-  - nothing to pack means no cartons.
+  - nothing to pack means no cartons, and the sequence of items you are given
+    is not changed.
 
   How you decide which items travel together is yours to choose. Several
   packings satisfy the rules above for the same shipment, and any of them is

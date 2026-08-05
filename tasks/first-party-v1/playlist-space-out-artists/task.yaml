@@ -25,7 +25,8 @@ prompt: |
   - such an order exists exactly when no artist holds more than
     `(len(tracks) + 1) // 2` of the tracks; when one does, raise ValueError
     rather than returning a queue that breaks the rule above;
-  - no tracks means an empty queue.
+  - no tracks means an empty queue, and the sequence of tracks you are given
+    is not changed.
 
   Which of the possible orders you return is yours to choose. Several orders
   satisfy the rules above for the same tracks, and any of them is a correct

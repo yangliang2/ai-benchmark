@@ -6,12 +6,16 @@ here compares the result against a particular arrangement of items — several
 arrangements satisfy the rules for the same shipment and every one of them is
 a correct answer. What is checked is that the rules hold, including the one
 that costs money: no two cartons that could have travelled as one.
+
+The weighing is done here rather than through the module's own helper: what is
+being graded is the packing, and a solution that also changed what a carton
+weighs must not be able to move the target.
 """
 
 from itertools import combinations
 
 import pytest
-from cartons import Item, pack, total_weight
+from cartons import Item, pack
 
 CAPACITY = 1000
 
@@ -29,9 +33,19 @@ SHIPMENTS = {
 NAMES = sorted(SHIPMENTS)
 
 
+def weighed(carton):
+    """What the items in a carton weigh together, in grams."""
+    return sum(item.weight for item in carton)
+
+
 def packed(name):
-    """The cartons `pack` produces for one shipment, as plain lists."""
-    return [list(carton) for carton in pack(SHIPMENTS[name], CAPACITY)]
+    """The cartons `pack` produces for one shipment, as plain lists.
+
+    The shipment is handed over as a copy of its own, so that a solution
+    working through the sequence it was given is graded on what it packed
+    rather than on what it had left over.
+    """
+    return [list(carton) for carton in pack(list(SHIPMENTS[name]), CAPACITY)]
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -43,7 +57,7 @@ def test_every_item_is_packed_exactly_once(name):
 
 @pytest.mark.parametrize("name", NAMES)
 def test_no_carton_is_over_the_capacity(name):
-    assert all(total_weight(carton) <= CAPACITY for carton in packed(name))
+    assert all(weighed(carton) <= CAPACITY for carton in packed(name))
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -51,7 +65,7 @@ def test_no_two_cartons_could_have_travelled_as_one(name):
     """The billed rule. It is also what rules out an empty carton, which
     weighs nothing and so could always have travelled with another."""
     for one, another in combinations(packed(name), 2):
-        assert total_weight(one) + total_weight(another) > CAPACITY
+        assert weighed(one) + weighed(another) > CAPACITY
 
 
 def test_an_item_heavier_than_the_capacity_is_refused():

@@ -34,14 +34,21 @@ QUEUES = {
 NAMES = sorted(QUEUES)
 
 
+def given(name):
+    """One set of tracks, handed over as a copy of its own, so that a
+    solution working through the sequence it was given is graded on the queue
+    it built rather than on what it had left over."""
+    return list(QUEUES[name])
+
+
 @pytest.mark.parametrize("name", NAMES)
 def test_the_queue_holds_exactly_the_tracks_it_was_given(name):
-    assert Counter(spread(QUEUES[name])) == Counter(QUEUES[name])
+    assert Counter(spread(given(name))) == Counter(QUEUES[name])
 
 
 @pytest.mark.parametrize("name", NAMES)
 def test_no_artist_is_heard_twice_in_a_row(name):
-    played = list(spread(QUEUES[name]))
+    played = list(spread(given(name)))
 
     for earlier, later in zip(played, played[1:]):
         assert earlier.artist != later.artist
