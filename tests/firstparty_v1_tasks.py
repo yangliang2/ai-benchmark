@@ -1,9 +1,10 @@
 """Shared helpers for the first-party v1 task-set test suites.
 
-Every one of those suites needs the same three things: the checked-in task
-set, a run-log row to hand `evaluate`, and a workdir diff built the way the
-live runner builds one — copy the pristine repo, git init + commit, edit,
-`git add -A && git diff --cached`. Building the diff with git rather than
+Every one of those suites needs the same few things: the checked-in task set,
+a run-log row to hand `evaluate`, a workdir diff built the way the live runner
+builds one — copy the pristine repo, git init + commit, edit, `git add -A &&
+git diff --cached` — and, for a refactor task, a way to run the structural
+half of a grading suite on its own. Building the diff with git rather than
 hand-writing hunks is the point: the grader is then exercised against
 genuine patches (added, modified and deleted files) that cannot drift from
 what a real run would log.
@@ -16,13 +17,25 @@ from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
-from ai_benchmark.firstparty_v1 import Run, Task, load_task_set
+from ai_benchmark.firstparty_v1 import (
+    GRADE_TIMEOUT_S,
+    Run,
+    Task,
+    _run_grading,
+    load_task_set,
+)
 
 TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
 SOLUTIONS = Path(__file__).parent.parent / "tasks" / "first-party-v1-solutions"
 
 # An identity, so the initial commit works on a machine with none configured.
 _GIT = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
+
+# Bytecode is a byproduct of having run something, not part of a tree anyone
+# authored: a stray __pycache__/ left in a solutions tree by a probe once
+# reached the diff and broke grading. The live runner keeps it out with its
+# own .gitignore; these helpers copy trees directly, so they drop it here.
+_BYTECODE = shutil.ignore_patterns("__pycache__", "*.pyc")
 
 
 def task_by_id(task_id: str) -> Task:
@@ -34,7 +47,7 @@ def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
     """The workdir diff a run that made this edit would log."""
     with tempfile.TemporaryDirectory(prefix="ai-bench-test-") as name:
         workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYTECODE)
         subprocess.run([*_GIT, "init", "-q", "."], cwd=workdir, check=True)
         subprocess.run([*_GIT, "add", "-A"], cwd=workdir, check=True)
         subprocess.run([*_GIT, "commit", "-qm", "pristine"], cwd=workdir, check=True)
@@ -66,7 +79,9 @@ def solved_tree(
                 shutil.rmtree(entry)
             else:
                 entry.unlink()
-        shutil.copytree(SOLUTIONS / task.id, workdir, dirs_exist_ok=True)
+        shutil.copytree(
+            SOLUTIONS / task.id, workdir, dirs_exist_ok=True, ignore=_BYTECODE
+        )
         if mutate is not None:
             mutate(workdir)
 
@@ -76,6 +91,14 @@ def solved_tree(
 def solution_diff(task: Task, mutate: Callable[[Path], None] | None = None) -> str:
     """The workdir diff the reference solution produces."""
     return workdir_diff(task, solved_tree(task, mutate))
+
+
+def structural_half_passes(task: Task, diff: str) -> bool:
+    """Whether the structural assertions alone accept this diff. Uses the
+    grader's own private runner: the split is not reachable through grade(),
+    which always runs the whole suite — exactly the point being tested."""
+    structural = sorted(set(task.grading_test_paths) - set(task.behaviour_test_paths))
+    return _run_grading(task, diff, structural, timeout_s=GRADE_TIMEOUT_S)
 
 
 def run_for(task: Task, diff: str, *, model: str = "claude-sonnet-5") -> Run:

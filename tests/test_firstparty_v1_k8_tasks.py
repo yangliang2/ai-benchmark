@@ -40,13 +40,18 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-from firstparty_v1_tasks import run_for, solution_diff, solved_tree, task_by_id
+from firstparty_v1_tasks import (
+    run_for,
+    solution_diff,
+    solved_tree,
+    structural_half_passes,
+    task_by_id,
+)
 
 from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
     Rung,
     Task,
-    _run_grading,
     evaluate,
     lint_task_set,
 )
@@ -255,13 +260,6 @@ def visible_tests_pass(task: Task, edit: Callable[[Path], None] | None = None) -
             ).returncode
             == 0
         )
-
-
-def structural_half_passes(task: Task, diff: str) -> bool:
-    """Whether the structural assertions alone accept this diff, through the
-    grader's own private runner — the split is not reachable through grade()."""
-    structural = sorted(set(task.grading_test_paths) - set(task.behaviour_test_paths))
-    return _run_grading(task, diff, structural, timeout_s=GRADE_TIMEOUT_S)
 
 
 def tasks() -> list[Task]:

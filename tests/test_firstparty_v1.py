@@ -16,10 +16,18 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 
+import firstparty_v1_tasks
 import pytest
 import yaml
 from conftest import FakeClaude
-from firstparty_v1_tasks import TASKS, run_for, task_by_id, workdir_diff
+from firstparty_v1_tasks import (
+    SOLUTIONS,
+    TASKS,
+    run_for,
+    solution_diff,
+    task_by_id,
+    workdir_diff,
+)
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import load_runs as load_v0_runs
@@ -266,6 +274,33 @@ def solve_wordcount_and_leave_a_broken_conftest(workdir: Path) -> None:
     importing a helper the agent decided not to ship."""
     solve_wordcount(workdir)
     (workdir / "conftest.py").write_text("from helpers import fixture_text  # noqa\n")
+
+
+# --- the diff-building helpers these suites are written on ---------------------
+
+
+def test_bytecode_left_in_a_solution_tree_never_reaches_the_diff(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Anything that imports a solution leaves a __pycache__ beside it, and
+    the helpers copy whole trees: without this, one probe run turns every
+    later reference-solution grading into a diff carrying stale bytecode,
+    which is how it was found."""
+    task = task_by_id(REFACTOR_SEED)
+    solutions = tmp_path / "solutions"
+    shutil.copytree(SOLUTIONS / task.id, solutions / task.id)
+    cache = solutions / task.id / "__pycache__"
+    cache.mkdir()
+    (cache / "ledger.cpython-313.pyc").write_bytes(b"\x00stale bytecode\x00")
+    (solutions / task.id / "ledger.pyc").write_bytes(b"\x00stale bytecode\x00")
+    monkeypatch.setattr(firstparty_v1_tasks, "SOLUTIONS", solutions)
+
+    diff = solution_diff(task)
+
+    assert "__pycache__" not in diff
+    assert ".pyc" not in diff
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+    assert record.quality_value == 1.0
 
 
 # --- task format and loader ---------------------------------------------------

@@ -17,16 +17,16 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from firstparty_v1_tasks import SOLUTIONS, TASKS, run_for, solution_diff, task_by_id
-
-from ai_benchmark.firstparty_v1 import (
-    GRADE_TIMEOUT_S,
-    Task,
-    _run_grading,
-    evaluate,
-    lint_task_set,
-    load_task_set,
+from firstparty_v1_tasks import (
+    SOLUTIONS,
+    TASKS,
+    run_for,
+    solution_diff,
+    structural_half_passes,
+    task_by_id,
 )
+
+from ai_benchmark.firstparty_v1 import evaluate, lint_task_set, load_task_set
 
 REFACTOR_TASKS = (
     "cart-extract-coupon-policy",
@@ -40,14 +40,6 @@ REFACTOR_TASKS = (
     "tasktrack-reshape-parse-result",
     "textdoc-split-render-flag",
 )
-
-
-def structural_half_passes(task: Task, diff: str) -> bool:
-    """Whether the structural assertions alone accept this diff. Uses the
-    grader's own private runner: the split is not reachable through grade(),
-    which always runs the whole suite — exactly the point being tested."""
-    structural = sorted(set(task.grading_test_paths) - set(task.behaviour_test_paths))
-    return _run_grading(task, diff, structural, timeout_s=GRADE_TIMEOUT_S)
 
 
 # --- the task set itself --------------------------------------------------------
