@@ -46,13 +46,16 @@ def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
         ).stdout
 
 
-def solution_diff(task: Task, mutate: Callable[[Path], None] | None = None) -> str:
-    """The workdir diff the reference solution produces.
+def solved_tree(
+    task: Task, mutate: Callable[[Path], None] | None = None
+) -> Callable[[Path], None]:
+    """The edit that turns a pristine workdir into the reference solution.
 
     The solved tree *replaces* the pristine one rather than being laid over
     it, so a solution that merges two modules into one is captured as the
-    deletion it is. Optionally mutated afterwards, to grade a solution bent
-    in one deliberate way.
+    deletion it is. Optionally mutated afterwards, to produce a solution bent
+    in one deliberate way — which is wanted both as a diff to grade and as a
+    workdir to run the repository's own tests in.
     """
 
     def apply_solution(workdir: Path) -> None:
@@ -67,7 +70,12 @@ def solution_diff(task: Task, mutate: Callable[[Path], None] | None = None) -> s
         if mutate is not None:
             mutate(workdir)
 
-    return workdir_diff(task, apply_solution)
+    return apply_solution
+
+
+def solution_diff(task: Task, mutate: Callable[[Path], None] | None = None) -> str:
+    """The workdir diff the reference solution produces."""
+    return workdir_diff(task, solved_tree(task, mutate))
 
 
 def run_for(task: Task, diff: str, *, model: str = "claude-sonnet-5") -> Run:

@@ -1,0 +1,35 @@
+# refactor with K8 at misleading: repo/test_alerts.py is green on the pristine
+# repository and stays green when the rule order is tidied into severity order,
+# because every event it reports on matches exactly one rule. The behaviour the
+# order decides — that a health check is never reported however it answers —
+# lives only in the held-out behaviour tests named below, which must PASS on
+# the pristine repository; everything else in grading/ is a structural
+# assertion that must FAIL on it until severity dispatches through a table.
+id: alerts-rule-table
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  severity in alerts.py is an if/elif chain over the incoming event, and it
+  has to grow another branch every time a rule is added.
+
+  Replace the chain with a module-level table RULES holding one entry per
+  rule — a predicate and the severity it gives — and reduce severity to
+  walking the table and returning the first match. Adding a rule should then
+  mean adding one entry, nothing else.
+
+  This is a pure refactor: the severity every event comes back with must be
+  exactly as it is today.
+grading:
+  behaviour_tests:
+    - test_alerts_behaviour.py
+construction:
+  knobs:
+    - id: K8
+      level: misleading
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the mute rule is first because it has to win, and nothing visible says
+      so — every event in the repo's tests matches one rule, so ordering the
+      table by how loud each severity is passes them all
