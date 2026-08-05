@@ -766,7 +766,7 @@ def lint_task_set(
     """
     problems = _family_problems(tasks) + _pair_problems(tasks)
     for task in tasks:
-        problems.extend(_construction_problems(task))
+        problems.extend(construction_problems(task))
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
             problems.append(
                 f"{task.id}: the grading tests already pass on the pristine repo — "
@@ -782,7 +782,7 @@ def lint_task_set(
     return problems
 
 
-def _construction_problems(task: Task) -> list[str]:
+def construction_problems(task: Task) -> list[str]:
     """What is wrong with this task's declaration of how it was built.
 
     The rule runs both ways, because the two states mean opposite things and
@@ -790,6 +790,10 @@ def _construction_problems(task: Task) -> list[str]:
     outside the frozen baseline must declare its construction, and a baseline
     task must not, or reconciliation can read it as neither control nor
     knob-experiment task.
+
+    Public because reconciliation checks it too, before reading a task set as
+    controls and predictions. One invariant, one implementation: two copies of
+    this rule could disagree about which tasks are controls.
     """
     declared = task.construction is not None
     baseline = task.id in BASELINE_TASK_IDS
