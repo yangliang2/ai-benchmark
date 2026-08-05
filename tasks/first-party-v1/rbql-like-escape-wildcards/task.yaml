@@ -1,0 +1,64 @@
+# feature-dev with K7 at dense, on a vendored RBQL snapshot carrying no
+# knob-setting edit: the invariant density this task is pitched on is the
+# library's own, so the modifications list below is empty. Empty is not the
+# same as untouched — what was left out of both RBQL snapshots for reasons
+# answering to no knob is recorded in
+# docs/research/substrate-candidate-repos.md, down to the JS-comparison test
+# that wrote an artifact into the repository root. The edit itself is a dozen
+# lines in one function, and it lands between contracts the prompt does not
+# restate: the literal runs between wildcards go through re.escape, so a
+# pattern's dots and stars are not regex syntax; the translation is anchored
+# at both ends; and the operator caches one compiled matcher per pattern, four
+# frames away in compile_and_run.
+#
+# K7 has no enumerated ladder in KNOB_LEVELS, so "dense" is recorded as
+# written; nothing checks that another task's K7 level means the same thing.
+id: rbql-like-escape-wildcards
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  RBQL queries can filter with like(), whose pattern language has two
+  wildcards: `_` stands for one character and `%` for any run of them. The
+  translation into a regular expression is like_to_regex in
+  rbql/rbql_engine.py.
+
+  There is currently no way to ask for a literal underscore or percent sign,
+  so a query cannot look for the text "100%". Give the pattern language a
+  backslash escape:
+
+    * `\_` matches one underscore and nothing else,
+    * `\%` matches one percent sign and nothing else,
+    * `\\` matches one backslash, and does not escape whatever follows it,
+    * a backslash before anything else is not an escape: it matches a
+      backslash, and the character after it goes on meaning what it meant.
+      A backslash at the very end of a pattern matches a backslash.
+
+  Everything else about like() stays as it is: an unescaped `_` or `%` is
+  still a wildcard, a pattern still has to match the whole string, and every
+  other character is still matched literally whatever it would mean to a
+  regular expression.
+construction:
+  knobs:
+    - id: K7
+      level: dense
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the write set is a dozen lines in one function but what decides
+      correctness is the shape of the function it is going into: like_to_regex
+      builds its output by handing whole runs of the pattern to re.escape, so
+      an escape has to end the run it is in and re-enter as its own escaped
+      character. The obvious implementation — replace the escapes with
+      placeholders, translate, put them back — either has re.escape escape the
+      placeholder or leaks it into the output, and the read set that says so
+      is the run bookkeeping in the loop plus the anchoring at the end and the
+      per-pattern matcher cache four frames away in compile_and_run. RBQL is
+      public MIT code, but nothing here can be recognised: no commit of it has
+      escapes, and what training would show for "LIKE with escapes" is SQL's
+      own ESCAPE clause, which declares its escape character in the query and
+      is not this
+  substrate:
+    origin: https://github.com/mechatroner/RBQL
+    commit: 4137027611f551591a1775d1d4c8f7fb8d163caa
+    license: MIT

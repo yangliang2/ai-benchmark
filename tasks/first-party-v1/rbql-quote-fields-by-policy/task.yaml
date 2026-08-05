@@ -1,0 +1,82 @@
+# refactor with K8 at misleading, on a vendored RBQL snapshot. The repository
+# ships 41 passing tests over ~3 000 lines of library — a suite thorough enough
+# that its own coverage of the package sits at 92% before the deletions — and
+# three surgical deletions (recorded below) took out every test that ever wrote
+# a table under the quoted_rfc policy. So the two quoting methods can be folded
+# into one that quotes the plain way for both policies, and the visible suite
+# stays green: nothing left in it asks a writer to quote a field containing a
+# newline. The held-out behaviour tests named here pin what each policy writes
+# and must PASS on the pristine repository; the structural assertions must FAIL
+# on it until the choice is a function of csv_utils'.
+id: rbql-quote-fields-by-policy
+category: refactor
+scale: cross-file
+language: python
+prompt: |
+  rbql/csv_utils.py owns one half of the CSV dialect. Given a delimiter and a
+  policy, get_polymorphic_split_function returns the function that turns a
+  line into fields, so a caller that has a policy never has to know which
+  splitter goes with it.
+
+  The other half is not there. The quoting a policy calls for lives in
+  rbql/rbql_csv.py, as two CSVWriter methods that differ only in which
+  csv_utils function they call — quote_fields and quote_fields_rfc — picked
+  by the policy chain in CSVWriter.__init__.
+
+  Put that decision beside the splitting one. In rbql/csv_utils.py add:
+
+      def get_polymorphic_quote_function(dlm, policy):
+
+  It returns the function that quotes one field under `policy`, taking that
+  field and returning the quoted text; for a policy that quotes nothing it
+  returns None instead, and for a policy it does not support it raises
+  ValueError, the way get_polymorphic_split_function already does.
+
+  In rbql/rbql_csv.py, CSVWriter then has a single quote_fields preprocessor
+  built from whatever that function hands back, and quote_fields_rfc goes
+  away.
+
+  This is a pure refactor: what CSVWriter writes under every policy, and the
+  warnings it reports, must be exactly what they are today.
+grading:
+  behaviour_tests:
+    - test_output_quoting_behaviour.py
+construction:
+  knobs:
+    - id: K8
+      level: misleading
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the repo's own tests are green and thorough-looking — 41 of them, and
+      they still write tables under every other policy — but after the three
+      deletions not one of them writes a field containing a newline, which is
+      the only thing the rfc quoter does differently from the plain one. So
+      collapsing the two into a single quote_field call reads as removing a
+      duplicate and the visible suite never objects. RBQL is public MIT code
+      and its CSV layer may well have been read in training, but what training
+      would show is the two methods standing apart, not which of them a
+      merged one has to keep; the graded contract is that difference, and no
+      visible test states it
+  substrate:
+    origin: https://github.com/mechatroner/RBQL
+    commit: 4137027611f551591a1775d1d4c8f7fb8d163caa
+    license: MIT
+    modifications:
+      - knob: K8
+        description: >-
+          dropped test_multiline_fields from test_csv_utils.py — the only test
+          in the suite that spells out a quoted_rfc table by hand, and the only
+          place a written-back field carrying a newline was compared against
+          what it should be
+      - knob: K8
+        description: >-
+          dropped test_iterator_rfc from test_csv_utils.py — 100 random tables
+          written and parsed back under quoted_rfc, which is where a writer
+          that quotes the plain way loses every field the generator gave a
+          newline to
+      - knob: K8
+        description: >-
+          dropped test_iterator_rfc_comments from test_csv_utils.py — the same
+          write-and-parse-back round trip under quoted_rfc with a comment
+          prefix in play, and the third and last test to exercise the policy

@@ -1,33 +1,41 @@
-"""The vendored-substrate tasks of ticket #22.
+"""The vendored-substrate tasks of tickets #22 and #23.
 
-The three of them start from one cold OSS repository — pgularski/pysm, a
-hierarchical state machine, snapshotted at a pinned commit — rather than from
-a repository we wrote. That is the whole point of the exercise, so the first
-thing asserted here is the provenance: the pin is the full commit id, the
-origin is followable, the licence travels with the code in `repo/`, and every
-surgical edit made to the snapshot names a knob the task itself activates. An
-edit answering to no declared knob is difficulty the task's profile does not
-account for, and on a substrate nobody here wrote it is also the edit most
-easily forgotten.
+They start from cold OSS repositories — pgularski/pysm, a hierarchical state
+machine, and mechatroner/RBQL, an SQL-like query engine over CSV, each
+snapshotted at a pinned commit — rather than from repositories we wrote. That
+is the whole point of the exercise, so the first thing asserted here is the
+provenance: the pin is the full commit id, the origin is followable, the
+licence travels with the code in `repo/`, and every surgical edit made to the
+snapshot names a knob the task itself activates. An edit answering to no
+declared knob is difficulty the task's profile does not account for, and on a
+substrate nobody here wrote it is also the edit most easily forgotten.
 
-Two of the tasks set K8 to misleading and the lever is the same one #19 used,
-except that here the tests being taken away are somebody else's: each
+Two substrates rather than one is what #23 was for, and what it buys is here:
+the same gates are asserted over both, per task, so "the vendoring flow is
+repeatable" is a property of the checked-in set rather than a claim in a
+ticket. Which upstream a task came from is carried in its row, because the pin
+and the copyright holder are the two things that must not be shared.
+
+Three of the tasks set K8 to misleading and the lever is the same one #19
+used, except that here the tests being taken away are somebody else's: each
 starting repository ships the upstream suite minus exactly the tests that
-covered the graded contract, and it goes on passing — 136 of them — while the
-careless restructuring quietly changes behaviour. Each careless variant is
-asserted to keep the repository green *and* to satisfy every structural
-assertion before it is asserted to grade 0.0, because a net that caught the
-mistake would say nothing about K8. A task carries as many of them as have
-been found: a slip a review turned up and the grading suite was taught to
+covered the graded contract, and it goes on passing — 136 of them on pysm, 41
+on RBQL — while the careless restructuring quietly changes behaviour. Each
+careless variant is asserted to keep the repository green *and* to satisfy
+every structural assertion before it is asserted to grade 0.0, because a net
+that caught the mistake would say nothing about K8, and a slip the prompt
+already rules out would say nothing either. A task carries as many of them as
+have been found: a slip a review turned up and the grading suite was taught to
 catch is registered here afterwards, so the suite goes on being asked the
 question that caught it.
 
-The third sets K7 — invariant density — and its snapshot carries no
-knob-setting edit, so its modifications list is empty on purpose: the density
-it is pitched on is the library's own. Empty is not the same as untouched:
-what was left out of all three snapshots for reasons answering to no knob —
-down to the two MicroPython-fallback import tests that reach for `pysm/pysm.py`
-through the upstream `test/` layout — is recorded in
+The other two set K7 — invariant density — and their snapshots carry no
+knob-setting edit, so their modifications lists are empty on purpose: the
+density they are pitched on is the library's own. Empty is not the same as
+untouched: what was left out of the snapshots for reasons answering to no
+knob — down to the two MicroPython-fallback import tests that reach for
+`pysm/pysm.py` through the upstream `test/` layout, and RBQL's JS-comparison
+test that wrote an artifact into the repository root — is recorded in
 `docs/research/substrate-candidate-repos.md`, because `modifications` is not
 the place for it.
 
@@ -63,18 +71,41 @@ from ai_benchmark.firstparty_v1 import (
     lint_task_set,
 )
 
-SUBSTRATE_ORIGIN = "https://github.com/pgularski/pysm"
-SUBSTRATE_COMMIT = "0c47a5067974951c75a498ee4ed025cf881f48fd"
+
+class Upstream(NamedTuple):
+    """One vendored repository, and the two things about it that a task's
+    provenance block has to get right: what pins the snapshot, and whose
+    licence travels with it."""
+
+    origin: str
+    commit: str
+    licence_holder: str
+
+
+PYSM = Upstream(
+    origin="https://github.com/pgularski/pysm",
+    commit="0c47a5067974951c75a498ee4ed025cf881f48fd",
+    licence_holder="Piotr Gularski",
+)
+RBQL = Upstream(
+    origin="https://github.com/mechatroner/RBQL",
+    commit="4137027611f551591a1775d1d4c8f7fb8d163caa",
+    licence_holder="Dmitry Ignatovich",
+)
+
+
+def edit(source_file: Path, replacements: dict[str, str]) -> None:
+    """Replace each passage in one file, insisting every one is found."""
+    source = source_file.read_text()
+    for before, after in replacements.items():
+        assert source.count(before) == 1, before
+        source = source.replace(before, after)
+    source_file.write_text(source)
 
 
 def rewrite(workdir: Path, replacements: dict[str, str]) -> None:
     """Replace each passage in pysm/pysm.py, insisting every one is found."""
-    core = workdir / "pysm" / "pysm.py"
-    source = core.read_text()
-    for before, after in replacements.items():
-        assert source.count(before) == 1, before
-        source = source.replace(before, after)
-    core.write_text(source)
+    edit(workdir / "pysm" / "pysm.py", replacements)
 
 
 # --- the careless refactors: the restructuring done as asked, bent once ---------
@@ -110,6 +141,38 @@ def hand_the_action_callback_the_current_leaf_state(workdir: Path) -> None:
     rewrite(workdir, {
         "        transition['action'](leaf_state_before, event)\n":
             "        transition['action'](self.leaf_state, event)\n",
+    })
+
+
+def quote_both_output_policies_the_plain_way(workdir: Path) -> None:
+    """The choice moved into csv_utils exactly as asked, and then made one
+    choice: both quoting policies handed the plain quoter, on the reading that
+    two functions differing in one clause were a duplicate. Right for
+    `quoted`, and it stops `quoted_rfc` quoting the fields it exists to
+    quote — the ones carrying a line break."""
+    edit(workdir / "rbql" / "csv_utils.py", {
+        "    elif policy == 'quoted_rfc':\n"
+        "        return lambda field: rfc_quote_field(field, dlm)\n":
+            "    elif policy == 'quoted_rfc':\n"
+            "        return lambda field: quote_field(field, dlm)\n",
+    })
+
+
+def hand_each_output_policy_the_other_ones_quoter(workdir: Path) -> None:
+    """The mirror of the above, and the slip a table of two entries invites:
+    the two policies keep their two quoters and swap them. `quoted_rfc` then
+    writes what it always wrote minus the line breaks, so only the *other*
+    policy is visibly wrong — and it is wrong by quoting more than it should,
+    which reads as harmless."""
+    edit(workdir / "rbql" / "csv_utils.py", {
+        "    if policy == 'quoted':\n"
+        "        return lambda field: quote_field(field, dlm)\n"
+        "    elif policy == 'quoted_rfc':\n"
+        "        return lambda field: rfc_quote_field(field, dlm)\n":
+            "    if policy == 'quoted':\n"
+            "        return lambda field: rfc_quote_field(field, dlm)\n"
+            "    elif policy == 'quoted_rfc':\n"
+            "        return lambda field: quote_field(field, dlm)\n",
     })
 
 
@@ -188,6 +251,91 @@ def resume_history_on_the_way_in(workdir: Path) -> None:
     })
 
 
+def choose_the_quoter_from_a_table(workdir: Path) -> None:
+    """The same decision, spelled as a lookup rather than a chain, and applied
+    to the record by rebinding the list's contents instead of walking it by
+    index — same quoter per policy, same text on the stream."""
+    edit(workdir / "rbql" / "csv_utils.py", {
+        "    if policy == 'quoted':\n"
+        "        return lambda field: quote_field(field, dlm)\n"
+        "    elif policy == 'quoted_rfc':\n"
+        "        return lambda field: rfc_quote_field(field, dlm)\n"
+        "    elif policy in ('simple', 'whitespace', 'monocolumn'):\n"
+        "        return None\n"
+        "    else:\n"
+        "        raise ValueError('Unsupported quoting policy: {}'.format(policy))\n":
+            "    quoters = {'quoted': quote_field, 'quoted_rfc': rfc_quote_field}\n"
+            "    if policy in quoters:\n"
+            "        chosen = quoters[policy]\n"
+            "        return lambda field: chosen(field, dlm)\n"
+            "    if policy in ('simple', 'whitespace', 'monocolumn'):\n"
+            "        return None\n"
+            "    raise ValueError('Unsupported quoting policy: {}'.format(policy))\n",
+    })
+    edit(workdir / "rbql" / "rbql_csv.py", {
+        "    def quote_fields(self, fields):\n"
+        "        for i in range(len(fields)):\n"
+        "            fields[i] = self.polymorphic_quote(fields[i])\n":
+            "    def quote_fields(self, fields):\n"
+            "        fields[:] = [self.polymorphic_quote(f) for f in fields]\n",
+    })
+
+
+def translate_the_like_pattern_in_two_passes(workdir: Path) -> None:
+    """Shallow escapes read by collecting the literal run as it goes rather
+    than by slicing it out of the pattern afterwards: an escaped character is
+    appended to the run being built, so it reaches re.escape with the rest of
+    the run instead of on its own. A different place to keep the literal text,
+    and the same translation."""
+    edit(workdir / "rbql" / "rbql_engine.py", {
+        "def like_to_regex(pattern):\n"
+        "    p = 0\n"
+        "    i = 0\n"
+        "    converted = ''\n"
+        "    while i < len(pattern):\n"
+        "        if pattern[i] == '\\\\' and i + 1 < len(pattern) and "
+        "pattern[i + 1] in ['_', '%', '\\\\']:\n"
+        "            # The escaped character is matched literally, so it leaves the\n"
+        "            # literal run it was in and comes back through re.escape "
+        "on its own.\n"
+        "            converted += re.escape(pattern[p:i])\n"
+        "            converted += re.escape(pattern[i + 1])\n"
+        "            i += 2\n"
+        "            p = i\n"
+        "            continue\n"
+        "        if pattern[i] in ['_', '%']:\n"
+        "            converted += re.escape(pattern[p:i])\n"
+        "            p = i + 1\n"
+        "            if pattern[i] == '_':\n"
+        "                converted += '.'\n"
+        "            else:\n"
+        "                converted += '.*'\n"
+        "        i += 1\n"
+        "    converted += re.escape(pattern[p:i])\n"
+        "    return '^' + converted + '$'\n":
+            "def like_to_regex(pattern):\n"
+            "    pieces = []\n"
+            "    literal = ''\n"
+            "    i = 0\n"
+            "    while i < len(pattern):\n"
+            "        char = pattern[i]\n"
+            "        if char == '\\\\' and i + 1 < len(pattern) and "
+            "pattern[i + 1] in ['_', '%', '\\\\']:\n"
+            "            literal += pattern[i + 1]\n"
+            "            i += 2\n"
+            "            continue\n"
+            "        if char in ['_', '%']:\n"
+            "            pieces.append(re.escape(literal))\n"
+            "            literal = ''\n"
+            "            pieces.append('.' if char == '_' else '.*')\n"
+            "        else:\n"
+            "            literal += char\n"
+            "        i += 1\n"
+            "    pieces.append(re.escape(literal))\n"
+            "    return '^' + ''.join(pieces) + '$'\n",
+    })
+
+
 def revert_by_dropping_two_in_a_loop(workdir: Path) -> None:
     """The same two entries removed, counted out in a loop against the result
     of the step rather than by an early return."""
@@ -207,12 +355,12 @@ def revert_by_dropping_two_in_a_loop(workdir: Path) -> None:
 class SubstrateTask(NamedTuple):
     """One task on the vendored substrate, and what is pinned about it here.
 
-    `touched` is the set of files the reference solution edits, `knobs` is the
-    activation the task declares, `modifications` is how many surgical edits
-    its snapshot carries, `bends` are careless answers the repository's own
-    tests do not catch (there are none where K8 is not the knob),
-    `differently` is an alternative correct answer, and `rung` is the
-    pre-registered prediction.
+    `upstream` is the repository the snapshot came from, `touched` is the set
+    of files the reference solution edits, `knobs` is the activation the task
+    declares, `modifications` is how many surgical edits its snapshot carries,
+    `bends` are careless answers the repository's own tests do not catch
+    (there are none where K8 is not the knob), `differently` is an alternative
+    correct answer, and `rung` is the pre-registered prediction.
 
     `bends` is a tuple because a slip found later is a slip that was always
     possible: once the grading suite has been taught to catch one, it is
@@ -220,6 +368,7 @@ class SubstrateTask(NamedTuple):
     """
 
     task_id: str
+    upstream: Upstream
     touched: frozenset[str]
     knobs: dict[str, str]
     modifications: int
@@ -231,6 +380,7 @@ class SubstrateTask(NamedTuple):
 SUBSTRATE_TASKS = (
     SubstrateTask(
         task_id="pysm-extract-transition-step",
+        upstream=PYSM,
         touched=frozenset({"pysm/pysm.py"}),
         knobs={"K8": "misleading"},
         modifications=2,
@@ -244,6 +394,7 @@ SUBSTRATE_TASKS = (
     ),
     SubstrateTask(
         task_id="pysm-remember-substate-history",
+        upstream=PYSM,
         touched=frozenset({"pysm/pysm.py"}),
         knobs={"K7": "dense"},
         modifications=0,
@@ -252,12 +403,35 @@ SUBSTRATE_TASKS = (
     ),
     SubstrateTask(
         task_id="pysm-revert-through-one-step",
+        upstream=PYSM,
         touched=frozenset({"pysm/pysm.py"}),
         knobs={"K8": "misleading"},
         modifications=2,
         rung="unsolved",
         bends=(drop_one_history_entry_per_revert,),
         differently=revert_by_dropping_two_in_a_loop,
+    ),
+    SubstrateTask(
+        task_id="rbql-quote-fields-by-policy",
+        upstream=RBQL,
+        touched=frozenset({"rbql/csv_utils.py", "rbql/rbql_csv.py"}),
+        knobs={"K8": "misleading"},
+        modifications=3,
+        rung="sonnet-only",
+        bends=(
+            quote_both_output_policies_the_plain_way,
+            hand_each_output_policy_the_other_ones_quoter,
+        ),
+        differently=choose_the_quoter_from_a_table,
+    ),
+    SubstrateTask(
+        task_id="rbql-like-escape-wildcards",
+        upstream=RBQL,
+        touched=frozenset({"rbql/rbql_engine.py"}),
+        knobs={"K7": "dense"},
+        modifications=0,
+        rung="sonnet-only",
+        differently=translate_the_like_pattern_in_two_passes,
     ),
 )
 
@@ -301,6 +475,13 @@ def tasks() -> list[Task]:
 # --- the substrate: where the starting repositories came from -------------------
 
 
+def test_the_set_stands_on_more_than_one_upstream_repository() -> None:
+    """What #23 was for. Every gate in this module is asserted per task, so
+    holding more than one upstream is what turns them from a description of
+    one lucky repository into a recipe that ran twice."""
+    assert len({entry.upstream for entry in SUBSTRATE_TASKS}) > 1
+
+
 @pytest.mark.parametrize("entry", BY_TASK)
 def test_the_snapshot_records_where_it_came_from_and_what_pins_it(
     entry: SubstrateTask,
@@ -310,8 +491,8 @@ def test_the_snapshot_records_where_it_came_from_and_what_pins_it(
     substrate = task.construction.substrate
 
     assert substrate is not None
-    assert substrate.origin == SUBSTRATE_ORIGIN
-    assert substrate.commit == SUBSTRATE_COMMIT
+    assert substrate.origin == entry.upstream.origin
+    assert substrate.commit == entry.upstream.commit
     assert substrate.license == "MIT"
 
 
@@ -319,13 +500,15 @@ def test_the_snapshot_records_where_it_came_from_and_what_pins_it(
 def test_the_licence_travels_with_the_vendored_code(entry: SubstrateTask) -> None:
     """Redistribution is the reason: the snapshot is somebody else's code and
     is copied into every workdir, so its licence has to be in `repo/` and not
-    only named in metadata."""
+    only named in metadata — and it has to be the licence of the repository
+    this task actually came from, which is the mistake a second substrate
+    makes possible."""
     task = task_by_id(entry.task_id)
 
     licence = (task.repo_dir / "LICENSE").read_text()
 
     assert "MIT License" in licence
-    assert "Piotr Gularski" in licence
+    assert entry.upstream.licence_holder in licence
 
 
 @pytest.mark.parametrize("entry", BY_TASK)

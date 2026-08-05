@@ -1,8 +1,9 @@
 # Substrate candidate repos — vendoring shortlist
 
-**Status: research output, 2026-08-05. Candidate 4 (`pgularski/pysm`) has since
-been vendored — see "What was actually vendored" at the end. The other four are
-still untouched shortlist entries.**
+**Status: research output, 2026-08-05. Candidate 4 (`pgularski/pysm`) and
+candidate 2 (`mechatroner/RBQL`) have since been vendored — see "What was
+actually vendored" at the end. The other three are still untouched shortlist
+entries.**
 
 Context: `docs/design/task-difficulty-and-ex-ante-profiles.md` §10 ("Substrate
 spectrum") calls for vendoring several **cold, small, thin-dependency Python
@@ -319,13 +320,18 @@ difficulty ordering survives a substrate swap, holding domain roughly constant.
 
 ---
 
-## What was actually vendored (ticket #22, 2026-08-05)
+## What was actually vendored
+
+Two sections, one per substrate. Both record the same thing and for the same
+reason: the *recipe* is not recoverable from the snapshot, because
+`construction.substrate.modifications` records the knob-setting edits — which
+is what it is for — and says nothing about what was left out of the snapshot
+in the first place.
+
+### `pgularski/pysm` (ticket #22, 2026-08-05)
 
 `pgularski/pysm` at the pinned `0c47a506…`, into three task directories under
-`tasks/first-party-v1/pysm-*`. Recorded here because the *recipe* is not
-recoverable from the snapshot: `construction.substrate.modifications` records
-the knob-setting edits, which is what it is for, and says nothing about what
-was left out of the snapshot in the first place.
+`tasks/first-party-v1/pysm-*`.
 
 **Layout.** The visible test suite sits at the root of `repo/` beside the
 `pysm/` package, not in a `test/` subdirectory as upstream. Two reasons: plain
@@ -366,3 +372,107 @@ and ship **136** passing tests each; the K7 task ships the 138 unchanged.
 first: the package imports and runs with `--noconftest`, the pinned config, and
 the workdir behind the standard library on `sys.path`. No module in it is named
 after a standard-library one, so the loader's shadowing rejection does not fire.
+
+### `mechatroner/RBQL` (ticket #23, 2026-08-05)
+
+`mechatroner/RBQL` at the pinned `41370276…`, into two task directories under
+`tasks/first-party-v1/rbql-*`. The second substrate, and the point of doing it
+was to find out which parts of the pysm recipe were the recipe and which were
+pysm. The answer: the flattened layout and the licence-in-`repo/` rule carried
+over unchanged, and the only new work was deciding what "the Python half"
+means in a bilingual repository.
+
+**Layout.** Same shape as pysm's, for the same reason: the visible test files
+sit at the root of `repo/` beside the `rbql/` package rather than in the
+upstream `test/` directory, so that plain `pytest` in the workdir finds the
+package without a `conftest.py` putting the root on `sys.path`. The fixture
+directories the tests read (`csv_files/`, `json_files/`, `other_test_files/`)
+and the three JSON test manifests move to the root with them, because the
+tests resolve every fixture against `os.path.dirname(os.path.abspath(__file__))`.
+
+That flattening leaves one dead line in each vendored test file: they also do
+`sys.path.insert(0, os.path.join(os.path.dirname(script_dir), 'rbql-py'))`,
+which in this layout names a directory that does not exist. It was left
+byte-identical rather than "fixed" — a non-existent `sys.path` entry is
+skipped, `import rbql` falls through to the root pytest already put there, and
+editing upstream code that works is how a snapshot stops being a snapshot.
+
+**The bilingual half.** The shortlist entry above flags it, and it is the one
+genuinely new decision here. Dropped whole: `rbql-js/`, and the three
+JavaScript test files beside the Python ones (`test/test_rbql.js`,
+`test/test_csv_utils.js`, `test/test_common.js`). Recorded here rather than in
+any task's metadata, because dropping the twin also drops a real
+cross-language consistency invariant — upstream keeps the two implementations
+agreeing test-for-test, and the vendored snapshot cannot.
+
+**Kept:** `rbql/*.py` (nine of the eleven modules), the repository's `LICENSE`
+(MIT, Dmitry Ignatovich), `rbql-py/LIBRARY_README.md` as `README.md`, three of
+the upstream test files (`test_rbql.py`, `test_csv_utils.py`,
+`test_json_io.py`) and the fixtures and manifests they read.
+
+`rbql_sqlite.py` is **kept**, which departs from the shortlist entry's advice
+to drop it alongside `rbql_pandas.py`. The reason that advice existed is the
+sqlite *tests*, which read binary fixture databases, and those are dropped. The
+module itself imports `re`, `os`, `sys` and the engine; `sqlite3` is the
+standard library and is imported by its callers in `rbql_main.py`, so keeping
+it costs nothing and dropping it would have meant surgery on ~39 lines of
+`rbql_main.py` — the CLI surface that is half of why this substrate was picked
+for K4 in the first place. Cutting un-knobbed holes in the module a task's
+read-set runs through is a worse trade than carrying a module no test touches.
+
+**Dropped, and why — none of it knob-motivated:**
+
+- `.git`, `.github/`, `DEV_README.md`, `rbql_logo.png`, `test_all.sh`,
+  `rbql-py/setup.py`, `rbql-py/MANIFEST.in`, `rbql-py/DEV_README.md`,
+  `rbql-py/README.md`, `rbql-py/LICENSE` (a duplicate of the root one) — VCS
+  metadata, CI, packaging and developer docs.
+- `rbql/rbql_pandas.py` — pandas is a third-party dependency, and a
+  starting repository has to be stdlib-only. (It imports pandas lazily, so
+  keeping it would not have broken `import rbql`; it would have left a module
+  that cannot run in a repository whose whole claim is that everything in it
+  can.)
+- `rbql/rbql_ipython.py` — the IPython magic, which exists to query pandas
+  dataframes and imports `rbql_pandas` at module level, so it goes with it.
+- The two lines in `rbql/__init__.py` that re-export those two modules. This
+  is the only edit to vendored *source* in either snapshot, and it is a
+  consequence of the two deletions rather than a decision of its own: without
+  it `import rbql` raises ImportError.
+- `test/test_rbql_pandas.py`, `test/test_rbql_sqlite.py`, `test/sqlite_files/`
+  — the tests of the two integrations, one needing pandas and the other
+  reading binary `.sqlite` fixtures.
+- `test/test_mad_max.py` — excluded by upstream's own verified test command
+  (see the shortlist entry above).
+- `test/__init__.py`, `test/library_demos/` — the package marker the flattened
+  layout does not need, and hand-run demo scripts (Python, JavaScript and
+  HTML) rather than tests.
+- One test inside `test_rbql.py`, `test_column_name_parsing_from_file` — it
+  writes `python_column_infos.txt` into the directory it lives in, which in
+  the flattened layout is the root of `repo/`, so every run's workdir diff
+  would carry the artifact. What it exists for is md5-comparison against the
+  JS twin's output, and the twin is not vendored.
+
+**Test counts.** Upstream
+`PYTHONPATH=./rbql-py pytest test/test_rbql.py test/test_csv_utils.py test/test_json_io.py`
+gives 45 passed. The snapshot above, before any knob edit, gives **44** — the
+one JS-comparison test. The K7 task ships those 44 unchanged; the
+K8-misleading task then deletes the three tests covering the contract it
+grades and ships **41**.
+
+**Confirmed under the grading isolation** before anything was authored on it,
+because RBQL compiles and `exec`s the user's query through `ast` and that was
+the risk worth probing first: a throwaway task graded 1.0 on a probe suite
+that imported the package, ran a query with `where`/`order by` over an
+in-memory table, round-tripped a quoted CSV file through `query_csv`, and
+reached `csv_utils` and `rbql_engine` directly — all with `--noconftest`, the
+pinned config, and the workdir behind the standard library on `sys.path`. No
+module in the tree is named after a standard-library one (`rbql`, `csv_files`,
+`json_files`, `other_test_files`, `test_*.py`), so the loader's shadowing
+rejection does not fire.
+
+One thing that probe did *not* have to catch, and is worth writing down because
+the next substrate might: keeping the upstream `test/` directory would have put
+a top-level package sharing a name with CPython's own `test` package into the
+tree, and the loader would have allowed it — `sys.stdlib_module_names`, which
+is what the shadowing check reads, does not list `test`. Nothing here imports
+it, so it would have been latent rather than broken, which is exactly the shape
+of problem the flattening avoids for free.
