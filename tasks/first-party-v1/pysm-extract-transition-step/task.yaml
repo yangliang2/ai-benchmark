@@ -1,0 +1,57 @@
+# refactor with K8 at misleading, on a vendored pysm snapshot. The repository
+# ships 136 passing tests over ~1 700 lines of library, which is what makes
+# trusting them reasonable — and two surgical deletions (recorded below) took
+# out every test that looks at which state a transition callback receives. So
+# the sequence can be lifted out of dispatch with `after` handed the state the
+# machine left instead of the one it entered, and the visible suite stays
+# green. The held-out behaviour tests named here pin that contract and must
+# PASS on the pristine repository; the structural assertions must FAIL on it
+# until the step is a method of its own.
+id: pysm-extract-transition-step
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  In pysm/pysm.py, StateMachine.dispatch does two separable jobs. It decides
+  whether an event causes a transition at all — the current leaf state's own
+  handler runs first, then the lookup walks up the machine hierarchy — and,
+  when one fires, it performs that transition: the before callback, the exit
+  handlers, the action callback, the enter handlers, the after callback.
+
+  Pull the second job out into a method of its own:
+
+      def _perform_transition(self, transition, event, leaf_state_before):
+
+  leaving dispatch with the deciding half and a single call to it.
+
+  This is a pure refactor: the sequence a dispatched event sets off must be
+  exactly what it is today.
+grading:
+  behaviour_tests:
+    - test_transition_step_behaviour.py
+construction:
+  knobs:
+    - id: K8
+      level: misleading
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the repo's own tests are green and thorough-looking, and after both
+      deletions not one of them checks which state a transition callback is
+      handed, so passing leaf_state_before to after — the argument already in
+      hand — reads as tidying and the visible suite never objects
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT
+    modifications:
+      - knob: K8
+        description: >-
+          dropped test_state_instance_passed_to_an_event_handler from
+          test_pysm.py — the only test in the suite asserting which state each
+          of the condition, before, action and after callbacks is handed
+      - knob: K8
+        description: >-
+          dropped test_string_parsing.py — its tokeniser types every token
+          from the state its after callback receives, so it was the second
+          and last place the visible suite depended on that contract

@@ -1,0 +1,52 @@
+# feature-dev with K7 at dense, on a vendored pysm snapshot carried over
+# unmodified: the invariant density this task is pitched on is the library's
+# own, so the modifications list below is empty. The edit itself is a couple
+# of lines, and it lands in the middle of the statechart contracts — the exit
+# walk up the hierarchy, the state_stack push, the reset that decides where an
+# entry path starts, leaf_state agreeing with the stack — none of which the
+# prompt restates and all of which the held-out tests check.
+#
+# K7 has no enumerated ladder in KNOB_LEVELS, so "dense" is recorded as
+# written; nothing checks that another task's K7 level means the same thing.
+id: pysm-remember-substate-history
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  pysm's composite states have no memory: leave a StateMachine that has
+  substates, come back to it later, and it starts again from its initial
+  substate. Add shallow history, the UML statechart feature that resumes a
+  composite state where it was left.
+
+  In pysm/pysm.py, give StateMachine.__init__ a `history` keyword defaulting
+  to False:
+
+      def __init__(self, name, history=False):
+
+  A machine created with history=True remembers which of its substates was
+  active when it was left, and entering it again resumes from that substate
+  instead of from its initial one. A history machine that has not been
+  entered yet still starts at its initial state, and a machine created
+  without history behaves exactly as it does today.
+
+  Everything else about a transition stays as it is: the exit handlers still
+  run from the leaf outwards and the enter handlers still run inwards down to
+  the state actually entered, leaf_state still names the state the machine is
+  in, and state_stack still records the substate that was left.
+construction:
+  knobs:
+    - id: K7
+      level: dense
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the write set is two lines but the read set is the whole transition
+      machinery — the reset that has to become conditional lives in
+      _exit_states, four frames away from the constructor keyword, and
+      _enter_states rebuilds its path by descending through .state, so an
+      implementation that remembers the substate anywhere else has to restore
+      it before that descent or resume at the wrong leaf
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

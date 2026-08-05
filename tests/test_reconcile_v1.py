@@ -169,19 +169,20 @@ def test_reconcile_v1_reports_the_checked_in_first_sweep(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The command's reason to exist, run on real artifacts: the first sweep
-    covered the 22 zero-knob baseline tasks and none of the 22 constructed
+    covered the 22 zero-knob baseline tasks and none of the 25 constructed
     ones, so every prediction is still unswept and no knob is assessable
     yet."""
     main(checked_in_argv())
 
     out = capsys.readouterr().out
-    assert "22 zero-knob baseline, 22 constructed" in out
+    assert "22 zero-knob baseline, 25 constructed" in out
     assert "data/first-party-v1-runs/2026-08-04.jsonl" in out
     assert "data/first-party-v1-runs/2026-08-04-resume.jsonl" in out
     # Every constructed task is unswept, and says so rather than vanishing.
-    assert "22 constructed task(s): 0 swept, 22 unswept" in out
+    assert "25 constructed task(s): 0 swept, 25 unswept" in out
     for constructed_id in ("settleup-settle-debts", "alerts-rule-table",
-                           "billing-split-by-weight-l3"):
+                           "billing-split-by-weight-l3",
+                           "pysm-remember-substate-history"):
         assert constructed_id in out
     assert "hit-rate: 0/0" in out
 

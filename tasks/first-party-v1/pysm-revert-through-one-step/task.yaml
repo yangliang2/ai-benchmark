@@ -1,0 +1,61 @@
+# refactor with K8 at misleading, on a vendored pysm snapshot. Two surgical
+# deletions (recorded below) took out the only two tests covering
+# revert_to_previous_leaf_state, and 136 tests still pass — so the double pop
+# can be reduced to one while the visible suite goes on saying the
+# restructuring is fine. The held-out behaviour tests named here pin what the
+# history stack does and must PASS on the pristine repository; the structural
+# assertions must FAIL on it until the move is a step of its own.
+id: pysm-revert-through-one-step
+category: refactor
+scale: single-file
+language: python
+prompt: |
+  In pysm/pysm.py, StateMachine.revert_to_previous_leaf_state is written as a
+  call to set_previous_leaf_state followed by two pops of leaf_state_stack
+  wrapped in try/except IndexError. That only reads correctly if you already
+  know what the call it wraps did to the stack on the way through, and it
+  leaves one public method quietly reaching around another.
+
+  Restructure the two so they share an explicit step:
+
+      def _move_to_previous_leaf_state(self, event):
+
+  It moves to the leaf state on top of the history and returns that state,
+  or returns None and moves nothing when there is no history to go back to.
+  It leaves leaf_state_stack alone. Each public method then becomes that call
+  plus whatever bookkeeping is its own, and revert_to_previous_leaf_state no
+  longer goes through set_previous_leaf_state.
+
+  This is a pure refactor: what either method does to the machine and to the
+  history stack must be exactly what it does today.
+grading:
+  behaviour_tests:
+    - test_leaf_state_history_behaviour.py
+construction:
+  knobs:
+    - id: K8
+      level: misleading
+  prediction:
+    rung: unsolved
+    rationale: >-
+      after both deletions no visible test exercises revert at all, so the
+      suite stays green whatever the new step does to the stack, and the
+      count that has to survive the move is the least obvious thing in the
+      method — one pop per state reverted is the reading the prompt's own
+      wording invites, and only the held-out tests ever say otherwise
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT
+    modifications:
+      - knob: K8
+        description: >-
+          dropped test_revert_to_previous_state from test_pysm.py — it walked
+          leaf_state_stack entry by entry across a revert, including the
+          empty-history case
+      - knob: K8
+        description: >-
+          dropped test_revert_to_previous_state_not_reverting_after_first_iteration
+          from test_pysm.py — the second and last test of the mechanism, and
+          the only one stepping back through four states in a row, which is
+          where a single pop first shows
