@@ -1,0 +1,54 @@
+# K9 at single: one planted inventive decision — which payments to ask for —
+# and nothing else. Every property the payments must have is stated, including
+# the budget that rules out the obvious pro-rata answer; what no rule decides
+# is the scheme that stays inside it, and several do (settle the largest debt
+# against the largest credit; route everything through one person). The
+# grading suite replays the transfers and checks the properties, so any scheme
+# that satisfies them grades resolved.
+#
+# feature-dev: the grading tests exercise settle, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: settleup-settle-debts
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  settleup.py works out what everybody's balance is after a trip and who
+  still has something to settle, but nothing in it says who should pay whom.
+
+  Add a function `settle(net)` to settleup.py. It is given a mapping of name
+  to balance in whole cents — positive means the person is owed money,
+  negative means they owe it — and returns the payments that clear the books,
+  as a list of Transfers.
+
+  What the payments have to satisfy:
+
+  - once they have all been made, every balance is zero;
+  - each one moves a positive number of cents between two different people
+    named in the mapping;
+  - nobody whose balance is already zero appears in one — they are square and
+    should be left out of it;
+  - people dislike being asked for payments, so there is a budget: if `k`
+    people have a non-zero balance, ask for at most `k - 1` payments;
+  - balances that do not add up to zero are a mistake — raise ValueError;
+  - nothing to settle means no payments, and the mapping you are given is not
+    changed.
+
+  Which payments you ask for is yours to choose. Several sets of payments
+  satisfy the rules above for the same balances, and any of them is a correct
+  answer.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the one decision left open is the scheme, and the reading of "clear the
+      books" that needs no invention — every debtor pays every creditor a
+      share in proportion — settles everybody exactly while asking for
+      d times c payments, which is over the stated budget as soon as two
+      people owe and two are owed

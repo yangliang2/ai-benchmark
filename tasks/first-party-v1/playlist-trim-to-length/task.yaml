@@ -1,0 +1,41 @@
+# K9 at none: the zero-crux control for playlist-space-out-artists. Same
+# starting repository byte for byte, same category, scale and language,
+# comparable amount of code to write — and the rule stated step by step,
+# including the one place a reader might improvise (the track that would
+# overrun), so there is nothing left to invent.
+#
+# feature-dev: the grading tests exercise trimmed, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: playlist-trim-to-length
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  playlist.py can tell us how long a queue runs, but the radio slots we
+  supply have a fixed length and nothing cuts a queue down to one.
+
+  Add a function `trimmed(tracks, seconds)` to playlist.py that returns, as a
+  list, the part of the queue that fits in a slot of `seconds` seconds.
+
+  Work along the tracks in the order they are given, keeping a running total:
+
+  - stop at the first track that would take the running total past `seconds`,
+    and return the tracks kept so far — do not skip it and carry on with the
+    ones behind it, even where one of those would still fit;
+  - a track that fills the remaining time exactly is kept;
+  - a slot of no length at all keeps nothing, and no tracks means an empty
+    result;
+  - a negative `seconds` is a mistake — raise ValueError.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the walk, the stopping rule, the exactly-full boundary and the one
+      error case are all stated outright, so the change is a running total
+      and a loop with no decision left to the author

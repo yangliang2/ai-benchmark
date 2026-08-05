@@ -1,0 +1,45 @@
+# K9 at none: the zero-crux control for settleup-settle-debts. Same starting
+# repository byte for byte, same category, scale and language, comparable
+# amount of code to write — and the one rule with any content in it, how an
+# amount that does not divide is charged, both stated in the prompt and
+# already written out in balances(), so nothing is left to invent.
+#
+# feature-dev: the grading tests exercise applied, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: settleup-apply-expense
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  settleup.py works out balances for a whole trip at once, but an expense
+  added while the trip is still running means recomputing everything from the
+  beginning.
+
+  Add a function `applied(net, expense)` to settleup.py that returns the
+  balances that result from charging one further Expense to the balances it
+  is given.
+
+  How the expense lands:
+
+  - the payer's balance goes up by the whole amount;
+  - each name in `expense.shares` has its balance reduced by its share,
+    charged the way `balances` already charges an expense: equal whole cents,
+    with the earliest shares in the order given taking the extra cent when
+    the amount does not divide evenly;
+  - a name that is not in the mapping yet starts from a balance of zero;
+  - the mapping you are given is not changed — the result is a new one;
+  - an expense nobody shares is a mistake — raise ValueError.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the charging rule is stated in the prompt and demonstrated in the
+      module beside it, and the copy, the missing-name default and the one
+      error are stated too, so the change is the existing loop body applied
+      to a single expense

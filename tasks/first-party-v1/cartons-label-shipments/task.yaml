@@ -1,0 +1,52 @@
+# K9 at none: the zero-crux control for cartons-pack-shipments. Same starting
+# repository byte for byte, same category, scale and language, comparable
+# amount of code to write — and every decision behind the label stated in the
+# prompt, so there is nothing to invent and the grading suite can name the
+# exact strings it expects.
+#
+# feature-dev: the grading tests exercise labels, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: cartons-label-shipments
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  cartons.py summarises a despatch for us, but the cartons themselves still
+  go out unlabelled.
+
+  Add a function `labels(cartons, destination)` to cartons.py. It is given
+  the cartons of one despatch — a sequence of sequences of Items — and a
+  destination code, and returns a list holding one label string per carton,
+  in the order the cartons are given.
+
+  A label is exactly four parts, separated by single spaces:
+
+  - the destination code in upper case, whatever case it was given in,
+    followed by a hyphen and the carton's number;
+  - the carton's number counts from 1 and is always three digits, padded
+    with leading zeros: `001`, `010`, `100`;
+  - the skus of the carton's items, in the order they sit in the carton,
+    joined with commas and no spaces — or the literal `(empty)` when the
+    carton holds nothing;
+  - the carton's total weight, written the way the courier wants it: in
+    grams followed by `g` while the carton is under a kilogram, and from a
+    kilogram up in kilograms to one decimal place followed by `kg`, rounded
+    down to that decimal.
+
+  So a first carton to `lon` holding items `kx-1` (300g) and `kx-2` (250g) is
+  labelled `LON-001 kx-1,kx-2 550g`, and one weighing 1250g is labelled
+  `1.2kg`. No cartons means no labels.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every part of the label is spelled out, down to the padding, the
+      separator and the empty-carton wording, so the whole change is
+      transcription of a stated format over a list the module already knows
+      how to weigh

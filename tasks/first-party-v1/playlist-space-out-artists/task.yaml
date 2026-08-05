@@ -1,0 +1,47 @@
+# K9 at single: one planted inventive decision — the order the tracks come
+# back in — and nothing else. The contract is stated in full, including the
+# exact condition under which no such order exists, so the only thing left
+# open is how to build one; several constructions do, and the grading suite
+# checks the queue's properties rather than a particular order.
+#
+# feature-dev: the grading tests exercise spread, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: playlist-space-out-artists
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  playlist.py can measure a queue of tracks and group them by artist, but
+  nothing in it decides what order they should be played in, and listeners
+  complain when the same artist comes round twice in a row.
+
+  Add a function `spread(tracks)` to playlist.py that returns the tracks in a
+  listening order, as a list.
+
+  What the order has to satisfy:
+
+  - it holds exactly the tracks it was given, each of them once;
+  - no two tracks next to each other are by the same artist;
+  - such an order exists exactly when no artist holds more than
+    `(len(tracks) + 1) // 2` of the tracks; when one does, raise ValueError
+    rather than returning a queue that breaks the rule above;
+  - no tracks means an empty queue.
+
+  Which of the possible orders you return is yours to choose. Several orders
+  satisfy the rules above for the same tracks, and any of them is a correct
+  answer.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the feasibility condition is handed over, so the one decision left open
+      is the construction itself, and the obvious one — deal the artist
+      groups out in turn — strands the last copies of the busiest artist
+      beside each other as soon as one artist holds more tracks than there
+      are other artists

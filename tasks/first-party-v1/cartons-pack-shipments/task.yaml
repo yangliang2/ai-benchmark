@@ -1,0 +1,51 @@
+# K9 at single: one planted inventive decision — which items travel together —
+# and nothing else. Everything the packing has to satisfy is stated as an
+# acceptance rule, including the billed one that rules out packing items into
+# cartons in arrival order; what no rule decides is the strategy that meets
+# them, and several do. The grading suite checks the rules rather than an
+# arrangement, so any strategy that satisfies them grades resolved.
+#
+# feature-dev: the grading tests exercise pack, which does not exist in repo/,
+# so they fail on the pristine repository as the lint requires.
+id: cartons-pack-shipments
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  cartons.py can weigh a carton and say whether one more item would fit, but
+  nothing in it decides which items travel together.
+
+  Add a function `pack(items, capacity)` to cartons.py. It is given a
+  sequence of Items and a per-carton weight capacity in grams, and returns
+  the cartons to despatch as a list of lists of Items.
+
+  What despatch needs from it:
+
+  - every item it is given is packed, exactly once, into exactly one carton;
+  - no carton weighs more than `capacity`;
+  - we are billed per carton, so no two of the cartons that come back may be
+    light enough to have travelled as one: for any two of them, their weights
+    added together must come to more than `capacity`;
+  - an item heavier than `capacity` cannot be despatched at all — raise
+    ValueError;
+  - nothing to pack means no cartons.
+
+  How you decide which items travel together is yours to choose. Several
+  packings satisfy the rules above for the same shipment, and any of them is
+  a correct answer; the order of the cartons, and of the items within a
+  carton, does not matter either.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the one decision left open is the packing strategy, and the obvious
+      one — start a new carton whenever the next item does not fit the
+      current one — breaks the billed rule the moment a heavy item is
+      followed by a light one, which the shipment sorted heaviest-first is
+      there to catch
