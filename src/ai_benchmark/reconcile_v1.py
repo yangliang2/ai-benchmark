@@ -8,14 +8,14 @@ the zero-knob baseline, whether each family climbs its ladder, what each
 crux/control pair cost, and which knobs moved nothing.
 
 **Where the verdicts come from.** A raw run-log row carries the workdir diff
-but no verdict, so an observed rung is not derivable from the log alone --
+but no verdict, so an observed rung is not derivable from the log alone —
 something has to grade. This module grades the way `eval-v1 --replay` does, by
 sharing its code path: each logged diff is applied to a fresh copy of the
 task's pristine repository, the held-out grading tests are laid over the top,
 and the suite is run. That keeps the report on the read side of the provenance
 boundary as CONTEXT.md draws it ("live runs write it, evaluation and replay
 only ever read it"): no agent, no LLM, no network, no run log written, and no
-record merged. It also keeps the design note's exit criterion true --
+record merged. It also keeps the design note's exit criterion true —
 every number here is recomputable from checked-in artifacts by one command,
 which reading an evaluated dataset instead would not be, since the dataset is
 a build product and is not checked in.
@@ -48,7 +48,7 @@ from ai_benchmark.firstparty_v1 import (
 # The operational difficulty ladder, weakest model first: a task's observed
 # rung is named after the weakest model that resolved it, and one no model
 # resolved is unsolved. The models are pinned rather than recognised by name,
-# because admitting a model is a decision about where it sits on the ladder --
+# because admitting a model is a decision about where it sits on the ladder —
 # a run logged under a model nobody has made that decision for fails loudly
 # here rather than quietly leaving a denominator.
 LADDER: tuple[tuple[str, Rung], ...] = (
@@ -59,8 +59,8 @@ LADDER_MODELS: tuple[str, ...] = tuple(model for model, _ in LADDER)
 
 # What a task's runs are allowed to say about it. Two of these are not rungs:
 # a task no log mentions is `unswept`, and one whose runs cannot decide between
-# two rungs -- sonnet resolved it but haiku never ran, so it is either
-# haiku-solvable or sonnet-only -- is `incomplete`. Neither is ever scored, and
+# two rungs — sonnet resolved it but haiku never ran, so it is either
+# haiku-solvable or sonnet-only — is `incomplete`. Neither is ever scored, and
 # neither is silently read as `unsolved`.
 Observed = Literal["haiku-solvable", "sonnet-only", "unsolved", "incomplete", "unswept"]
 
@@ -316,7 +316,7 @@ def _header(
     lines = [
         f"reconciliation: {BENCHMARK}",
         (
-            f"  task set   {tasks_root} -- {len(outcomes)} task(s): "
+            f"  task set   {tasks_root} — {len(outcomes)} task(s): "
             f"{len(baseline(outcomes))} zero-knob baseline, "
             f"{len(constructed(outcomes))} constructed"
         ),
@@ -326,9 +326,16 @@ def _header(
         for index, log in enumerate(logs)
     ] or ["  run logs   (none)"]
     lines += [
-        f"  runs       {runs} over {len(swept)} task(s), "
-        f"{len(rounds)} round(s)"
-        + (f": {', '.join(round.isoformat() for round in rounds)}" if rounds else ""),
+        f"  runs       {runs} over {len(swept)} task(s)",
+        # Rounds are counted off the tasks, not off the log files: a task's
+        # round is the latest as-of date among its runs, so one log can carry
+        # more than one round and one round more than one log.
+        f"  rounds     {len(rounds)} round(s)"
+        + (
+            f": {', '.join(round.isoformat() for round in rounds)}"
+            if rounds else ""
+        )
+        + " — the distinct as-of date(s) the swept task(s) carry",
         f"  ladder     {ladder}; neither -> unsolved",
         "  verdicts   replayed: every logged diff re-graded by its task's held-out",
         "             tests, the computation eval-v1 --replay does. No agent, no LLM,",
@@ -500,9 +507,9 @@ def _monotonic(ordered: Sequence[Outcome]) -> str:
     heights = [_HEIGHT[member.rung] for member in ordered if member.determined]
     undetermined = len(ordered) - len(heights)
     if len(heights) < 2:
-        return f"unknown -- {undetermined} of {len(ordered)} variant(s) without a rung"
+        return f"unknown — {undetermined} of {len(ordered)} variant(s) without a rung"
     verdict = "yes" if all(a <= b for a, b in pairwise(heights)) else (
-        "no -- a variant further up the ladder landed on a lower rung"
+        "no — a variant further up the ladder landed on a lower rung"
     )
     if undetermined:
         return f"{verdict} (over the {len(heights)} variant(s) with a rung)"
@@ -520,28 +527,55 @@ def _pairs(outcomes: Sequence[Outcome]) -> list[str]:
     if not pairs:
         return [*lines, "   (no paired task in the task set)"]
 
-    rows: list[Sequence[str]] = [
+    ranked: list[Sequence[str]] = [
         ("pair", "crux", "control", "crux rung", "control rung", "delta")
     ]
+    unranked: list[Sequence[str]] = [("pair", "task", "level", "observed rung")]
     for pair in sorted(pairs):
         members = pairs[pair]
         if len(members) != 2:
-            rows.append((
+            ranked.append((
                 pair, ", ".join(sorted(member.task.id for member in members)), "-",
-                "-", "-", f"unknown -- pair holds {len(members)} member(s)",
+                "-", "-", f"unknown — pair holds {len(members)} member(s)",
             ))
             continue
         knob = _varied_knob(members)
+        if not KNOB_LEVELS.get(knob):
+            # An unenumerated ladder orders its levels alphabetically, which
+            # says nothing about difficulty. Calling the alphabetically later
+            # member the crux would let the delta accuse a working pair of
+            # failing to isolate what it was built to isolate, so this pair is
+            # reported as two rungs and no claim about which should be higher.
+            unranked += [
+                (pair, member.task.id, f"{knob}={_level(member, knob)}", member.rung)
+                for member in sorted(members, key=lambda member: member.task.id)
+            ]
+            continue
         control, crux = sorted(
             members, key=lambda member: level_order(knob, _level(member, knob))
         )
-        rows.append((
+        ranked.append((
             pair,
             f"{crux.task.id} ({knob}={_level(crux, knob)})",
             f"{control.task.id} ({knob}={_level(control, knob)})",
             crux.rung, control.rung, _delta_text(crux, control),
         ))
-    return [*lines, "", *_table(rows, indent="   ")]
+
+    if len(ranked) > 1:
+        lines += ["", *_table(ranked, indent="   ")]
+    if len(unranked) > 1:
+        lines += [
+            "",
+            *_wrap(
+                "pairs varying a knob whose ladder the design note has not "
+                "enumerated: its levels carry no difficulty order, so neither "
+                "member is named the crux and no rung delta is claimed.",
+                indent="   ",
+            ),
+            "",
+            *_table(unranked, indent="   "),
+        ]
+    return lines
 
 
 def _flags(outcomes: Sequence[Outcome]) -> list[str]:
@@ -549,16 +583,21 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         "5. no-separation flags",
         *_wrap(
             "criterion: within one round, a knob separates when two of its swept "
-            "levels produced different sets of observed rungs -- or, when only one "
+            "levels produced different sets of observed rungs — or, when only one "
             "level was swept, when that level's set differs from the zero-knob "
-            "baseline's over the same task categories. At n=1 per cell a single "
-            "task changes a set, so a flag is a reason to look, not a test.",
+            "baseline's over the same task categories. The levels are read within "
+            "the round, the baseline controls across all of them, because the "
+            "baseline is swept once and a cell is never swept twice. At n=1 per "
+            "cell a single task changes a set, so a flag is a reason to look, not "
+            "a test.",
             indent="   ",
         ),
         *_wrap(
             f"kill discipline: a knob silent for {SILENT_ROUNDS_TO_DEMOTE} round(s) "
             "is demoted (docs/design/task-difficulty-and-ex-ante-profiles.md "
-            "section 9). A round is one as-of date in the logs.",
+            "section 9). A round is one as-of date in the logs, so one sweep that "
+            "spills across midnight counts as two rounds here — read the dates "
+            "below before reading a demotion off them.",
             indent="   ",
         ),
     ]
@@ -570,7 +609,11 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         outcome.round for outcome in outcomes if outcome.round is not None
     })
     for knob in sorted({knob for knob, _ in groups}, key=knob_order):
-        verdicts = [(round, _separation(knob, outcomes, round)) for round in rounds]
+        verdicts = [
+            (round, _separation(knob, outcomes, round))
+            for round in rounds
+            if _activated_in(knob, outcomes, round)
+        ]
         silent = sum(verdict.startswith("no separation") for _, verdict in verdicts)
         block = [
             f"   {knob}  {round.isoformat()}  {verdict}"
@@ -579,15 +622,37 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         tail = f"       silent round(s): {silent}"
         if silent >= SILENT_ROUNDS_TO_DEMOTE:
             tail += (
-                f" -- demote {knob}: silent for the "
+                f" — demote {knob}: silent for the "
                 f"{SILENT_ROUNDS_TO_DEMOTE} round(s) the kill discipline allows"
             )
         lines += ["", *block, tail]
     return lines
 
 
+def _activated_in(knob: str, outcomes: Sequence[Outcome], round: date) -> bool:
+    """Whether any task activating this knob was swept in this round.
+
+    A round that swept none of them has nothing to say about the knob, so it
+    gets no row: a printed "not assessable" would read as a round the knob was
+    tried in and the kill discipline would then have to explain it away.
+    """
+    return any(
+        outcome.round == round
+        and outcome.construction is not None
+        and knob in outcome.construction.levels
+        for outcome in outcomes
+    )
+
+
 def _separation(knob: str, outcomes: Sequence[Outcome], round: date) -> str:
-    """Whether this knob's levels told outcomes apart in this round."""
+    """Whether this knob's levels told outcomes apart in this round.
+
+    The levels are read within the round; the zero-knob controls are read
+    across every round. A cell is only ever swept once, so the baseline cannot
+    be re-swept alongside a later round's tasks — scoping the controls to the
+    round too would leave every single-level knob permanently unassessable
+    from the round after the baseline's onwards.
+    """
     in_round = [outcome for outcome in outcomes if outcome.round == round]
     groups = {
         level: members
@@ -599,25 +664,25 @@ def _separation(knob: str, outcomes: Sequence[Outcome], round: date) -> str:
 
     if len(levels) >= 2:
         separated = len({rung_set(groups[level]) for level in levels}) > 1
-        return f"{'separated' if separated else 'no separation'} -- {described}"
+        return f"{'separated' if separated else 'no separation'} — {described}"
     if len(levels) == 1:
         categories = {member.task.category for member in groups[levels[0]]}
         controls = [
-            control for control in baseline(in_round)
+            control for control in baseline(outcomes)
             if control.task.category in categories and control.determined
         ]
         if not controls:
             return (
-                f"not assessable -- one level swept ({described}) and no zero-knob "
+                f"not assessable — one level swept ({described}) and no zero-knob "
                 f"baseline of the same category ({', '.join(sorted(categories))}) "
-                "in this round"
+                "has a rung in any round"
             )
         separated = rung_set(groups[levels[0]]) != rung_set(controls)
         return (
-            f"{'separated' if separated else 'no separation'} -- {described} vs "
+            f"{'separated' if separated else 'no separation'} — {described} vs "
             f"baseline {_rung_set_text(controls)}"
         )
-    return "not assessable -- no level of it has a rung in this round"
+    return "not assessable — no level of it has a rung in this round"
 
 
 # --- the command ---------------------------------------------------------------

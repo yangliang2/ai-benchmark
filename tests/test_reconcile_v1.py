@@ -1,11 +1,17 @@
 """The reconcile-v1 command surface: predictions read against swept outcomes.
 
-Everything here drives `main([...])` and reads stdout, because the report *is*
-the deliverable — there is no machine-readable form to assert against instead.
-Fixture task sets are built in tmp_path from one trivial underlying change, so
-a variant's rung is decided by the diff its run logged and by nothing else.
+Everything here drives `main([...])` and reads stdout, which is the repo's
+convention for a command: the rendered report is what a reader acts on, so
+asserting on it catches a grouping that is right in `observed_outcomes` and
+wrong on the page. Fixture task sets are built in tmp_path from one trivial
+underlying change, so a variant's rung is decided by the diff its run logged
+and by nothing else.
 """
 
+import os
+import re
+import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -14,7 +20,7 @@ import pytest
 import yaml
 from firstparty_v1_tasks import workdir_diff
 
-from ai_benchmark import firstparty_v1
+from ai_benchmark import firstparty_v1, reconcile_v1
 from ai_benchmark.cli import main
 
 # The underlying change every fixture task asks for: one function, one answer.
@@ -130,17 +136,43 @@ def reconcile(
     return capsys.readouterr().out
 
 
+_REPO = Path(__file__).parent.parent
+
+
+def checked_in_argv() -> list[str]:
+    """The checked-in task set and run logs, named explicitly. The command's
+    own defaults are relative to the working directory, and a test that leans
+    on them passes or fails by where pytest was started from."""
+    return [
+        "reconcile-v1",
+        "--tasks", str(_REPO / "tasks" / "first-party-v1"),
+        "--replay", str(_REPO / "data" / "first-party-v1-runs"),
+    ]
+
+
+def family_block(out: str) -> str:
+    """Section 3 alone. A verdict like "monotonic along the ladder: no" has to
+    be read inside the block it belongs to: "no" and "yes" and "unknown" all
+    turn up somewhere in a full report whatever the family did, so an
+    unscoped assertion would hold however wrong the answer was."""
+    return out.split("3. family ladders")[1].split("4. crux/control pairs")[0]
+
+
+def pairs_block(out: str) -> str:
+    return out.split("4. crux/control pairs")[1].split("5. no-separation flags")[0]
+
+
 # --- the demo: the checked-in first sweep against the checked-in task set ------
 
 
 def test_reconcile_v1_reports_the_checked_in_first_sweep(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The command's reason to exist, run on real artifacts with no arguments:
-    the first sweep covered the 22 zero-knob baseline tasks and none of the 22
-    constructed ones, so every prediction is still unswept and no knob is
-    assessable yet."""
-    main(["reconcile-v1"])
+    """The command's reason to exist, run on real artifacts: the first sweep
+    covered the 22 zero-knob baseline tasks and none of the 22 constructed
+    ones, so every prediction is still unswept and no knob is assessable
+    yet."""
+    main(checked_in_argv())
 
     out = capsys.readouterr().out
     assert "22 zero-knob baseline, 22 constructed" in out
@@ -151,21 +183,65 @@ def test_reconcile_v1_reports_the_checked_in_first_sweep(
     for constructed_id in ("settleup-settle-debts", "alerts-rule-table",
                            "billing-split-by-weight-l3"):
         assert constructed_id in out
-    # The baseline was swept, and its rungs are what round 1 has to show for
-    # itself: 22 tasks, both models, every verdict determined.
-    assert "baseline" in out and "22" in out
     assert "hit-rate: 0/0" in out
+
+    # The baseline is on the page as every knob's comparison row, and round 1
+    # swept all of it: no baseline row has a task it did not sweep.
+    grouping = out.split("2. knob grouping")[1].split("3. family ladders")[0]
+    rows = [line for line in grouping.splitlines() if "(baseline)" in line]
+    assert rows
+    for row in rows:
+        _, category, tasks_in_row, swept, *_ = row.split()
+        assert tasks_in_row == swept, f"{category} baseline not fully swept: {row}"
+
+
+def test_reconcile_v1_defaults_to_the_checked_in_task_set_and_run_logs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The demo is meant to be one argument-free command, so where the defaults
+    point is behaviour. Checked at the seam rather than by grading the whole
+    sweep a third time, which is what the two tests around it already pay
+    for."""
+    monkeypatch.chdir(_REPO)
+    seen: dict[str, Any] = {}
+
+    def spy(tasks: list[Any], tasks_root: Path, logs: list[Path], **_: Any) -> str:
+        seen.update(tasks_root=tasks_root, logs=logs)
+        return ""
+
+    monkeypatch.setattr(reconcile_v1, "reconcile", spy)
+    main(["reconcile-v1"])
+
+    assert seen["tasks_root"] == Path("tasks/first-party-v1")
+    assert seen["logs"]
+    assert all(log.parent == Path("data/first-party-v1-runs") for log in seen["logs"])
 
 
 def test_reconcile_v1_report_is_byte_identical_on_a_second_run(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    main(["reconcile-v1"])
-    first = capsys.readouterr().out
-    main(["reconcile-v1"])
-    second = capsys.readouterr().out
+    """The report is read by diffing it against the last one, so any set or
+    dict iteration order leaking into it would show up as churn that means
+    nothing. Twice in this process, then once more in a subprocess under a
+    pinned PYTHONHASHSEED: within one process a hash-ordered structure iterates
+    the same way every time, which is exactly how that bug would hide.
+    """
+    argv = checked_in_argv()
 
-    assert first == second
+    main(argv)
+    first = capsys.readouterr().out
+    main(argv)
+    assert capsys.readouterr().out == first
+
+    reseeded = subprocess.run(
+        [sys.executable, "-c",
+         "import sys; from ai_benchmark.cli import main; main(sys.argv[1:])",
+         *argv],
+        capture_output=True, text=True, check=True,
+        env={**os.environ, "PYTHONHASHSEED": "1"},
+    )
+
+    assert reseeded.stdout == first
 
 
 # --- section 1: predictions ----------------------------------------------------
@@ -258,7 +334,11 @@ def test_reconcile_v1_names_a_task_resolved_by_haiku_haiku_solvable(
 
     out = reconcile(tasks, log, capsys)
 
-    assert "haiku-solvable" in out and "unsolved" in out
+    predictions = out.split("1. prediction reconciliation")[1].split("2. knob")[0]
+    [easy] = [line for line in predictions.splitlines() if "easy-task" in line]
+    [hard] = [line for line in predictions.splitlines() if "hard-task" in line]
+    assert easy.split() == ["easy-task", "haiku-solvable", "haiku-solvable", "hit"]
+    assert hard.split() == ["hard-task", "unsolved", "unsolved", "hit"]
     assert "hit-rate: 2/2" in out
 
 
@@ -343,8 +423,8 @@ def test_reconcile_v1_calls_a_family_monotonic_along_its_ladder(
 
     out = reconcile(tasks, log, capsys)
 
-    assert "monotonic" in out and "yes" in out
-    ladder = out.split("family ladders")[1]
+    ladder = family_block(out)
+    assert "monotonic along the ladder: yes" in ladder
     assert ladder.index("net-covered") < ladder.index("net-bare")
     assert ladder.index("net-bare") < ladder.index("net-misleading")
 
@@ -367,7 +447,7 @@ def test_reconcile_v1_reports_a_family_that_goes_backwards_down_the_ladder(
 
     out = reconcile(tasks, log, capsys)
 
-    assert "monotonic" in out and "no" in out
+    assert "monotonic along the ladder: no" in family_block(out)
 
 
 def test_reconcile_v1_cannot_judge_monotonicity_of_an_unswept_family(
@@ -385,7 +465,7 @@ def test_reconcile_v1_cannot_judge_monotonicity_of_an_unswept_family(
 
     out = reconcile(tasks, log, capsys)
 
-    assert "monotonic" in out and "unknown" in out
+    assert "monotonic along the ladder: unknown" in family_block(out)
 
 
 # --- section 4: crux/control pairs ---------------------------------------------
@@ -456,6 +536,38 @@ def test_reconcile_v1_names_the_pair_whose_control_came_out_harder(
     assert "-1 rung (control harder)" in out.split("crux/control pairs")[1]
 
 
+def test_reconcile_v1_names_no_crux_in_a_pair_on_an_unenumerated_ladder(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """K7's levels are recorded as the author wrote them rather than enumerated
+    into a ladder, so "dense" sorting before "sparse" is the alphabet and not a
+    difficulty order. Reading a crux off it would let the report accuse a
+    working pair of failing to isolate what it was built to isolate — so this
+    pair gets its two levels and two rungs, and no claim about which of them
+    should have been higher."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "terrain-dense", construction=constructed(
+        "K7", "dense", "sonnet-only", pair="terrain"))
+    write_task(tasks, "terrain-sparse", construction=constructed(
+        "K7", "sparse", "haiku-solvable", pair="terrain"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {"terrain-sparse": [_HAIKU, _SONNET]})
+
+    out = reconcile(tasks, log, capsys)
+
+    pairs = pairs_block(out)
+    assert "harder" not in pairs
+    assert not re.search(r"[+-]\d+ rung", pairs)  # no delta, in either direction
+    # Both members stay on the page, with their level and their rung.
+    [dense] = [line for line in pairs.splitlines() if "terrain-dense" in line]
+    [sparse] = [line for line in pairs.splitlines() if "terrain-sparse" in line]
+    assert dense.split() == ["terrain", "terrain-dense", "K7=dense", "unsolved"]
+    assert sparse.split() == [
+        "terrain", "terrain-sparse", "K7=sparse", "haiku-solvable"
+    ]
+
+
 # --- section 5: no-separation flags and the kill discipline --------------------
 
 
@@ -495,6 +607,42 @@ def test_reconcile_v1_does_not_flag_a_knob_whose_levels_separated(
 
     flags = out.split("no-separation flags")[1]
     assert "separated" in flags
+    assert "silent round(s): 0" in flags
+
+
+def test_reconcile_v1_reads_a_single_level_knob_against_an_earlier_baseline(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The knob's one level was swept a round after the baseline was, which is
+    the only shape a single-level knob can ever have: a cell is swept once, so
+    the zero-knob controls cannot be re-run beside a knob added later. The
+    levels are read within the round and the controls across all of them, or
+    K8 — the one knob whose ladder has a single level in the set — would read
+    "not assessable" in every round from the second on.
+    """
+    tasks = tmp_path / "tasks"
+    # A frozen zero-knob baseline id, so it counts as a control.
+    write_task(tasks, "ledger-split-formatting", category="refactor")
+    write_task(tasks, "net-misleading", category="refactor",
+               construction=constructed("K8", "misleading", "unsolved"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "round-1.jsonl",
+              [task for task in loaded if task.id == "ledger-split-formatting"],
+              {"ledger-split-formatting": [_HAIKU, _SONNET]}, as_of=date(2026, 8, 4))
+    write_log(logs / "round-2.jsonl",
+              [task for task in loaded if task.id == "net-misleading"], {},
+              as_of=date(2026, 9, 1))
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    flags = out.split("5. no-separation flags")[1]
+    [verdict] = [line for line in flags.splitlines() if line.startswith("   K8")]
+    assert "2026-09-01  separated —" in verdict
+    assert "misleading {unsolved} vs baseline {haiku-solvable}" in verdict
+    # Round 1 swept no K8 task at all, so it is not a round K8 was silent in.
+    assert "2026-08-04" not in flags
     assert "silent round(s): 0" in flags
 
 

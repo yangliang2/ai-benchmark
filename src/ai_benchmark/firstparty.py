@@ -36,6 +36,10 @@ from ai_benchmark.schema import (
 
 BENCHMARK = "first-party-v0"
 
+# What a live sweep runs when no --model is given. `reconcile_v1.LADDER_MODELS`
+# is the same set seen from the other end: it names the models a rung can be
+# read off, and rejects a log carrying any other. Adding a model here without
+# giving it a rung there makes the next sweep unreconcilable.
 DEFAULT_MODELS = ["claude-sonnet-5", "claude-haiku-4-5"]
 
 

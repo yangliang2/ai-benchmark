@@ -118,10 +118,7 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
         raise SystemExit("error: --timeout must be a positive number of seconds")
     tasks = firstparty_v1.load_task_set(args.tasks)
     if args.live:
-        log = (
-            args.log
-            or Path("data/first-party-v1-runs") / f"{local_today().isoformat()}.jsonl"
-        )
+        log = args.log or DEFAULT_V1_RUNS / f"{local_today().isoformat()}.jsonl"
         # The default timeout lives on run_live alone; None means "not given".
         timeout = {} if args.timeout is None else {"timeout_s": args.timeout}
         runs = firstparty_v1.run_live(
