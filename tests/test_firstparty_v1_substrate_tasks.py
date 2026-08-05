@@ -14,10 +14,13 @@ Two of the tasks set K8 to misleading and the lever is the same one #19 used,
 except that here the tests being taken away are somebody else's: each
 starting repository ships the upstream suite minus exactly the tests that
 covered the graded contract, and it goes on passing — 136 of them — while the
-careless restructuring quietly changes behaviour. The careless variant is
+careless restructuring quietly changes behaviour. Each careless variant is
 asserted to keep the repository green *and* to satisfy every structural
 assertion before it is asserted to grade 0.0, because a net that caught the
-mistake would say nothing about K8.
+mistake would say nothing about K8. A task carries as many of them as have
+been found: a slip a review turned up and the grading suite was taught to
+catch is registered here afterwards, so the suite goes on being asked the
+question that caught it.
 
 The third sets K7 — invariant density — and its snapshot carries no
 knob-setting edit, so its modifications list is empty on purpose: the density
@@ -85,6 +88,28 @@ def hand_the_after_callback_the_state_it_left(workdir: Path) -> None:
     rewrite(workdir, {
         "        transition['after'](self.leaf_state, event)\n":
             "        transition['after'](leaf_state_before, event)\n",
+    })
+
+
+def hand_the_after_callback_the_transition_target(workdir: Path) -> None:
+    """The step extracted exactly as asked, and `after` read off the local the
+    line above it already binds. The same state as the machine's leaf whenever
+    the transition names a leaf — and one level short of it whenever it names
+    a composite state the entry walk goes on descending through."""
+    rewrite(workdir, {
+        "        transition['after'](self.leaf_state, event)\n":
+            "        transition['after'](to_state, event)\n",
+    })
+
+
+def hand_the_action_callback_the_current_leaf_state(workdir: Path) -> None:
+    """The mirror of the above on the other side of the exit walk: `action`
+    read off the machine rather than off the argument it was handed. The same
+    state whenever the walk stayed inside one machine — and the outermost
+    state it exited whenever it climbed."""
+    rewrite(workdir, {
+        "        transition['action'](leaf_state_before, event)\n":
+            "        transition['action'](self.leaf_state, event)\n",
     })
 
 
@@ -184,10 +209,14 @@ class SubstrateTask(NamedTuple):
 
     `touched` is the set of files the reference solution edits, `knobs` is the
     activation the task declares, `modifications` is how many surgical edits
-    its snapshot carries, `bend` is a careless answer the repository's own
-    tests do not catch (there is none where K8 is not the knob), `differently`
-    is an alternative correct answer, and `rung` is the pre-registered
-    prediction.
+    its snapshot carries, `bends` are careless answers the repository's own
+    tests do not catch (there are none where K8 is not the knob),
+    `differently` is an alternative correct answer, and `rung` is the
+    pre-registered prediction.
+
+    `bends` is a tuple because a slip found later is a slip that was always
+    possible: once the grading suite has been taught to catch one, it is
+    registered here so the suite goes on being asked about it.
     """
 
     task_id: str
@@ -196,7 +225,7 @@ class SubstrateTask(NamedTuple):
     modifications: int
     rung: Rung
     differently: Callable[[Path], None]
-    bend: Callable[[Path], None] | None = None
+    bends: tuple[Callable[[Path], None], ...] = ()
 
 
 SUBSTRATE_TASKS = (
@@ -206,7 +235,11 @@ SUBSTRATE_TASKS = (
         knobs={"K8": "misleading"},
         modifications=2,
         rung="sonnet-only",
-        bend=hand_the_after_callback_the_state_it_left,
+        bends=(
+            hand_the_after_callback_the_state_it_left,
+            hand_the_after_callback_the_transition_target,
+            hand_the_action_callback_the_current_leaf_state,
+        ),
         differently=perform_the_transition_through_locals,
     ),
     SubstrateTask(
@@ -223,16 +256,16 @@ SUBSTRATE_TASKS = (
         knobs={"K8": "misleading"},
         modifications=2,
         rung="unsolved",
-        bend=drop_one_history_entry_per_revert,
+        bends=(drop_one_history_entry_per_revert,),
         differently=revert_by_dropping_two_in_a_loop,
     ),
 )
 
 BY_TASK = [pytest.param(entry, id=entry.task_id) for entry in SUBSTRATE_TASKS]
-MISLEADING = [
-    pytest.param(entry, id=entry.task_id)
+CARELESS = [
+    pytest.param(entry, bend, id=f"{entry.task_id}-{bend.__name__}")
     for entry in SUBSTRATE_TASKS
-    if entry.bend is not None
+    for bend in entry.bends
 ]
 
 
@@ -402,9 +435,9 @@ def test_the_reference_solution_keeps_the_repository_green(
     assert visible_tests_pass(task, solved_tree(task))
 
 
-@pytest.mark.parametrize("entry", MISLEADING)
+@pytest.mark.parametrize(("entry", "bend"), CARELESS)
 def test_a_careless_refactor_stays_green_and_still_grades_unresolved(
-    entry: SubstrateTask,
+    entry: SubstrateTask, bend: Callable[[Path], None]
 ) -> None:
     """The K8-misleading probe, and the reason all three things are asserted.
 
@@ -414,10 +447,9 @@ def test_a_careless_refactor_stays_green_and_still_grades_unresolved(
     held-out behaviour tests do, and they are what makes the verdict 0.0.
     """
     task = task_by_id(entry.task_id)
-    assert entry.bend is not None
-    diff = solution_diff(task, mutate=entry.bend)
+    diff = solution_diff(task, mutate=bend)
 
-    assert visible_tests_pass(task, solved_tree(task, entry.bend))
+    assert visible_tests_pass(task, solved_tree(task, bend))
     assert structural_half_passes(task, diff)
 
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")

@@ -96,19 +96,28 @@ def test_after_sees_the_state_that_has_been_entered():
     assert seen == {"state": fixture.idle, "leaf_state": fixture.idle}
 
 
-def test_after_sees_the_arrival_state_across_two_levels_too():
+def test_exiting_two_levels_does_not_change_what_the_callbacks_see():
+    """Where `action` parts company with the machine's current leaf state.
+    `action` runs after the exit walk, and on a transition that leaves a
+    composite state that walk has already climbed past the leaf — so the leaf
+    state by then is the outermost state exited, while `action` is still owed
+    the one the transition started from, exactly as on a single-level exit.
+    """
     fixture = machine()
     seen = {}
     fixture.root.add_transition(
         fixture.work, fixture.away, events=["leave"],
         before=lambda state, event: seen.setdefault("before", state),
+        action=lambda state, event: seen.setdefault("action", state),
         after=lambda state, event: seen.setdefault("after", state),
     )
     fixture.root.initialize()
 
     fixture.root.dispatch(Event("leave"))
 
-    assert seen == {"before": fixture.typing, "after": fixture.away}
+    assert seen == {
+        "before": fixture.typing, "action": fixture.typing, "after": fixture.away
+    }
 
 
 def test_after_sees_the_leaf_when_the_target_is_a_composite_state():
