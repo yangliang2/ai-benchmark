@@ -1,0 +1,44 @@
+# K1 family billing-split-by-weight, level 2 of 3: the change is described
+# rather than specified — which share rounds up is characterised in prose
+# ("cut the hardest") rather than named as a rule, and its consequence for a
+# weight of nothing is pointed at rather than stated. The repo, the grading
+# suite and the reference solution are identical across the three variants —
+# the prompt is the only thing that varies.
+#
+# feature-dev: the grading tests exercise split_by_weights, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: billing-split-by-weight-l2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small billing module in billing.py.
+
+  A bill is not always shared out equally: a shared invoice is apportioned
+  by usage, a refund by what each line contributed, a fee by headcount. Add
+  a function `split_by_weights(amount, weights)` to billing.py that splits
+  `amount` cents into one share per weight, each share carrying its weight's
+  proportion of the whole.
+
+  Exact proportions are rarely whole numbers of cents, so the split has to
+  decide which shares round up, and the module's existing answer — favour
+  the earlier share — does not carry over on its own once the shares are
+  unequal: a share is favoured because its exact value was cut the hardest,
+  and being earlier only settles it between two cut alike. A line owed
+  nothing is not owed a rounding cent either. Weights the module cannot
+  split against are refused rather than guessed at.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: description
+  family: billing-split-by-weight
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      "cut the hardest" describes largest-remainder without naming it and
+      has to be turned into a comparison the code makes, and the pull of the
+      module's existing earliest-shares rule is toward the wrong answer

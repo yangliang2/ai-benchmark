@@ -1,0 +1,40 @@
+# K1 family billing-split-by-weight, level 3 of 3: the intent and the gap are
+# stated, and nothing else. The signature is named because grading has to be
+# able to call the function at all; every decision behind it — that no cent is
+# created or lost, that the share cut the hardest takes the leftover cent,
+# that the earlier share settles a tie, and that a split the module cannot
+# make is refused — has to be read off the module docstring and split_evenly.
+# The repo, the grading suite and the reference solution are identical across
+# the three variants — the prompt is the only thing that varies.
+#
+# feature-dev: the grading tests exercise split_by_weights, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: billing-split-by-weight-l3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small billing module in billing.py.
+
+  Bills are not always shared out equally — apportioned by usage, by
+  headcount, by what each line contributed — and that is the one thing the
+  module cannot do: it can only cut an amount into shares that are all the
+  same size.
+
+  Add a function `split_by_weights(amount, weights)` to billing.py that
+  closes that gap, giving one share per weight.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: intent
+  family: billing-split-by-weight
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the rounding rule is only in the module docstring's "as close to their
+      exact values as whole cents allow", and copying split_evenly's visible
+      earliest-shares rule instead is both the obvious move and wrong

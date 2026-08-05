@@ -1,0 +1,49 @@
+# K1 family billing-split-by-weight, level 1 of 3: every decision the change
+# turns on is stated as an acceptance criterion, worked examples included, so
+# nothing has to be inferred from the repository. The repo, the grading suite
+# and the reference solution are identical across the three variants — the
+# prompt is the only thing that varies.
+#
+# feature-dev: the grading tests exercise split_by_weights, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: billing-split-by-weight-l1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small billing module in billing.py.
+
+  Add a function `split_by_weights(amount, weights)` to billing.py that
+  splits `amount` cents into one share per weight, in proportion to the
+  weights. It must satisfy all of the following:
+
+  - The shares are a list, one per weight, adding back up to exactly
+    `amount`.
+  - Each share starts at the whole cents its exact value covers — the whole
+    part of `amount` times that weight, over the weights' total.
+  - The cents left over after that go one each to the shares whose exact
+    values were cut by the most, and where two were cut by the same amount
+    the earlier share takes the cent. So `split_by_weights(100, [1, 2, 4])`
+    is `[14, 29, 57]` and `split_by_weights(103, [1, 2, 3, 4])` is
+    `[10, 21, 31, 41]`.
+  - A weight of 0 gets a share of 0 and never takes one of those leftover
+    cents: `split_by_weights(101, [0, 1, 1])` is `[0, 51, 50]`.
+  - Equal weights come out exactly as `split_evenly` splits the same amount.
+  - An amount of 0 gives every share 0.
+  - No weights at all, weights adding up to 0, a negative amount and a
+    negative weight each raise `ValueError`.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+  family: billing-split-by-weight
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the allocation rule is named, two worked examples pin it, and the
+      zero-weight case is spelled out, so nothing about which share rounds
+      up is left to work out

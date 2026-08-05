@@ -88,6 +88,20 @@ def consume(lots, quantity):
     return tuple(remaining), cost
 '''
 
+# Proportional shares with split_evenly's leftover rule copied across
+# unchanged: the cents go to the earliest shares rather than to the ones the
+# rounding cut hardest, so a weight of nothing can collect one.
+EARLIEST_SHARES = '''
+
+def split_by_weights(amount, weights):
+    """`amount` split into one share per weight, in proportion to them."""
+    total = sum(weights)
+    shares = [amount * weight // total for weight in weights]
+    for index in range(amount - sum(shares)):
+        shares[index] += 1
+    return shares
+'''
+
 
 class Family(NamedTuple):
     """One K1 family, and what is pinned about it here.
@@ -133,6 +147,16 @@ FAMILIES = (
         },
         touched="inventory.py",
         probe=KEEP_EMPTY_LOTS,
+    ),
+    Family(
+        stem="billing-split-by-weight",
+        rungs={
+            "acceptance": "haiku-solvable",
+            "description": "sonnet-only",
+            "intent": "sonnet-only",
+        },
+        touched="billing.py",
+        probe=EARLIEST_SHARES,
     ),
 )
 
