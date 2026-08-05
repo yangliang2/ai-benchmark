@@ -2,25 +2,29 @@
 # the mapping that comes back and never looks at the one it passed in, so the
 # repo's tests are green whether the shelving is copied shelf by shelf or
 # shallowly — and relabel, which copies shallowly and is right to, is sitting
-# there as the spelling to unify on. That the callers' shelves survive a place
-# or a remove lives only in the held-out behaviour tests named below, which
-# must PASS on the pristine repository; everything else in grading/ is a
-# structural assertion that must FAIL on it until the copy has one home.
+# there as the spelling to unify on. The change asked for is place and remove
+# alone, so relabel is a lure rather than a caller: widening its copy to the
+# new one would hand the caller different lists back, which is a behaviour
+# change and graded as one. That the callers' shelves survive a place or a
+# remove, and that relabel's answer still shares them, lives only in the
+# held-out behaviour tests named below, which must PASS on the pristine
+# repository; everything else in grading/ is a structural assertion that must
+# FAIL on it until the copy has one home.
 id: stockroom-extract-shelf-copy
 category: refactor
 scale: cross-file
 language: python
 prompt: |
-  place, remove and relabel in stockroom.py each copy the shelving before
-  changing it, and each spells the copy differently.
+  place and remove in stockroom.py each copy the shelving before changing it,
+  and each spells the copy differently.
 
-  Pull the copy out into a new module shelving.py as a function
-  `copied(shelves)`, and have all three call it instead of copying inline.
-  After the change, `from shelving import copied` must work and stockroom.py
-  must no longer build a copy of its own.
+  Pull that copy out into a new module shelving.py as a function
+  `copied(shelves)`, and have both call it instead of copying inline. After
+  the change, `from shelving import copied` must work and neither place nor
+  remove may build a copy of its own.
 
-  This is a pure refactor: what the three functions return, what they raise,
-  and what they leave behind them must be exactly as it is today.
+  This is a pure refactor: what every function in stockroom.py returns, what
+  it raises, and what it leaves behind it must be exactly as it is today.
 grading:
   behaviour_tests:
     - test_stockroom_behaviour.py

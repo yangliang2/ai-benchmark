@@ -16,6 +16,11 @@ behaviour gone. A probe that failed the visible tests would say nothing about
 K8, because a net that catches the mistake is exactly what these tasks claim
 not to have.
 
+Every task is also probed in the opposite direction, with an answer that
+restructures differently but correctly and must grade 1.0 — otherwise the
+structural assertions would be describing the reference solution rather than
+the change the prompt asks for.
+
 The tasks are deliberately unlike one another, because a net that only
 misleads about one shape of behaviour has not been shown to be a knob.
 
@@ -98,18 +103,99 @@ def expire_sessions_a_second_late(workdir: Path) -> None:
     )
 
 
+# --- the honest variants: the same restructuring, answered another way ---------
+
+
+def walk_the_alert_table_with_next(workdir: Path) -> None:
+    """The table built exactly as asked and walked with next() over a
+    generator rather than a for loop: same rules, same order, same
+    first-match rule."""
+    alerts = workdir / "alerts.py"
+    source = alerts.read_text()
+    loop = (
+        "    for matches, level in RULES:\n"
+        "        if matches(event):\n"
+        "            return level\n"
+        '    return "ignore"\n'
+    )
+    assert loop in source
+    alerts.write_text(
+        source.replace(
+            loop,
+            "    return next(\n"
+            "        (level for matches, level in RULES if matches(event)),\n"
+            '        "ignore",\n'
+            "    )\n",
+        )
+    )
+
+
+def rank_the_leaderboard_on_a_tuple(workdir: Path) -> None:
+    """The ordering rule in one place, spelled as a one-element tuple key,
+    with top and rank_of asking standings for the order instead of sorting
+    again — a different shape that orders players identically, ties and
+    all."""
+    leaderboard = workdir / "leaderboard.py"
+    source = leaderboard.read_text()
+    replacements = {
+        "    return -player.total()\n": "    return (-player.total(),)\n",
+        "    return sorted(players, key=rank_key)[:count]\n": (
+            "    return standings(players)[:count]\n"
+        ),
+        "    ordered = sorted(players, key=rank_key)\n": (
+            "    ordered = standings(players)\n"
+        ),
+    }
+    for before, after in replacements.items():
+        assert before in source
+        source = source.replace(before, after)
+    leaderboard.write_text(source)
+
+
+def import_the_shelving_module(workdir: Path) -> None:
+    """The same seam reached the other way: `import shelving` and a
+    module-qualified call, rather than the reference's
+    `from shelving import copied`."""
+    stockroom = workdir / "stockroom.py"
+    source = stockroom.read_text()
+    from_import = "from shelving import copied\n"
+    assert from_import in source
+    stockroom.write_text(
+        source.replace(from_import, "import shelving\n").replace(
+            " = copied(shelves)", " = shelving.copied(shelves)"
+        )
+    )
+
+
+def import_the_expiry_module(workdir: Path) -> None:
+    """The same seam reached the other way: `import expiry` and a
+    module-qualified call, with the limit re-exported by assignment rather
+    than by the reference's `from expiry import TTL_SECONDS, is_expired`."""
+    sessions = workdir / "sessions.py"
+    source = sessions.read_text()
+    from_import = "from expiry import TTL_SECONDS, is_expired\n"
+    assert from_import in source
+    sessions.write_text(
+        source.replace(
+            from_import, "import expiry\n\nTTL_SECONDS = expiry.TTL_SECONDS\n"
+        ).replace("is_expired(session, now)", "expiry.is_expired(session, now)")
+    )
+
+
 class K8Task(NamedTuple):
     """One K8-misleading task, and what is pinned about it here.
 
     `touched` is the set of files the reference solution edits, `bend` is the
-    careless refactor the repository's own tests do not catch, and `rung` is
-    the pre-registered prediction.
+    careless refactor the repository's own tests do not catch, `differently`
+    is an alternative correct answer to the same prompt, and `rung` is the
+    pre-registered prediction.
     """
 
     task_id: str
     touched: frozenset[str]
     rung: Rung
     bend: Callable[[Path], None]
+    differently: Callable[[Path], None]
 
 
 K8_TASKS = (
@@ -118,24 +204,28 @@ K8_TASKS = (
         touched=frozenset({"alerts.py"}),
         rung="sonnet-only",
         bend=order_alert_rules_by_severity,
+        differently=walk_the_alert_table_with_next,
     ),
     K8Task(
         task_id="leaderboard-extract-rank-key",
         touched=frozenset({"leaderboard.py"}),
         rung="unsolved",
         bend=settle_leaderboard_ties_by_name,
+        differently=rank_the_leaderboard_on_a_tuple,
     ),
     K8Task(
         task_id="stockroom-extract-shelf-copy",
         touched=frozenset({"stockroom.py", "shelving.py"}),
         rung="sonnet-only",
         bend=copy_shelving_shallowly,
+        differently=import_the_shelving_module,
     ),
     K8Task(
         task_id="sessions-extract-expiry",
         touched=frozenset({"sessions.py", "expiry.py"}),
         rung="sonnet-only",
         bend=expire_sessions_a_second_late,
+        differently=import_the_expiry_module,
     ),
 )
 
@@ -265,6 +355,27 @@ def test_a_careless_refactor_stays_green_and_still_grades_unresolved(
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")
 
     assert record.quality_value == 0.0
+
+
+@pytest.mark.parametrize("entry", BY_TASK)
+def test_an_alternative_correct_restructuring_still_resolves(entry: K8Task) -> None:
+    """The probe pointing the other way, and what keeps the structural
+    assertions from being a description of the reference solution rather than
+    of the change asked for: an answer that restructures differently but
+    correctly must still grade 1.0.
+
+    For the two cross-file tasks the variant deliberately picks the import
+    form the reference does not — module-qualified where the reference uses
+    `from X import Y` — because a seam assertion that replaces the function
+    at runtime is most easily written around one form and then silently
+    grades the other zero.
+    """
+    task = task_by_id(entry.task_id)
+    diff = solution_diff(task, mutate=entry.differently)
+
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+
+    assert record.quality_value == 1.0
 
 
 # --- pre-registered predictions -------------------------------------------------

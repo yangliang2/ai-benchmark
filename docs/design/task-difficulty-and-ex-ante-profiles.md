@@ -202,7 +202,11 @@ L2 hints / L3 intent-only). Clean K1 isolation, amortized authoring cost,
 and directly tests the product hypothesis that rewriting a ticket downgrades
 the required tier ("how to make this ticket delegable" as a product
 feature). Same family pattern applies to K8 (net good/broken/misleading)
-and K11.
+and K11 — in principle only, as of #19: the shipped family lint holds `repo/`
+byte-identical across members and a K8 or K11 lever lives inside `repo/`, so
+those families are not authorable today. Round-1 K8 is therefore standalone
+tasks, and defining the lint per knob rather than per family is a recorded
+round-2 decision (see the #16 close comment).
 
 **K1/K2 overlap, recorded before any sweep so the caveat cannot be invented
 afterwards:** the ladder's L3 (intent-only) does not delete the withheld

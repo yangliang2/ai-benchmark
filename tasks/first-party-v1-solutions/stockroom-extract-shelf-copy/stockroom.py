@@ -26,7 +26,7 @@ def remove(shelves, item, shelf):
 
 def relabel(shelves, shelf, name):
     """The shelving after `shelf` has been renamed to `name`."""
-    renamed = copied(shelves)
+    renamed = dict(shelves)
     if shelf not in renamed:
         raise KeyError(f"no shelf called {shelf}")
     renamed[name] = renamed.pop(shelf)

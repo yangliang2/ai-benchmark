@@ -28,6 +28,18 @@ def test_relabelling_renames_a_shelf_and_keeps_what_is_on_it():
         relabel({"a1": []}, "c3", "b2")
 
 
+def test_relabelling_hands_back_the_very_lists_it_was_given():
+    """relabel only renames a key, so its copy stops at the mapping and the
+    shelving it answers with is standing on the caller's own lists. Copying
+    deeper would be tidier and would be a different answer."""
+    shelves = {"a1": ["hammer"], "b2": ["saw"]}
+
+    renamed = relabel(shelves, "a1", "c3")
+
+    assert renamed["c3"] is shelves["a1"]
+    assert renamed["b2"] is shelves["b2"]
+
+
 def test_moving_carries_an_item_across():
     assert move({"a1": ["hammer"], "b2": []}, "hammer", "a1", "b2") == {
         "a1": [],

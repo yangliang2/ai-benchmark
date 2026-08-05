@@ -1,12 +1,32 @@
 """Structural half of the grading suite: asserts the copy has one home, in a
-module of its own, that all three callers go through. Fails on the pristine
-repo, where shelving.py does not exist."""
+module of its own, that both callers go through. Fails on the pristine repo,
+where shelving.py does not exist."""
 
 import inspect
 
+import shelving
 import stockroom
 from shelving import copied
-from stockroom import place, relabel, remove
+from stockroom import place, remove
+
+
+def reroute(monkeypatch, defining, caller, name, replacement):
+    """Point every name that reaches `defining.name` at `replacement`.
+
+    Which names those are is up to the import form the solution chose:
+    `import shelving` reaches the function through the defining module's
+    attribute, `from shelving import copied` binds a second name in the
+    caller, and an `as` clause binds it under a third. Redirecting all of
+    them is what keeps the seam assertion a question about the seam rather
+    than about how the caller spelled its import.
+    """
+    original = getattr(defining, name)
+    bound_in_caller = [
+        attribute for attribute, value in vars(caller).items() if value is original
+    ]
+    monkeypatch.setattr(defining, name, replacement)
+    for attribute in bound_in_caller:
+        monkeypatch.setattr(caller, attribute, replacement)
 
 
 def test_copied_answers_with_a_copy():
@@ -16,24 +36,25 @@ def test_copied_answers_with_a_copy():
     assert copied(shelves) is not shelves
 
 
-def test_all_three_callers_copy_through_it(monkeypatch):
+def test_both_callers_copy_through_it(monkeypatch):
     # Only a real seam picks up a copy replaced at runtime; a helper alongside
-    # three inline copies does not.
-    monkeypatch.setattr(
-        "stockroom.copied",
+    # two inline copies does not.
+    reroute(
+        monkeypatch,
+        shelving,
+        stockroom,
+        "copied",
         lambda shelves: {name: list(items) for name, items in shelves.items()}
         | {"loading-bay": []},
     )
 
     assert "loading-bay" in place({"a1": []}, "saw", "a1")
     assert "loading-bay" in remove({"a1": ["saw"]}, "saw", "a1")
-    assert "loading-bay" in relabel({"a1": []}, "a1", "b2")
 
 
 def test_stockroom_no_longer_builds_a_copy_of_its_own():
-    for function in (place, remove, relabel):
+    for function in (place, remove):
         source = inspect.getsource(function)
-        assert "copied(" in source
         assert "dict(shelves)" not in source
         assert "shelves.items()" not in source
 
