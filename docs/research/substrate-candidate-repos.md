@@ -1,6 +1,8 @@
 # Substrate candidate repos — vendoring shortlist
 
-**Status: research output, 2026-08-05. No decision taken, nothing vendored.**
+**Status: research output, 2026-08-05. Candidate 4 (`pgularski/pysm`) has since
+been vendored — see "What was actually vendored" at the end. The other four are
+still untouched shortlist entries.**
 
 Context: `docs/design/task-difficulty-and-ex-ante-profiles.md` §10 ("Substrate
 spectrum") calls for vendoring several **cold, small, thin-dependency Python
@@ -314,3 +316,52 @@ A useful property of this set for the external-validity check in open question
 engines** (airspeed, stencil) with sharply different safety-net quality. Running
 the same knob at the same level across a matched pair tests whether the knob →
 difficulty ordering survives a substrate swap, holding domain roughly constant.
+
+---
+
+## What was actually vendored (ticket #22, 2026-08-05)
+
+`pgularski/pysm` at the pinned `0c47a506…`, into three task directories under
+`tasks/first-party-v1/pysm-*`. Recorded here because the *recipe* is not
+recoverable from the snapshot: `construction.substrate.modifications` records
+the knob-setting edits, which is what it is for, and says nothing about what
+was left out of the snapshot in the first place.
+
+**Layout.** The visible test suite sits at the root of `repo/` beside the
+`pysm/` package, not in a `test/` subdirectory as upstream. Two reasons: plain
+`pytest` in the workdir then finds the package without a `conftest.py` putting
+the root on `sys.path`, and a top-level `test/` would sit next to a
+standard-library package name in a tree that grading keeps *behind* the
+standard library.
+
+**Kept:** `pysm/*.py` (all six modules — stdlib-only, verified import by
+import), `LICENSE`, `README.rst`, and 12 of the 14 upstream `test_*.py` files.
+
+**Dropped, and why — none of it knob-motivated:**
+
+- `.git`, `.github/`, `docs/`, `examples/`, `setup.py`, `setup.cfg`,
+  `.pylintrc`, `.readthedocs.yaml`, `CHANGELOG.md`, `conftest.py` — VCS
+  metadata, CI, and packaging.
+- `pysm/*.pyi` and `pysm/py.typed` — typing metadata, not needed to run, and
+  keeping them would make every reference solution a cross-file diff for
+  stub-only reasons.
+- `test/test_release_scripts.py` — tests the project's own release tooling and
+  shells out to a bare `python` (the research note above already flags it).
+- `test/test_micropython_optional_modules.py` — rewrites module files on disk
+  to simulate a MicroPython interpreter.
+- `test/upysm_smoke.py` — not a pytest file.
+- Two tests inside `test_pysm.py`
+  (`test_core_imports_without_logging_module`,
+  `test_core_imports_without_collections_defaultdict`) — they reach for
+  `pysm/pysm.py` through `dirname(dirname(__file__))`, which is the upstream
+  `test/` layout and not the vendored one.
+
+**Test counts.** Upstream `pytest test --ignore=test/test_release_scripts.py`
+gives 145 passed. The snapshot above, before any knob edit, gives **138**. The
+two K8-misleading tasks then delete the tests covering the contract they grade
+and ship **136** passing tests each; the K7 task ships the 138 unchanged.
+
+**Confirmed under the grading isolation**, which was the risk worth probing
+first: the package imports and runs with `--noconftest`, the pinned config, and
+the workdir behind the standard library on `sys.path`. No module in it is named
+after a standard-library one, so the loader's shadowing rejection does not fire.
