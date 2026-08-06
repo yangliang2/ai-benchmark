@@ -116,19 +116,31 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
         # Checked before anything runs: a non-positive timeout would kill
         # every run after billing had already started.
         raise SystemExit("error: --timeout must be a positive number of seconds")
+    if args.live and not args.sweep:
+        # Also checked before anything runs, and required rather than
+        # defaulted: reconciliation counts its rounds by sweep id, and the two
+        # values the runner could have guessed both miscount. The date merges
+        # two sweeps run in one day; the log's name splits one sweep across
+        # the invocations that ran its models or resumed it.
+        raise SystemExit(
+            "error: --live runs need a --sweep id naming the sweep this "
+            "invocation is part of; reuse it for every invocation of one sweep"
+        )
     tasks = firstparty_v1.load_task_set(args.tasks)
     if args.live:
         log = args.log or DEFAULT_V1_RUNS / f"{local_today().isoformat()}.jsonl"
         # The default timeout lives on run_live alone; None means "not given".
         timeout = {} if args.timeout is None else {"timeout_s": args.timeout}
         runs = firstparty_v1.run_live(
-            tasks, args.model or DEFAULT_MODELS, log, **timeout
+            tasks, args.model or DEFAULT_MODELS, log, sweep=args.sweep, **timeout
         )
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
     else:
-        if args.model or args.log or args.timeout is not None:
-            raise SystemExit("--model, --log and --timeout apply only to --live runs")
+        if args.model or args.log or args.timeout is not None or args.sweep:
+            raise SystemExit(
+                "--model, --log, --timeout and --sweep apply only to --live runs"
+            )
         runs = firstparty_v1.load_runs(args.replay)
         source = str(args.replay)
     records = firstparty_v1.evaluate(tasks, runs, source=source)
@@ -310,6 +322,14 @@ def main(argv: list[str] | None = None) -> None:
         "--timeout",
         type=int,
         help=f"per-run live timeout in seconds (default: {RUN_TIMEOUT_S})",
+    )
+    evaluate_v1.add_argument(
+        "--sweep",
+        help="the sweep this invocation is part of, stamped on every row it "
+        "writes; required for --live, and there is no default because both "
+        "guesses miscount. reconcile-v1 counts one round per sweep id, so give "
+        "every invocation of one sweep the same id — models run in separate "
+        "invocations, a sweep resumed after a crash — and a new sweep a new one",
     )
     evaluate_v1.set_defaults(command=_eval_v1_command)
 

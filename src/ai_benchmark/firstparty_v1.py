@@ -420,6 +420,26 @@ class Task(BaseModel):
         return self
 
 
+# What a sweep id has to be to work as a round key, said once for the two
+# places that enforce it: the run model, which sees ids read back out of a
+# log, and the live runner, which sees the one its caller passed in.
+_SWEEP_ID_RULE = (
+    "a sweep id is the key reconciliation groups its rounds by, so it has to "
+    "be one exact non-empty string repeated across every invocation of one "
+    "sweep — an empty id keys a round on nothing, and ' r2' beside 'r2' "
+    "splits one sweep into two rounds without anything failing"
+)
+
+
+def _sweep_id_problem(sweep: str) -> str | None:
+    """What is wrong with this sweep id, if anything."""
+    if not sweep.strip():
+        return f"sweep id {sweep!r} is empty or blank"
+    if sweep != sweep.strip():
+        return f"sweep id {sweep!r} is padded with whitespace"
+    return None
+
+
 class Run(BaseModel):
     """One raw run-log row: the v0 fields plus the workdir diff.
 
@@ -441,6 +461,20 @@ class Run(BaseModel):
     latency_s: float = Field(ge=0)
     turns: int = Field(ge=1)
     as_of: date
+    # Which sweep wrote this row: the id the live runner stamps on every row
+    # of one invocation batch, so that reconciliation counts rounds by sweep
+    # rather than by calendar date — two sweeps run on one day are two rounds,
+    # and one sweep split across several invocations (models run apart, a
+    # resume after a crash) is one. Optional because every row written before
+    # the field existed has none, and those stay valid and replay unchanged:
+    # reconciliation falls back to their as-of date, which is all they say.
+    sweep: NonEmptyStr | None = None
+
+    @model_validator(mode="after")
+    def sweep_id_is_a_usable_round_key(self) -> Self:
+        if self.sweep is not None and (problem := _sweep_id_problem(self.sweep)):
+            raise ValueError(f"{problem} — {_SWEEP_ID_RULE}")
+        return self
 
 
 def load_task_set(root: Path) -> list[Task]:
@@ -543,14 +577,21 @@ def _stdlib_collisions(repo_dir: Path) -> list[str]:
 
 
 def load_runs(path: Path) -> list[Run]:
-    try:
-        return [
-            Run.model_validate(json.loads(line))
-            for line in path.read_text().splitlines()
-            if line.strip()
-        ]
-    except (json.JSONDecodeError, ValidationError) as error:
-        raise IngestError(f"{path}: {error}") from error
+    """Every row of a raw v1 run log, in the order it was appended.
+
+    A bad row names its own line. The log is appended to run by run over a
+    sweep that was paid for, so it is normal for one row out of a hundred to
+    be the problem, and "somewhere in this file" does not find it.
+    """
+    runs = []
+    for number, line in enumerate(path.read_text().splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            runs.append(Run.model_validate(json.loads(line)))
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise IngestError(f"{path} line {number}: {error}") from error
+    return runs
 
 
 # --- execution-verified grading ------------------------------------------------
@@ -1116,6 +1157,7 @@ def run_live(
     models: list[str],
     log_path: Path,
     *,
+    sweep: str,
     timeout_s: int = RUN_TIMEOUT_S,
 ) -> list[Run]:
     """Run every task through tools-enabled claude-code headless per model.
@@ -1127,7 +1169,17 @@ def run_live(
     part-way keeps every run already paid for. Unlike v0, tools stay enabled:
     the run is genuinely multi-turn, editing the repository it was given.
     Setting sources stay disabled.
+
+    Every row carries `sweep`, the id of the sweep this invocation is a batch
+    of. It is required rather than defaulted because neither thing the runner
+    could guess from is right: the date collapses two sweeps run in one day
+    into one round, and the log's own name splits a sweep across the separate
+    invocations that ran its models or resumed it. Which invocations make up
+    one sweep is the caller's knowledge, and the round key is a bad place to
+    guess — so the caller says, and a paid run costs one more argument.
     """
+    if problem := _sweep_id_problem(sweep):
+        raise IngestError(f"{problem} — {_SWEEP_ID_RULE}")
     if log_path.exists():
         raise IngestError(
             f"run log {log_path} already exists — replay it, or pass a fresh --log"
@@ -1140,8 +1192,8 @@ def run_live(
         for model in models:
             for task in tasks:
                 run = _run_task_live(
-                    task, model,
-                    agent_version=version, as_of=today, timeout_s=timeout_s,
+                    task, model, agent_version=version, as_of=today,
+                    sweep=sweep, timeout_s=timeout_s,
                 )
                 log.write(json.dumps(run.model_dump(mode="json"), sort_keys=True) + "\n")
                 log.flush()
@@ -1150,7 +1202,8 @@ def run_live(
 
 
 def _run_task_live(
-    task: Task, model: str, *, agent_version: str, as_of: date, timeout_s: int
+    task: Task, model: str, *,
+    agent_version: str, as_of: date, sweep: str, timeout_s: int,
 ) -> Run:
     with tempfile.TemporaryDirectory(prefix="ai-bench-live-") as name:
         workdir = Path(name) / "workdir"
@@ -1163,11 +1216,11 @@ def _run_task_live(
     base = run_from_claude_json(
         task.id, model, payload, agent_version=agent_version, as_of=as_of
     )
-    # A v1 Run is v0's fields plus the diff, and the dump keeps that coupling
-    # in one place. mypy cannot see through the **dump, but Run's
-    # extra="forbid" turns any v0 field this model does not declare into a
-    # loud runtime error rather than silent drift.
-    return Run(**base.model_dump(), diff=diff)
+    # A v1 Run is v0's fields plus the diff and the sweep id, and the dump
+    # keeps that coupling in one place. mypy cannot see through the **dump,
+    # but Run's extra="forbid" turns any v0 field this model does not declare
+    # into a loud runtime error rather than silent drift.
+    return Run(**base.model_dump(), diff=diff, sweep=sweep)
 
 
 def _commit_pristine(task: Task, workdir: Path) -> str:

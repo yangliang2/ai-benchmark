@@ -174,12 +174,16 @@ def test_eval_v1_live_end_to_end(
     log = tmp_path / "runs.jsonl"
 
     main(["eval-v1", "--tasks", str(tasks), "--live", "--model", "claude-sonnet-5",
-          "--log", str(log), "--timeout", "120", "--data", str(data)])
+          "--log", str(log), "--timeout", "120", "--sweep", "round-2-track-a",
+          "--data", str(data)])
 
     out = capsys.readouterr().out
     assert f"ran 2 live runs; raw log written to {log}" in out
     assert "evaluated 2 runs over 2 tasks (1 resolved)" in out
     assert log.exists()
+    assert all(
+        run.sweep == "round-2-track-a" for run in firstparty_v1.load_runs(log)
+    )
 
     main(["table", "--data", str(data)])
     assert "first-party-v1" in capsys.readouterr().out
@@ -192,6 +196,20 @@ def test_eval_v1_rejects_a_non_positive_timeout(tmp_path: Path) -> None:
 
     with pytest.raises(SystemExit, match="timeout"):
         main(["eval-v1", "--tasks", str(tasks), "--live", "--timeout", "0",
+              "--data", str(tmp_path / "unified.jsonl")])
+
+
+def test_eval_v1_live_without_a_sweep_id_is_refused_before_it_bills(
+    tmp_path: Path,
+) -> None:
+    """No default: reconcile-v1 counts one round per sweep id, and both values
+    the runner could have guessed miscount — today's date merges two sweeps
+    run in one day, the log's name splits one sweep across the invocations
+    that ran its models or resumed it."""
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+
+    with pytest.raises(SystemExit, match="--sweep"):
+        main(["eval-v1", "--tasks", str(tasks), "--live",
               "--data", str(tmp_path / "unified.jsonl")])
 
 

@@ -945,6 +945,79 @@ def test_a_malformed_run_log_fails_loudly(tmp_path: Path) -> None:
         load_runs(log)
 
 
+# --- the sweep id: which invocation batch wrote a row -------------------------
+
+
+def log_row(**overrides: object) -> str:
+    """One raw run-log line as JSON, with any field overridden.
+
+    Written as JSON rather than by dumping a Run, because half of what these
+    tests check is what the model refuses, and a value the model rejects
+    cannot be built by constructing a Run first.
+    """
+    row: dict[str, object] = {
+        "task_id": FEATURE_SEED,
+        "agent": "claude-code",
+        "agent_version": "2.1.220",
+        "model": "claude-sonnet-5",
+        "output": "done",
+        "diff": "",
+        "tokens_in": 41000,
+        "tokens_out": 1500,
+        "cost_usd": 0.21,
+        "latency_s": 64.5,
+        "turns": 7,
+        "as_of": "2026-08-04",
+    }
+    return json.dumps(row | overrides) + "\n"
+
+
+def test_a_run_log_row_from_before_the_sweep_field_still_loads(
+    firstparty_v1_fixture: Path,
+) -> None:
+    """Every checked-in log predates the field and none may need rewriting to
+    stay readable: such a row simply carries no sweep id."""
+    runs = load_runs(firstparty_v1_fixture)
+
+    assert runs and all(run.sweep is None for run in runs)
+
+
+def test_a_run_log_row_carries_the_sweep_that_wrote_it(tmp_path: Path) -> None:
+    log = tmp_path / "runs.jsonl"
+    log.write_text(log_row(sweep="round-2-track-a"))
+
+    [run] = load_runs(log)
+
+    assert run.sweep == "round-2-track-a"
+
+
+@pytest.mark.parametrize(
+    ("sweep", "complaint"),
+    [
+        ("", "at least 1 character"),
+        ("   ", "empty or blank"),
+        (" round-2", "padded with whitespace"),
+        ("round-2\n", "padded with whitespace"),
+        (17, "valid string"),
+        (["round-2"], "valid string"),
+    ],
+)
+def test_a_malformed_sweep_id_fails_loudly_naming_the_row(
+    tmp_path: Path, sweep: object, complaint: str
+) -> None:
+    """A sweep id is the key reconciliation groups its rounds by, so a broken
+    one would split or merge rounds rather than fail. The row is named because
+    a log is appended to over a paid sweep, and "somewhere in this file" does
+    not find the row that has to be fixed."""
+    log = tmp_path / "runs.jsonl"
+    log.write_text(log_row() + log_row(sweep=sweep))
+
+    with pytest.raises(IngestError, match=complaint) as failure:
+        load_runs(log)
+
+    assert "line 2" in str(failure.value)
+
+
 def test_duplicate_runs_fail_loudly() -> None:
     wordcount = task_by_id(FEATURE_SEED)
     run = run_for(wordcount, "")
@@ -1248,6 +1321,10 @@ def test_lint_rejects_a_pair_whose_members_declare_different_scales(
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----
 
 
+# Every live-runner test names the sweep it is part of: the runner requires
+# one, because which invocations make up a sweep is the caller's to know.
+SWEEP = "sweep-under-test"
+
 # What the fake agent appends to wordcount.py when it solves the seed task.
 SOLUTION = (
     "\n\ndef top_words(text, n):\n"
@@ -1301,7 +1378,9 @@ def test_live_runs_append_replayable_rows_with_exact_measurements(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    runs = run_live([wordcount], ["claude-sonnet-5", "claude-haiku-4-5"], log)
+    runs = run_live(
+        [wordcount], ["claude-sonnet-5", "claude-haiku-4-5"], log, sweep=SWEEP
+    )
 
     assert load_runs(log) == runs
     sonnet, haiku = runs
@@ -1344,7 +1423,7 @@ def test_live_runs_grant_all_tools_but_not_setting_sources(
     argv_log = fake_claude("")
     wordcount = task_by_id(FEATURE_SEED)
 
-    run_live([wordcount], ["claude-sonnet-5"], tmp_path / "runs.jsonl")
+    run_live([wordcount], ["claude-sonnet-5"], tmp_path / "runs.jsonl", sweep=SWEEP)
 
     [argv] = [json.loads(line) for line in argv_log.read_text().splitlines()]
     assert "--tools" not in argv
@@ -1352,6 +1431,41 @@ def test_live_runs_grant_all_tools_but_not_setting_sources(
     assert argv[argv.index("--permission-mode") + 1] == "bypassPermissions"
     assert "--allowedTools" not in argv
     assert argv[argv.index("-p") + 1] == wordcount.prompt
+
+
+def test_live_runs_stamp_the_sweep_id_on_every_row(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """One invocation is one batch of one sweep, and the id the caller named
+    lands on every row it writes — which is what lets reconciliation count its
+    rounds by sweep rather than by the date the rows happen to carry."""
+    fake_claude(SOLVE_AS_SONNET_ACT)
+    log = tmp_path / "runs.jsonl"
+
+    runs = run_live(
+        [task_by_id(FEATURE_SEED)],
+        ["claude-sonnet-5", "claude-haiku-4-5"],
+        log,
+        sweep="round-2-track-a",
+    )
+
+    assert [run.sweep for run in runs] == ["round-2-track-a"] * 2
+    assert [run.sweep for run in load_runs(log)] == ["round-2-track-a"] * 2
+
+
+def test_run_live_refuses_a_sweep_id_that_is_not_a_round_key(tmp_path: Path) -> None:
+    """Refused before the first run rather than when its row is validated: by
+    then the run has been paid for. " round-2" and "round-2" would key two
+    rounds off one sweep, so the padding is a fault and not something to
+    quietly strip."""
+    log = tmp_path / "runs.jsonl"
+
+    with pytest.raises(IngestError, match="padded with whitespace"):
+        run_live(
+            [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log, sweep=" round-2",
+        )
+
+    assert not log.exists()
 
 
 def test_a_run_the_environment_blocked_fails_loudly_not_as_a_verdict(
@@ -1369,7 +1483,7 @@ def test_a_run_the_environment_blocked_fails_loudly_not_as_a_verdict(
     log = tmp_path / "runs.jsonl"
 
     with pytest.raises(IngestError, match="Bash"):
-        run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log)
+        run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert load_runs(log) == []
 
@@ -1393,7 +1507,7 @@ def test_capture_is_immune_to_hostile_operator_git_config(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert "diff --git a/" in run.diff  # noprefix did not shape the artifact
     assert "ordering.py" in run.diff  # excludesFile did not drop the new file
@@ -1412,7 +1526,7 @@ def test_an_agent_file_that_is_not_utf8_fails_loudly(
     with pytest.raises(IngestError, match="UTF-8"):
         run_live(
             [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"],
-            tmp_path / "runs.jsonl",
+            tmp_path / "runs.jsonl", sweep=SWEEP,
         )
 
 
@@ -1423,7 +1537,7 @@ def test_a_file_the_agent_deleted_is_captured_and_applies_at_replay(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert "deleted file mode" in run.diff
     [record] = evaluate([wordcount], [run], source=str(log))
@@ -1447,7 +1561,7 @@ def test_edits_the_agent_committed_mid_run_are_still_captured(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert "top_words" in run.diff  # the committed edit
     assert "notes.md" in run.diff  # the edit after the commit
@@ -1468,7 +1582,7 @@ def test_an_agent_modified_ignore_file_is_neutralised(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert ".gitignore" not in run.diff
     assert "ordering.py" in run.diff
@@ -1489,7 +1603,9 @@ def test_a_sweep_that_dies_mid_way_keeps_the_rows_already_paid_for(
     log = tmp_path / "runs.jsonl"
 
     with pytest.raises(IngestError, match="claude exited 3"):
-        run_live([wordcount], ["claude-sonnet-5", "claude-haiku-4-5"], log)
+        run_live(
+            [wordcount], ["claude-sonnet-5", "claude-haiku-4-5"], log, sweep=SWEEP
+        )
 
     [row] = load_runs(log)
     assert row.model == "claude-sonnet-5"
@@ -1501,7 +1617,7 @@ def test_run_live_refuses_to_overwrite_an_existing_log(tmp_path: Path) -> None:
     log.write_text("")
 
     with pytest.raises(IngestError, match="already exists"):
-        run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log)
+        run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log, sweep=SWEEP)
 
 
 def test_a_live_run_that_exceeds_the_timeout_fails_loudly(
@@ -1512,7 +1628,7 @@ def test_a_live_run_that_exceeds_the_timeout_fails_loudly(
     with pytest.raises(IngestError, match="timed out after 1s"):
         run_live(
             [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"],
-            tmp_path / "runs.jsonl", timeout_s=1,
+            tmp_path / "runs.jsonl", sweep=SWEEP, timeout_s=1,
         )
 
 
@@ -1529,7 +1645,7 @@ def test_an_agent_authored_binary_file_survives_capture_and_replay(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert "GIT binary patch" in run.diff
     [record] = evaluate([wordcount], [run], source=str(log))
@@ -1547,7 +1663,7 @@ def test_the_runner_owns_the_ignore_file_even_if_the_agent_deletes_it(
     wordcount = task_by_id(FEATURE_SEED)
     log = tmp_path / "runs.jsonl"
 
-    [run] = run_live([wordcount], ["claude-sonnet-5"], log)
+    [run] = run_live([wordcount], ["claude-sonnet-5"], log, sweep=SWEEP)
 
     assert ".gitignore" not in run.diff
     assert "__pycache__" not in run.diff
