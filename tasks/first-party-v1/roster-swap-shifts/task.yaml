@@ -60,7 +60,10 @@ construction:
       lines against a contract stated in full, and round 1's authors went 0
       for 12 betting that a planted trap moved a rung, so the bet is that the
       copy is written deeply enough and the distance costs turns rather than
-      the outcome
+      the outcome; the effort half is read with a confound this task does not
+      separate, its prompt running about 1.7x the feature-dev controls' word
+      count, so a turns hit says distance plus a longer brief and not
+      distance alone
     effort:
       comparator: baseline
       metric: turns

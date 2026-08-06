@@ -8,9 +8,13 @@ What it has not done is arrange for the stations to come down when something
 *does* go wrong, and nothing on the happy path says so. The stand is left
 powered up, which is discovered by whoever walks up to it next.
 
-The stations that fail are defined here rather than in the module under
-test, so what the verdict is measured against cannot be rewritten by the
-diff being graded.
+The stations that fail are defined here, and every expectation is a log
+written out literally, so what the verdict is measured against cannot be
+rewritten by the diff being graded. `still_up` is read back through the
+module because it says what a run left behind more plainly than a log
+does — a convenience rather than the yardstick: every rule it is used for
+is also asserted here against a literal log, so the verdict survives a
+rewritten reader.
 """
 
 import pytest

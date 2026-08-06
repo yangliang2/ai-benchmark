@@ -11,8 +11,8 @@ K11 buys it by moving the failure, and leaves the read set alone.
 
 What makes this a knob rather than a claim is the property the probes here
 assert, which is the one thing every task has to have and nothing else in
-the suite could show. For each task the careless edit must survive
-*everything the agent can see*:
+the suite could show. For each task every careless answer registered here
+must survive *everything the agent can see*:
 
 1. the repository's own tests go on passing;
 2. the happy-path exercise a reader runs on their own change — the one in
@@ -93,6 +93,24 @@ COPY_THE_ROSTER_SHALLOWLY = '''def with_swap(roster, day, leaving, arriving):
     return swapped
 '''
 
+# Farther out than the shallow copy above, and the answer someone writes
+# once they have seen that one fail: the roster it was given really is left
+# alone, and the day that changed really is its own list. What is still
+# shared is every day nobody touched, so the two rosters only reach each
+# other on a day neither swap was about.
+COPY_ONLY_THE_DAY_THAT_CHANGED = '''def with_swap(roster, day, leaving, arriving):
+    """A new roster with `arriving` standing where `leaving` stood on `day`."""
+    swapped = dict(roster)
+    shift = list(swapped[day])
+    if leaving not in shift:
+        raise ValueError(f"{leaving} is not on the {day} shift")
+    if arriving in shift:
+        raise ValueError(f"{arriving} is already on the {day} shift")
+    shift[shift.index(leaving)] = arriving
+    swapped[day] = shift
+    return swapped
+'''
+
 DRIVE_THE_STAND_IN_STRAIGHT_LINES = '''def run(stations, work):
     """Bring `stations` up, do `work`, and take the stand back down."""
     for station in stations:
@@ -101,6 +119,23 @@ DRIVE_THE_STAND_IN_STRAIGHT_LINES = '''def run(stations, work):
     for station in reversed(stations):
         station.stop()
     return done
+'''
+
+# The rig with a real `finally` in it, which is the answer that survives
+# noticing the first bend: the stand comes down however the run ends, and
+# every check of work that raises passes. What it stops is `stations` — the
+# list it was handed — rather than the stations that actually came up, so it
+# is wrong only about a station that never started, and only in the log left
+# for whoever reads the run afterwards.
+STOP_WHAT_WAS_ASKED_FOR = '''def run(stations, work):
+    """Bring `stations` up, do `work`, and take the stand back down."""
+    try:
+        for station in stations:
+            station.start()
+        return work()
+    finally:
+        for station in reversed(stations):
+            station.stop()
 '''
 
 COUNT_THE_INTERVAL_FROM_THE_RUN = '''def next_due(schedule, due_at, ran_at):
@@ -179,6 +214,25 @@ COUNT_THE_SLOTS_THAT_HAVE_GONE_BY = '''def next_due(schedule, due_at, ran_at):
 '''
 
 
+# --- an answer that disobeys one stated clause ---------------------------------
+
+# Neither careless nor an alternative: the reference solution with a single
+# written-down clause broken — the batches go out as tuples rather than as
+# the lists the prompt asks for. It is here because the house rule is that a
+# clause the prompt states is a clause the held-out suite grades, and this
+# one graded 1.0 until the grading `send` was taught to say so.
+HAND_THE_BATCHES_OVER_AS_TUPLES = '''def flush(outbox, send, size):
+    """Send the messages waiting to go out, in batches of at most `size`."""
+    posted = 0
+    for batch in batches(pending(outbox), size):
+        send(tuple(batch))
+        del outbox["pending"][: len(batch)]
+        outbox["sent"].extend(batch)
+        posted += len(batch)
+    return posted
+'''
+
+
 # --- the check an agent runs on its own change ---------------------------------
 
 # Deliberately the exercise a reader writes to convince themselves the change
@@ -231,17 +285,32 @@ print(next_due(backup, 1120, 1175))
 """
 
 
+class Bend(NamedTuple):
+    """One careless answer, under the name a probe failure reports it by."""
+
+    name: str
+    answer: str
+
+
 class K11Task(NamedTuple):
     """One K11 task, and everything pinned about it here.
 
     `module` is the file the reference solution adds to and `definition` is
     where the added function starts, which is what lets a probe swap one
-    answer for another. `careless` is the answer that is right on the near
-    path, `differently` an answer that is right everywhere, `self_check` the
-    exercise a reader runs on their own change and `self_check_shows` what it
-    prints — written out here rather than read back from a run, so that a
-    check which stopped exercising anything would fail rather than agree with
-    itself. `rung` and `at_least_factor` are the pre-registered prediction.
+    answer for another. `careless` holds the answers that are right on the
+    near path, `differently` an answer that is right everywhere, `self_check`
+    the exercise a reader runs on their own change and `self_check_shows`
+    what it prints — written out here rather than read back from a run, so
+    that a check which stopped exercising anything would fail rather than
+    agree with itself. `rung` and `at_least_factor` are the pre-registered
+    prediction.
+
+    `careless` is a tuple for the reason the substrate suite's `bends` is: a
+    slip found later was always possible, and once the held-out suite has
+    been shown to catch one it is registered here so it goes on being asked
+    about. A second bend is worth registering when it is *farther out* than
+    the first — the answer somebody writes after the first one has been
+    pointed out to them, which passes more of the far half before it fails.
     """
 
     task_id: str
@@ -249,7 +318,7 @@ class K11Task(NamedTuple):
     definition: str
     rung: Rung
     at_least_factor: float
-    careless: str
+    careless: tuple[Bend, ...]
     differently: str
     self_check: str
     self_check_shows: str
@@ -262,7 +331,9 @@ K11_TASKS = (
         definition="def flush(",
         rung="haiku-solvable",
         at_least_factor=1.2,
-        careless=SEND_EVERYTHING_THEN_MOVE_IT,
+        careless=(
+            Bend("send-everything-then-move-it", SEND_EVERYTHING_THEN_MOVE_IT),
+        ),
         differently=REBUILD_THE_QUEUES_A_BATCH_AT_A_TIME,
         self_check=FLUSHED_AN_OUTBOX,
         self_check_shows=(
@@ -278,7 +349,10 @@ K11_TASKS = (
         definition="def with_swap(",
         rung="haiku-solvable",
         at_least_factor=1.2,
-        careless=COPY_THE_ROSTER_SHALLOWLY,
+        careless=(
+            Bend("copy-the-roster-shallowly", COPY_THE_ROSTER_SHALLOWLY),
+            Bend("copy-only-the-day-that-changed", COPY_ONLY_THE_DAY_THAT_CHANGED),
+        ),
         differently=BUILD_THE_ROSTER_OUT_OF_ITS_READERS,
         self_check=SWAPPED_A_SHIFT,
         self_check_shows=(
@@ -292,7 +366,10 @@ K11_TASKS = (
         definition="def run(",
         rung="haiku-solvable",
         at_least_factor=1.2,
-        careless=DRIVE_THE_STAND_IN_STRAIGHT_LINES,
+        careless=(
+            Bend("drive-the-stand-in-straight-lines", DRIVE_THE_STAND_IN_STRAIGHT_LINES),
+            Bend("stop-what-was-asked-for", STOP_WHAT_WAS_ASKED_FOR),
+        ),
         differently=STOP_WHAT_CAME_UP_ON_THE_WAY_OUT,
         self_check=RAN_THE_STAND,
         self_check_shows=(
@@ -308,7 +385,9 @@ K11_TASKS = (
         definition="def next_due(",
         rung="haiku-solvable",
         at_least_factor=1.2,
-        careless=COUNT_THE_INTERVAL_FROM_THE_RUN,
+        careless=(
+            Bend("count-the-interval-from-the-run", COUNT_THE_INTERVAL_FROM_THE_RUN),
+        ),
         differently=COUNT_THE_SLOTS_THAT_HAVE_GONE_BY,
         self_check=ASKED_WHEN_IT_IS_NEXT_DUE,
         self_check_shows="[1000, 1060, 1120, 1180]\n1060\n1120\n1180\n",
@@ -316,6 +395,11 @@ K11_TASKS = (
 )
 
 BY_TASK = [pytest.param(entry, id=entry.task_id) for entry in K11_TASKS]
+BY_BEND = [
+    pytest.param(entry, bend, id=f"{entry.task_id}-{bend.name}")
+    for entry in K11_TASKS
+    for bend in entry.careless
+]
 
 
 def tasks() -> list[Task]:
@@ -440,9 +524,9 @@ def test_the_repository_starts_out_green(entry: K11Task) -> None:
 # --- the distance: what the agent can see, and what the verdict reads ----------
 
 
-@pytest.mark.parametrize("entry", BY_TASK)
+@pytest.mark.parametrize(("entry", "bend"), BY_BEND)
 def test_the_agents_own_check_cannot_tell_the_careless_answer_apart(
-    entry: K11Task,
+    entry: K11Task, bend: Bend
 ) -> None:
     """The K11 property, and the probe that decides whether the knob is what
     it says it is.
@@ -456,15 +540,15 @@ def test_the_agents_own_check_cannot_tell_the_careless_answer_apart(
     task = task_by_id(entry.task_id)
 
     correct = what_the_check_shows(task, entry, None)
-    careless = what_the_check_shows(task, entry, entry.careless)
+    careless = what_the_check_shows(task, entry, bend.answer)
 
     assert correct == entry.self_check_shows
     assert careless == entry.self_check_shows
 
 
-@pytest.mark.parametrize("entry", BY_TASK)
+@pytest.mark.parametrize(("entry", "bend"), BY_BEND)
 def test_a_careless_answer_passes_the_visible_suite_and_still_grades_unresolved(
-    entry: K11Task,
+    entry: K11Task, bend: Bend
 ) -> None:
     """The other half of the same claim: nothing the agent can run says the
     change is wrong. The repository's own tests pass — they passed before the
@@ -472,7 +556,7 @@ def test_a_careless_answer_passes_the_visible_suite_and_still_grades_unresolved(
     suite, which is the only thing that exercises the far path, grades it
     0.0."""
     task = task_by_id(entry.task_id)
-    careless = answering(entry, entry.careless)
+    careless = answering(entry, bend.answer)
 
     assert visible_tests_pass(task, solved_tree(task, careless))
 
@@ -498,6 +582,28 @@ def test_an_answer_written_differently_but_correctly_still_resolves(
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")
 
     assert record.quality_value == 1.0
+
+
+def test_the_batch_shape_the_prompt_asks_for_is_a_shape_the_suite_grades() -> None:
+    """A clause a prompt states is a clause the held-out suite settles.
+
+    `flush` is asked to hand each batch to `send` as a list. Until the
+    grading `send` was taught to look at what it was handed, an answer
+    passing tuples graded 1.0: every assertion read the batch back as
+    `list(batch)`, so the shape was written down and never measured. The gap
+    is invisible from either side on its own — the prompt reads as though it
+    were graded, the suite as though the prompt had not asked — which is why
+    it is pinned here rather than left to a reader of both.
+    """
+    [entry] = [item for item in K11_TASKS if item.task_id == "outbox-flush-in-batches"]
+    task = task_by_id(entry.task_id)
+    tuples = answering(entry, HAND_THE_BATCHES_OVER_AS_TUPLES)
+
+    [record] = evaluate(
+        [task], [run_for(task, solution_diff(task, mutate=tuples))], source="run-log"
+    )
+
+    assert record.quality_value == 0.0
 
 
 # --- pre-registered predictions -------------------------------------------------

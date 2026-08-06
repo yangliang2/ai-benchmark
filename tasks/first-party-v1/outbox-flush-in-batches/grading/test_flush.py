@@ -9,9 +9,13 @@ A flush that hands its whole queue over to `send` and updates the outbox
 afterwards answers the near half exactly like a correct one, and then loses
 every message the failed call had already sent and sends the rest twice.
 
-Expected values are literals here rather than anything computed from the
-module, so a rewritten `pending`, `sent` or `batches` cannot make a wrong
-answer look right.
+Every expected value here is a literal rather than anything computed from
+the module, so a rewritten `batches` cannot make a wrong answer look right.
+The queues are read back through `pending` and `sent`, which is the
+module's own way of saying where a message is, but the verdict does not
+rest on those two: the batches `send` was handed and the count it returned
+are recorded outside the module, and they catch the far half's failures on
+their own.
 """
 
 import pytest
@@ -35,12 +39,18 @@ def filled(messages=None):
 
 
 class Recorder:
-    """A `send` that accepts every batch and remembers what it was handed."""
+    """A `send` that accepts every batch and remembers what it was handed.
+
+    A gateway is handed a list, which is what the task asks for and what a
+    `send` written against it is entitled to expect, so a batch arriving as
+    anything else fails here rather than being quietly coerced.
+    """
 
     def __init__(self):
         self.batches = []
 
     def __call__(self, batch):
+        assert isinstance(batch, list), f"a batch went out as {type(batch).__name__}"
         self.batches.append(list(batch))
 
 

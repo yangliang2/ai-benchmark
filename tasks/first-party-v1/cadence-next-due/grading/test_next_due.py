@@ -76,6 +76,12 @@ def test_an_overrun_of_many_intervals_lands_on_the_next_slot_after_it():
     assert next_due(BACKUP, 1000, 4321) == 4360
 
 
+def test_a_schedule_of_its_own_keeps_its_own_grid():
+    hourly = make("sweep", 0, 3600)
+
+    assert next_due(hourly, 0, 5400) == 7200
+
+
 # --- what a due time has to be -------------------------------------------------
 
 
@@ -92,9 +98,3 @@ def test_a_due_time_before_the_first_slot_is_refused():
 def test_a_run_that_finished_before_it_was_due_is_refused():
     with pytest.raises(ValueError):
         next_due(BACKUP, 1060, 1059)
-
-
-def test_a_schedule_of_its_own_keeps_its_own_grid():
-    hourly = make("sweep", 0, 3600)
-
-    assert next_due(hourly, 0, 5400) == 7200
