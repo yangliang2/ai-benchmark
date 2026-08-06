@@ -424,10 +424,13 @@ class Task(BaseModel):
 # places that enforce it: the run model, which sees ids read back out of a
 # log, and the live runner, which sees the one its caller passed in.
 _SWEEP_ID_RULE = (
-    "a sweep id is the key reconciliation groups its rounds by, so it has to "
-    "be one exact non-empty string repeated across every invocation of one "
-    "sweep — an empty id keys a round on nothing, and ' r2' beside 'r2' "
-    "splits one sweep into two rounds without anything failing"
+    "a sweep id is the key reconciliation groups its rounds by, and the id it "
+    "prints in a comma-joined list of them, so it has to be one exact "
+    "non-empty string repeated across every invocation of one sweep, carrying "
+    "no comma and no control character — an empty id keys a round on nothing, "
+    "' r2' beside 'r2' splits one sweep into two rounds without anything "
+    "failing, and 'r2,x' reads back off the report as the two rounds r2 and x. "
+    "Inner single spaces are fine: 'round 2' names one round"
 )
 
 
@@ -437,11 +440,21 @@ def _sweep_id_problem(sweep: str) -> str | None:
         return f"sweep id {sweep!r} is empty or blank"
     if sweep != sweep.strip():
         return f"sweep id {sweep!r} is padded with whitespace"
+    if "," in sweep:
+        return f"sweep id {sweep!r} contains a comma"
+    # isprintable() is False for exactly what wrecks a one-line report cell:
+    # newlines, tabs, other control characters, and the non-space separators
+    # that look like a space without being one. A plain inner space passes.
+    if unprintable := [char for char in sweep if not char.isprintable()]:
+        return (
+            f"sweep id {sweep!r} contains the control character "
+            f"{unprintable[0]!r}"
+        )
     return None
 
 
 class Run(BaseModel):
-    """One raw run-log row: the v0 fields plus the workdir diff.
+    """One raw run-log row: the v0 fields plus the workdir diff and the sweep id.
 
     The diff is the graded artifact — it is what grading replays — so `output`
     (the agent's final message) is metadata here, kept for reading runs back.

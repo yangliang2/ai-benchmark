@@ -354,7 +354,10 @@ The registered rule (section 9) reads "**no separation after two sweeps →
 demoted**". `reconcile-v1` operationalises a sweep as one distinct `as_of`
 date, and both round-1 sweeps carry `2026-08-05`, so the report shows K8 and
 K9 at silent-1 and warns in its own criterion text to read the dates before
-reading a demotion off them. The ruling here goes to the registered text,
+reading a demotion off them. [Resolved by #28: rounds now key on sweep ids,
+with the as-of date only as the fallback for logs written before the field
+existed — including these round-1 logs, which is why the ruling below still
+stands as the record of how it was decided.] The ruling here goes to the registered text,
 not to its current implementation, and it does **not** land the same way on
 both knobs, because the two knobs did not get the same number of sweeps:
 
@@ -379,6 +382,9 @@ result is grounds for changing *what is measured*, not for extending the
 knob's life under the old measure. Implementation follow-up (recorded, not
 a ticket): `reconcile-v1`'s round counter should key on the sweep, not on
 `as_of`, or the same collapse recurs whenever two sweeps share a day.
+[Resolved by #28: the live runner stamps a caller-named sweep id on every row
+and the round counter keys on it, falling back to the as-of date only for
+legacy logs that carry none.]
 
 ### 14. What each miss teaches
 

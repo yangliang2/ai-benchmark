@@ -128,7 +128,12 @@ class Outcome:
     rung: Observed
     # The round this task was swept in: the latest of the rounds its runs
     # belong to, so a cell finished in a second sweep counts to the sweep that
-    # finished it.
+    # finished it. "Latest" is by the round's own date, which is when it
+    # started, so a task swept in two overlapping sweeps attributes to the one
+    # that started later rather than the one that finished it. Unreachable
+    # under the sequential-sweep protocol (a sweep is read before the next is
+    # launched); documented rather than fixed, because fixing it would mean
+    # dating a round by its last run and that reads worse everywhere else.
     round: Round | None
 
     @property

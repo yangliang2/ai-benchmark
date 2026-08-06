@@ -766,7 +766,7 @@ def test_reconcile_v1_demotes_a_knob_silent_for_two_rounds(
     assert "demote" in out
 
 
-# --- rounds: keyed on the sweep id, falling back to the as-of date ------------
+# --- rounds: keyed on the sweep id, falling back to the as-of date -------------
 
 
 def test_reconcile_v1_counts_two_sweeps_of_one_calendar_day_as_two_rounds(
@@ -880,6 +880,23 @@ def test_reconcile_v1_names_both_keyings_when_the_logs_are_mixed(
     [verdict] = [line for line in flags.splitlines() if line.startswith("   K8")]
     assert "sweep round-2  separated —" in verdict
     assert "misleading {unsolved} vs baseline {haiku-solvable}" in verdict
+
+
+def test_reconcile_v1_says_so_when_there_is_no_run_to_key_a_round_on(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A task set whose sweep has not run yet: no round, and the keying line
+    says why rather than printing a bare zero that reads like a broken key."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "open-acceptance", construction=constructed(
+        "K1", "acceptance", "haiku-solvable", family="open"))
+    log = tmp_path / "runs.jsonl"
+    write_log(log, [], {})
+
+    out = reconcile(tasks, log, capsys)
+
+    assert "0 round(s)" in out
+    assert "(no swept run to key a round on)" in out
 
 
 def test_reconcile_v1_reads_every_log_in_a_directory(

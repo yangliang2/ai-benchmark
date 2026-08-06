@@ -299,6 +299,19 @@ def main(argv: list[str] | None = None) -> None:
         help="run the first-party v1 eval (live via tools-enabled claude-code, "
         "or replay a raw run log), grading each workdir diff by running the "
         "task's held-out tests, and merge the records",
+        description=(
+            "Run the first-party v1 eval — live via tools-enabled "
+            "claude-code, or replaying a raw run log — grading each workdir "
+            "diff by running the task's held-out tests, and merge the "
+            "records. A live run must name the sweep it is part of, and "
+            "--sweep has no default because both values the runner could "
+            "have guessed from miscount: reconcile-v1 counts one round per "
+            "sweep id, today's date merges two sweeps run in one day into "
+            "one round, and the log's own name splits one sweep across the "
+            "separate invocations that ran its models or resumed it after a "
+            "crash. Give every invocation of one sweep the same id, and a "
+            "new sweep a new one."
+        ),
     )
     evaluate_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
     evaluate_v1.add_argument("--data", type=Path, default=DEFAULT_DATA)
@@ -326,10 +339,7 @@ def main(argv: list[str] | None = None) -> None:
     evaluate_v1.add_argument(
         "--sweep",
         help="the sweep this invocation is part of, stamped on every row it "
-        "writes; required for --live, and there is no default because both "
-        "guesses miscount. reconcile-v1 counts one round per sweep id, so give "
-        "every invocation of one sweep the same id — models run in separate "
-        "invocations, a sweep resumed after a crash — and a new sweep a new one",
+        "writes (required for --live; see the description above)",
     )
     evaluate_v1.set_defaults(command=_eval_v1_command)
 

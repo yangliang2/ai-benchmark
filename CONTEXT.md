@@ -59,7 +59,7 @@ Orthogonal to category:
 - **task** — one first-party benchmark instance. v0: a self-contained prompt plus a **check**. v1: a **task directory**.
 - **check** — the static regex that grades a run's final output as resolved or not. v0 limitation: checks demand task-specific content but do not execute anything, so `resolved` on a first-party-v0 record is pattern-verified — weaker evidence than SWE-bench's test-verified `resolved`. Grouping by benchmark keeps v0, v1 and SWE-bench from ever pooling.
 - **run** — one task × combination execution with exact measurements (tokens in/out, cost USD, latency, turns) as reported by the claude CLI. A v1 run also carries its **workdir diff**.
-- **raw run log** — JSONL, one row per run, appended as each run completes. The provenance boundary: live runs write it, evaluation and replay only ever read it, and a record's source is the log itself. Each row the runner writes also names the **round** it belongs to, by carrying that round's sweep id; rows written before that field existed carry none, and stay valid and replay-exact without it.
+- **raw run log** — JSONL, one row per run, appended as each run completes. The provenance boundary: live runs write it, evaluation and replay only ever read it, and a record's source is the log itself. Each row the *v1* runner writes also names the **round** it belongs to, by carrying that round's sweep id (a v0 row has no such field at all); v1 rows written before the field existed carry none, and stay valid and replay-exact without it.
 - **instance-level** — umbrella for the two source types that carry per-instance rows and may pool into rates (`per-instance`, `first-party`). Rows of different source types never pool together (ADR-0001).
 
 ### v1: execution-verified grading

@@ -945,7 +945,7 @@ def test_a_malformed_run_log_fails_loudly(tmp_path: Path) -> None:
         load_runs(log)
 
 
-# --- the sweep id: which invocation batch wrote a row -------------------------
+# --- the sweep id: which invocation batch wrote a row --------------------------
 
 
 def log_row(**overrides: object) -> str:
@@ -991,6 +991,18 @@ def test_a_run_log_row_carries_the_sweep_that_wrote_it(tmp_path: Path) -> None:
     assert run.sweep == "round-2-track-a"
 
 
+def test_a_sweep_id_may_hold_an_inner_space(tmp_path: Path) -> None:
+    """What the id rejects is what breaks the report's one-line round list, not
+    everything that is not a slug. An operator who names a sweep 'round 2'
+    prints and keys exactly as well as one who names it 'round-2'."""
+    log = tmp_path / "runs.jsonl"
+    log.write_text(log_row(sweep="round 2"))
+
+    [run] = load_runs(log)
+
+    assert run.sweep == "round 2"
+
+
 @pytest.mark.parametrize(
     ("sweep", "complaint"),
     [
@@ -998,6 +1010,9 @@ def test_a_run_log_row_carries_the_sweep_that_wrote_it(tmp_path: Path) -> None:
         ("   ", "empty or blank"),
         (" round-2", "padded with whitespace"),
         ("round-2\n", "padded with whitespace"),
+        ("round\n2", "control character"),
+        ("round\t2", "control character"),
+        ("round-2,track-a", "contains a comma"),
         (17, "valid string"),
         (["round-2"], "valid string"),
     ],
@@ -1008,7 +1023,12 @@ def test_a_malformed_sweep_id_fails_loudly_naming_the_row(
     """A sweep id is the key reconciliation groups its rounds by, so a broken
     one would split or merge rounds rather than fail. The row is named because
     a log is appended to over a paid sweep, and "somewhere in this file" does
-    not find the row that has to be fixed."""
+    not find the row that has to be fixed.
+
+    The comma and the control characters are rejected for the reading end
+    rather than the keying end: the report prints its rounds comma-joined on
+    one line, so 'round-2,track-a' reads back off it as two rounds and an id
+    with a newline in it breaks the line it is printed on."""
     log = tmp_path / "runs.jsonl"
     log.write_text(log_row() + log_row(sweep=sweep))
 
