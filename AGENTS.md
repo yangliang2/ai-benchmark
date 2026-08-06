@@ -19,3 +19,9 @@ Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `
 ### Domain docs
 
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Sweep protocol
+
+Paid runs of the first-party v1 task set: isolated worktree, one agent version
+per sweep, guard backups, and no `-dry` in a log's name. Read
+`docs/agents/sweep-protocol.md` before launching one.

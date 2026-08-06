@@ -472,7 +472,13 @@ from a repo suite that never imports `merged`).
    the weakest comparator available. The contrasts that survive this are the
    version-matched within-round ones: K1's three levels against each other,
    and K9's three matched pairs. Round 2 should pin the CLI version for a
-   sweep and prefer paired designs over baseline deltas.
+   sweep and prefer paired designs over baseline deltas. [Addressed by #29:
+   `docs/agents/sweep-protocol.md` pins the version for a whole sweep and
+   aborts on drift between invocations. It is protocol rather than a runner
+   check because the runner reads the version once per invocation and stamps
+   every row of that invocation with it, so drift is by construction something
+   that happens between invocations — and the runner does not know which
+   earlier logs belong to the sweep.]
 3. **K7 flagged "separated", in the easier direction.** The report's
    criterion compares *sets* of observed rungs, and K7's 2 cells
    ({haiku-solvable}) cannot reproduce the 11-cell baseline's 3-element set
@@ -491,7 +497,11 @@ from a repo suite that never imports `merged`).
    real, graded, paid row (`settings-merge-layers-l1` haiku,
    `rbql-like-escape-wildcards` haiku). Reconciliation reads them correctly;
    any hand-rolled analysis that filters on the filename will silently drop
-   two cells, as a first pass of this analysis did.
+   two cells, as a first pass of this analysis did. [Addressed by #29: dry
+   checks now write to normally-named logs and no analysis may select logs by
+   filename — `docs/agents/sweep-protocol.md`. These two files keep their
+   names: they are checked-in artifacts of a swept round, and renaming them
+   would be rewriting the record rather than the rule.]
 5. **A rare flake on the RBQL substrate, cause not pinned.** Found while
    running this ticket's gates:
    `test_the_reference_solution_keeps_the_repository_green` on
