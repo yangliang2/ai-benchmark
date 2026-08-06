@@ -72,7 +72,49 @@ _REPORTED: tuple[Observed, ...] = (*RUNGS, "incomplete", "unswept")
 # section 9: a knob that separates nothing across this many sweeps is demoted.
 SILENT_ROUNDS_TO_DEMOTE = 2
 
+# The header's legend for what a round is. Printed every time rather than only
+# when the two keyings meet: the round count is the number the kill discipline
+# is read off, and it is not readable without knowing what keyed it.
+_ROUND_KEYING_NOTE = (
+    "a round is one sweep: a run keys on the sweep id it carries, or on the "
+    "as-of date it ran on when it carries none. So two sweeps run in one day "
+    "count as two rounds and one sweep spilling across midnight counts as one "
+    "— except among rows logged before the id existed, where the date is all "
+    "there is and both miscounts remain."
+)
+
 _BASELINE_LABEL = "(baseline)"
+
+
+@dataclass(frozen=True)
+class Round:
+    """One sweep, as the report counts them.
+
+    A run says which sweep it belongs to by carrying a sweep id. A run logged
+    before that field existed says only what day it ran on, so it falls back
+    to its as-of date — which is the weaker key the sweep id was added to
+    replace: it splits a sweep that spilled across midnight and merges two
+    sweeps run on one day. Both keyings can appear in one report, so a round
+    records which of them produced it and says so in its label.
+
+    `as_of` is the earliest as-of date among the runs keyed to this round. For
+    a legacy round that date *is* the key; for a sweep round it only places
+    the round in time, so that the kill discipline's rows read chronologically
+    even though a sweep id says nothing about when it ran.
+    """
+
+    sweep: str | None
+    as_of: date
+
+    @property
+    def label(self) -> str:
+        if self.sweep is None:
+            return f"as-of {self.as_of.isoformat()}"
+        return f"sweep {self.sweep}"
+
+    @property
+    def sort_key(self) -> tuple[date, str]:
+        return (self.as_of, self.sweep or "")
 
 
 @dataclass(frozen=True)
@@ -84,9 +126,10 @@ class Outcome:
     # model reads as missing rather than as a failure.
     resolved: Mapping[str, bool]
     rung: Observed
-    # The round this task was swept in: the latest as-of date among its runs,
-    # so a cell finished on a second day counts to the round that finished it.
-    round: date | None
+    # The round this task was swept in: the latest of the rounds its runs
+    # belong to, so a cell finished in a second sweep counts to the sweep that
+    # finished it.
+    round: Round | None
 
     @property
     def determined(self) -> bool:
@@ -134,19 +177,56 @@ def observed_outcomes(
     records = evaluate(tasks, runs, source=source, timeout_s=timeout_s)
 
     resolved: dict[str, dict[str, bool]] = {task.id: {} for task in tasks}
-    rounds: dict[str, list[date]] = {task.id: [] for task in tasks}
     for record in records:
         assert record.instance_id is not None  # evaluate writes the task id
         resolved[record.instance_id][record.model] = bool(record.quality_value)
-        rounds[record.instance_id].append(record.as_of)
+
+    # Rounds are read off the runs rather than the records: a record carries
+    # the as-of date but not the sweep id, and the sweep id is the round key
+    # wherever a run has one. `evaluate` has already refused a run naming a
+    # task the set does not have, so every id here is one of these tasks.
+    by_key = rounds_by_key(runs)
+    rounds: dict[str, list[Round]] = {task.id: [] for task in tasks}
+    for run in runs:
+        rounds[run.task_id].append(by_key[round_key(run)])
     return {
         task.id: Outcome(
             task=task,
             resolved=resolved[task.id],
             rung=observed_rung(resolved[task.id]),
-            round=max(rounds[task.id]) if rounds[task.id] else None,
+            round=(
+                max(rounds[task.id], key=lambda round: round.sort_key)
+                if rounds[task.id]
+                else None
+            ),
         )
         for task in tasks
+    }
+
+
+def round_key(run: Run) -> str | date:
+    """What groups this run with the other runs of its sweep.
+
+    The sweep id when the row carries one, and the as-of date when it does
+    not. The two can never collide: a str key and a date key are different
+    keys even when a sweep was named after the day it ran.
+    """
+    return run.as_of if run.sweep is None else run.sweep
+
+
+def rounds_by_key(runs: Iterable[Run]) -> dict[str | date, Round]:
+    """One Round per key, dated by the earliest run keyed to it.
+
+    Dating the round here rather than on each run is what keeps a sweep whole:
+    every row of one sweep resolves to the same Round however many days the
+    sweep took, which is the whole point of keying on the id.
+    """
+    dates: dict[str | date, list[date]] = {}
+    for run in runs:
+        dates.setdefault(round_key(run), []).append(run.as_of)
+    return {
+        key: Round(sweep=key if isinstance(key, str) else None, as_of=min(days))
+        for key, days in dates.items()
     }
 
 
@@ -311,7 +391,10 @@ def _header(
 ) -> list[str]:
     swept = [outcome for outcome in outcomes if outcome.swept]
     runs = sum(len(outcome.resolved) for outcome in outcomes)
-    rounds = sorted({outcome.round for outcome in swept if outcome.round is not None})
+    rounds = sorted(
+        {outcome.round for outcome in swept if outcome.round is not None},
+        key=lambda round: round.sort_key,
+    )
     ladder = "; ".join(f"{model} -> {rung}" for model, rung in LADDER)
     lines = [
         f"reconciliation: {BENCHMARK}",
@@ -328,14 +411,12 @@ def _header(
     lines += [
         f"  runs       {runs} over {len(swept)} task(s)",
         # Rounds are counted off the tasks, not off the log files: a task's
-        # round is the latest as-of date among its runs, so one log can carry
-        # more than one round and one round more than one log.
+        # round is the latest of the rounds its runs belong to, so one log can
+        # carry more than one round and one round more than one log.
         f"  rounds     {len(rounds)} round(s)"
-        + (
-            f": {', '.join(round.isoformat() for round in rounds)}"
-            if rounds else ""
-        )
-        + " — the distinct as-of date(s) the swept task(s) carry",
+        + (f": {', '.join(round.label for round in rounds)}" if rounds else ""),
+        f"             {_keying(rounds)}",
+        *_wrap(_ROUND_KEYING_NOTE, indent="             "),
         f"  ladder     {ladder}; neither -> unsolved",
         "  verdicts   replayed: every logged diff re-graded by its task's held-out",
         "             tests, the computation eval-v1 --replay does. No agent, no LLM,",
@@ -343,6 +424,19 @@ def _header(
         "             record is merged into the dataset.",
     ]
     return lines
+
+
+def _keying(rounds: Sequence[Round]) -> str:
+    """How many of these rounds each keying produced."""
+    if not rounds:
+        return "(no swept run to key a round on)"
+    by_sweep = sum(round.sweep is not None for round in rounds)
+    by_date = len(rounds) - by_sweep
+    if not by_date:
+        return f"{by_sweep} keyed on a sweep id"
+    if not by_sweep:
+        return f"{by_date} keyed on an as-of date; no run carries a sweep id"
+    return f"{by_sweep} keyed on a sweep id, {by_date} on an as-of date"
 
 
 def _predictions(outcomes: Sequence[Outcome]) -> list[str]:
@@ -595,9 +689,11 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         *_wrap(
             f"kill discipline: a knob silent for {SILENT_ROUNDS_TO_DEMOTE} round(s) "
             "is demoted (docs/design/task-difficulty-and-ex-ante-profiles.md "
-            "section 9). A round is one as-of date in the logs, so one sweep that "
-            "spills across midnight counts as two rounds here — read the dates "
-            "below before reading a demotion off them.",
+            "section 9). A round is one sweep, named below by the sweep id its "
+            "runs carried — or, for runs logged before that field existed, by "
+            "their as-of date, which is the weaker key: it still merges two "
+            "sweeps run in one day and still splits one that ran past midnight. "
+            "Read the labels below before reading a demotion off them.",
             indent="   ",
         ),
     ]
@@ -605,9 +701,10 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
     if not groups:
         return [*lines, "", "   (no constructed task in the task set)"]
 
-    rounds = sorted({
-        outcome.round for outcome in outcomes if outcome.round is not None
-    })
+    rounds = sorted(
+        {outcome.round for outcome in outcomes if outcome.round is not None},
+        key=lambda round: round.sort_key,
+    )
     for knob in sorted({knob for knob, _ in groups}, key=knob_order):
         verdicts = [
             (round, _separation(knob, outcomes, round))
@@ -616,7 +713,7 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         ]
         silent = sum(verdict.startswith("no separation") for _, verdict in verdicts)
         block = [
-            f"   {knob}  {round.isoformat()}  {verdict}"
+            f"   {knob}  {round.label}  {verdict}"
             for round, verdict in verdicts
         ] or [f"   {knob}  (no round has swept it)"]
         tail = f"       silent round(s): {silent}"
@@ -629,7 +726,7 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
     return lines
 
 
-def _activated_in(knob: str, outcomes: Sequence[Outcome], round: date) -> bool:
+def _activated_in(knob: str, outcomes: Sequence[Outcome], round: Round) -> bool:
     """Whether any task activating this knob was swept in this round.
 
     A round that swept none of them has nothing to say about the knob, so it
@@ -644,7 +741,7 @@ def _activated_in(knob: str, outcomes: Sequence[Outcome], round: date) -> bool:
     )
 
 
-def _separation(knob: str, outcomes: Sequence[Outcome], round: date) -> str:
+def _separation(knob: str, outcomes: Sequence[Outcome], round: Round) -> str:
     """Whether this knob's levels told outcomes apart in this round.
 
     The levels are read within the round; the zero-knob controls are read

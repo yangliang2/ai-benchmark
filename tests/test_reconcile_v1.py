@@ -96,6 +96,7 @@ def write_log(
     resolved_by: dict[str, list[str]],
     *,
     as_of: date = date(2026, 8, 4),
+    sweep: str | None = None,
     models: tuple[str, ...] = (_HAIKU, _SONNET),
     agent: str = "claude-code",
 ) -> None:
@@ -103,7 +104,9 @@ def write_log(
 
     `resolved_by` names, per task id, the models whose run solved it; every
     other model logs the empty diff, which grades unresolved because the
-    grading tests fail on the pristine repository.
+    grading tests fail on the pristine repository. `sweep` left out writes a
+    legacy log: rows from before the sweep id existed, which reconciliation
+    has to keep reading by their as-of date.
     """
     rows = []
     for task in tasks:
@@ -123,6 +126,7 @@ def write_log(
                     latency_s=64.5,
                     turns=7,
                     as_of=as_of,
+                    sweep=sweep,
                 )
             )
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -247,6 +251,35 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
         assert tasks_in_row == swept_in_row, (
             f"{category} baseline not fully swept: {row}"
         )
+
+
+def test_reconcile_v1_keys_the_checked_in_rounds_the_way_their_logs_allow(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Which key the report used on the real artifacts, derived from them.
+
+    Every round-1 row was written before the sweep id existed, so today every
+    round here is an as-of date and the header says so. A round-2 log carrying
+    ids moves this test rather than breaking it: what is asserted is that each
+    round the report names is a key its logs actually contain, and that the
+    header's account of which keying it used matches the logs."""
+    logs = reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
+    runs = [run for log in logs for run in firstparty_v1.load_runs(log)]
+    sweeps = {run.sweep for run in runs if run.sweep is not None}
+    dates = {run.as_of for run in runs if run.sweep is None}
+
+    main(checked_in_argv())
+    header = capsys.readouterr().out.split("1. prediction reconciliation")[0]
+
+    named = re.search(r"^  rounds +\d+ round\(s\): (.*)$", header, re.MULTILINE)
+    assert named, "the report names the rounds it counted"
+    labels = named[1].split(", ")
+    for label in labels:
+        if label.startswith("sweep "):
+            assert label.removeprefix("sweep ") in sweeps
+        else:
+            assert date.fromisoformat(label.removeprefix("as-of ")) in dates
+    assert ("no run carries a sweep id" in header) == (not sweeps)
 
 
 def test_reconcile_v1_defaults_to_the_checked_in_task_set_and_run_logs(
@@ -731,6 +764,122 @@ def test_reconcile_v1_demotes_a_knob_silent_for_two_rounds(
     assert "2 round(s)" in out
     assert "silent round(s): 2" in out
     assert "demote" in out
+
+
+# --- rounds: keyed on the sweep id, falling back to the as-of date ------------
+
+
+def test_reconcile_v1_counts_two_sweeps_of_one_calendar_day_as_two_rounds(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Why the sweep id exists at all. Round 1's two sweeps both carried
+    2026-08-05, so the kill discipline read them as one round and no knob
+    could run out of rope on the evidence it actually had. Keyed on the sweep
+    the same rows are two rounds, and a knob silent in both is demoted."""
+    tasks = tmp_path / "tasks"
+    for family in ("open", "wide"):
+        for level in ("acceptance", "description"):
+            write_task(tasks, f"{family}-{level}", construction=constructed(
+                "K1", level, "haiku-solvable", family=family))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    for sweep, stem in (("round-2-a", "open"), ("round-2-b", "wide")):
+        swept = [task for task in loaded if task.id.startswith(f"{stem}-")]
+        write_log(logs / f"{sweep}.jsonl", swept,
+                  {task.id: [_HAIKU, _SONNET] for task in swept},
+                  as_of=date(2026, 8, 5), sweep=sweep)
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    assert "2 round(s): sweep round-2-a, sweep round-2-b" in out
+    assert "2 keyed on a sweep id" in out
+    flags = out.split("5. no-separation flags")[1]
+    assert "K1  sweep round-2-a  no separation" in flags
+    assert "K1  sweep round-2-b  no separation" in flags
+    assert "silent round(s): 2" in flags
+    assert "demote K1" in flags
+
+
+def test_reconcile_v1_keeps_one_sweep_that_spilled_across_midnight_as_one_round(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The mirror of the bug the sweep id fixes: a long sweep whose rows land
+    on two dates is still one sweep, and counting it twice would spend a
+    knob's kill-discipline rope on a clock."""
+    tasks = tmp_path / "tasks"
+    for level in ("acceptance", "description"):
+        write_task(tasks, f"open-{level}", construction=constructed(
+            "K1", level, "haiku-solvable", family="open"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    for index, task in enumerate(loaded):
+        write_log(logs / f"part-{index}.jsonl", [task],
+                  {task.id: [_HAIKU, _SONNET]},
+                  as_of=date(2026, 8, 5 + index), sweep="round-2")
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    assert "1 round(s): sweep round-2" in out
+    assert "silent round(s): 1" in out
+
+
+def test_reconcile_v1_keys_a_round_on_its_as_of_date_when_no_run_names_a_sweep(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Every checked-in log predates the field, so the fallback is the common
+    case and not a corner. The round is the as-of date, labelled as such: a
+    reader counting rounds has to see that the weaker key was the one
+    available."""
+    tasks = tmp_path / "tasks"
+    for level in ("acceptance", "description"):
+        write_task(tasks, f"open-{level}", construction=constructed(
+            "K1", level, "haiku-solvable", family="open"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded},
+              as_of=date(2026, 8, 5))
+
+    out = reconcile(tasks, log, capsys)
+
+    assert "1 round(s): as-of 2026-08-05" in out
+    assert "1 keyed on an as-of date; no run carries a sweep id" in out
+    assert "K1  as-of 2026-08-05  no separation" in out.split(
+        "5. no-separation flags")[1]
+
+
+def test_reconcile_v1_names_both_keyings_when_the_logs_are_mixed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A legacy log and a sweep-tagged one in one report, which is what every
+    report looks like from round 2 on. Each run keys on its own sweep id where
+    it has one and on its as-of date where it does not, and the header says
+    how many rounds came from each — a round count that silently mixed the two
+    mechanisms would be the same unreadable number the sweep id replaced."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "ledger-split-formatting", category="refactor")
+    write_task(tasks, "net-misleading", category="refactor",
+               construction=constructed("K8", "misleading", "unsolved"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "legacy.jsonl",
+              [task for task in loaded if task.id == "ledger-split-formatting"],
+              {"ledger-split-formatting": [_HAIKU, _SONNET]},
+              as_of=date(2026, 8, 4))
+    write_log(logs / "round-2.jsonl",
+              [task for task in loaded if task.id == "net-misleading"], {},
+              as_of=date(2026, 9, 1), sweep="round-2")
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    assert "2 round(s): as-of 2026-08-04, sweep round-2" in out
+    assert "1 keyed on a sweep id, 1 on an as-of date" in out
+    flags = out.split("5. no-separation flags")[1]
+    [verdict] = [line for line in flags.splitlines() if line.startswith("   K8")]
+    assert "sweep round-2  separated —" in verdict
+    assert "misleading {unsolved} vs baseline {haiku-solvable}" in verdict
 
 
 def test_reconcile_v1_reads_every_log_in_a_directory(
