@@ -1,0 +1,67 @@
+# K11 at far: the careless edit's failure happens in somebody else's call.
+# `dict(roster)` gives a new mapping over the old lists, so the roster that
+# comes back is right in every particular a reader of the change would look
+# at — right person, right day, right position, other days untouched — and
+# the roster that was handed in has been rewritten underneath its owner. That
+# shows up the next time anyone reads the old roster or puts somebody on a
+# shift of either one, which is a different call in a different place. The
+# repository's own suite covers the rota, not the swap, and the happy-path
+# exercise a reader runs looks at the answer rather than at the input.
+#
+# This is round 1's most instructive failure rebuilt as a knob: both models
+# paraphrased settings-merge-layers-l2's copy-on-write invariant into their
+# own docstrings and then wrote `dict(base)` plus direct assignment
+# (docs/design/task-difficulty-and-ex-ante-profiles.md section 14).
+#
+# feature-dev: the grading tests exercise with_swap, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: roster-swap-shifts
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  roster.py can put people on shifts and take them off, but every change is
+  made in place. The rota tool wants to show a proposed swap beside the
+  current week before anyone accepts it, and it cannot do that while the only
+  way to make a change is to make it for real.
+
+  Add a function `with_swap(roster, day, leaving, arriving)` to roster.py.
+
+  What it has to do:
+
+  - return a new roster — the same kind of thing `new_roster` returns, with
+    the same days in the same order — in which `arriving` stands where
+    `leaving` stood on `day`'s shift, in the same position in that day's
+    order, with everyone else on that day and every other day exactly as they
+    were;
+  - leave the roster it was given exactly as it was;
+  - hand back a roster that goes on being independent of the one it was made
+    from: putting somebody on a shift of either roster afterwards, on any
+    day, must not show up in the other, and neither must taking somebody off;
+  - refuse a swap with nobody to swap out — `leaving` not on that day's
+    shift — and a swap that would put somebody on a shift twice — `arriving`
+    already on it — raising ValueError either way, the way `add_shift` and
+    `drop_shift` refuse the same two mistakes;
+  - a day the roster does not have raises KeyError, as reading it already
+    does.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K11
+      level: far
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the shallow copy fails nowhere near where it is written — the returned
+      roster is correct in every respect and only the caller's own roster,
+      read in some later call, is wrong — but the change is a handful of
+      lines against a contract stated in full, and round 1's authors went 0
+      for 12 betting that a planted trap moved a rung, so the bet is that the
+      copy is written deeply enough and the distance costs turns rather than
+      the outcome
+    effort:
+      comparator: baseline
+      metric: turns
+      at_least_factor: 1.2

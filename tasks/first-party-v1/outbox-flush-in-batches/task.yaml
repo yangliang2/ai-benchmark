@@ -1,0 +1,69 @@
+# K11 at far: the distance between the careless edit and the failure it
+# causes is a whole further call. A flush written as "hand every batch to
+# send, then move the messages across" is indistinguishable from a correct
+# one on every input where send accepts everything — the batches handed over,
+# the queues afterwards and the count returned all match — and only comes
+# apart when send raises part-way, where it loses the batches that had
+# already gone out and hands them to the *next* flush a second time. The
+# repository's own suite covers the queue and the batching, not flush, and
+# the happy-path exercise a reader runs on their own change never makes send
+# fail, so nothing the agent can see says anything is wrong.
+#
+# feature-dev: the grading tests exercise flush, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: outbox-flush-in-batches
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  outbox.py holds messages until something sends them and knows how to cut
+  them into batches, but nothing in it actually sends anything: every caller
+  writes its own loop, and they disagree about what happens when the gateway
+  is down.
+
+  Add a function `flush(outbox, send, size)` to outbox.py that sends the
+  messages waiting to go out, in batches, using the `send` callable it is
+  given.
+
+  What it has to do:
+
+  - cut the messages waiting to go out into consecutive batches of at most
+    `size`, oldest first, and hand each batch to `send` as a list — oldest
+    batch first, one call per batch;
+  - a batch `send` returns from has gone out: it leaves the queue and joins
+    the messages that have gone out, keeping its order;
+  - return how many messages this call sent;
+  - an empty queue sends nothing, does not call `send` at all, and returns 0;
+  - a `size` below 1 is refused the way `batches` already refuses it.
+
+  `send` may raise — the gateway goes down, and it is not this function's job
+  to decide what to do about that. When it does:
+
+  - let the exception reach the caller unchanged;
+  - the batch it raised on has not gone out: it and every message behind it
+    stay in the queue, in their order;
+  - what had already gone out before the failure has gone out and stays that
+    way;
+  - so a later `flush` takes up from exactly where the failed one stopped,
+    and no message is ever sent twice.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K11
+      level: far
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the failure this plants is a call away from the edit — the natural
+      "send everything, then update the queues" order is correct on every run
+      where send accepts, and only a later flush shows the double send — but
+      the change is a dozen lines against a contract stated in full, and
+      round 1's authors went 0 for 12 betting that a planted trap moved a
+      rung, so the bet is that the model reads past it and the distance costs
+      turns rather than the outcome
+    effort:
+      comparator: baseline
+      metric: turns
+      at_least_factor: 1.2

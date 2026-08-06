@@ -1,0 +1,66 @@
+# K11 at far: the careless edit is byte-for-byte correct on every run that
+# succeeds. Start the stations in a loop, call the work, stop them in a loop
+# — the log it writes on a good run is the same log a correct `run` writes,
+# so the happy-path exercise a reader runs on their own change cannot tell
+# the two apart. What is missing is the arrangement that takes the stand back
+# down when the work raises or a station will not come up, and a stand left
+# powered up is found by whoever walks up to it next rather than by the run
+# that left it that way. The repository's own suite covers the stations and
+# the log, not the rig.
+#
+# feature-dev: the grading tests exercise run, which does not exist in repo/,
+# so they fail on the pristine repository as the lint requires.
+id: standrig-run-stations
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  standrig.py knows how to bring one station up and take it down, but every
+  test script drives the stand itself, and each one gets the shutdown a
+  little different — which is how the stand ends up left powered overnight
+  after a test that threw.
+
+  Add a function `run(stations, work)` to standrig.py that drives one whole
+  run of the stand.
+
+  What it has to do:
+
+  - start each of `stations` in the order it is given them;
+  - once they are all up, call `work()` — no arguments — and return what it
+    returns;
+  - then take the stand down: stop the stations that were started, in the
+    reverse of the order they were started in.
+
+  And the part the stand exists for: however `run` finishes, it leaves
+  nothing up.
+
+  - if `work` raises, the started stations are still stopped, in that same
+    reverse order, and the exception reaches the caller;
+  - if a station's `start` raises, the stations already up are stopped, in
+    that same reverse order, and the exception reaches the caller — the work
+    is not attempted;
+  - a station that never came up is never stopped: `stop` is called only on
+    stations whose `start` returned.
+
+  A run of no stations still calls `work` and returns its value.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K11
+      level: far
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      a rig written as three straight loops writes exactly the log a correct
+      one writes on every run that succeeds, so the distance between the
+      missing try and the stand it leaves powered up is a failure that has
+      not happened yet — but the contract states all three shutdown paths
+      outright and round 1's authors went 0 for 12 betting a planted trap
+      moved a rung, so the bet is that the rig is written correctly and the
+      distance costs turns rather than the outcome
+    effort:
+      comparator: baseline
+      metric: turns
+      at_least_factor: 1.2

@@ -1,0 +1,62 @@
+# K11 at far: the careless answer is right until it is not, and then it is
+# wrong forever. "The next slot if the run finished in time, otherwise an
+# interval from now" agrees with a correct `next_due` on every run that keeps
+# up — which is every run a happy-path exercise writes, and every run of a
+# job that is behaving. The first run that outlasts a slot moves the job off
+# the grid it was made with, and because each answer is fed back in as the
+# next due time, every slot after that is wrong too. What is lost is the
+# cadence, several runs downstream of the line that lost it; nothing at the
+# time of the wrong answer looks wrong.
+#
+# feature-dev: the grading tests exercise next_due, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: cadence-next-due
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  cadence.py can say when a job is due — a first time and an interval, and
+  every slot the interval lands on — but nothing in it says what happens
+  after a run. The scheduler asks each job for its next due time when a run
+  finishes, and today every caller works it out for itself.
+
+  Add a function `next_due(schedule, due_at, ran_at)` to cadence.py. It is
+  given a schedule, the slot a run was due at, and the time that run
+  finished, and returns the time the job is next due.
+
+  What it has to do:
+
+  - the job keeps the cadence it was made with. Every time it is due is one
+    of the schedule's own slots — `first_due` and every `every` seconds after
+    it — and a run that took longer than expected never moves the job off
+    them;
+  - when the run finished before the next slot came round, the job is next
+    due at that slot;
+  - when the run was still going as slots went by, those slots are missed
+    rather than made up: the job is next due at the first slot strictly after
+    `ran_at`. A slot that went by while the job was running does not queue up
+    a second run;
+  - `due_at` has to be one of this schedule's slots, and `ran_at` cannot be
+    before it — a run cannot finish before it was due. Either mistake raises
+    ValueError.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K11
+      level: far
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the careless answer — an interval from the moment the run finished —
+      agrees with a correct one on every run that keeps up, so the distance
+      between the edit and its failure is however many runs pass before one
+      overruns, and then the drift is permanent because each answer feeds the
+      next; but the rule is stated outright and round 1's authors went 0 for
+      12 betting a planted trap moved a rung, so the bet is that the grid is
+      respected and the distance costs turns rather than the outcome
+    effort:
+      comparator: baseline
+      metric: turns
+      at_least_factor: 1.2
