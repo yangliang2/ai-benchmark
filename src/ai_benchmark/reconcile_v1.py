@@ -5,7 +5,8 @@ sweep can be scored against it afterwards by something other than memory. This
 module is that something: it reads the raw run logs and the task set, and
 reports per-task hits and misses, how outcomes group by knob and level against
 the zero-knob baseline, whether each family climbs its ladder, what each
-crux/control pair cost, and which knobs moved nothing.
+crux/control pair cost, which knobs moved nothing, and — for the tasks that
+registered one — whether each effort claim came true on each model.
 
 **Where the verdicts come from.** A raw run-log row carries the workdir diff
 but no verdict, so an observed rung is not derivable from the log alone —
@@ -37,6 +38,8 @@ from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
     KNOB_LEVELS,
     Construction,
+    EffortClaim,
+    EffortMetric,
     Run,
     Rung,
     Task,
@@ -128,6 +131,23 @@ class Round:
 
 
 @dataclass(frozen=True)
+class Effort:
+    """What one run cost, on the two axes an effort claim can be read on.
+
+    Taken off the run-log row rather than off the graded record, and taken
+    whatever the verdict was: a run that failed still spent its turns and its
+    dollars, and an effort claim is a claim about what the work took, not
+    about whether it worked.
+    """
+
+    turns: int
+    cost_usd: float
+
+    def value(self, metric: EffortMetric) -> float:
+        return float(self.turns) if metric == "turns" else self.cost_usd
+
+
+@dataclass(frozen=True)
 class Outcome:
     """What one task's runs said about it, and when they said it."""
 
@@ -135,6 +155,10 @@ class Outcome:
     # Only the ladder models that actually ran this task, so that a missing
     # model reads as missing rather than as a failure.
     resolved: Mapping[str, bool]
+    # Keyed the same way and for the same reason: a model with no row here
+    # never ran this task, which is the difference between a claim that came
+    # out false and one nothing measured.
+    effort: Mapping[str, Effort]
     rung: Observed
     # The round this task was swept in: the latest of the rounds its runs
     # belong to, so a cell finished in a second sweep counts to the sweep that
@@ -202,12 +226,21 @@ def observed_outcomes(
     # task the set does not have, so every id here is one of these tasks.
     by_key = rounds_by_key(runs)
     rounds: dict[str, list[Round]] = {task.id: [] for task in tasks}
+    # What each run cost, read straight off the log rather than out of the
+    # records: `evaluate` has already refused the two rows that would make
+    # this ambiguous (an unknown task, two runs of one cell), so one row per
+    # task x model is all there is to read.
+    effort: dict[str, dict[str, Effort]] = {task.id: {} for task in tasks}
     for run in runs:
         rounds[run.task_id].append(by_key[round_key(run)])
+        effort[run.task_id][run.model] = Effort(
+            turns=run.turns, cost_usd=run.cost_usd
+        )
     return {
         task.id: Outcome(
             task=task,
             resolved=resolved[task.id],
+            effort=effort[task.id],
             rung=observed_rung(resolved[task.id]),
             round=(
                 max(rounds[task.id], key=lambda round: round.sort_key)
@@ -336,6 +369,179 @@ def rung_set(outcomes: Iterable[Outcome]) -> frozenset[Observed]:
     return frozenset(outcome.rung for outcome in outcomes if outcome.determined)
 
 
+# --- grading the effort claims -------------------------------------------------
+
+# What an effort claim can come out as. "not assessable" is the third state
+# for the same reason the rung reconciliation has `unswept` and `incomplete`:
+# a comparator no sweep reached says nothing about the claim, and reading it
+# as a miss would invent a result out of an absent measurement.
+Assessed = Literal["hit", "miss", "not assessable"]
+
+
+@dataclass(frozen=True)
+class Assessment:
+    """One registered effort claim, read for one model.
+
+    Per model rather than per task because that is the shape of the
+    measurement: a run log holds one turns and one cost per task x model, and
+    round 1's contrasts moved by different multiples on the two models (K9's
+    turns 1.80x on haiku against 1.36x on sonnet). Collapsing them would
+    average away the thing the claim is about.
+    """
+
+    task: str
+    model: str
+    claim: EffortClaim
+    verdict: Assessed
+    # Absent exactly when the run that would have measured it is absent, which
+    # is what `not assessable` means and where its reason comes from.
+    observed: float | None
+    comparator: float | None
+    # What the claim was read against, named so a miss can be checked: the
+    # partner's task id, or the baseline the mean was taken over.
+    against: str
+    # Why it could not be read, when it could not.
+    reason: str | None
+
+    @property
+    def ratio(self) -> float | None:
+        if self.observed is None or not self.comparator:
+            return None
+        return self.observed / self.comparator
+
+
+def effort_assessments(outcomes: Sequence[Outcome]) -> list[Assessment]:
+    """Every registered effort claim, graded for every model on the ladder.
+
+    Tasks in id order and models in ladder order, so the section this feeds
+    is byte-identical run to run however the outcomes were collected.
+    """
+    controls = baseline(outcomes)
+    partners = _pair_partners(outcomes)
+    assessments: list[Assessment] = []
+    for outcome in sorted(outcomes, key=lambda outcome: outcome.task.id):
+        if outcome.construction is None:
+            continue
+        claim = outcome.construction.prediction.effort
+        if claim is None:
+            continue
+        assessments.extend(
+            _assess(outcome, claim, model, controls=controls, partners=partners)
+            for model in LADDER_MODELS
+        )
+    return assessments
+
+
+def _pair_partners(outcomes: Sequence[Outcome]) -> dict[str, Outcome]:
+    """The other member of each task's pair, where the pair has exactly two.
+
+    A pair of any other size has no defined partner, so nothing is recorded
+    for its members and a claim against one is reported not assessable. The
+    lint refuses such a pair before a sweep; this is what the report does if
+    one reaches it anyway, rather than picking a member to compare against.
+    """
+    pairs: dict[str, list[Outcome]] = {}
+    for outcome in constructed(outcomes):
+        assert outcome.construction is not None
+        if outcome.construction.pair is not None:
+            pairs.setdefault(outcome.construction.pair, []).append(outcome)
+
+    partners: dict[str, Outcome] = {}
+    for members in pairs.values():
+        if len(members) == 2:
+            one, other = members
+            partners[one.task.id] = other
+            partners[other.task.id] = one
+    return partners
+
+
+def _assess(
+    outcome: Outcome,
+    claim: EffortClaim,
+    model: str,
+    *,
+    controls: Sequence[Outcome],
+    partners: Mapping[str, Outcome],
+) -> Assessment:
+    """This task's own measurement against its comparator's, for one model.
+
+    Nothing here is inferred from an absence. A missing run on either side, a
+    pair without a partner and a category with no controls all end the same
+    way: not assessable, with the reason named, and scored nowhere.
+    """
+    comparator, against, reason = _comparator(
+        outcome, claim, model, controls=controls, partners=partners
+    )
+    measured = outcome.effort.get(model)
+    observed = measured.value(claim.metric) if measured is not None else None
+    verdict: Assessed = "not assessable"
+    if observed is None:
+        reason = f"{outcome.task.id} has no {model} run"
+    elif reason is None and comparator is not None:
+        # A comparator of zero is not a comparator: no multiple of it is
+        # anything, so the claim is unreadable rather than trivially met.
+        if not comparator:
+            reason = f"{against} measured 0 {claim.metric} on {model}"
+        else:
+            verdict = (
+                "hit" if observed >= claim.at_least_factor * comparator else "miss"
+            )
+    return Assessment(
+        task=outcome.task.id,
+        model=model,
+        claim=claim,
+        verdict=verdict,
+        observed=observed,
+        comparator=comparator,
+        against=against,
+        reason=reason if verdict == "not assessable" else None,
+    )
+
+
+def _comparator(
+    outcome: Outcome,
+    claim: EffortClaim,
+    model: str,
+    *,
+    controls: Sequence[Outcome],
+    partners: Mapping[str, Outcome],
+) -> tuple[float | None, str, str | None]:
+    """What this claim is read against: the value, its name, and — where there
+    is no value — why there is none."""
+    if claim.comparator == "pair":
+        partner = partners.get(outcome.task.id)
+        if partner is None:
+            pair = outcome.construction.pair if outcome.construction else None
+            return None, "its pair partner", (
+                f"pair {pair!r} does not hold exactly two tasks, so "
+                f"{outcome.task.id} has no partner to be read against"
+            )
+        measured = partner.effort.get(model)
+        if measured is None:
+            return None, partner.task.id, f"{partner.task.id} has no {model} run"
+        return measured.value(claim.metric), partner.task.id, None
+
+    category = outcome.task.category
+    ran = [
+        control for control in controls
+        if control.task.category == category and model in control.effort
+    ]
+    against = f"the {category} baseline"
+    if not ran:
+        return None, against, (
+            f"no {category} zero-knob baseline control has a {model} run"
+        )
+    # The mean, not the median. A factor claim is a claim about the size of a
+    # cost, and at the handful of tasks per cell this experiment runs at a
+    # median throws away the tail the effort signal has so far lived in — K7's
+    # 36-turn haiku cell against a 9.8-turn baseline mean. Round 1's contrasts
+    # were read off means for the same reason (design note section 11), so
+    # reading a registered claim off medians would score it against numbers
+    # nothing else in this project quotes.
+    values = [control.effort[model].value(claim.metric) for control in ran]
+    return sum(values) / len(values), f"{against} (mean of {len(ran)})", None
+
+
 # --- rendering -----------------------------------------------------------------
 
 
@@ -398,6 +604,14 @@ def render(
         *_pairs(ordered),
         "",
         *_flags(ordered),
+        "",
+        # Last, and numbered after the five sections that were here before it,
+        # rather than beside section 1 where it belongs by subject. The report
+        # is read by diffing one round's against the last one's, so renumbering
+        # the existing sections would move every line of a report to add one
+        # block; and the kill discipline in section 5 still counts rung
+        # silence alone, so printing effort above it would read as feeding it.
+        *_effort_claims(ordered),
     ])
 
 
@@ -882,6 +1096,123 @@ def _forced_text(one: Side, other: Side) -> str:
         f"{large[0]}'s {len(rung_set(large[1]))} distinct rung(s), so the two "
         "sets could not have matched however the runs came out"
     )
+
+
+def _claim_text(claim: EffortClaim) -> str:
+    """The registered claim, in the words it was registered in."""
+    return f"{claim.metric} >= {claim.at_least_factor:g}x {claim.comparator}"
+
+
+def _measured(value: float | None, metric: EffortMetric) -> str:
+    """One measurement in the unit its metric is quoted in, or a dash where
+    the run that would have produced it is missing."""
+    if value is None:
+        return "-"
+    if metric == "cost":
+        return f"${value:.4f}"
+    return f"{value:.2f}".rstrip("0").rstrip(".")
+
+
+def _effort_claims(outcomes: Sequence[Outcome]) -> list[str]:
+    lines = ["6. effort-claim reconciliation"]
+    assessments = effort_assessments(outcomes)
+    if not assessments:
+        # The round-1 task set's state, and the honest one: no task registered
+        # an effort claim, so there is nothing here to be right or wrong about.
+        # Said rather than omitted, because a section that disappears when it
+        # has nothing to report is indistinguishable from one that broke.
+        return [*lines, "   (no effort claim registered in the task set)"]
+
+    graded = [a for a in assessments if a.verdict != "not assessable"]
+    hits = [a for a in graded if a.verdict == "hit"]
+    rate = f"{len(hits) / len(graded):.1%}" if graded else "n/a"
+    lines += [
+        (
+            f"   {len(assessments)} reading(s) of "
+            f"{len({a.task for a in assessments})} registered claim(s), "
+            "one per model on the ladder"
+        ),
+        (
+            f"   hit-rate: {len(hits)}/{len(graded)} assessed ({rate}); "
+            f"{len(assessments) - len(graded)} not assessable"
+        ),
+        *_wrap(
+            "criterion: a claim is a hit when this task's own measurement is at "
+            "least its registered factor times its comparator's, for that "
+            "model. Read per model because that is how a run log measures: one "
+            "turns and one cost per task x model, and round 1's contrasts moved "
+            "by different multiples on the two. Every logged run counts, "
+            "resolved or not — a claim is about what the work cost, not about "
+            "whether it worked.",
+            indent="   ",
+        ),
+        *_wrap(
+            "comparators: a pair claim is read against the one other member of "
+            "this task's pair, and a baseline claim against the mean over the "
+            "zero-knob baseline controls of this task's category that ran the "
+            "model. The mean and not the median: at the few tasks per cell this "
+            "experiment runs at, a median discards the tail the effort signal "
+            "has so far lived in, and the round-1 contrasts this section makes "
+            "falsifiable were themselves read off means.",
+            indent="   ",
+        ),
+        *_wrap(
+            "not assessable: a missing run on either side, a pair without a "
+            "partner, or a category with no swept control. None of them is "
+            "guessed at and none is scored — an unswept comparator is the "
+            "absence of a measurement, not a claim that came out false.",
+            indent="   ",
+        ),
+        "",
+    ]
+
+    rows: list[Sequence[str]] = [
+        ("task", "model", "claim", "comparator", "observed", "ratio", "verdict")
+    ]
+    for assessment in assessments:
+        metric = assessment.claim.metric
+        rows.append((
+            assessment.task,
+            assessment.model,
+            _claim_text(assessment.claim),
+            _measured(assessment.comparator, metric),
+            _measured(assessment.observed, metric),
+            f"{assessment.ratio:.2f}x" if assessment.ratio is not None else "-",
+            assessment.verdict,
+        ))
+    lines += _table(rows, indent="   ")
+
+    misses = [a for a in assessments if a.verdict == "miss"]
+    if misses:
+        # Echoed the way a missed rung echoes its rationale: the claim is what
+        # was bet, and a miss is only readable beside what it was bet against.
+        lines += ["", "   misses, with the claim that was registered for them:"]
+        for assessment in misses:
+            metric = assessment.claim.metric
+            # A verdict is only ever reached with both sides measured and a
+            # non-zero comparator, so a miss always has a ratio to print.
+            assert assessment.ratio is not None
+            lines += [
+                f"   {assessment.task} ({assessment.model}):",
+                *_wrap(
+                    f"claimed {metric} at least "
+                    f"{assessment.claim.at_least_factor:g}x {assessment.against}, "
+                    f"which measured {_measured(assessment.comparator, metric)}; "
+                    f"it spent {_measured(assessment.observed, metric)} "
+                    f"({assessment.ratio:.2f}x)",
+                    indent="     ",
+                ),
+            ]
+
+    if unread := [a for a in assessments if a.verdict == "not assessable"]:
+        lines += ["", "   not assessable, with what was missing:"]
+        for assessment in unread:
+            assert assessment.reason is not None
+            lines += [
+                f"   {assessment.task} ({assessment.model}):",
+                *_wrap(assessment.reason, indent="     "),
+            ]
+    return lines
 
 
 # --- the command ---------------------------------------------------------------

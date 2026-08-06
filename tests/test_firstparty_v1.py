@@ -615,6 +615,141 @@ def test_a_prediction_without_a_rationale_fails_loudly(tmp_path: Path) -> None:
         load_task_set(tmp_path)
 
 
+def a_prediction(**overrides: object) -> dict[str, object]:
+    """A well-formed prediction, ready to grow or break an effort claim."""
+    return {
+        "rung": "haiku-solvable",
+        "rationale": "every decision is stated as an acceptance criterion",
+    } | overrides
+
+
+AN_EFFORT_CLAIM = {"comparator": "pair", "metric": "turns", "at_least_factor": 1.5}
+
+
+def test_a_prediction_carries_no_effort_claim_unless_one_is_registered(
+    tmp_path: Path,
+) -> None:
+    """Round-1 tasks registered a rung and nothing else, and they still load:
+    the effort claim is an addition to the prediction, not a new requirement
+    on it."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block())
+
+    [task] = load_task_set(tmp_path)
+
+    assert task.construction is not None
+    assert task.construction.prediction.effort is None
+
+
+def test_a_prediction_records_the_effort_claim_registered_with_it(
+    tmp_path: Path,
+) -> None:
+    """Comparator, metric and minimum factor round-trip off disk, which is
+    what makes 'this knob costs effort' a bet reconciliation can settle."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        pair="crux-and-control",
+        prediction=a_prediction(effort=AN_EFFORT_CLAIM),
+    ))
+
+    [task] = load_task_set(tmp_path)
+
+    assert task.construction is not None
+    claim = task.construction.prediction.effort
+    assert claim is not None
+    assert claim.comparator == "pair"
+    assert claim.metric == "turns"
+    assert claim.at_least_factor == 1.5
+
+
+def test_an_effort_claim_against_the_baseline_needs_no_pair(
+    tmp_path: Path,
+) -> None:
+    """The other comparator is the zero-knob baseline of the task's own
+    category, which every task has whether or not it was built beside a
+    control."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction=a_prediction(effort={
+            "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
+        }),
+    ))
+
+    [task] = load_task_set(tmp_path)
+
+    assert task.construction is not None
+    assert task.construction.prediction.effort is not None
+    assert task.construction.prediction.effort.comparator == "baseline"
+
+
+def test_an_effort_claim_against_an_unknown_comparator_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """There are two things a task's effort can be read against, and both are
+    things reconciliation can find in the task set. Anything else is a
+    comparator nothing computes."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction=a_prediction(effort=AN_EFFORT_CLAIM | {"comparator": "vibes"}),
+    ))
+
+    with pytest.raises(IngestError, match="vibes"):
+        load_task_set(tmp_path)
+
+
+def test_an_effort_claim_on_an_unknown_metric_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Turns and cost are what a run log measures per row; a claim on anything
+    else could never be graded from one."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        pair="crux-and-control",
+        prediction=a_prediction(effort=AN_EFFORT_CLAIM | {"metric": "wall-clock"}),
+    ))
+
+    with pytest.raises(IngestError, match="wall-clock"):
+        load_task_set(tmp_path)
+
+
+@pytest.mark.parametrize("factor", [1.0, 0.5, 0.0, -1.0])
+def test_an_effort_claim_that_claims_nothing_fails_loudly(
+    tmp_path: Path, factor: float
+) -> None:
+    """A minimum factor of 1.0 is satisfied by any task that costs its
+    comparator's own price, and one below 1.0 by a task that costs less — so
+    neither says the knob costs anything, and both would score as registered
+    findings."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        pair="crux-and-control",
+        prediction=a_prediction(
+            effort=AN_EFFORT_CLAIM | {"at_least_factor": factor}
+        ),
+    ))
+
+    with pytest.raises(IngestError, match="at_least_factor"):
+        load_task_set(tmp_path)
+
+
+def test_an_effort_claim_against_a_pair_partner_that_does_not_exist_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """A claim comparing this task against its pair partner needs a pair to
+    have a partner in. The block contradicts itself, so it is refused where
+    the block is read rather than left for the set-wide lint."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction=a_prediction(effort=AN_EFFORT_CLAIM),
+    ))
+
+    with pytest.raises(IngestError, match="pair"):
+        load_task_set(tmp_path)
+
+
+def test_an_unknown_effort_claim_field_fails_loudly(tmp_path: Path) -> None:
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        pair="crux-and-control",
+        prediction=a_prediction(effort=AN_EFFORT_CLAIM | {"at_most_factor": 3.0}),
+    ))
+
+    with pytest.raises(IngestError, match="at_most_factor"):
+        load_task_set(tmp_path)
+
+
 def test_an_unknown_construction_field_fails_loudly(tmp_path: Path) -> None:
     """The task model forbids extras, so a misspelt field is a loud failure
     rather than metadata that silently never reaches reconciliation."""
@@ -1399,6 +1534,55 @@ def test_lint_rejects_a_pair_whose_members_sit_at_one_level(tmp_path: Path) -> N
 
     assert "crux-and-control" in problem and "same level" in problem
     assert "control-task" in problem and "crux-task" in problem
+
+
+# --- task-set lint: effort claims have a comparator to be read against ---------
+
+
+def test_lint_accepts_an_effort_claim_against_an_existing_pair_partner(
+    tmp_path: Path,
+) -> None:
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+    retitle(tmp_path / "crux-task", construction=a_construction_block(
+        knobs=[{"id": "K9", "level": "single"}],
+        pair="crux-and-control",
+        prediction=a_prediction(effort=AN_EFFORT_CLAIM),
+    ))
+
+    assert lint_task_set(load_task_set(tmp_path)) == []
+
+
+def test_lint_accepts_an_effort_claim_against_a_baseline_of_the_same_category(
+    tmp_path: Path,
+) -> None:
+    clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)  # a frozen zero-knob control
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction=a_prediction(effort={
+            "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
+        }),
+    ))
+
+    assert lint_task_set(load_task_set(tmp_path)) == []
+
+
+def test_lint_rejects_a_baseline_effort_claim_with_no_baseline_to_read(
+    tmp_path: Path,
+) -> None:
+    """Only the set can show this one: the claim itself is well formed, and
+    the comparator it names — the zero-knob baseline of this task's category —
+    simply is not in the task set. Reconciliation would report it not
+    assessable forever, which is a registered claim that can never be settled
+    and is worth catching before the sweep is paid for."""
+    clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        prediction=a_prediction(effort={
+            "comparator": "baseline", "metric": "turns", "at_least_factor": 1.5,
+        }),
+    ))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "knobbed-task" in problem and "feature-dev" in problem
+    assert "zero-knob baseline" in problem
 
 
 # --- live runner: tools-enabled claude-code, workdir diff into the run log -----

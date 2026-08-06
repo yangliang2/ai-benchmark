@@ -252,6 +252,37 @@ def test_lint_v1_exits_non_zero_on_a_broken_task(tmp_path: Path) -> None:
         main(["lint-v1", "--tasks", str(tmp_path)])
 
 
+def test_lint_v1_exits_non_zero_on_an_effort_claim_with_no_comparator(
+    tmp_path: Path,
+) -> None:
+    """An effort claim naming its pair partner as the comparator, on a task
+    that declares no pair. The block contradicts itself, so the loader refuses
+    it and the lint gate the sweep protocol runs never gets past loading —
+    which is the point: the claim is unsettleable, and the gate says so before
+    anything is paid for."""
+    seed = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    task_dir = tmp_path / "unpaired-claim"
+    shutil.copytree(seed / "wordcount-top-words", task_dir)
+    spec = task_dir / "task.yaml"
+    spec.write_text(
+        spec.read_text().replace("id: wordcount-top-words", "id: unpaired-claim")
+        + "construction:\n"
+        "  knobs:\n"
+        "    - id: K9\n"
+        "      level: single\n"
+        "  prediction:\n"
+        "    rung: haiku-solvable\n"
+        "    rationale: one planted decision the spec never makes derivable\n"
+        "    effort:\n"
+        "      comparator: pair\n"
+        "      metric: turns\n"
+        "      at_least_factor: 1.5\n"
+    )
+
+    with pytest.raises(SystemExit, match="pair"):
+        main(["lint-v1", "--tasks", str(tmp_path)])
+
+
 def test_classify_with_warm_cache_needs_no_api_key(
     dataset_fixture: Path, tmp_path: Path,
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch,

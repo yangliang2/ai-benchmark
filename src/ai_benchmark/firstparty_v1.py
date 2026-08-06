@@ -209,18 +209,71 @@ class KnobActivation(BaseModel):
         return self
 
 
+# What a run log measures per row, and therefore what an effort claim can be
+# registered against: the two axes round 1 recovered its real result on.
+EffortMetric = Literal["turns", "cost"]
+
+# What a task's effort is read against. Both are things the task set itself
+# holds, so a claim is settleable from checked-in artifacts by the same one
+# command everything else here is: the task's pair partner — the control built
+# beside it — or the zero-knob baseline tasks of the task's own category.
+EffortComparator = Literal["pair", "baseline"]
+
+
+class EffortClaim(BaseModel):
+    """The author's pre-registered claim that this task costs effort.
+
+    Twice now effort has separated where `resolved` could not: the first
+    sweep's refactor lesson and round 1's K7/K9 contrasts, both recovered from
+    the run logs after the fact (docs/design/task-difficulty-and-ex-ante-
+    profiles.md sections 12 and 16). Recovered after the fact that is mining.
+    Registered here it is a bet reconciliation settles per model, on the same
+    terms the rung prediction is settled on — and one the sweep can lose.
+
+    Deliberately not carried: a rationale of its own. The prediction it hangs
+    on already has one, and the claim itself is three numbers a report can
+    echo verbatim, so a second free-text field would be a second place for the
+    same reasoning to be written and drift from.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    comparator: EffortComparator
+    metric: EffortMetric
+    at_least_factor: float
+
+    @model_validator(mode="after")
+    def the_factor_claims_something(self) -> Self:
+        if self.at_least_factor <= 1.0:
+            raise ValueError(
+                f"at_least_factor {self.at_least_factor} claims nothing — the "
+                "claim is that this task costs at least that multiple of its "
+                "comparator, so 1.0 is satisfied by a task costing exactly what "
+                "its comparator costs, and anything below it by a task costing "
+                "less. Register a factor above 1.0 or register no effort claim"
+            )
+        return self
+
+
 class Prediction(BaseModel):
     """The author's pre-registered difficulty prediction for this task.
 
     Registered before the task's first paid run, which is what makes the knob
     theory falsifiable rather than fitted to the sweep afterwards; the run
     log's append-only timeline is the audit trail that it came first.
+
+    The rung is mandatory and the effort claim optional, which is the order
+    the two were learnt in: every task lands on a rung, and only some tasks
+    are built to cost something. A task registering no effort claim is not
+    claiming its knob is free — it is claiming nothing, and reconciliation
+    scores it nowhere.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     rung: Rung
     rationale: NonEmptyStr
+    effort: EffortClaim | None = None
 
 
 class Modification(BaseModel):
@@ -313,6 +366,26 @@ class Construction(BaseModel):
             raise ValueError(
                 f"knob(s) {repeated} set more than once — a task sets each knob "
                 "to one level, or the level it was run at is ambiguous"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def an_effort_claim_has_a_comparator_to_read_it_against(self) -> Self:
+        """A claim read against a pair partner needs a pair to have one in.
+
+        Caught here rather than in the set-wide lint because the block already
+        contradicts itself: no other task, and no sweep, could make it
+        settleable. The set-wide half of the rule — that the *baseline*
+        comparator a claim names is actually in the task set — is the lint's,
+        because only the set can show it.
+        """
+        claim = self.prediction.effort
+        if claim is not None and claim.comparator == "pair" and self.pair is None:
+            raise ValueError(
+                "the effort claim is read against this task's pair partner, and "
+                "the block declares no pair — there is no partner to read it "
+                "against, so no sweep could ever settle the claim. Declare the "
+                "pair, or claim against the zero-knob baseline instead"
             )
         return self
 
@@ -812,13 +885,15 @@ def lint_task_set(
     expensive to discover in the middle of a paid sweep.
 
     The construction invariants are read rather than run, but belong here for
-    the same reason: an undeclared knob, an unregistered prediction or a
-    family whose variants differ in more than the knob they vary costs nothing
-    to catch now and cannot be repaired afterwards — a prediction registered
-    once the outcome is known is not a prediction, and a sweep is only paid
-    for once.
+    the same reason: an undeclared knob, an unregistered prediction, a family
+    whose variants differ in more than the knob they vary, or an effort claim
+    naming a comparator the task set does not hold costs nothing to catch now
+    and cannot be repaired afterwards — a prediction registered once the
+    outcome is known is not a prediction, and a sweep is only paid for once.
     """
-    problems = _family_problems(tasks) + _pair_problems(tasks)
+    problems = (
+        _family_problems(tasks) + _effort_claim_problems(tasks) + _pair_problems(tasks)
+    )
     for task in tasks:
         problems.extend(construction_problems(task))
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
@@ -938,6 +1013,37 @@ def _family_problems(tasks: list[Task]) -> list[str]:
         gradient = _shared_prompt_problem(family, variants)
         if gradient is not None:
             problems.append(gradient)
+    return problems
+
+
+def _effort_claim_problems(tasks: list[Task]) -> list[str]:
+    """Effort claims whose comparator this task set does not hold.
+
+    The shape of a claim is the task model's business, and so is the half of
+    this rule a single block can show — a pair comparator on a task declaring
+    no pair never loads at all. What only the set can show is the other
+    comparator: a claim read against the zero-knob baseline of the task's own
+    category needs the set to hold such a control, and where it does not,
+    reconciliation reports the claim not assessable in every round there will
+    ever be. That is a registered claim no sweep can settle, which is the one
+    thing pre-registration is supposed to rule out, and it costs nothing to
+    catch before the sweep is paid for.
+    """
+    stocked = {task.category for task in tasks if task.id in BASELINE_TASK_IDS}
+    problems = []
+    for task in tasks:
+        if task.construction is None:
+            continue
+        claim = task.construction.prediction.effort
+        if claim is None or claim.comparator != "baseline":
+            continue
+        if task.category not in stocked:
+            problems.append(
+                f"{task.id}: its effort claim is read against the zero-knob "
+                "baseline of its own category, and the task set holds no "
+                f"{task.category} baseline control — no sweep could settle the "
+                "claim, so it would be reported not assessable in every round"
+            )
     return problems
 
 

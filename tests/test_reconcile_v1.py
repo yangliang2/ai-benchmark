@@ -71,16 +71,28 @@ def constructed(
     family: str | None = None,
     pair: str | None = None,
     rationale: str = "the level this task sets should land it here",
+    effort: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    prediction: dict[str, Any] = {"rung": rung, "rationale": rationale}
+    if effort is not None:
+        prediction["effort"] = effort
     block: dict[str, Any] = {
         "knobs": [{"id": knob, "level": level}],
-        "prediction": {"rung": rung, "rationale": rationale},
+        "prediction": prediction,
     }
     if family is not None:
         block["family"] = family
     if pair is not None:
         block["pair"] = pair
     return block
+
+
+def claim(comparator: str, metric: str, at_least_factor: float) -> dict[str, Any]:
+    return {
+        "comparator": comparator,
+        "metric": metric,
+        "at_least_factor": at_least_factor,
+    }
 
 
 def solved_diff(task: firstparty_v1.Task) -> str:
@@ -99,6 +111,7 @@ def write_log(
     sweep: str | None = None,
     models: tuple[str, ...] = (_HAIKU, _SONNET),
     agent: str = "claude-code",
+    effort: dict[str, dict[str, tuple[int, float]]] | None = None,
 ) -> None:
     """A raw run log sweeping `tasks` with `models`.
 
@@ -107,11 +120,17 @@ def write_log(
     grading tests fail on the pristine repository. `sweep` left out writes a
     legacy log: rows from before the sweep id existed, which reconciliation
     has to keep reading by their as-of date.
+
+    `effort` names what a run cost, per task id and model, as (turns, cost);
+    every cell it does not name gets the same default, so a test that says
+    nothing about effort logs a flat sweep and a test about effort claims sets
+    only the cells its claim is read from.
     """
     rows = []
     for task in tasks:
         diff = solved_diff(task)
         for model in models:
+            turns, cost = (effort or {}).get(task.id, {}).get(model, (7, 0.21))
             rows.append(
                 firstparty_v1.Run(
                     task_id=task.id,
@@ -122,9 +141,9 @@ def write_log(
                     diff=diff if model in resolved_by.get(task.id, []) else "",
                     tokens_in=41000,
                     tokens_out=1500,
-                    cost_usd=0.21,
+                    cost_usd=cost,
                     latency_s=64.5,
-                    turns=7,
+                    turns=turns,
                     as_of=as_of,
                     sweep=sweep,
                 )
@@ -164,6 +183,13 @@ def family_block(out: str) -> str:
 
 def pairs_block(out: str) -> str:
     return out.split("4. crux/control pairs")[1].split("5. no-separation flags")[0]
+
+
+def effort_block(out: str) -> str:
+    """Section 6 alone. "hit", "miss" and "not assessable" are all words the
+    rung reconciliation in section 1 uses too, so an unscoped assertion about
+    an effort verdict would pass on the wrong section's row."""
+    return out.split("6. effort-claim reconciliation")[1]
 
 
 # --- the demo: the checked-in sweeps against the checked-in task set ----------
@@ -251,6 +277,24 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
         assert tasks_in_row == swept_in_row, (
             f"{category} baseline not fully swept: {row}"
         )
+
+    # Effort claims, derived the same way. Round 1 registered none — effort
+    # was only ever recovered from its logs after the fact, which is the whole
+    # reason the claim exists — so today this reads as the empty state. A
+    # round-2 task that registers one moves this branch rather than breaking
+    # it, which is what keeps the expectation coming from the artifacts.
+    claimed = [
+        task for task in constructed
+        if task.construction is not None
+        and task.construction.prediction.effort is not None
+    ]
+    effort = effort_block(out)
+    if not claimed:
+        assert effort.strip() == "(no effort claim registered in the task set)"
+    else:
+        assert f"{len(claimed)} registered claim(s)" in effort
+        for task in claimed:
+            assert task.id in effort, f"{task.id} registered a claim and lost it"
 
 
 def test_reconcile_v1_keys_the_checked_in_rounds_the_way_their_logs_allow(
@@ -1078,6 +1122,324 @@ def test_reconcile_v1_reads_every_log_in_a_directory(
 
     out = capsys.readouterr().out
     assert "2 swept, 0 unswept" in out
+
+
+# --- section 6: effort claims --------------------------------------------------
+
+
+def write_effort_pair(tasks: Path) -> None:
+    """A planted crux claiming to cost 1.5x the turns of the control built
+    beside it.
+
+    Only the crux registers the claim: the control is what it is read against,
+    and a control claiming to cost more than the crux would be a different
+    experiment.
+    """
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "haiku-solvable", pair="thing",
+        effort=claim("pair", "turns", 1.5),
+    ))
+    write_task(tasks, "control-task", construction=constructed(
+        "K9", "none", "haiku-solvable", pair="thing"))
+
+
+def test_reconcile_v1_scores_an_effort_claim_that_came_true(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The crux cost exactly the 1.5x it was registered at, on both models.
+
+    Exactly, rather than comfortably: the claim is a minimum, so the boundary
+    is the case a reader would have to guess about otherwise."""
+    tasks = tmp_path / "tasks"
+    write_effort_pair(tasks)
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "crux-task": {_HAIKU: (15, 0.30), _SONNET: (15, 0.30)},
+        "control-task": {_HAIKU: (10, 0.20), _SONNET: (10, 0.20)},
+    })
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "hit-rate: 2/2 assessed (100.0%); 0 not assessable" in effort
+    rows = [line.split() for line in effort.splitlines() if "crux-task" in line]
+    assert rows == [
+        ["crux-task", _HAIKU, "turns", ">=", "1.5x", "pair", "10", "15", "1.50x", "hit"],
+        ["crux-task", _SONNET, "turns", ">=", "1.5x", "pair", "10", "15", "1.50x",
+         "hit"],
+    ]
+    # The control registered no claim, so it is scored nowhere.
+    assert not [line for line in effort.splitlines() if "control-task" in line]
+
+
+def test_reconcile_v1_echoes_the_claim_an_effort_miss_was_registered_under(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A missed effort claim teaches the same way a missed rung does, so the
+    bet is echoed beside what it was read against — and the comparator is
+    named, because 1.2x of what is the whole question."""
+    tasks = tmp_path / "tasks"
+    write_effort_pair(tasks)
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "crux-task": {_HAIKU: (12, 0.30), _SONNET: (12, 0.30)},
+        "control-task": {_HAIKU: (10, 0.20), _SONNET: (10, 0.20)},
+    })
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "hit-rate: 0/2 assessed (0.0%)" in effort
+    assert "misses, with the claim that was registered for them:" in effort
+    assert f"crux-task ({_HAIKU}):" in effort
+    assert (
+        "claimed turns at least 1.5x control-task, which measured 10; it "
+        "spent 12 (1.20x)"
+    ) in " ".join(effort.split())
+
+
+def test_reconcile_v1_reads_a_baseline_effort_claim_against_its_own_category(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The other comparator: the mean over the zero-knob baseline controls of
+    the task's own category. The feature-dev control is deliberately expensive
+    — pooled in it would swamp the mean, and it is the taxonomy's job that it
+    is not."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "ledger-split-formatting", category="refactor")
+    write_task(tasks, "exporters-pull-up-base-class", category="refactor")
+    write_task(tasks, "wordcount-top-words")  # feature-dev, and far pricier
+    write_task(tasks, "net-task", category="refactor", construction=constructed(
+        "K8", "misleading", "haiku-solvable",
+        effort=claim("baseline", "cost", 2.0),
+    ))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "ledger-split-formatting": {_HAIKU: (7, 0.10), _SONNET: (7, 0.10)},
+        "exporters-pull-up-base-class": {_HAIKU: (7, 0.20), _SONNET: (7, 0.20)},
+        "wordcount-top-words": {_HAIKU: (7, 5.00), _SONNET: (7, 5.00)},
+        "net-task": {_HAIKU: (7, 0.25), _SONNET: (7, 0.25)},
+    })
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    [row] = [line.split() for line in effort.splitlines()
+             if line.split()[:2] == ["net-task", _HAIKU]]
+    assert row == [
+        "net-task", _HAIKU, "cost", ">=", "2x", "baseline",
+        "$0.1500", "$0.2500", "1.67x", "miss",
+    ]
+    # The mean's denominator travels with the miss: two controls, not three.
+    assert "the refactor baseline (mean of 2)" in " ".join(effort.split())
+
+
+def test_reconcile_v1_scores_an_effort_claim_separately_per_model(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """One claim, two readings. Round 1's effort contrasts moved by different
+    multiples on the two models — K9's turns 1.80x on haiku against 1.36x on
+    sonnet — so a claim collapsed to one verdict would average away exactly
+    the thing it is about."""
+    tasks = tmp_path / "tasks"
+    write_effort_pair(tasks)
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "crux-task": {_HAIKU: (20, 0.30), _SONNET: (11, 0.30)},
+        "control-task": {_HAIKU: (10, 0.20), _SONNET: (10, 0.20)},
+    })
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "hit-rate: 1/2 assessed (50.0%)" in effort
+    scored = {
+        line.split()[1]: line.split()
+        for line in effort.splitlines()
+        if line.split()[:1] == ["crux-task"] and line.split()[-1] in ("hit", "miss")
+    }
+    assert scored[_HAIKU][-2:] == ["2.00x", "hit"]
+    assert scored[_SONNET][-2:] == ["1.10x", "miss"]
+
+
+def test_reconcile_v1_will_not_assess_a_claim_whose_comparator_was_not_swept(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The crux ran and the control did not, so there is no multiple to take.
+    Reading the absent control as cheap would manufacture the claim's own
+    conclusion out of a sweep that never happened."""
+    tasks = tmp_path / "tasks"
+    write_effort_pair(tasks)
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, [task for task in loaded if task.id == "crux-task"],
+              {"crux-task": [_HAIKU, _SONNET]},
+              effort={"crux-task": {_HAIKU: (20, 0.30), _SONNET: (20, 0.30)}})
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "hit-rate: 0/0 assessed (n/a); 2 not assessable" in effort
+    assert "not assessable, with what was missing:" in effort
+    assert f"control-task has no {_HAIKU} run" in effort
+    assert f"control-task has no {_SONNET} run" in effort
+
+
+def test_reconcile_v1_will_not_assess_a_claim_on_a_task_that_was_not_swept(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The mirror case: the comparator is there and the claiming task is not."""
+    tasks = tmp_path / "tasks"
+    write_effort_pair(tasks)
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, [task for task in loaded if task.id == "control-task"],
+              {"control-task": [_HAIKU, _SONNET]})
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "2 not assessable" in effort
+    assert f"crux-task has no {_HAIKU} run" in effort
+
+
+def test_reconcile_v1_will_not_assess_a_claim_on_the_model_the_comparator_missed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Half-swept comparators are the normal shape of a sweep that died
+    part-way, and they leave one model readable and the other not. The claim
+    is scored on the model both sides ran and withheld on the other."""
+    tasks = tmp_path / "tasks"
+    write_effort_pair(tasks)
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "crux.jsonl",
+              [task for task in loaded if task.id == "crux-task"],
+              {"crux-task": [_HAIKU, _SONNET]},
+              effort={"crux-task": {_HAIKU: (20, 0.30), _SONNET: (20, 0.30)}})
+    write_log(logs / "control.jsonl",
+              [task for task in loaded if task.id == "control-task"],
+              {"control-task": [_HAIKU]}, models=(_HAIKU,),
+              effort={"control-task": {_HAIKU: (10, 0.20)}})
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+    effort = effort_block(capsys.readouterr().out)
+
+    assert "hit-rate: 1/1 assessed (100.0%); 1 not assessable" in effort
+    assert f"control-task has no {_SONNET} run" in effort
+
+
+def test_reconcile_v1_will_not_assess_a_baseline_claim_with_no_such_control(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A claim read against a category the zero-knob baseline does not cover.
+    The lint refuses this before a sweep; the report's job is to say what is
+    missing rather than to fall back on some other category's controls."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "wordcount-top-words")  # a feature-dev control
+    write_task(tasks, "bug-task", category="bug-fix", construction=constructed(
+        "K9", "single", "haiku-solvable",
+        effort=claim("baseline", "turns", 1.5),
+    ))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded})
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "2 not assessable" in effort
+    assert f"no bug-fix zero-knob baseline control has a {_HAIKU} run" in effort
+
+
+def test_reconcile_v1_will_not_assess_a_claim_against_a_comparator_of_zero(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A comparator that measured nothing is not a comparator: no multiple of
+    zero is anything, so a claim read against it is unreadable rather than
+    met by whatever the task spent. Reachable only on cost — a run log's
+    turns are at least one by schema — and it is what keeps the ratio the
+    report prints well defined."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "haiku-solvable", pair="thing",
+        effort=claim("pair", "cost", 2.0),
+    ))
+    write_task(tasks, "control-task", construction=constructed(
+        "K9", "none", "haiku-solvable", pair="thing"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "crux-task": {_HAIKU: (7, 0.30), _SONNET: (7, 0.30)},
+        "control-task": {_HAIKU: (7, 0.0), _SONNET: (7, 0.0)},
+    })
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert "hit-rate: 0/0 assessed (n/a); 2 not assessable" in effort
+    assert f"control-task measured 0 cost on {_HAIKU}" in effort
+
+
+def test_reconcile_v1_says_when_no_effort_claim_is_registered_at_all(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Round 1's task set, and every task set before effort was registrable.
+    The section says so rather than vanishing: a section that disappears when
+    it has nothing to report cannot be told from one that broke."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "haiku-solvable", pair="thing"))
+    write_task(tasks, "control-task", construction=constructed(
+        "K9", "none", "haiku-solvable", pair="thing"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded})
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    assert effort.strip() == "(no effort claim registered in the task set)"
+
+
+def test_reconcile_v1_renders_effort_claims_byte_identically_twice_over(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Same reason as the whole-report determinism test, on the section that
+    walks pairs and baselines: both are built out of dictionaries, and an
+    iteration order leaking into the page would show up as churn in a report
+    that is read by diffing."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "ledger-split-formatting", category="refactor")
+    write_task(tasks, "exporters-pull-up-base-class", category="refactor")
+    write_effort_pair(tasks)
+    write_task(tasks, "net-task", category="refactor", construction=constructed(
+        "K8", "misleading", "haiku-solvable",
+        effort=claim("baseline", "cost", 2.0),
+    ))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "ledger-split-formatting": {_HAIKU: (7, 0.10), _SONNET: (7, 0.10)},
+        "exporters-pull-up-base-class": {_HAIKU: (9, 0.20), _SONNET: (9, 0.20)},
+        "crux-task": {_HAIKU: (15, 0.30), _SONNET: (12, 0.30)},
+        "control-task": {_HAIKU: (10, 0.20), _SONNET: (10, 0.20)},
+        "net-task": {_HAIKU: (7, 0.40), _SONNET: (7, 0.25)},
+    })
+    argv = ["reconcile-v1", "--tasks", str(tasks), "--replay", str(log)]
+
+    main(argv)
+    first = effort_block(capsys.readouterr().out)
+    main(argv)
+    assert effort_block(capsys.readouterr().out) == first
+
+    reseeded = subprocess.run(
+        [sys.executable, "-c",
+         "import sys; from ai_benchmark.cli import main; main(sys.argv[1:])", *argv],
+        capture_output=True, text=True, check=True,
+        env={**os.environ, "PYTHONHASHSEED": "1"},
+    )
+
+    assert effort_block(reseeded.stdout) == first
+    # Both comparators and both metrics are on the page, so what is being
+    # pinned as stable is the whole section rather than one branch of it.
+    assert "cost >= 2x baseline" in first and "turns >= 1.5x pair" in first
+    assert "hit" in first and "miss" in first
 
 
 # --- loud failures -------------------------------------------------------------
