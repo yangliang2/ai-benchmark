@@ -88,8 +88,9 @@ construction:
           dropped test_iterator_rfc from test_csv_utils.py — 100 random tables
           written and parsed back under quoted_rfc, and the generator puts line
           breaks into fields without regard for the delimiter it will later
-          pick, so nearly every table holds a field the plain quoter would
-          write unquoted and the reader could not put back together
+          pick, so about half the tables hold a field the plain quoter would
+          write unquoted and the reader could not put back together — across
+          a hundred of them, some such table is a near-certainty
       - knob: K8
         description: >-
           dropped test_iterator_rfc_comments from test_csv_utils.py — the same
