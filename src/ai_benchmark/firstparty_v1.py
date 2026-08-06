@@ -143,6 +143,14 @@ KNOB_LEVELS: dict[str, tuple[str, ...]] = {
     "K9": ("none", "single"),  # crux depth
     "K10": (),  # coordination width
     "K11": (),  # detection distance
+    # Decision conveyance, and the one ladder whose *order* is the claim
+    # rather than a vocabulary: how the single withheld decision reaches the
+    # solver, easiest first, prose last because prose displaces the module as
+    # the source of truth and steers the implementation shape. Mirrored
+    # verbatim from the design note, which registered it before this line
+    # existed — reordering these four here would silently rewrite a
+    # pre-registered claim into whatever the next sweep happened to show.
+    "K12": ("criterion", "repo-primitive", "unmentioned", "prose"),
 }
 
 # The operational difficulty ladder a prediction is expressed against: the

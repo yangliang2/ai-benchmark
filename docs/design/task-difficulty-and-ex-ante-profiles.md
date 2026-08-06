@@ -182,7 +182,11 @@ difficulty-theory validation become the same activity. Knobs:
 - Spec side: K1 decision openness (acceptance/description/intent spec
   ladder), K2 implicit requirements (constraints live in repo conventions,
   not the ticket — the recorded "convention-driven difficulty" lever),
-  K3 contradiction traps (correct behaviour = flag, not implement).
+  K3 contradiction traps (correct behaviour = flag, not implement),
+  K12 decision conveyance (criterion / repo-primitive / unmentioned /
+  **prose** — how the one withheld decision reaches the solver; the ladder's
+  order *is* the registered claim, prose hardest and sitting below
+  unmentioned).
 - Terrain side: K4 read-set/write-set ratio, K5 with/against grain,
   K6 haunted areas (load-bearing weird code, Chesterton's fence),
   K7 invariant density, K8 safety-net quality (covered / partial / bare /
@@ -217,6 +221,48 @@ its K2 shadow", not to K1 alone, and a K1 family is not a clean K1 instrument
 however carefully everything else is held constant. The clean K2 instrument is
 a pure-K2 task: constraints living in conventions while the spec stays at
 acceptance level, where K1 is pinned at L1 and only K2 moves.
+
+**K12, derived from round 1's failing diffs (section 14) and registered here
+before any code or task names it.** The K1 sweep's non-monotonicity was
+mechanistic, not noise: `settings-l1` stated copy-on-write as an acceptance
+criterion and both models wrote an explicit deep copy; `settings-l3` said
+nothing about the merge and sonnet composed the answer out of the module's
+own copying primitives; `settings-l2` described the merge clause-for-clause
+and both models transcribed that shape, whose canonical Python spelling
+aliases by construction. So what orders the outcomes is not how much prose a
+prompt carries but how the withheld decision *reaches* the solver, and the
+order is criterion → repo-primitive → unmentioned → **prose**: prose
+displaces the module as the source of truth and steers the implementation
+shape, which is worse than saying nothing and leaving the module to be read.
+That order is the whole claim, pre-registered and falsifiable exactly as
+written — prose variants coming back easier than unmentioned ones kills it in
+public, which is the point of registering it here first. (Section 14's inline
+list transposes its last two terms; the sentence immediately after it, which
+puts "implied by prose" *below* "unmentioned", is the reading registered.)
+
+**How K1 is read across a K12 family.** K12 scopes one decision out of K1:
+where both are declared, K1 is the level the spec's *other* decisions are
+written at and K12 is the conveyance of the crux alone. A K12 family
+therefore writes every non-crux decision identically in every variant — the
+members share one acceptance-criteria block verbatim — and varies only the
+passage the crux travels in, so K1 is honestly constant while K12 moves.
+Where K12 is not declared, K1 goes on covering the whole spec, which is what
+the round-1 K1 families measured. Unlike K8's and K11's, a K12 family is
+authorable under the shipped lint today: its lever is the prompt, and the
+prompt is the one thing the lint asks a family to *vary*.
+
+**What K12 does not claim.** Difficulty and price come apart here, and round
+1 says which way round: `settings-l2`, the prose variant, cost haiku 5 turns
+against `l1`'s 7 and `l3`'s 9 — and failed both models, where `l3` was
+solved. Prose was the cheap answer and the wrong one; saying nothing cost
+more and got solved. A K12 task therefore registers the
+ladder claim on its rung, and registers an **effort claim only where the
+level's mechanism is reading burden**, which peaks at unmentioned rather than
+at prose. A turns ladder running monotonically along K12 would be a bet the
+round-1 run log already argues against. Such a claim is read against the pair
+partner rather than a category baseline, which is what the two pairs a K12
+family declares are for — criterion against repo-primitive, and prose against
+unmentioned, the second being the contrast the whole ladder turns on.
 
 Guards: difficulty must come from a named knob traceable to a real
 architect experience (no puzzle difficulty, no obfuscation); one knob at a

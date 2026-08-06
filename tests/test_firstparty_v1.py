@@ -549,11 +549,29 @@ def test_the_k9_ladder_is_the_two_levels_the_design_note_names() -> None:
         KnobActivation(id="K9", level="planted")
 
 
+def test_the_k12_ladder_is_the_four_levels_in_the_order_the_note_registered() -> None:
+    """K12's ladder is the only one whose *order* is the claim rather than a
+    vocabulary: how the withheld decision reaches the solver, easiest first,
+    prose last and below unmentioned. So the tuple is pinned as a sequence and
+    not as a set — reordering it here would rewrite a pre-registered claim
+    into whatever the next sweep happened to show — and a level off it is
+    refused, as for every other enumerated knob."""
+    assert KNOB_LEVELS["K12"] == (
+        "criterion",
+        "repo-primitive",
+        "unmentioned",
+        "prose",
+    )
+
+    with pytest.raises(ValidationError, match="not one of"):
+        KnobActivation(id="K12", level="hinted")
+
+
 def test_a_knob_whose_ladder_is_not_enumerated_takes_a_free_text_level(
     tmp_path: Path,
 ) -> None:
-    """The design note enumerates K1's, K8's and K9's levels and no others; a
-    knob it has not pinned down yet records its level as written."""
+    """The design note enumerates K1's, K8's, K9's and K12's levels and no
+    others; a knob it has not pinned down yet records its level as written."""
     clone_constructed(tmp_path, "knobbed-task", a_construction_block(
         knobs=[{"id": "K7", "level": "dense"}],
     ))
