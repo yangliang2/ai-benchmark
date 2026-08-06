@@ -31,10 +31,6 @@ are predicted to be harder than the refactor tasks that saturated at 100%, so
 each rung is pinned here and a sweep that disagrees is a visible miss.
 """
 
-import shutil
-import subprocess
-import sys
-import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
@@ -46,10 +42,10 @@ from firstparty_v1_tasks import (
     solved_tree,
     structural_half_passes,
     task_by_id,
+    visible_tests_pass,
 )
 
 from ai_benchmark.firstparty_v1 import (
-    GRADE_TIMEOUT_S,
     Rung,
     Task,
     evaluate,
@@ -235,31 +231,6 @@ K8_TASKS = (
 )
 
 BY_TASK = [pytest.param(entry, id=entry.task_id) for entry in K8_TASKS]
-
-
-def visible_tests_pass(task: Task, edit: Callable[[Path], None] | None = None) -> bool:
-    """Whether the repository's own tests — the net the agent sees — pass.
-
-    Run the way an agent would run them: plain pytest in the workdir, with
-    none of the isolation grading applies, because the question here is what
-    the agent is told rather than what the verdict reads.
-    """
-    with tempfile.TemporaryDirectory(prefix="ai-bench-k8-") as name:
-        workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
-        if edit is not None:
-            edit(workdir)
-        return (
-            subprocess.run(
-                [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
-                cwd=workdir,
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=GRADE_TIMEOUT_S,
-            ).returncode
-            == 0
-        )
 
 
 def tasks() -> list[Task]:

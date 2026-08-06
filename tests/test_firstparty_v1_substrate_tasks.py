@@ -46,25 +46,23 @@ checked-in task has to prove — lints clean, reference resolves, empty diff
 does not, scale honest to the reference diff — plus the pre-registered rungs.
 """
 
-import shutil
-import subprocess
-import sys
-import tempfile
+import random
 from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
 
 import pytest
 from firstparty_v1_tasks import (
+    VISIBLE_SUITE_SEED,
     run_for,
     solution_diff,
     solved_tree,
     structural_half_passes,
     task_by_id,
+    visible_tests_pass,
 )
 
 from ai_benchmark.firstparty_v1 import (
-    GRADE_TIMEOUT_S,
     Rung,
     Task,
     evaluate,
@@ -443,31 +441,6 @@ CARELESS = [
 ]
 
 
-def visible_tests_pass(task: Task, edit: Callable[[Path], None] | None = None) -> bool:
-    """Whether the repository's own tests — the net the agent sees — pass.
-
-    Run the way an agent would run them: plain pytest in the workdir, with
-    none of the isolation grading applies, because the question here is what
-    the agent is told rather than what the verdict reads.
-    """
-    with tempfile.TemporaryDirectory(prefix="ai-bench-substrate-") as name:
-        workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
-        if edit is not None:
-            edit(workdir)
-        return (
-            subprocess.run(
-                [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
-                cwd=workdir,
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=GRADE_TIMEOUT_S,
-            ).returncode
-            == 0
-        )
-
-
 def tasks() -> list[Task]:
     return [task_by_id(entry.task_id) for entry in SUBSTRATE_TASKS]
 
@@ -607,6 +580,32 @@ def test_the_repository_starts_out_green(entry: SubstrateTask) -> None:
     says the pruning left a working library behind: the upstream suite still
     passes over the code that was kept."""
     assert visible_tests_pass(task_by_id(entry.task_id))
+
+
+def test_the_visible_suite_runs_against_seeded_generators() -> None:
+    """What makes every green verdict above an assertion rather than a draw.
+
+    RBQL's own suite builds its tables, delimiters and line separators with
+    the unseeded global `random`, which is round 1's leading candidate for the
+    ~0.5% failure of `test_the_reference_solution_keeps_the_repository_green`
+    on this very task (design note section 15, anomaly 5). The fix is in the
+    harness's throwaway copy and nowhere near the checked-in tree, so this
+    probe rides into the copy the same way — as an edit — and asks the one
+    question that can only be answered yes if the seeding arrived: the first
+    draw of a test is the first draw of the seeded stream. Unseeded, the
+    probe fails with probability 1.
+    """
+    task = task_by_id("rbql-like-escape-wildcards")
+    first_draw = random.Random(VISIBLE_SUITE_SEED).random()
+
+    def plant_the_probe(workdir: Path) -> None:
+        (workdir / "test_seeding_probe.py").write_text(
+            "import random\n\n\n"
+            "def test_the_stream_starts_where_the_harness_seeded_it():\n"
+            f"    assert random.random() == {first_draw!r}\n"
+        )
+
+    assert visible_tests_pass(task, plant_the_probe)
 
 
 @pytest.mark.parametrize("entry", BY_TASK)

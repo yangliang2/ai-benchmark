@@ -515,7 +515,15 @@ from a repo suite that never imports `merged`).
    determinism, and seeding the vendored generators would cost nothing and
    remove the question. Worth checking against the observation that this
    same cell is the round's most extreme at 46 turns and $0.48 — suggestive,
-   not evidence.
+   not evidence. [Addressed by #29: the harness now seeds `random` in the
+   throwaway copy it runs a visible suite in — a conftest injected after the
+   edit, never in a checked-in tree, since replay of a logged run applies its
+   diff to those exact bytes. The node reran 1000 times without a failure; at
+   the 0.5% rate observed above a clean thousand happens 0.7% of the time, so
+   the rate is not merely unobserved but bounded. The upstream mechanism is
+   still not *proven*, because the seeding removes the question rather than
+   answering it; what is proven is that the gate no longer depends on the
+   answer.]
 
 ### 16. What round 2 should change (candidates, not tickets)
 

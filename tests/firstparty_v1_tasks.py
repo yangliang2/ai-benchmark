@@ -8,10 +8,15 @@ half of a grading suite on its own. Building the diff with git rather than
 hand-writing hunks is the point: the grader is then exercised against
 genuine patches (added, modified and deleted files) that cannot drift from
 what a real run would log.
+
+Running a task's *visible* suite — the net the agent inherits, as against the
+held-out one the verdict reads — is here too, because it is the one helper
+that has to be deterministic and was not: see `visible_tests_pass`.
 """
 
 import shutil
 import subprocess
+import sys
 import tempfile
 from collections.abc import Callable
 from datetime import date
@@ -94,6 +99,78 @@ def solved_tree(
 def solution_diff(task: Task, mutate: Callable[[Path], None] | None = None) -> str:
     """The workdir diff the reference solution produces."""
     return workdir_diff(task, solved_tree(task, mutate))
+
+
+# What the copy's generators are seeded with. Public because a suite proving
+# the injection reached the copy has to know what to expect from a draw.
+VISIBLE_SUITE_SEED = 20260806
+
+# Dropped into the throwaway copy a visible suite runs in, and nowhere else.
+# The checked-in `repo/` trees of swept tasks are immutable — replay of a
+# logged run applies its diff to those exact bytes — so determinism is bought
+# in the copy, which no run and no replay ever sees.
+_SEEDING_CONFTEST = f'''\
+"""Determinism for this copy, injected by the ai-benchmark test harness.
+
+Not part of the task and not in any checked-in tree: a vendored suite that
+builds its fixtures with the unseeded global `random` makes "the repository's
+own tests pass" a probabilistic claim, which is no basis for a gate. Seeded
+once before collection, because fixtures are built at import time too, and
+again before every test, so that a test drawing a different number of values
+than it did last time cannot shift what the tests after it see.
+"""
+
+import random
+
+
+def pytest_configure(config):
+    random.seed({VISIBLE_SUITE_SEED})
+
+
+def pytest_runtest_setup(item):
+    random.seed({VISIBLE_SUITE_SEED})
+'''
+
+
+def visible_tests_pass(task: Task, edit: Callable[[Path], None] | None = None) -> bool:
+    """Whether the repository's own tests — the net the agent sees — pass.
+
+    Run the way an agent would run them: plain pytest in the workdir, with
+    none of the isolation grading applies, because the question here is what
+    the agent is told rather than what the verdict reads.
+
+    With one deliberate difference from what the agent gets: the copy is
+    seeded. A vendored suite generating its own tables and delimiters with the
+    unseeded global `random` turns this gate into a coin toss — round 1 caught
+    it as a ~0.5% failure of "the reference solution keeps the repository
+    green" on the RBQL substrate — and a gate that fails once in two hundred
+    runs cannot support a verdict resting on the visible suite staying green.
+    The seeding goes in *after* the edit, because an edit that lays a solved
+    tree over the workdir replaces what is there.
+    """
+    with tempfile.TemporaryDirectory(prefix="ai-bench-visible-") as name:
+        workdir = Path(name)
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYTECODE)
+        if edit is not None:
+            edit(workdir)
+        conftest = workdir / "conftest.py"
+        assert not conftest.exists(), (
+            f"{task.id} ships its own conftest.py — seeding the copy would "
+            "replace it, so this helper would be running a different suite "
+            "than the agent sees"
+        )
+        conftest.write_text(_SEEDING_CONFTEST, encoding="utf-8")
+        return (
+            subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+                cwd=workdir,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=GRADE_TIMEOUT_S,
+            ).returncode
+            == 0
+        )
 
 
 def structural_half_passes(task: Task, diff: str) -> bool:
