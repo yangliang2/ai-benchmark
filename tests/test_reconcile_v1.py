@@ -733,6 +733,129 @@ def test_reconcile_v1_reads_a_single_level_knob_against_an_earlier_baseline(
     assert "silent round(s): 0" in flags
 
 
+# Three frozen zero-knob ids, so they count as controls, and one per rung of
+# the ladder: a baseline landing on all three rungs is what a small level
+# cannot reproduce, and it is what the checked-in refactor baseline does.
+_SPANNING_BASELINE = {
+    "ledger-split-formatting": [_HAIKU, _SONNET],
+    "exporters-pull-up-base-class": [_SONNET],
+    "gradebook-split-compute-from-format": [],
+}
+
+
+def write_baseline_spanning_the_ladder(tasks: Path) -> None:
+    for task_id in _SPANNING_BASELINE:
+        write_task(tasks, task_id, category="refactor")
+
+
+def write_baseline_log(log: Path, loaded: list[firstparty_v1.Task]) -> None:
+    """The round that swept those controls, a round before the knob's own."""
+    write_log(
+        log,
+        [task for task in loaded if task.id in _SPANNING_BASELINE],
+        {task_id: models for task_id, models in _SPANNING_BASELINE.items() if models},
+        as_of=date(2026, 8, 4),
+    )
+
+
+def test_reconcile_v1_will_not_read_separation_off_a_level_too_small_to_match(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The minimum-sample guard, on the shape that produced K7's round-1 flag.
+
+    One swept cell lands on one rung, so a level of one can never reproduce a
+    three-rung baseline whatever its run does: the sets differ by arithmetic
+    and not because the knob moved anything. The verdict has to be withdrawn
+    rather than counted as silence, too — a knob whose only comparison was
+    unreadable has not been shown to move nothing.
+    """
+    tasks = tmp_path / "tasks"
+    write_baseline_spanning_the_ladder(tasks)
+    write_task(tasks, "net-dense", category="refactor",
+               construction=constructed("K7", "dense", "sonnet-only"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_baseline_log(logs / "round-1.jsonl", loaded)
+    write_log(logs / "round-2.jsonl",
+              [task for task in loaded if task.id == "net-dense"],
+              {"net-dense": [_HAIKU, _SONNET]}, as_of=date(2026, 9, 1))
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    flags = out.split("5. no-separation flags")[1]
+    [verdict] = [line for line in flags.splitlines() if line.startswith("   K7")]
+    assert "not assessable" in verdict
+    assert "dense {haiku-solvable} vs baseline " in verdict
+    assert "dense has 1 graded cell(s) against (baseline)'s 3 distinct rung(s)" in verdict
+    assert "silent round(s): 0" in flags
+
+
+def test_reconcile_v1_still_reads_a_level_sampled_as_deeply_as_the_baseline(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The guard has to leave a real comparison alone. Three cells could have
+    landed on the baseline's three rungs and did not, so their agreeing on one
+    rung is a result rather than an arithmetic consequence — this is the shape
+    of K1's four-per-level contrast, which the guard must not touch."""
+    tasks = tmp_path / "tasks"
+    write_baseline_spanning_the_ladder(tasks)
+    for index in (1, 2, 3):
+        write_task(tasks, f"net-dense-{index}", category="refactor",
+                   construction=constructed("K7", "dense", "sonnet-only"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_baseline_log(logs / "round-1.jsonl", loaded)
+    write_log(
+        logs / "round-2.jsonl",
+        [task for task in loaded if task.id.startswith("net-")],
+        {task.id: [_HAIKU, _SONNET] for task in loaded if task.id.startswith("net-")},
+        as_of=date(2026, 9, 1),
+    )
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    flags = out.split("5. no-separation flags")[1]
+    [verdict] = [line for line in flags.splitlines() if line.startswith("   K7")]
+    assert "separated —" in verdict and "not assessable" not in verdict
+
+
+def test_reconcile_v1_guards_two_levels_of_one_knob_against_each_other(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The guard is on the comparison, not on the baseline: two levels read
+    against each other inside one round are guarded the same way, and one
+    believable difference among several is enough to call the knob separated.
+
+    Here acceptance and description each land on one rung and differ, which
+    one cell each is enough to show; intent spans two rungs, which neither of
+    them could have reproduced. The knob separated, on the pair that could.
+    """
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "open-acceptance",
+               construction=constructed("K1", "acceptance", "haiku-solvable"))
+    write_task(tasks, "open-description",
+               construction=constructed("K1", "description", "sonnet-only"))
+    for index in (1, 2):
+        write_task(tasks, f"open-intent-{index}",
+                   construction=constructed("K1", "intent", "unsolved"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {
+        "open-acceptance": [_HAIKU, _SONNET],
+        "open-description": [_SONNET],
+        "open-intent-1": [_HAIKU, _SONNET],
+        "open-intent-2": [_SONNET],
+    })
+
+    out = reconcile(tasks, log, capsys)
+
+    flags = out.split("5. no-separation flags")[1]
+    [verdict] = [line for line in flags.splitlines() if line.startswith("   K1")]
+    assert "separated —" in verdict
+
+
 def test_reconcile_v1_demotes_a_knob_silent_for_two_rounds(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -763,7 +886,43 @@ def test_reconcile_v1_demotes_a_knob_silent_for_two_rounds(
     out = capsys.readouterr().out
     assert "2 round(s)" in out
     assert "silent round(s): 2" in out
-    assert "demote" in out
+    # The demotion names the rounds it counted: it travels out of this report
+    # into the design note, and a demotion that does not say which sweeps went
+    # silent cannot be checked against them.
+    assert (
+        "demote K1: silent in as-of 2026-08-04, as-of 2026-09-01 — 2 round(s) "
+        "against the 2 the kill discipline allows"
+    ) in out
+
+
+def test_reconcile_v1_dates_the_sweeps_a_demotion_counted(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A sweep id says nothing about when it ran, so the demote line carries
+    the date alongside it. Round-1's own demotion was argued from which sweeps
+    ran and when, off a report that printed neither."""
+    tasks = tmp_path / "tasks"
+    for family in ("open", "wide"):
+        for level in ("acceptance", "description"):
+            write_task(tasks, f"{family}-{level}", construction=constructed(
+                "K1", level, "haiku-solvable", family=family))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    sweeps = [("round-one", date(2026, 8, 4), "open-"),
+              ("round-two", date(2026, 9, 1), "wide-")]
+    for sweep, as_of, stem in sweeps:
+        swept = [task for task in loaded if task.id.startswith(stem)]
+        write_log(logs / f"{sweep}.jsonl", swept,
+                  {task.id: [_HAIKU, _SONNET] for task in swept},
+                  as_of=as_of, sweep=sweep)
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    assert (
+        "demote K1: silent in sweep round-one (2026-08-04), "
+        "sweep round-two (2026-09-01) — 2 round(s)"
+    ) in out
 
 
 # --- rounds: keyed on the sweep id, falling back to the as-of date -------------

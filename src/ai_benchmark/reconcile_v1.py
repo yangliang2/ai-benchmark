@@ -26,7 +26,7 @@ from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
-from itertools import pairwise
+from itertools import combinations, pairwise
 from pathlib import Path
 from typing import Literal
 
@@ -111,6 +111,16 @@ class Round:
         if self.sweep is None:
             return f"as-of {self.as_of.isoformat()}"
         return f"sweep {self.sweep}"
+
+    @property
+    def dated_label(self) -> str:
+        """The label with the date the round ran on, for the places that name
+        a round away from the table listing it — a demotion, above all. A
+        sweep id says nothing about when it ran, and a demotion that cannot be
+        placed in time cannot be checked against the sweeps that produced it."""
+        if self.sweep is None:
+            return self.label
+        return f"{self.label} ({self.as_of.isoformat()})"
 
     @property
     def sort_key(self) -> tuple[date, str]:
@@ -692,6 +702,18 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
             indent="   ",
         ),
         *_wrap(
+            "minimum sample: a side of n graded cells lands on at most n distinct "
+            "rungs, so a side holding fewer graded cells than the other side has "
+            "rungs cannot reproduce that set however its runs come out. That "
+            "difference is arithmetic rather than a knob effect, and is reported "
+            "not assessable, naming the counts. The guard counts graded cells per "
+            "side — per level within the round, and the baseline's own cells where "
+            "a lone level is read against it — and it can only ever withdraw a "
+            "claim of separation: two sides landing on the same set always pass "
+            "it, so no knob is guarded into a silent round.",
+            indent="   ",
+        ),
+        *_wrap(
             f"kill discipline: a knob silent for {SILENT_ROUNDS_TO_DEMOTE} round(s) "
             "is demoted (docs/design/task-difficulty-and-ex-ante-profiles.md "
             "section 9). A round is one sweep, named below by the sweep id its "
@@ -716,16 +738,24 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
             for round in rounds
             if _activated_in(knob, outcomes, round)
         ]
-        silent = sum(verdict.startswith("no separation") for _, verdict in verdicts)
+        silent = [
+            round for round, verdict in verdicts
+            if verdict.startswith("no separation")
+        ]
         block = [
             f"   {knob}  {round.label}  {verdict}"
             for round, verdict in verdicts
         ] or [f"   {knob}  (no round has swept it)"]
-        tail = f"       silent round(s): {silent}"
-        if silent >= SILENT_ROUNDS_TO_DEMOTE:
+        tail = f"       silent round(s): {len(silent)}"
+        if len(silent) >= SILENT_ROUNDS_TO_DEMOTE:
+            # Naming them is the point: a demotion travels out of this report
+            # into the design note and the tickets that follow it, and one
+            # that does not say which rounds it counted cannot be checked
+            # against the sweeps it was read off.
+            counted = ", ".join(round.dated_label for round in silent)
             tail += (
-                f" — demote {knob}: silent for the "
-                f"{SILENT_ROUNDS_TO_DEMOTE} round(s) the kill discipline allows"
+                f" — demote {knob}: silent in {counted} — {len(silent)} round(s) "
+                f"against the {SILENT_ROUNDS_TO_DEMOTE} the kill discipline allows"
             )
         lines += ["", *block, tail]
     return lines
@@ -765,8 +795,7 @@ def _separation(knob: str, outcomes: Sequence[Outcome], round: Round) -> str:
     described = ", ".join(f"{level} {_rung_set_text(groups[level])}" for level in levels)
 
     if len(levels) >= 2:
-        separated = len({rung_set(groups[level]) for level in levels}) > 1
-        return f"{'separated' if separated else 'no separation'} — {described}"
+        return _compare([(level, groups[level]) for level in levels], described)
     if len(levels) == 1:
         categories = {member.task.category for member in groups[levels[0]]}
         controls = [
@@ -779,12 +808,80 @@ def _separation(knob: str, outcomes: Sequence[Outcome], round: Round) -> str:
                 f"baseline of the same category ({', '.join(sorted(categories))}) "
                 "has a rung in any round"
             )
-        separated = rung_set(groups[levels[0]]) != rung_set(controls)
-        return (
-            f"{'separated' if separated else 'no separation'} — {described} vs "
-            f"baseline {_rung_set_text(controls)}"
+        return _compare(
+            [(levels[0], groups[levels[0]]), (_BASELINE_LABEL, controls)],
+            f"{described} vs baseline {_rung_set_text(controls)}",
         )
     return "not assessable — no level of it has a rung in this round"
+
+
+Side = tuple[str, Sequence[Outcome]]
+
+
+def _compare(sides: Sequence[Side], described: str) -> str:
+    """The verdict these sides support, guarded against sample size.
+
+    Two sides separate when they landed on different sets of rungs — but a
+    difference is only evidence when both sides had the cells to land on one
+    set. `_forced_apart` is what says they did not, and this is where its
+    verdict becomes "not assessable" rather than "separated": an under-sampled
+    difference is arithmetic, and reading it as a knob effect is what put a
+    "separated" flag on K7 in round 1 (design note section 15, anomaly 3).
+
+    Every side is compared with every other, and one believable difference is
+    enough: a knob that separated two of its levels separated, whatever a
+    third under-sampled level does or does not add.
+    """
+    differing = [
+        (one, other) for one, other in combinations(sides, 2)
+        if rung_set(one[1]) != rung_set(other[1])
+    ]
+    if not differing:
+        return f"no separation — {described}"
+    forced = [pair for pair in differing if _forced_apart(pair[0][1], pair[1][1])]
+    if len(forced) < len(differing):
+        return f"separated — {described}"
+    return (
+        f"not assessable — {described}; "
+        + "; ".join(_forced_text(one, other) for one, other in forced)
+    )
+
+
+def _forced_apart(one: Sequence[Outcome], other: Sequence[Outcome]) -> bool:
+    """Whether these two sides could not have matched however their runs came out.
+
+    The minimum-sample guard, and the reason it is stated as a comparison
+    rather than as a constant: a side of n graded cells lands on at most n
+    distinct rungs, so a side holding fewer cells than the other side has
+    rungs cannot reproduce that set whatever any of its runs does. The
+    difference between them is then arithmetic and not a knob effect.
+
+    It cannot silence a genuinely-sampled comparison, and cannot silence a
+    knob into demotion, because sides landing on the *same* set always pass
+    it: a set drawn from n cells holds at most n rungs, so each side already
+    has at least as many cells as the shared set has rungs. The guard only
+    ever withdraws a claim of separation.
+    """
+    return (
+        len(_graded(one)) < len(rung_set(other))
+        or len(_graded(other)) < len(rung_set(one))
+    )
+
+
+def _graded(outcomes: Sequence[Outcome]) -> list[Outcome]:
+    """The outcomes a set comparison is built from: the ones with a rung."""
+    return [outcome for outcome in outcomes if outcome.determined]
+
+
+def _forced_text(one: Side, other: Side) -> str:
+    small, large = sorted(
+        (one, other), key=lambda side: (len(_graded(side[1])), side[0])
+    )
+    return (
+        f"{small[0]} has {len(_graded(small[1]))} graded cell(s) against "
+        f"{large[0]}'s {len(rung_set(large[1]))} distinct rung(s), so the two "
+        "sets could not have matched however the runs came out"
+    )
 
 
 # --- the command ---------------------------------------------------------------
