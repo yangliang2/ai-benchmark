@@ -364,6 +364,21 @@ def by_knob_level(outcomes: Iterable[Outcome]) -> dict[tuple[str, str], list[Out
     return groups
 
 
+def pairs_by_id(outcomes: Iterable[Outcome]) -> dict[str, list[Outcome]]:
+    """The outcomes under each pair id, unpaired tasks left out.
+
+    Every member is kept, including the ones belonging to a pair of a size no
+    pair should have: what the report and the effort grading each do with such
+    a pair differs, and both need to see it to say so.
+    """
+    pairs: dict[str, list[Outcome]] = {}
+    for outcome in constructed(outcomes):
+        assert outcome.construction is not None
+        if outcome.construction.pair is not None:
+            pairs.setdefault(outcome.construction.pair, []).append(outcome)
+    return pairs
+
+
 def rung_set(outcomes: Iterable[Outcome]) -> frozenset[Observed]:
     """The rungs these outcomes landed on, undetermined ones left out."""
     return frozenset(outcome.rung for outcome in outcomes if outcome.determined)
@@ -440,14 +455,8 @@ def _pair_partners(outcomes: Sequence[Outcome]) -> dict[str, Outcome]:
     lint refuses such a pair before a sweep; this is what the report does if
     one reaches it anyway, rather than picking a member to compare against.
     """
-    pairs: dict[str, list[Outcome]] = {}
-    for outcome in constructed(outcomes):
-        assert outcome.construction is not None
-        if outcome.construction.pair is not None:
-            pairs.setdefault(outcome.construction.pair, []).append(outcome)
-
     partners: dict[str, Outcome] = {}
-    for members in pairs.values():
+    for members in pairs_by_id(outcomes).values():
         if len(members) == 2:
             one, other = members
             partners[one.task.id] = other
@@ -840,12 +849,7 @@ def _monotonic(ordered: Sequence[Outcome]) -> str:
 
 
 def _pairs(outcomes: Sequence[Outcome]) -> list[str]:
-    pairs: dict[str, list[Outcome]] = {}
-    for outcome in constructed(outcomes):
-        assert outcome.construction is not None
-        if outcome.construction.pair is not None:
-            pairs.setdefault(outcome.construction.pair, []).append(outcome)
-
+    pairs = pairs_by_id(outcomes)
     lines = ["4. crux/control pairs"]
     if not pairs:
         return [*lines, "   (no paired task in the task set)"]
@@ -1098,9 +1102,24 @@ def _forced_text(one: Side, other: Side) -> str:
     )
 
 
+def _factor_text(factor: float) -> str:
+    """The registered factor, printed so it reads back as itself.
+
+    `repr` and not a fixed precision: a factor is a bet, and a format that
+    rounds it prints a claim nobody registered. `:g` rounded 1.5000001 to six
+    significant digits and put "1.5" on the page beside the 1.50x ratio the
+    same claim had been missed by, so the section read as an argument with
+    itself over a number it had rounded. A float's repr is the shortest string
+    that reads back as that exact float, so no two accepted factors print
+    alike and none prints as a number it is not.
+    """
+    return repr(factor)
+
+
 def _claim_text(claim: EffortClaim) -> str:
     """The registered claim, in the words it was registered in."""
-    return f"{claim.metric} >= {claim.at_least_factor:g}x {claim.comparator}"
+    factor = _factor_text(claim.at_least_factor)
+    return f"{claim.metric} >= {factor}x {claim.comparator}"
 
 
 def _measured(value: float | None, metric: EffortMetric) -> str:
@@ -1158,7 +1177,9 @@ def _effort_claims(outcomes: Sequence[Outcome]) -> list[str]:
         ),
         *_wrap(
             "not assessable: a missing run on either side, a pair without a "
-            "partner, or a category with no swept control. None of them is "
+            "partner, a category with no swept control, or a comparator that "
+            "measured zero — no multiple of zero is anything, so a claim read "
+            "against it is unreadable rather than met. None of them is "
             "guessed at and none is scored — an unswept comparator is the "
             "absence of a measurement, not a claim that came out false.",
             indent="   ",
@@ -1166,8 +1187,13 @@ def _effort_claims(outcomes: Sequence[Outcome]) -> list[str]:
         "",
     ]
 
+    # `against` names the other side on every row, hit and miss alike, the way
+    # sections 2 and 4 name both sides of every comparison they print. Without
+    # it only the misses said what "1.50x" was a multiple of, and a hit row's
+    # two numbers sat beside each other unattributed.
     rows: list[Sequence[str]] = [
-        ("task", "model", "claim", "comparator", "observed", "ratio", "verdict")
+        ("task", "model", "claim", "against", "comparator", "observed", "ratio",
+         "verdict")
     ]
     for assessment in assessments:
         metric = assessment.claim.metric
@@ -1175,6 +1201,7 @@ def _effort_claims(outcomes: Sequence[Outcome]) -> list[str]:
             assessment.task,
             assessment.model,
             _claim_text(assessment.claim),
+            assessment.against,
             _measured(assessment.comparator, metric),
             _measured(assessment.observed, metric),
             f"{assessment.ratio:.2f}x" if assessment.ratio is not None else "-",
@@ -1189,14 +1216,14 @@ def _effort_claims(outcomes: Sequence[Outcome]) -> list[str]:
         lines += ["", "   misses, with the claim that was registered for them:"]
         for assessment in misses:
             metric = assessment.claim.metric
+            factor = _factor_text(assessment.claim.at_least_factor)
             # A verdict is only ever reached with both sides measured and a
             # non-zero comparator, so a miss always has a ratio to print.
             assert assessment.ratio is not None
             lines += [
                 f"   {assessment.task} ({assessment.model}):",
                 *_wrap(
-                    f"claimed {metric} at least "
-                    f"{assessment.claim.at_least_factor:g}x {assessment.against}, "
+                    f"claimed {metric} at least {factor}x {assessment.against}, "
                     f"which measured {_measured(assessment.comparator, metric)}; "
                     f"it spent {_measured(assessment.observed, metric)} "
                     f"({assessment.ratio:.2f}x)",

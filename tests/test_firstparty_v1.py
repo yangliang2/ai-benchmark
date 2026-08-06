@@ -726,6 +726,31 @@ def test_an_effort_claim_that_claims_nothing_fails_loudly(
         load_task_set(tmp_path)
 
 
+@pytest.mark.parametrize(
+    ("factor", "spelling"),
+    [(float("nan"), ".nan"), (float("inf"), ".inf")],
+    ids=["nan", "inf"],
+)
+def test_an_effort_claim_on_a_factor_that_is_not_a_number_fails_loudly(
+    tmp_path: Path, factor: float, spelling: str
+) -> None:
+    """YAML spells both of these, pydantic keeps both as floats, and the bound
+    below catches neither: a nan compares false against every bound, and an
+    infinity clears it and then claims a multiple no run could ever measure."""
+    task_dir = clone_constructed(tmp_path, "knobbed-task", a_construction_block(
+        pair="crux-and-control",
+        prediction=a_prediction(
+            effort=AN_EFFORT_CLAIM | {"at_least_factor": factor}
+        ),
+    ))
+    # The spelling on disk, because what makes these reachable at all is that
+    # a hand-written task.yaml can say them.
+    assert f"at_least_factor: {spelling}" in (task_dir / "task.yaml").read_text()
+
+    with pytest.raises(IngestError, match="finite"):
+        load_task_set(tmp_path)
+
+
 def test_an_effort_claim_against_a_pair_partner_that_does_not_exist_fails_loudly(
     tmp_path: Path,
 ) -> None:

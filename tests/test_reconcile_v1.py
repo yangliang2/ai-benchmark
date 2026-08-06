@@ -1163,13 +1163,19 @@ def test_reconcile_v1_scores_an_effort_claim_that_came_true(
 
     assert "hit-rate: 2/2 assessed (100.0%); 0 not assessable" in effort
     rows = [line.split() for line in effort.splitlines() if "crux-task" in line]
+    # The hit rows name what they were read against, the same way a miss does:
+    # "1.50x" is a multiple of something, and the row says of what.
     assert rows == [
-        ["crux-task", _HAIKU, "turns", ">=", "1.5x", "pair", "10", "15", "1.50x", "hit"],
-        ["crux-task", _SONNET, "turns", ">=", "1.5x", "pair", "10", "15", "1.50x",
-         "hit"],
+        ["crux-task", _HAIKU, "turns", ">=", "1.5x", "pair", "control-task",
+         "10", "15", "1.50x", "hit"],
+        ["crux-task", _SONNET, "turns", ">=", "1.5x", "pair", "control-task",
+         "10", "15", "1.50x", "hit"],
     ]
-    # The control registered no claim, so it is scored nowhere.
-    assert not [line for line in effort.splitlines() if "control-task" in line]
+    # The control registered no claim, so it is scored nowhere — it appears
+    # only as the thing the crux's rows were read against, never as a row of
+    # its own.
+    assert not [line for line in effort.splitlines()
+                if line.split()[:1] == ["control-task"]]
 
 
 def test_reconcile_v1_echoes_the_claim_an_effort_miss_was_registered_under(
@@ -1198,6 +1204,38 @@ def test_reconcile_v1_echoes_the_claim_an_effort_miss_was_registered_under(
     ) in " ".join(effort.split())
 
 
+def test_reconcile_v1_prints_the_factor_the_claim_was_registered_at(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A factor a rounding format would round away, printed whole.
+
+    1.5000001 shown as "1.5" beside a ratio of "1.50x" reads as a claim that
+    was met and scored a miss, so the section would be arguing with itself
+    about a number it had rounded itself. The claim is a bet, and a report
+    that rounds the bet reports one nobody registered.
+    """
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "haiku-solvable", pair="thing",
+        effort=claim("pair", "turns", 1.5000001),
+    ))
+    write_task(tasks, "control-task", construction=constructed(
+        "K9", "none", "haiku-solvable", pair="thing"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "crux-task": {_HAIKU: (15, 0.30), _SONNET: (15, 0.30)},
+        "control-task": {_HAIKU: (10, 0.20), _SONNET: (10, 0.20)},
+    })
+
+    effort = " ".join(effort_block(reconcile(tasks, log, capsys)).split())
+
+    assert "turns >= 1.5000001x pair" in effort
+    assert "turns >= 1.5x pair" not in effort
+    # And in the miss echo, where the same factor is spelt out in words.
+    assert "claimed turns at least 1.5000001x control-task" in effort
+
+
 def test_reconcile_v1_reads_a_baseline_effort_claim_against_its_own_category(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -1224,12 +1262,12 @@ def test_reconcile_v1_reads_a_baseline_effort_claim_against_its_own_category(
 
     effort = effort_block(reconcile(tasks, log, capsys))
 
-    [row] = [line.split() for line in effort.splitlines()
+    [row] = [line for line in effort.splitlines()
              if line.split()[:2] == ["net-task", _HAIKU]]
-    assert row == [
-        "net-task", _HAIKU, "cost", ">=", "2x", "baseline",
-        "$0.1500", "$0.2500", "1.67x", "miss",
-    ]
+    assert " ".join(row.split()) == (
+        f"net-task {_HAIKU} cost >= 2.0x baseline "
+        "the refactor baseline (mean of 2) $0.1500 $0.2500 1.67x miss"
+    )
     # The mean's denominator travels with the miss: two controls, not three.
     assert "the refactor baseline (mean of 2)" in " ".join(effort.split())
 
@@ -1375,6 +1413,9 @@ def test_reconcile_v1_will_not_assess_a_claim_against_a_comparator_of_zero(
 
     assert "hit-rate: 0/0 assessed (n/a); 2 not assessable" in effort
     assert f"control-task measured 0 cost on {_HAIKU}" in effort
+    # And the legend lists it beside the other three causes, so a reader meets
+    # it before the row that hit it rather than only in the row's own reason.
+    assert "or a comparator that measured zero" in " ".join(effort.split())
 
 
 def test_reconcile_v1_says_when_no_effort_claim_is_registered_at_all(
@@ -1438,7 +1479,7 @@ def test_reconcile_v1_renders_effort_claims_byte_identically_twice_over(
     assert effort_block(reseeded.stdout) == first
     # Both comparators and both metrics are on the page, so what is being
     # pinned as stable is the whole section rather than one branch of it.
-    assert "cost >= 2x baseline" in first and "turns >= 1.5x pair" in first
+    assert "cost >= 2.0x baseline" in first and "turns >= 1.5x pair" in first
     assert "hit" in first and "miss" in first
 
 

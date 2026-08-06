@@ -58,6 +58,7 @@ no network and no installs.
 
 import importlib.util
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -244,6 +245,18 @@ class EffortClaim(BaseModel):
 
     @model_validator(mode="after")
     def the_factor_claims_something(self) -> Self:
+        if not math.isfinite(self.at_least_factor):
+            # YAML spells these `.nan` and `.inf`, and both survive parsing as
+            # floats. A nan compares false against every bound, so it slips
+            # past the test below; an inf passes it and then claims a multiple
+            # no measurement can reach. Neither is a bet a sweep could lose.
+            raise ValueError(
+                f"at_least_factor {self.at_least_factor} is not a finite "
+                "number — a claim is settled by comparing a measurement "
+                "against this multiple, and neither a nan nor an infinity is "
+                "a multiple any run could be read against. Register a finite "
+                "factor above 1.0"
+            )
         if self.at_least_factor <= 1.0:
             raise ValueError(
                 f"at_least_factor {self.at_least_factor} claims nothing — the "
