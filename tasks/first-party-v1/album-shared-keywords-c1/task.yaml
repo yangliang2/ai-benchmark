@@ -1,0 +1,50 @@
+# K12 family album-shared-keywords, level 1 of 4 (criterion): the one
+# withheld decision — that two keywords are the same keyword when they
+# canonicalise the same way — is handed over as an acceptance criterion. The
+# repo, the grading suite and the reference solution are identical across the
+# four variants, and so is every non-crux criterion: the prompts share one
+# block verbatim and differ only in the passage the crux travels in.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise shared_keywords, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: album-shared-keywords-c1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small photo-album module in album.py.
+
+  Add a function `shared_keywords(one, other)` to album.py that reports the
+  keywords two albums have in common. It must satisfy all of the following:
+
+  - `shared_keywords` returns a list of canonical keywords in alphabetical
+    order, with no keyword in it twice.
+  - Two albums carrying nothing in common give `[]`, and so do two albums
+    with nothing filed against them at all.
+  - Neither album is modified.
+
+  - Two keywords are the same keyword when they canonicalise the same way,
+    so an album carrying `Sunset Over Water` and one carrying `SUNSET over
+    water` have that keyword in common.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: criterion
+  family: album-shared-keywords
+  pair: album-shared-keywords-stated
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the crux is handed over as an acceptance criterion, with an example of
+      the two spellings, so nothing about matching has to be recovered from
+      the module and the change is transcription

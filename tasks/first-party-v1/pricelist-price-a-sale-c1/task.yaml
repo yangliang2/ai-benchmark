@@ -1,0 +1,50 @@
+# K12 family pricelist-price-a-sale, level 1 of 4 (criterion): the one
+# withheld decision — that a sale is priced by the highest-ranked rule that
+# speaks to it, on its own — is handed over as an acceptance criterion. The
+# repo, the grading suite and the reference solution are identical across the
+# four variants, and so is every non-crux criterion: the prompts share one
+# block verbatim and differ only in the passage the crux travels in.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise price_for, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: pricelist-price-a-sale-c1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small price-list module in pricelist.py.
+
+  Add a function `price_for(price_list, sku, quantity)` to pricelist.py that
+  says what a customer pays for that many of that sku. It must satisfy all of
+  the following:
+
+  - The price is a whole number of pence: the sku's list price times the
+    quantity, with any discount taken off it the way `discounted` takes one.
+  - With no rule speaking to the sale, the customer pays the list price for
+    each one.
+  - The price list is not modified.
+
+  - Where more than one rule speaks to a sale, the highest-ranked of them
+    decides the price on its own, and the rules it outranks are not applied
+    as well.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: criterion
+  family: pricelist-price-a-sale
+  pair: pricelist-price-a-sale-stated
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the crux is handed over as an acceptance criterion, so which rule wins
+      and that the losers are dropped are both stated, and what is left is
+      picking the maximum by a ranking the module already computes

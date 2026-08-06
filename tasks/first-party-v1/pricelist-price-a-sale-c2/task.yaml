@@ -1,0 +1,56 @@
+# K12 family pricelist-price-a-sale, level 2 of 4 (repo-primitive): the crux
+# is not stated. The prompt points at the module function that already
+# embodies it — `rank`, which `describe_rules` is written on — and leaves the
+# rule itself to be read off there. The repo, the grading suite and the
+# reference solution are identical across the four variants, and so is every
+# non-crux criterion: the prompts share one block verbatim and differ only in
+# the passage the crux travels in.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise price_for, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: pricelist-price-a-sale-c2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small price-list module in pricelist.py.
+
+  Add a function `price_for(price_list, sku, quantity)` to pricelist.py that
+  says what a customer pays for that many of that sku. It must satisfy all of
+  the following:
+
+  - The price is a whole number of pence: the sku's list price times the
+    quantity, with any discount taken off it the way `discounted` takes one.
+  - With no rule speaking to the sale, the customer pays the list price for
+    each one.
+  - The price list is not modified.
+
+  `pricelist.py` already ranks one rule against another, and `describe_rules`
+  is written on that ranking; build `price_for` on it too, rather than on the
+  order the rules happen to appear in.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: repo-primitive
+  family: pricelist-price-a-sale
+  pair: pricelist-price-a-sale-stated
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the rule is not stated but the prompt points straight at the ranking
+      that carries it, so the module still has to be opened and read where
+      the criterion variant did not, and what is found there says which rule
+      wins
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.1

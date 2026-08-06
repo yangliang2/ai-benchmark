@@ -1,0 +1,54 @@
+# K12 family album-shared-keywords, level 3 of 4 (unmentioned): the prompt
+# says nothing whatever about the crux. The module carries it — the docstring
+# says which questions are answered canonically, and `keyword_set`,
+# `has_keyword` and `describe` all answer that way — so the decision is
+# recoverable from the repository alone, which is what makes the variant
+# solvable rather than a coin toss. The repo, the grading suite and the
+# reference solution are identical across the four variants, and so is every
+# non-crux criterion: this variant's prompt is exactly the shared block, and
+# the other three add one passage to it.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise shared_keywords, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: album-shared-keywords-c3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small photo-album module in album.py.
+
+  Add a function `shared_keywords(one, other)` to album.py that reports the
+  keywords two albums have in common. It must satisfy all of the following:
+
+  - `shared_keywords` returns a list of canonical keywords in alphabetical
+    order, with no keyword in it twice.
+  - Two albums carrying nothing in common give `[]`, and so do two albums
+    with nothing filed against them at all.
+  - Neither album is modified.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: unmentioned
+  family: album-shared-keywords
+  pair: album-shared-keywords-withheld
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      nothing points at the matching rule, so the module is the only place it
+      can come from and the answer has to be composed out of what is found
+      there — the route round 1's settings-l3 took and solved, which is why
+      this is not bet above the bottom rung
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.2

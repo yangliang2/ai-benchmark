@@ -1,0 +1,56 @@
+# K12 family album-shared-keywords, level 2 of 4 (repo-primitive): the crux
+# is not stated. The prompt points at the module function that already
+# embodies it — `keyword_set`, which answers which keywords an album carries
+# — and leaves the rule itself to be read off there. The repo, the grading
+# suite and the reference solution are identical across the four variants,
+# and so is every non-crux criterion: the prompts share one block verbatim
+# and differ only in the passage the crux travels in.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise shared_keywords, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: album-shared-keywords-c2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small photo-album module in album.py.
+
+  Add a function `shared_keywords(one, other)` to album.py that reports the
+  keywords two albums have in common. It must satisfy all of the following:
+
+  - `shared_keywords` returns a list of canonical keywords in alphabetical
+    order, with no keyword in it twice.
+  - Two albums carrying nothing in common give `[]`, and so do two albums
+    with nothing filed against them at all.
+  - Neither album is modified.
+
+  `album.py` already answers which keywords an album carries, the way this
+  module answers that question; build `shared_keywords` out of that answer
+  rather than reaching into the filed keywords yourself.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: repo-primitive
+  family: album-shared-keywords
+  pair: album-shared-keywords-stated
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the rule is not stated but the prompt points straight at the primitive
+      that enforces it, so the module still has to be opened and read where
+      the criterion variant did not, and composing from what is found there
+      is the answer
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.1

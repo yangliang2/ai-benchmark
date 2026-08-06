@@ -1,0 +1,54 @@
+# K12 family pricelist-price-a-sale, level 3 of 4 (unmentioned): the prompt
+# says nothing whatever about the crux. The module carries it — the docstring
+# says a sale is priced by one rule and which one, `rank` computes the
+# ranking and `describe_rules` sorts by it — so the decision is recoverable
+# from the repository alone, which is what makes the variant solvable rather
+# than a coin toss. The repo, the grading suite and the reference solution
+# are identical across the four variants, and so is every non-crux criterion:
+# this variant's prompt is exactly the shared block, and the other three add
+# one passage to it.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise price_for, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: pricelist-price-a-sale-c3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small price-list module in pricelist.py.
+
+  Add a function `price_for(price_list, sku, quantity)` to pricelist.py that
+  says what a customer pays for that many of that sku. It must satisfy all of
+  the following:
+
+  - The price is a whole number of pence: the sku's list price times the
+    quantity, with any discount taken off it the way `discounted` takes one.
+  - With no rule speaking to the sale, the customer pays the list price for
+    each one.
+  - The price list is not modified.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: unmentioned
+  family: pricelist-price-a-sale
+  pair: pricelist-price-a-sale-withheld
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      nothing points at the ranking, so the module is the only place the rule
+      can come from and the answer has to be composed out of what is found
+      there — the route round 1's settings-l3 took and solved, which is why
+      this is not bet above the bottom rung
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.2

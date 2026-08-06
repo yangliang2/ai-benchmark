@@ -1,0 +1,59 @@
+# K12 family pricelist-price-a-sale, level 4 of 4 (prose): the crux is not
+# stated and nothing is pointed at. What the prompt adds instead is a
+# description of the change's shape — pick out the rules that speak to the
+# sale and let them settle the price between them — which is true of the
+# change and whose canonical Python spelling applies every one of them in
+# turn. This is the level round 1 found to be the hardest, below saying
+# nothing at all, because prose displaces the module as the source of truth
+# (design note section 14). The decision is still recoverable from the
+# repository, exactly as at level 3: the prose narrows nothing the module
+# says, and its closing sentence sends the reader back to the module — the
+# same sentence round 1's settings-l2 carried, and lost with. The repo, the
+# grading suite and the reference solution are identical across the four
+# variants, and so is every non-crux criterion.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise price_for, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: pricelist-price-a-sale-c4
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small price-list module in pricelist.py.
+
+  Add a function `price_for(price_list, sku, quantity)` to pricelist.py that
+  says what a customer pays for that many of that sku. It must satisfy all of
+  the following:
+
+  - The price is a whole number of pence: the sku's list price times the
+    quantity, with any discount taken off it the way `discounted` takes one.
+  - With no rule speaking to the sale, the customer pays the list price for
+    each one.
+  - The price list is not modified.
+
+  Think of it as looking down the rules the shop has put up, picking out the
+  ones that speak to the sale in front of you, and letting them settle the
+  price between them. Whatever the module already makes of one rule against
+  another, `price_for` should make of them too.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: prose
+  family: pricelist-price-a-sale
+  pair: pricelist-price-a-sale-withheld
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the described shape spells naturally as applying every rule that speaks
+      in turn, which is wrong wherever two of them speak at once, and the
+      prose displaces the module that would have said only one applies — the
+      mechanism that sank both models on round 1's settings-l2

@@ -1,0 +1,55 @@
+# K12 family album-shared-keywords, level 4 of 4 (prose): the crux is not
+# stated and nothing is pointed at. What the prompt adds instead is a
+# description of the change's shape — walk one album's keywords, keep the
+# ones the other carries — which is true of the change and whose canonical
+# Python spelling compares the keywords as they were written. This is the
+# level round 1 found to be the hardest, below saying nothing at all, because
+# prose displaces the module as the source of truth (design note section 14).
+# The decision is still recoverable from the repository, exactly as at level
+# 3: the prose narrows nothing the module says. The repo, the grading suite
+# and the reference solution are identical across the four variants, and so
+# is every non-crux criterion.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# feature-dev: the grading tests exercise shared_keywords, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: album-shared-keywords-c4
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small photo-album module in album.py.
+
+  Add a function `shared_keywords(one, other)` to album.py that reports the
+  keywords two albums have in common. It must satisfy all of the following:
+
+  - `shared_keywords` returns a list of canonical keywords in alphabetical
+    order, with no keyword in it twice.
+  - Two albums carrying nothing in common give `[]`, and so do two albums
+    with nothing filed against them at all.
+  - Neither album is modified.
+
+  Think of it as walking the keywords filed against the first album and
+  keeping each one the second album carries too.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: prose
+  family: album-shared-keywords
+  pair: album-shared-keywords-withheld
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the described shape spells naturally as a membership test on the
+      keywords as written, which is wrong wherever the two albums typed one
+      keyword differently, and the prose displaces the module that would have
+      said so — the mechanism that sank both models on round 1's settings-l2
