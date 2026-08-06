@@ -1010,19 +1010,19 @@ def _varied_knob_problem(pair: str, one: Task, other: Task) -> str | None:
 
     Exactly one knob moves between a crux and its control. Two moving knobs
     leave the delta belonging to neither; none at all makes two controls;
-    and members declaring different knobs entirely leave the report naming a
-    varied knob one of them never set, which it can only render as a level
-    of `-`.
+    and knob sets that differ at all — disjoint, or one nested in the other —
+    leave some knob declared on a single side, which the report can only
+    render as a level of `-` opposite it.
     """
     assert one.construction is not None and other.construction is not None
     held, variant = one.construction.levels, other.construction.levels
     if set(held) != set(variant):
         return (
             f"pair {pair!r} members do not set the same knob(s): {one.id} sets "
-            f"{sorted(held)} and {other.id} sets {sorted(variant)} — the knob "
-            "varying across the pair is then whichever one a single member "
-            "declares, which reconciliation renders as a crux/control contrast "
-            "with the other side at a level of '-'"
+            f"{sorted(held)} and {other.id} sets {sorted(variant)} — a knob only "
+            "one of them declares leaves the other side with no level to print, "
+            "which reconciliation renders as a crux/control contrast at a level "
+            "of '-', whatever the knobs they do share did"
         )
     varied = sorted(knob_id for knob_id in held if held[knob_id] != variant[knob_id])
     if not varied:

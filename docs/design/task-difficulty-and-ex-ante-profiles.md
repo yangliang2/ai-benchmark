@@ -487,8 +487,8 @@ from a repo suite that never imports `merged`).
    in section 12. The criterion needs a minimum-n guard, or set comparison
    needs replacing by something that degrades gracefully at n=1 per cell.
    [Resolved by #29: the guard is the comparison's own arithmetic rather than
-   a constant — a side of n graded cells lands on at most n distinct rungs, so
-   a side with fewer cells than the other has rungs is reported not assessable
+   a constant — a side of n graded tasks lands on at most n distinct rungs, so
+   a side with fewer tasks than the other has rungs is reported not assessable
    with the counts named. K7's flag now reads "not assessable"; nothing else in
    the report moved, because sides landing on the same set always pass the
    guard, so it can only ever withdraw a claim of separation.]

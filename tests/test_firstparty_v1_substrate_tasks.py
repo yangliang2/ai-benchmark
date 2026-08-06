@@ -592,8 +592,18 @@ def test_the_visible_suite_runs_against_seeded_generators() -> None:
     harness's throwaway copy and nowhere near the checked-in tree, so this
     probe rides into the copy the same way — as an edit — and asks the one
     question that can only be answered yes if the seeding arrived: the first
-    draw of a test is the first draw of the seeded stream. Unseeded, the
-    probe fails with probability 1.
+    draw of the seeded stream is what the copy hands out. Unseeded, the probe
+    fails with probability 1.
+
+    It asks it twice, because the injection is in two halves and either alone
+    would answer a single question. The import-time draw is the collection
+    seeding's, so stripping `pytest_configure` leaves it drawn off whatever
+    the interpreter started with; the in-test draw is the per-test seeding's,
+    so stripping `pytest_runtest_setup` leaves it wherever the modules
+    collected after this one left the stream. Both land on the *first* value
+    because nothing in this substrate's suite draws while being imported —
+    true of the pinned tree the probe runs against, which is the only tree it
+    runs against.
     """
     task = task_by_id("rbql-like-escape-wildcards")
     first_draw = random.Random(VISIBLE_SUITE_SEED).random()
@@ -601,7 +611,9 @@ def test_the_visible_suite_runs_against_seeded_generators() -> None:
     def plant_the_probe(workdir: Path) -> None:
         (workdir / "test_seeding_probe.py").write_text(
             "import random\n\n\n"
+            "AT_IMPORT = random.random()\n\n\n"
             "def test_the_stream_starts_where_the_harness_seeded_it():\n"
+            f"    assert AT_IMPORT == {first_draw!r}\n"
             f"    assert random.random() == {first_draw!r}\n"
         )
 

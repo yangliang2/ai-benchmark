@@ -787,7 +787,7 @@ def test_reconcile_v1_will_not_read_separation_off_a_level_too_small_to_match(
     [verdict] = [line for line in flags.splitlines() if line.startswith("   K7")]
     assert "not assessable" in verdict
     assert "dense {haiku-solvable} vs baseline " in verdict
-    assert "dense has 1 graded cell(s) against (baseline)'s 3 distinct rung(s)" in verdict
+    assert "dense has 1 graded task(s) against (baseline)'s 3 distinct rung(s)" in verdict
     assert "silent round(s): 0" in flags
 
 

@@ -702,12 +702,12 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
             indent="   ",
         ),
         *_wrap(
-            "minimum sample: a side of n graded cells lands on at most n distinct "
-            "rungs, so a side holding fewer graded cells than the other side has "
+            "minimum sample: a side of n graded tasks lands on at most n distinct "
+            "rungs, so a side holding fewer graded tasks than the other side has "
             "rungs cannot reproduce that set however its runs come out. That "
             "difference is arithmetic rather than a knob effect, and is reported "
-            "not assessable, naming the counts. The guard counts graded cells per "
-            "side — per level within the round, and the baseline's own cells where "
+            "not assessable, naming the counts. The guard counts graded tasks per "
+            "side — per level within the round, and the baseline's own tasks where "
             "a lone level is read against it — and it can only ever withdraw a "
             "claim of separation: two sides landing on the same set always pass "
             "it, so no knob is guarded into a silent round.",
@@ -822,7 +822,7 @@ def _compare(sides: Sequence[Side], described: str) -> str:
     """The verdict these sides support, guarded against sample size.
 
     Two sides separate when they landed on different sets of rungs — but a
-    difference is only evidence when both sides had the cells to land on one
+    difference is only evidence when both sides had the tasks to land on one
     set. `_forced_apart` is what says they did not, and this is where its
     verdict becomes "not assessable" rather than "separated": an under-sampled
     difference is arithmetic, and reading it as a knob effect is what put a
@@ -851,15 +851,15 @@ def _forced_apart(one: Sequence[Outcome], other: Sequence[Outcome]) -> bool:
     """Whether these two sides could not have matched however their runs came out.
 
     The minimum-sample guard, and the reason it is stated as a comparison
-    rather than as a constant: a side of n graded cells lands on at most n
-    distinct rungs, so a side holding fewer cells than the other side has
+    rather than as a constant: a side of n graded tasks lands on at most n
+    distinct rungs, so a side holding fewer tasks than the other side has
     rungs cannot reproduce that set whatever any of its runs does. The
     difference between them is then arithmetic and not a knob effect.
 
     It cannot silence a genuinely-sampled comparison, and cannot silence a
     knob into demotion, because sides landing on the *same* set always pass
-    it: a set drawn from n cells holds at most n rungs, so each side already
-    has at least as many cells as the shared set has rungs. The guard only
+    it: a set drawn from n tasks holds at most n rungs, so each side already
+    has at least as many tasks as the shared set has rungs. The guard only
     ever withdraws a claim of separation.
     """
     return (
@@ -878,7 +878,7 @@ def _forced_text(one: Side, other: Side) -> str:
         (one, other), key=lambda side: (len(_graded(side[1])), side[0])
     )
     return (
-        f"{small[0]} has {len(_graded(small[1]))} graded cell(s) against "
+        f"{small[0]} has {len(_graded(small[1]))} graded task(s) against "
         f"{large[0]}'s {len(rung_set(large[1]))} distinct rung(s), so the two "
         "sets could not have matched however the runs came out"
     )
