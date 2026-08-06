@@ -22,7 +22,9 @@ the reflex the domain suggests: charge every fault for all the downtime it was
 over, take every field from the record seen more recently, drop entries until
 the count fits. The controls are probed with the slip a careless reader of a
 fully stated spec makes, so that "nothing left to invent" cannot quietly mean
-"nothing left to get wrong".
+"nothing left to get wrong" — and so is a crux, wherever a rule it does state
+outright has a near reading that is wrong, since a crux's tolerance is meant
+to reach one decision and no further.
 
 A sibling of `test_firstparty_v1_k9_tasks.py` rather than an extension of it,
 for two reasons that both come out of the round-1 verdicts. That suite pins
@@ -54,6 +56,7 @@ from firstparty_v1_tasks import (
     task_by_id,
     visible_tests_pass,
 )
+from test_firstparty_v1_k9_tasks import PROBES as ROUND_ONE_PROBES
 
 from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
@@ -195,6 +198,48 @@ DROP_ENTRIES_UNTIL_THE_COUNT_FITS = '''def digest(entries, budget):
 '''
 
 
+# --- the slip a careless reader of a rule the crux does state makes -------------
+
+# A crux task states rules too, and one of the dossier crux's is a bar with a
+# near reading that is wrong: a disputed address may only be taken from a
+# record that holds every address field *either of them holds*, which is not
+# the same as one that holds all three. Where neither record has a postcode,
+# the bar is a street and a town, both of them clear it, and this reading
+# refuses a merge the rules allow.
+DEMAND_A_WHOLE_ADDRESS_OF_A_CANDIDATE = '''\
+def merge(one, other):
+    """The two dossiers as one record: field to a (value, source) pair.
+
+    The reference's policy for a disputed address — the record seen more
+    recently supplies it — with the bar a record has to clear to supply it
+    read as all three address fields.
+    """
+    if one.seen == other.seen:
+        raise ValueError("neither of them is the later record")
+    later, earlier = sorted((one, other), key=lambda dossier: -dossier.seen)
+    record = {}
+    for field in FIELDS:
+        for dossier in (later, earlier):
+            if value(dossier, field) is not None:
+                record[field] = (value(dossier, field), dossier.source)
+                break
+    if not disagree(one, other, ADDRESS):
+        return record
+    complete = [
+        dossier
+        for dossier in (later, earlier)
+        if all(value(dossier, field) is not None for field in ADDRESS)
+    ]
+    if not complete:
+        raise ValueError("neither of them holds the whole of the address")
+    taken = complete[0]
+    for field in ADDRESS:
+        if field in record:
+            record[field] = (value(taken, field), taken.source)
+    return record
+'''
+
+
 # --- the slips a careless reader of a fully stated spec makes --------------------
 
 WALK_STRAIGHT_PAST_THE_WINDOW = '''def quiet(faults, start, end):
@@ -215,7 +260,8 @@ WALK_STRAIGHT_PAST_THE_WINDOW = '''def quiet(faults, start, end):
     return free
 '''
 
-RECORD_THE_BLANK_INSTEAD_OF_FORGETTING_IT = '''def apply_correction(dossier, corrections, seen):
+RECORD_THE_BLANK_INSTEAD_OF_FORGETTING_IT = '''\
+def apply_correction(dossier, corrections, seen):
     """What `dossier` holds with `corrections` applied, and what that
     changed."""
     if seen <= dossier.seen:
@@ -345,11 +391,14 @@ class Probes(NamedTuple):
     `another_way` and `not_an_answer` are the crux task's two probes,
     `careless` holds the control's, `answers` prints the crux task's answer so
     two resolutions can be compared, and `rung` and `at_least_factor` are the
-    pre-registered prediction.
+    pre-registered prediction. `misread` is the crux task's own careless
+    reading, which is a different thing from `not_an_answer`: a rule the crux
+    states outright, read wrongly, rather than the decision it leaves open
+    never being treated as one.
 
-    `careless` is a tuple for the reason the K11 suite's is: a slip found
-    later was always possible, and once the held-out suite has been shown to
-    catch one it is registered here so it goes on being asked about.
+    `careless` and `misread` are tuples for the reason the K11 suite's is: a
+    slip found later was always possible, and once the held-out suite has been
+    shown to catch one it is registered here so it goes on being asked about.
     """
 
     module: str
@@ -361,6 +410,7 @@ class Probes(NamedTuple):
     not_an_answer: str
     careless: tuple[Bend, ...]
     answers: str
+    misread: tuple[Bend, ...] = ()
 
 
 PROBES: dict[str, Probes] = {
@@ -372,7 +422,9 @@ PROBES: dict[str, Probes] = {
         at_least_factor=1.25,
         another_way=LEVEL_THE_BLAME_OUT,
         not_an_answer=CHARGE_EVERY_FAULT_FOR_ITS_OWN_STRETCH,
-        careless=(Bend("walk-straight-past-the-window", WALK_STRAIGHT_PAST_THE_WINDOW),),
+        careless=(
+            Bend("walk-straight-past-the-window", WALK_STRAIGHT_PAST_THE_WINDOW),
+        ),
         answers=CHARGED,
     ),
     "dossier": Probes(
@@ -391,6 +443,12 @@ PROBES: dict[str, Probes] = {
             Bend("work-in-the-dossiers-own-mapping", WORK_IN_THE_DOSSIERS_OWN_MAPPING),
         ),
         answers=MERGED,
+        misread=(
+            Bend(
+                "demand-a-whole-address-of-a-candidate",
+                DEMAND_A_WHOLE_ADDRESS_OF_A_CANDIDATE,
+            ),
+        ),
     ),
     "digest": Probes(
         module="digest.py",
@@ -453,6 +511,12 @@ BY_BEND = [
     pytest.param(pair, bend, id=f"{pair.control_id}-{bend.name}")
     for pair in PAIRS
     for bend in pair.probes.careless
+]
+
+BY_MISREADING = [
+    pytest.param(pair, bend, id=f"{pair.crux_id}-{bend.name}")
+    for pair in PAIRS
+    for bend in pair.probes.misread
 ]
 
 TASK_IDS = tuple(
@@ -587,6 +651,28 @@ def test_the_control_is_a_comparable_amount_of_work(pair: Pair) -> None:
     assert 0.5 <= control / crux <= 2.0
 
 
+def test_every_k9_pair_in_the_task_set_is_probed_by_one_suite_or_the_other() -> None:
+    """K9 is probed by two suites, and nothing else says the two cover it.
+
+    A pair's probes are the part no metadata carries, and adding a seventh pair
+    to the task set is a change to a directory rather than to either suite —
+    so an unprobed pair would sweep looking exactly like a probed one, its crux
+    never shown to accept a second answer or refuse a non-answer. Registering
+    the same pair in both suites is the other way for the cover to be wrong,
+    and reads as agreement while one of the two goes stale.
+    """
+    declared_pairs = {
+        task.construction.pair
+        for task in load_task_set(TASKS)
+        if task.construction is not None
+        and task.construction.pair is not None
+        and "K9" in task.construction.levels
+    }
+
+    assert not set(ROUND_ONE_PROBES) & set(PROBES)
+    assert declared_pairs == set(ROUND_ONE_PROBES) | set(PROBES)
+
+
 def test_the_tasks_lint_clean() -> None:
     """Linted on their own, which these can be: every effort claim registered
     here is read against a pair partner that is in this same set, so no rule
@@ -693,6 +779,27 @@ def test_not_making_the_decision_does_not_resolve(pair: Pair) -> None:
         mutate=answering(
             pair.probes.module, pair.probes.crux_definition, pair.probes.not_an_answer
         ),
+    )
+
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
+@pytest.mark.parametrize(("pair", "bend"), BY_MISREADING)
+def test_a_careless_reading_of_the_crux_does_not_resolve(
+    pair: Pair, bend: Bend
+) -> None:
+    """The crux tasks state rules too, and everything a crux states outright
+    its grading suite has to hold it to. A suite that let a stated rule through
+    would be a suite tolerating more than the one decision the task leaves
+    open, and the tolerance the K9 probes above demonstrate would be that much
+    less evidence that what the crux withholds is a decision rather than a
+    reading."""
+    task = task_by_id(pair.crux_id)
+    diff = solution_diff(
+        task,
+        mutate=answering(pair.probes.module, pair.probes.crux_definition, bend.answer),
     )
 
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")

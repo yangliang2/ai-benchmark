@@ -127,11 +127,16 @@ def test_a_minute_only_one_fault_was_covering_is_charged_to_that_fault(name):
 @pytest.mark.parametrize("name", NAMES)
 def test_the_charges_are_whole_minutes(name):
     """Stated in the brief, so graded: a minute goes to one fault, and half a
-    minute each to two of them is not a division of it."""
+    minute each to two of them is not a division of it.
+
+    Graded on the charge rather than on the type carrying it: a sheet that
+    counted in floats and came out whole everywhere has divided the minutes
+    exactly as the brief asks, and 3.0 minutes is three minutes.
+    """
     sheet = blame(given(name))
 
     for fault in CASES[name].covers:
-        assert isinstance(sheet[fault], int)
+        assert sheet[fault] == int(sheet[fault])
 
 
 @pytest.mark.parametrize("name", NAMES)

@@ -40,6 +40,9 @@ prompt: |
     that field, and nothing is invented or blended: every value in it is a
     value one of them actually holds for that field, paired with that
     dossier's own source;
+  - a field one of them has sitting there blank — an empty string, or None —
+    is a field that one holds nothing for rather than one it holds blank, the
+    same as a field it never recorded at all;
   - a field only one of them holds comes from that one;
   - a field they both hold and agree about keeps the value they agree on, and
     either of them may be named as its source;

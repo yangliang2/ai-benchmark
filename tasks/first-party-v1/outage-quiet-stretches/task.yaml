@@ -42,6 +42,7 @@ construction:
   knobs:
     - id: K9
       level: none
+  pair: outage
   prediction:
     rung: haiku-solvable
     rationale: >-
@@ -50,4 +51,3 @@ construction:
       one come back as, which mistake is refused — so the change is a walk
       along the stretches the module already computes with nothing left open
       to the author
-  pair: outage

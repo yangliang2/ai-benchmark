@@ -45,6 +45,7 @@ construction:
   knobs:
     - id: K9
       level: none
+  pair: digest
   prediction:
     rung: haiku-solvable
     rationale: >-
@@ -52,4 +53,3 @@ construction:
       moment, what makes two entries one entry, what a shared list holds and
       in whose order, which mistake is refused — so the change is a walk along
       two ordered runs with nothing left open to the author
-  pair: digest

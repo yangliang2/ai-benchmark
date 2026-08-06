@@ -56,6 +56,7 @@ construction:
   knobs:
     - id: K9
       level: none
+  pair: dossier
   prediction:
     rung: haiku-solvable
     rationale: >-
@@ -64,4 +65,3 @@ construction:
       which two mistakes are refused — so the change is a rebuild of one
       mapping and a comparison against it, with nothing left open to the
       author
-  pair: dossier

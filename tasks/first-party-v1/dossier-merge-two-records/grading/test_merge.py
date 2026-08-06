@@ -118,6 +118,20 @@ CASES = {
         sources={},
         address_from=("crm",),
     ),
+    # Disputed, and neither of them holds a postcode: the address either of
+    # them could hand over is a street and a town, so both of them clear the
+    # bar and the record has no postcode in it. The bar is what the two of
+    # them hold between them, not the three fields an address can have, and a
+    # merge that took it for the latter would find no record it could take the
+    # address from and refuse a merge the rules allow.
+    "disputed-neither-holds-a-postcode": Case(
+        one=Dossier("crm", 1700, {"street": "9 Mill Lane", "town": "Wick"}),
+        other=Dossier("billing", 1800, {"street": "4 Quay Road", "town": "Wick"}),
+        holds={"street", "town"},
+        values={"town": "Wick"},
+        sources={},
+        address_from=("crm", "billing"),
+    ),
     # A disagreement outside the address, which time settles.
     "disputed-note": Case(
         one=Dossier("crm", 600, {"owner": "cal", "note": "vip"}),
