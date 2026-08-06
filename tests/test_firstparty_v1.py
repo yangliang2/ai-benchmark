@@ -1281,9 +1281,18 @@ def test_lint_rejects_a_family_whose_members_share_a_prompt(
 
 
 def clone_pair(root: Path, pair: str, task_ids: Sequence[str]) -> None:
-    """One cloned task per named id, all declaring the same pair."""
-    for task_id in task_ids:
-        clone_constructed(root, task_id, a_construction_block(pair=pair))
+    """One cloned task per named id, all declaring the same pair.
+
+    The members alternate between the two rungs of the crux knob, because that
+    is the shape a pair has: one knob varied across it and nothing else. The
+    third task the over-full-pair test adds gets a level again — a pair is
+    refused for holding three members before anything looks at their knobs.
+    """
+    levels = ("single", "none")
+    for index, task_id in enumerate(task_ids):
+        clone_constructed(root, task_id, a_construction_block(
+            knobs=[{"id": "K9", "level": levels[index % len(levels)]}], pair=pair,
+        ))
 
 
 def test_lint_accepts_two_tasks_paired_on_one_repository(tmp_path: Path) -> None:
@@ -1335,6 +1344,60 @@ def test_lint_rejects_a_pair_whose_members_declare_different_scales(
     [problem] = lint_task_set(load_task_set(tmp_path))
 
     assert "crux-and-control" in problem and "scale" in problem
+    assert "control-task" in problem and "crux-task" in problem
+
+
+def test_lint_rejects_a_pair_varying_two_knobs(tmp_path: Path) -> None:
+    """The delta the report prints for a pair is attributed to the one knob
+    that moved across it. With two moving there is no such knob, and the
+    number belongs to neither."""
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+    retitle(tmp_path / "crux-task", construction=a_construction_block(
+        knobs=[{"id": "K9", "level": "single"}, {"id": "K1", "level": "intent"}],
+        pair="crux-and-control",
+    ))
+    retitle(tmp_path / "control-task", construction=a_construction_block(
+        knobs=[{"id": "K9", "level": "none"}, {"id": "K1", "level": "acceptance"}],
+        pair="crux-and-control",
+    ))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "crux-and-control" in problem and "['K1', 'K9']" in problem
+    assert "control-task" in problem and "crux-task" in problem
+
+
+def test_lint_rejects_a_pair_whose_members_set_different_knobs(
+    tmp_path: Path,
+) -> None:
+    """The degenerate authoring #21 recorded as R2. Reconciliation reads the
+    varied knob off the members' own activations, so a pair whose members
+    declare different knobs is printed as a crux/control contrast on a knob
+    one side never set, with that side rendered at a level of `-`."""
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+    retitle(tmp_path / "control-task", construction=a_construction_block(
+        knobs=[{"id": "K1", "level": "acceptance"}], pair="crux-and-control",
+    ))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "crux-and-control" in problem and "'-'" in problem
+    assert "crux-task" in problem and "['K9']" in problem
+    assert "control-task" in problem and "['K1']" in problem
+
+
+def test_lint_rejects_a_pair_whose_members_sit_at_one_level(tmp_path: Path) -> None:
+    """Two members at the same level are two controls. Nothing distinguishes
+    them, so which of them the report calls the crux is decided by sort order
+    — and it would print a rung delta for the pairing either way."""
+    clone_pair(tmp_path, "crux-and-control", ["crux-task", "control-task"])
+    retitle(tmp_path / "crux-task", construction=a_construction_block(
+        knobs=[{"id": "K9", "level": "none"}], pair="crux-and-control",
+    ))
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "crux-and-control" in problem and "same level" in problem
     assert "control-task" in problem and "crux-task" in problem
 
 

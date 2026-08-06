@@ -948,11 +948,20 @@ def _pair_problems(tasks: list[Task]) -> list[str]:
     a planted crux and the control built beside it. Exactly two, because "the
     pair" names nothing once a third task joins it; starting from the same
     repository, because a control pitched on different terrain controls for
-    the terrain as well as for the knob; and classified the same way, because
+    the terrain as well as for the knob; classified the same way, because
     records inherit the task's annotations, so a pair that disagrees about
-    them is read across capability-matrix cells that are never compared.
-    Nothing else is asked of it: the levels the two declare are the knob's
-    business, not the grouping's.
+    them is read across capability-matrix cells that are never compared; and
+    setting the same knobs with exactly one of them varied, because the rung
+    delta the report prints for a pair is attributed to that one knob by
+    construction.
+
+    That last rule is the family rule over again, and for the same reason — a
+    pair varying two knobs attributes its delta to neither — with one case a
+    family cannot have: two members declaring *different* knobs. Reconciliation
+    reads the varied knob off the members' own activations, so a member that
+    never declares it renders as a level of `-`, and the pair is printed as a
+    crux/control contrast on a knob only one side was built for. The levels
+    themselves stay the knob's business, not the grouping's.
     """
     paired: dict[str, list[Task]] = {}
     for task in tasks:
@@ -989,7 +998,47 @@ def _pair_problems(tasks: list[Task]) -> list[str]:
                 "difference in where the work was asked as well as in what was "
                 "asked, which is the one thing a pair exists to rule out"
             )
+            continue
+        knobs = _varied_knob_problem(pair, one, other)
+        if knobs is not None:
+            problems.append(knobs)
     return problems
+
+
+def _varied_knob_problem(pair: str, one: Task, other: Task) -> str | None:
+    """Why this pair's rung delta would be unattributable, if it would be.
+
+    Exactly one knob moves between a crux and its control. Two moving knobs
+    leave the delta belonging to neither; none at all makes two controls;
+    and members declaring different knobs entirely leave the report naming a
+    varied knob one of them never set, which it can only render as a level
+    of `-`.
+    """
+    assert one.construction is not None and other.construction is not None
+    held, variant = one.construction.levels, other.construction.levels
+    if set(held) != set(variant):
+        return (
+            f"pair {pair!r} members do not set the same knob(s): {one.id} sets "
+            f"{sorted(held)} and {other.id} sets {sorted(variant)} — the knob "
+            "varying across the pair is then whichever one a single member "
+            "declares, which reconciliation renders as a crux/control contrast "
+            "with the other side at a level of '-'"
+        )
+    varied = sorted(knob_id for knob_id in held if held[knob_id] != variant[knob_id])
+    if not varied:
+        return (
+            f"pair {pair!r} members {sorted((one.id, other.id))} set every knob "
+            "they share to the same level — a pair is a planted crux read "
+            "against the control built beside it, and two members at one level "
+            "are two controls"
+        )
+    if len(varied) > 1:
+        return (
+            f"pair {pair!r} varies {varied} across "
+            f"{sorted((one.id, other.id))} — a pair varies exactly one knob, or "
+            "the rung delta the report prints for it belongs to neither"
+        )
+    return None
 
 
 def _annotations(task: Task) -> dict[str, str | None]:
