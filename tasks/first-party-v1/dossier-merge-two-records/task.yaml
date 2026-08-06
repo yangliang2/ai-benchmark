@@ -1,0 +1,86 @@
+# K9 at single: one planted inventive decision — which of two systems a
+# disputed address is taken from, when both of them hold all of it — and
+# nothing else. Every other rule is stated outright, including what happens
+# when neither holds all of it, and the grading suite checks what a merged
+# record has to be rather than one record.
+#
+# Why recall does not resolve it, which is what round 2 asks of a K9 crux
+# (ticket #33; round 1's cruxes were bin packing, rearrange-k-apart and debt
+# simplification, so recognising the shape handed over the answer). Deciding
+# which system's version of a customer survives a merge is a policy an
+# organisation adopts, not a problem with a solution: the newer record, the
+# fuller one, the one from the system of record, the one a human last touched
+# — each is defended on grounds outside the data. Every stock mechanism for
+# merging two mappings is per-field and last-write-wins — `dict.update`, a
+# three-way merge, a last-writer-wins register — and per-field is exactly
+# what the address rule forbids, so the reflex answer is ruled out by the
+# spec rather than by taste. Nor does "prefer the newer record" reduce to a
+# rule, because the newer one may not hold the whole address, and then it is
+# not a candidate at all. What is left is a choice between records that both
+# qualify, and naming a textbook problem hands over none of it.
+#
+# feature-dev: the grading tests exercise merge, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: dossier-merge-two-records
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  dossier.py can say what one system holds and where two of them disagree,
+  but nothing in it produces the single record the support desk reads, and
+  the desk is tired of opening two.
+
+  Add a function `merge(one, other)` to dossier.py that returns the two
+  dossiers as one record: a dict of field name to a `(value, source)` pair,
+  where `source` names the dossier the value was taken from.
+
+  What the record has to satisfy:
+
+  - it holds a field exactly when at least one of the two holds something for
+    that field, and nothing is invented or blended: every value in it is a
+    value one of them actually holds for that field, paired with that
+    dossier's own source;
+  - a field only one of them holds comes from that one;
+  - a field they both hold and agree about keeps the value they agree on, and
+    either of them may be named as its source;
+  - `owner` and `note` — the fields outside the address — go to the dossier
+    seen more recently wherever the two disagree;
+  - the address is one thing between its three fields. Where the two disagree
+    anywhere in it, every address field in the record comes from a single
+    dossier and names that dossier as its source: an address half from one
+    system and half from the other is an address nobody has ever lived at;
+  - and a disputed address may only be taken from a dossier that holds every
+    address field either of them holds, or taking it would throw away what
+    the other one knew. Where the two disagree in the address and neither of
+    them holds all of it, there is no address to take — raise ValueError;
+  - two dossiers seen at the same moment cannot be told apart in time, so
+    merging them raises ValueError;
+  - merging is the same either way round: `merge(one, other)` and
+    `merge(other, one)` produce the same record;
+  - the dossiers you were given are left as they were.
+
+  Which of the two a disputed address is taken from, when both of them hold
+  all of it, is yours to choose. Several ways of choosing satisfy the rules
+  above for the same pair of dossiers, and any of them is a correct answer.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  pair: dossier
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule is stated outright and the one decision left open — which
+      qualifying dossier a disputed address is taken from — is met by any
+      preference at all, so there is no narrow answer to miss; what the crux
+      costs is noticing that the address cannot be settled field by field the
+      way the rest of the record is, and the bet is that this shows up in
+      turns rather than in the rung, since round 1's authors went 0 for 12
+      betting that a knob moved one
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.25

@@ -1,0 +1,53 @@
+# K9 at none: the zero-crux control for outage-charge-downtime. Same starting
+# repository byte for byte, same category, scale and language, comparable
+# amount of code to write — and every rule stated step by step, including the
+# two places a reader might improvise (a fault reaching outside the window,
+# and two faults covering the same minute), so there is nothing left to
+# invent. Where the crux task hands over a policy decision, this one hands
+# over a walk.
+#
+# feature-dev: the grading tests exercise quiet, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: outage-quiet-stretches
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  outage.py can say which stretches a service was down for, but the status
+  page shows the other half of the picture — the stretches of a given window
+  it was up for — and nothing in the module works those out.
+
+  Add a function `quiet(faults, start, end)` to outage.py that returns, as a
+  list, the stretches of the window from `start` up to but not including
+  `end` that no fault was covering. Each stretch is a (start, end) pair, and
+  they come back in the order they happened.
+
+  What to do with each part of it:
+
+  - a fault reaching outside the window counts only for the part of it inside
+    the window, and a fault lying wholly outside the window is ignored;
+  - faults that overlap or meet are one stretch of downtime, not two —
+    `spans` already puts them together, and a window is quiet only where no
+    fault at all was covering it;
+  - a window nothing was broken in comes back as one stretch, the window
+    itself;
+  - a window every minute of which was broken comes back empty, and so does a
+    window of no length at all (`end` equal to `start`);
+  - a window that ends before it starts is a mistake — raise ValueError;
+  - the faults you were given are left as they were.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated outright — how far a fault counts, what two
+      overlapping faults amount to, what an empty window and a fully broken
+      one come back as, which mistake is refused — so the change is a walk
+      along the stretches the module already computes with nothing left open
+      to the author
+  pair: outage

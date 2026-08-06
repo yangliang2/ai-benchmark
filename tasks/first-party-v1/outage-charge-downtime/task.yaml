@@ -1,0 +1,80 @@
+# K9 at single: one planted inventive decision — which of the faults covering
+# a contested minute is charged for it — and nothing else. Every other rule a
+# charge sheet has to meet is stated outright, including the case a reader
+# might improvise over (a fault that covered no minutes at all), and the
+# grading suite checks what a sheet has to be rather than one sheet.
+#
+# Why recall does not resolve it, which is what round 2 asks of a K9 crux
+# (ticket #33; round 1's three cruxes were bin packing, rearrange-k-apart and
+# debt simplification, so a solver who recognised the shape was handed the
+# answer). Splitting shared downtime between overlapping causes is a policy an
+# incident review adopts, not a problem with a solution: different outfits
+# charge the first cause, the longest-running one, or share it out, and each
+# is defended on grounds outside the arithmetic. The constraints here are
+# invented so that no stock method fits either. The charge is in whole
+# minutes, which rules out the proportional split a cost-allocation method
+# would reach for — and rules it out in the spec rather than by taste. The
+# sheet must not depend on the order the faults arrive in, which rules out
+# "whoever comes first in the list". And a fault's sole minutes are its own,
+# so routing every contested minute through one hub fault — the shape
+# settleup's round-1 crux had — does not satisfy it either. What is left is a
+# choice of policy, and naming a textbook problem hands over none of them.
+#
+# feature-dev: the grading tests exercise blame, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: outage-charge-downtime
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  outage.py can say how long a service was down and who was covering any
+  given minute, but the incident review wants that downtime broken up between
+  the faults that caused it, and nothing in the module does that.
+
+  Add a function `blame(faults)` to outage.py that returns a charge sheet: a
+  dict of fault name to the whole number of minutes charged to that fault.
+
+  What the sheet has to satisfy:
+
+  - every minute of downtime is charged to exactly one of the faults that
+    were covering it, and charged whole — half a minute to each of two faults
+    is not an answer;
+  - so the charges add up to the whole downtime, and no fault is charged more
+    minutes than its own stretch holds;
+  - a minute only one fault was covering is charged to that fault: there is
+    nobody else it could go to;
+  - every fault has a line on the sheet, including one that covered no
+    minutes at all, which is charged nothing;
+  - the same faults handed over in a different order produce the same sheet;
+  - the faults you were given are left as they were, and no faults at all
+    means an empty sheet;
+  - a fault that ended before it started is refused with ValueError, the way
+    `stretch` already refuses one.
+
+  Which of the faults covering a contested minute is charged for it is yours
+  to choose. Several ways of choosing satisfy the rules above for the same
+  faults, and any of them is a correct answer.
+
+  The faults are named distinctly; you can rely on that.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  pair: outage
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule the sheet has to meet is stated outright, and the one
+      decision left open — which covering fault a contested minute is charged
+      to — is met by any policy at all, so there is no narrow answer to miss;
+      the bet is that the work of inventing a rule, checking it against the
+      sole-minutes clause and satisfying oneself that the total comes out
+      right shows up in turns rather than in the rung, since round 1's authors
+      went 0 for 12 betting that a knob moved one
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.25

@@ -1,0 +1,82 @@
+# K9 at single: one planted inventive decision — which of the entries that
+# could be left out are kept — and nothing else. Every other rule is stated
+# outright, including the exact budget below which no digest exists, and the
+# grading suite checks what a digest has to be rather than one digest.
+#
+# Why recall does not resolve it, which is what round 2 asks of a K9 crux
+# (ticket #33; round 1's cruxes were bin packing, rearrange-k-apart and debt
+# simplification, so recognising the shape handed the answer over). What to
+# keep in a summary is an editorial judgement — the most recent, the noisiest,
+# the run either side of the failure — and no arithmetic settles it. The
+# constraint that makes the reflex answers wrong is invented and interacting:
+# a gap occupies a place of its own, so leaving out a stretch of three frees
+# two places rather than three, keeping an entry out of the middle of a
+# stretch costs two places rather than one, and keeping the entry beside one
+# already kept costs one. Selection under a budget where the cost of an item
+# depends on which other items were chosen is not a knapsack, and the "as full
+# as the budget allows" clause rules out the one answer arithmetic does hand
+# over — leave out everything that may be left out. What is left is a choice
+# of what a reader is best served by, and naming a textbook problem hands over
+# none of it.
+#
+# feature-dev: the grading tests exercise digest, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: digest-fit-to-budget
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  digest.py can say what a digest stands for and print one, but nothing in it
+  makes one — so the summary panel, which has room for a fixed number of
+  lines, shows the first few entries of a failed job's log and nothing else.
+
+  Add a function `digest(entries, budget)` to digest.py that returns the run
+  cut down to `budget` places, as a list of entries and `Gap`s.
+
+  What the digest has to satisfy:
+
+  - it holds entries of the run, in the order the run holds them, and each
+    stretch of entries left out is replaced by a single `Gap` counting how
+    many were left out there — so the digest stands for the whole run, and no
+    two gaps ever stand next to each other;
+  - it never runs to more than `budget` places, a gap counting as a place of
+    its own: leaving out a stretch of three entries frees two places, not
+    three;
+  - every entry `must_keep` names is kept;
+  - it is as full as the budget allows: no entry is left out if keeping that
+    entry as well would still have left the digest inside the budget. Keeping
+    one more entry can cost two places rather than one, because an entry
+    taken out of the middle of a stretch splits one gap into two;
+  - a run that fits whole is kept whole, with no gaps in it at all, and an
+    empty run gives an empty digest whatever the budget;
+  - a budget too small for any digest is refused with ValueError, and that is
+    exactly when it is smaller than the number of entries that have to be
+    kept plus the number of separate stretches of the rest lying between
+    them;
+  - the run you were given is left as it was.
+
+  Which of the entries that could be left out you keep is yours to choose.
+  Several digests satisfy the rules above for the same run and the same
+  budget, and any of them is a correct answer.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  pair: digest
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule is stated outright, including the budget below which nothing
+      can be built, and the one decision left open — which droppable entries
+      to keep — is met by any preference at all; what the crux costs is
+      working out that a gap occupies a place, so that the obvious accounting
+      of entries against budget is off by the number of stretches, and the bet
+      is that this shows in turns rather than in the rung, since round 1's
+      authors went 0 for 12 betting that a knob moved one
+    effort:
+      comparator: pair
+      metric: turns
+      at_least_factor: 1.25

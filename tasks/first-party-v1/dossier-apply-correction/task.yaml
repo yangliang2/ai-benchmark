@@ -1,0 +1,67 @@
+# K9 at none: the zero-crux control for dossier-merge-two-records. Same
+# starting repository byte for byte, same category, scale and language,
+# comparable amount of code to write — and every rule stated step by step,
+# including the three places a reader might improvise (a blank correction, a
+# blank already sitting in the record, and a correction that changes nothing),
+# so there is nothing left to invent. Where the crux task hands over a policy
+# decision, this one hands over a rewrite.
+#
+# feature-dev: the grading tests exercise apply_correction, which does not
+# exist in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: dossier-apply-correction
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  dossier.py can say what a system holds, but nothing in it records a
+  correction, so when a customer tells the desk that a note against their
+  name is out of date the desk has nowhere to put it.
+
+  Add a function `apply_correction(dossier, corrections, seen)` to
+  dossier.py. It returns a pair: the new dossier, and a record of what the
+  correction changed.
+
+  What to do with each part of it:
+
+  - `corrections` is a dict of field name to the value to record. A name that
+    is not one of the fields a dossier holds is a mistake — raise ValueError,
+    the way `value` already refuses one;
+  - a correction with a blank value — an empty string, or None — means the
+    field is forgotten rather than recorded blank: the new dossier's `fields`
+    does not have that name in it at all. Two dossiers holding the same
+    things hold equal `fields`, which is not so if a forgotten field sits
+    there empty;
+  - for the same reason, a field the old dossier had sitting there blank is
+    not carried over: the new dossier holds what is known and nothing else;
+  - forgetting a field the dossier never held is not a mistake, and leaves
+    the new dossier holding what it would have held anyway;
+  - the new dossier keeps the same `source`, and takes `seen` from the time
+    given, which has to be later than the dossier's own — the same moment or
+    earlier raises ValueError;
+  - no corrections at all is not a mistake either: it gives back what the
+    dossier held, at the new time;
+  - the second half of the pair is a list of the fields the correction
+    actually changed, in the order FIELDS names them, each of them a
+    `(field, before, after)` triple, where `before` and `after` are what the
+    old dossier and the new one hold for that field — None where either holds
+    nothing;
+  - a correction recording what was already held changes nothing and so has
+    no triple, and neither does forgetting a field that was not held;
+  - the dossier you were given is left as it was.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated outright — what a blank correction means, what
+      becomes of a blank already held, what counts as a change worth listing,
+      which two mistakes are refused — so the change is a rebuild of one
+      mapping and a comparison against it, with nothing left open to the
+      author
+  pair: dossier

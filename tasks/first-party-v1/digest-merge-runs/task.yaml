@@ -1,0 +1,55 @@
+# K9 at none: the zero-crux control for digest-fit-to-budget. Same starting
+# repository byte for byte, same category, scale and language, comparable
+# amount of code to write — and every rule stated step by step, including the
+# two places a reader might improvise (two entries falling at the same moment,
+# and the same message logged twice), so there is nothing left to invent.
+# Where the crux task hands over an editorial decision, this one hands over a
+# merge.
+#
+# feature-dev: the grading tests exercise merge_runs, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: digest-merge-runs
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  digest.py works on one run of entries at a time, but a job that was
+  restarted leaves two — the worker's own log and the supervisor's — and
+  reading them side by side is how the last outage was missed.
+
+  Add a function `merge_runs(left, right)` to digest.py. It returns a pair:
+  the two runs as one run, and the entries the two of them had in common.
+
+  What to do with each part of it:
+
+  - both runs arrive in time order, each entry's `at` at or after the one
+    before it, and a run that is not in time order is a mistake — raise
+    ValueError, naming which of the two it was;
+  - the merged run holds every entry of both of them, in time order;
+  - where an entry of each falls at the same moment, `left`'s comes first,
+    and within either run the order it was given in is kept;
+  - an entry the two runs share — the same moment, the same text and the same
+    mark — is one entry and appears once. The same message logged again at
+    another moment is a different entry and appears twice, and so is the same
+    message at the same moment with a different mark on it;
+  - the shared entries come back as a list of their own, in the order `left`
+    holds them, and as an empty list where the two runs have nothing in
+    common;
+  - merging with an empty run gives back the other one, and merging two empty
+    runs gives an empty run;
+  - the runs you were given are left as they were.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated outright — which run goes first at a shared
+      moment, what makes two entries one entry, what a shared list holds and
+      in whose order, which mistake is refused — so the change is a walk along
+      two ordered runs with nothing left open to the author
+  pair: digest
