@@ -39,6 +39,21 @@ module — which matters, because the second conveys strictly more than its
 two. A ladder where prose only looked hard because it said less would explain
 itself away; this one cannot.
 
+Their `repo-primitive` variants are not equal in strength either, and that is
+worth recording before a sweep reads them as one level. Album's pointer sends
+the solver to the reader that answers which keywords an album carries, and
+that reader *is* the crux: whoever follows the pointer has thereby decided
+that two keywords canonicalising alike are one keyword, and lands on 1.0.
+Pricelist's sends the solver to the ranking `describe_rules` is written on,
+and the ranking is half of its crux: it settles which rule outranks which and
+says nothing about a sale being priced by one rule and one only, so an answer
+that follows the pointer literally and still lets every rule that speaks take
+its cut grades 0.0. Both are registered at the same rung, because the level is
+the same act — pointing at a primitive that already enforces the decision —
+but the two pointers hand over different fractions of what was withheld, and
+reconciliation should read a pricelist `repo-primitive` miss as the weaker
+pointer before reading it as the level failing.
+
 Every variant is solvable from the repository alone, including the two that
 say nothing useful about the crux, because a variant whose decision cannot be
 recovered is unsolvable by construction rather than hard. What shows it is
@@ -124,7 +139,10 @@ SHARED_ONLY = "unmentioned"
 
 # Two keywords are compared as they were typed. It canonicalises the answer,
 # because every variant asks for that in as many words — and then never asks
-# the module what makes two keywords one keyword.
+# the module what makes two keywords one keyword. This is also what the prose
+# variant's passage transcribes to: "appears in the second album's own list of
+# keywords" is the as-written reader, so what following that sentence arrives
+# at is checked in here rather than left to be argued about after a sweep.
 MATCH_THE_KEYWORDS_AS_TYPED = '''def shared_keywords(one, other):
     """The keywords both albums carry, canonically, in alphabetical order."""
     return sorted({
@@ -504,6 +522,8 @@ def test_the_reference_solution_resolves_and_doing_nothing_does_not(
 def test_the_declared_scale_matches_the_reference_solution(
     family: Family, task_id: str
 ) -> None:
+    """`single-file` is pinned across the family further up; what is left is
+    that the reference solution is in fact one file, and which one."""
     task = task_by_id(task_id)
 
     touched = {
@@ -513,7 +533,6 @@ def test_the_declared_scale_matches_the_reference_solution(
     }
 
     assert touched == {family.module}
-    assert task.scale == "single-file"
 
 
 @pytest.mark.parametrize("family, task_id", BY_VARIANT)

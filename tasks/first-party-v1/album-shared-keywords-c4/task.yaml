@@ -1,10 +1,15 @@
 # K12 family album-shared-keywords, level 4 of 4 (prose): the crux is not
 # stated and nothing is pointed at. What the prompt adds instead is a
 # description of the change's shape — walk one album's keywords, keep the
-# ones the other carries — which is true of the change and whose canonical
-# Python spelling compares the keywords as they were written. This is the
-# level round 1 found to be the hardest, below saying nothing at all, because
-# prose displaces the module as the source of truth (design note section 14).
+# ones that also appear in the other album's own list of keywords — which is
+# true of the change and whose canonical Python spelling compares the keywords
+# as they were written. The passage is deliberately worded around the module's
+# glossary rather than out of it: "carries" is the word `keyword_set` and
+# `has_keyword` answer in, so a passage describing the shape in *those* words
+# would transcribe into the right answer and leave the prose nothing to
+# displace. This is the level round 1 found to be the hardest, below saying
+# nothing at all, because prose displaces the module as the source of truth
+# (design note section 14).
 # The decision is still recoverable from the repository, exactly as at level
 # 3: the prose narrows nothing the module says. The repo, the grading suite
 # and the reference solution are identical across the four variants, and so
@@ -34,7 +39,8 @@ prompt: |
   - Neither album is modified.
 
   Think of it as walking the keywords filed against the first album and
-  keeping each one the second album carries too.
+  keeping each one that also appears in the second album's own list of
+  keywords.
 
   Keep the existing functions and their behaviour unchanged, and keep the
   module dependency-free (standard library only).

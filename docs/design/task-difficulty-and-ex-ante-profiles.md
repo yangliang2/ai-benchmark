@@ -262,7 +262,12 @@ at prose. A turns ladder running monotonically along K12 would be a bet the
 round-1 run log already argues against. Such a claim is read against the pair
 partner rather than a category baseline, which is what the two pairs a K12
 family declares are for — criterion against repo-primitive, and prose against
-unmentioned, the second being the contrast the whole ladder turns on.
+unmentioned, the second being the contrast the whole ladder turns on. Neither
+pair plants anything: reconciliation's section 4 prints them under its
+existing `crux`/`control` columns, which for a pair varying an enumerated
+ladder name the higher rung and the lower rather than a planted decision and
+its absence, so `unmentioned` printing as `prose`'s "control" is that column
+read as the ladder, not a claim that the crux was built into one side.
 
 Guards: difficulty must come from a named knob traceable to a real
 architect experience (no puzzle difficulty, no obfuscation); one knob at a
@@ -493,7 +498,9 @@ aliasing-unsafe by construction. l1 states copy-on-write as an acceptance
 criterion and both models wrote an explicit deep copy and passed. So the
 ordering that predicts the outcome is not "how much prose" but **stated as
 a criterion > reuse a primitive that already enforces it > implied by prose
-> unmentioned** — and "implied by prose" sits *below* "unmentioned",
+> unmentioned** [the `>` chain here transposes its last two terms; the
+registered order is section 9's — prose below unmentioned, as the rest of
+this sentence says] — and "implied by prose" sits *below* "unmentioned",
 because prose displaces the module as the source of truth and steers the
 implementation shape. Every one of the six K1 failures is invisible to a
 happy-path value-equality check, which is exactly what the agents' own
