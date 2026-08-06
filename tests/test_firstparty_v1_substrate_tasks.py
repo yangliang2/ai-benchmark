@@ -542,7 +542,7 @@ def test_the_snapshot_carries_no_version_control_metadata(
     assert not (task.repo_dir / ".gitignore").exists()
 
 
-# --- three standalone tasks, each declaring the knob it sets --------------------
+# --- five standalone tasks, each declaring the knob it sets ---------------------
 
 
 @pytest.mark.parametrize("entry", BY_TASK)
@@ -556,7 +556,7 @@ def test_each_task_declares_its_knob_and_stands_on_its_own(
     assert task.language == "python"
     # Standalone: no family (a K8 family would have to vary its lever inside
     # repo/, which the family lint holds byte-identical) and no pair, so each
-    # of the three carries its own copy of the snapshot and nothing here has
+    # of the five carries its own copy of the snapshot and nothing here has
     # to stay byte-identical to anything else.
     assert task.construction.family is None
     assert task.construction.pair is None
@@ -674,8 +674,8 @@ def test_the_registered_rungs_are_pinned_before_the_sweep() -> None:
 
 def test_every_prediction_says_which_mechanism_it_is_betting_on() -> None:
     """A rationale is what a missed prediction teaches, so each has to name
-    the thing it is betting on — the visible suite for the two K8 tasks, and
-    the contracts around the edit for the K7 one."""
+    the thing it is betting on — the visible suite for the three K8 tasks, and
+    the contracts around the edit for the two K7 ones."""
     for task in tasks():
         assert task.construction is not None
         rationale = task.construction.prediction.rationale

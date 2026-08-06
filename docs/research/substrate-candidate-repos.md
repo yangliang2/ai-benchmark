@@ -426,6 +426,18 @@ read-set runs through is a worse trade than carrying a module no test touches.
   `rbql-py/setup.py`, `rbql-py/MANIFEST.in`, `rbql-py/DEV_README.md`,
   `rbql-py/README.md`, `rbql-py/LICENSE` (a duplicate of the root one) — VCS
   metadata, CI, packaging and developer docs.
+- The root `README.md` — replaced rather than deleted: it documents the
+  repository, the CLI and the JS half, and the snapshot is the Python library,
+  so `rbql-py/LIBRARY_README.md` is what sits at the root of `repo/` under
+  that name. Worth knowing that the file kept is *not* current for the
+  snapshot: two sections of it document API the two entries below take away.
+  `rbql.query_pandas_dataframe(...)` raises `AttributeError`, and the IPython
+  `%rbql` magic has no module left to register it. Kept byte-identical anyway:
+  an upstream document is part of what the snapshot is, and a README trimmed
+  to match would be a file nobody upstream wrote. What that leaves is a
+  repository whose docs oversell its API — an ordinary way to be wrong about a
+  library, and no knob any task here sets on purpose, so it is written down
+  rather than left to be rediscovered.
 - `rbql/rbql_pandas.py` — pandas is a third-party dependency, and a
   starting repository has to be stdlib-only. (It imports pandas lazily, so
   keeping it would not have broken `import rbql`; it would have left a module
@@ -437,9 +449,10 @@ read-set runs through is a worse trade than carrying a module no test touches.
   is the only edit to vendored *source* in either snapshot, and it is a
   consequence of the two deletions rather than a decision of its own: without
   it `import rbql` raises ImportError.
-- `test/test_rbql_pandas.py`, `test/test_rbql_sqlite.py`, `test/sqlite_files/`
-  — the tests of the two integrations, one needing pandas and the other
-  reading binary `.sqlite` fixtures.
+- `test/test_rbql_pandas.py`, `test/test_rbql_sqlite.py`,
+  `test/sqlite_files/`, `test/sqlite_unit_tests.json` — the tests of the two
+  integrations, one needing pandas and the other reading binary `.sqlite`
+  fixtures, plus the JSON manifest of scenarios only the sqlite tests read.
 - `test/test_mad_max.py` — excluded by upstream's own verified test command
   (see the shortlist entry above).
 - `test/__init__.py`, `test/library_demos/` — the package marker the flattened
@@ -448,8 +461,16 @@ read-set runs through is a worse trade than carrying a module no test touches.
 - One test inside `test_rbql.py`, `test_column_name_parsing_from_file` — it
   writes `python_column_infos.txt` into the directory it lives in, which in
   the flattened layout is the root of `repo/`, so every run's workdir diff
-  would carry the artifact. What it exists for is md5-comparison against the
-  JS twin's output, and the twin is not vendored.
+  would carry the artifact. (`test/python_column_infos.txt` is not an upstream
+  file and so is not in the list above: it does not exist at the pinned
+  commit, and only appears once that test has run.) What the test exists for
+  is md5-comparison against the JS twin's output, and the twin is not
+  vendored.
+
+That list is exhaustive against the pinned tree: every upstream blob outside
+`rbql-js/` is either kept, dropped by a line above, or renamed by the **Kept**
+paragraph. Worth keeping it that way — the drop list is the only record of
+what a reader of `repo/` is not seeing.
 
 **Test counts.** Upstream
 `PYTHONPATH=./rbql-py pytest test/test_rbql.py test/test_csv_utils.py test/test_json_io.py`

@@ -1,22 +1,31 @@
 # refactor with K8 at misleading, on a vendored RBQL snapshot. The repository
-# ships 41 passing tests over ~3 000 lines of library — a suite thorough enough
-# that its own coverage of the package sits at 92% before the deletions — and
-# three surgical deletions (recorded below) took out every test that ever wrote
-# a table under the quoted_rfc policy. So the two quoting methods can be folded
-# into one that quotes the plain way for both policies, and the visible suite
-# stays green: nothing left in it asks a writer to quote a field containing a
-# newline. The held-out behaviour tests named here pin what each policy writes
-# and must PASS on the pristine repository; the structural assertions must FAIL
-# on it until the choice is a function of csv_utils'.
+# ships 41 passing tests over ~3 300 lines of library — a suite thorough enough
+# that before the deletions it covers 92% of the modules it exercises, or 74%
+# of the package counting rbql_main, rbql_sqlite and __main__, the CLI surface
+# no visible test enters — and three surgical deletions (recorded below) took
+# out every test that would notice a *bare* newline-carrying field, one
+# holding no delimiter, going out unquoted. So the two quoting methods can be
+# folded into one that quotes the plain way for both policies and the visible
+# suite stays green. Not because nothing is left that writes under quoted_rfc
+# — test_json_scenarios survives and writes 22 tables under that policy, every
+# one of them compared against a fixture — but because every newline-carrying
+# field those tables carry also holds the delimiter, and a field holding the
+# delimiter is one the plain quoter quotes too. Fourteen such fields across
+# two fixtures, and not one of them bare; the two quoters agree on every field
+# the visible suite has left. The held-out
+# behaviour tests named here pin what each policy writes and must PASS on the
+# pristine repository; the structural assertions must FAIL on it until the
+# choice is a function of csv_utils'.
 id: rbql-quote-fields-by-policy
 category: refactor
 scale: cross-file
 language: python
 prompt: |
-  rbql/csv_utils.py owns one half of the CSV dialect. Given a delimiter and a
-  policy, get_polymorphic_split_function returns the function that turns a
-  line into fields, so a caller that has a policy never has to know which
-  splitter goes with it.
+  rbql/csv_utils.py owns one half of the CSV dialect. Given a delimiter, a
+  policy and whether to preserve quotes and whitespace,
+  get_polymorphic_split_function returns the function that turns a line into
+  its fields and a warning flag, so a caller that has a policy never has to
+  know which splitter goes with it.
 
   The other half is not there. The quoting a policy calls for lives in
   rbql/rbql_csv.py, as two CSVWriter methods that differ only in which
@@ -36,8 +45,9 @@ prompt: |
   built from whatever that function hands back, and quote_fields_rfc goes
   away.
 
-  This is a pure refactor: what CSVWriter writes under every policy, and the
-  warnings it reports, must be exactly what they are today.
+  This is a pure refactor: what CSVWriter writes under every policy, the
+  warnings it reports, and what it refuses must be exactly what they are
+  today.
 grading:
   behaviour_tests:
     - test_output_quoting_behaviour.py
@@ -48,16 +58,18 @@ construction:
   prediction:
     rung: sonnet-only
     rationale: >-
-      the repo's own tests are green and thorough-looking — 41 of them, and
-      they still write tables under every other policy — but after the three
-      deletions not one of them writes a field containing a newline, which is
-      the only thing the rfc quoter does differently from the plain one. So
-      collapsing the two into a single quote_field call reads as removing a
-      duplicate and the visible suite never objects. RBQL is public MIT code
-      and its CSV layer may well have been read in training, but what training
-      would show is the two methods standing apart, not which of them a
-      merged one has to keep; the graded contract is that difference, and no
-      visible test states it
+      the repo's own tests are green and thorough-looking — 41 of them, and 22
+      of the tables they write still go out under quoted_rfc itself — but
+      after the three deletions every newline-carrying field the visible suite
+      hands the writer also holds the delimiter, and a field holding the
+      delimiter is one the plain quoter quotes too. The single clause that
+      separates the two quoters, quoting a field whose only offence is a line
+      break, is the one thing no surviving test asks for. So collapsing the
+      two into a single quote_field call reads as removing a duplicate and the
+      visible suite never objects. RBQL is public MIT code and its CSV layer
+      may well have been read in training, but what training would show is the
+      two methods standing apart, not which of them a merged one has to keep;
+      the graded contract is that difference, and no visible test states it
   substrate:
     origin: https://github.com/mechatroner/RBQL
     commit: 4137027611f551591a1775d1d4c8f7fb8d163caa
@@ -66,17 +78,31 @@ construction:
       - knob: K8
         description: >-
           dropped test_multiline_fields from test_csv_utils.py — the only test
-          in the suite that spells out a quoted_rfc table by hand, and the only
-          place a written-back field carrying a newline was compared against
-          what it should be
+          in the suite that spells out a quoted_rfc table by hand, and one of
+          the three that would notice a bare newline-carrying field going out
+          unquoted. Bare is the operative word: its table holds the field
+          'aaa \ntest', a line break and no delimiter, and a field with no
+          delimiter in it is one only the rfc quoter quotes
       - knob: K8
         description: >-
           dropped test_iterator_rfc from test_csv_utils.py — 100 random tables
-          written and parsed back under quoted_rfc, which is where a writer
-          that quotes the plain way loses every field the generator gave a
-          newline to
+          written and parsed back under quoted_rfc, and the generator puts line
+          breaks into fields without regard for the delimiter it will later
+          pick, so nearly every table holds a field the plain quoter would
+          write unquoted and the reader could not put back together
       - knob: K8
         description: >-
           dropped test_iterator_rfc_comments from test_csv_utils.py — the same
           write-and-parse-back round trip under quoted_rfc with a comment
-          prefix in play, and the third and last test to exercise the policy
+          prefix in play, and the third and last test that would notice a bare
+          newline-carrying field going out unquoted — the round trip is what
+          catches it, because a field written bare cannot be read back. The
+          policy itself is still exercised after all three go — the surviving
+          test_json_scenarios writes 22 tables under quoted_rfc and compares
+          every one against a fixture — and it stays green under the collapse
+          only because the 14 newline-carrying fields in those tables all hold
+          the delimiter too, which makes the plain quoter quote them. That is
+          the guard rail these deletions leave standing on a knife edge — a
+          fixture added later with a delimiter-free newline field would flip
+          the net back, and the visible suite would start catching the mistake
+          this task grades
