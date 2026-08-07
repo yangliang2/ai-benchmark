@@ -40,17 +40,36 @@ _SONNET = "claude-sonnet-5"
 _CONTROL = "wordcount-top-words"
 _OTHER_CONTROL = "spans-subtract-gaps"
 
+# The prediction every constructed fixture task registers. A constant and not
+# a parameter: calibrate reads no prediction at all — it reads costs off the
+# log and rungs off the replay — so a fixture varying this would suggest the
+# table moved with it. The block is written because the loader requires one.
+_PREDICTION = {
+    "rung": "haiku-solvable",
+    "rationale": "the levels this task sets should land it here",
+}
+
+# When the fixture sweeps ran. Constant for the same reason: calibrate keys
+# nothing on a round, so no fixture has a reason to move the date.
+_AS_OF = date(2026, 8, 4)
+
 
 def write_task(
     root: Path,
     task_id: str,
     *,
     category: str = "feature-dev",
+    scale: str = "single-file",
+    substrate: bool = False,
     knobs: dict[str, str] | None = None,
-    rung: str = "haiku-solvable",
 ) -> None:
     """One fixture task directory: a zero-knob control when `knobs` is None, a
-    constructed task activating exactly those knobs otherwise."""
+    constructed task activating exactly those knobs otherwise.
+
+    `scale` and `substrate` are what the mix disclosure is read off, and they
+    are the two annotations the row key does not carry — so a fixture sets
+    them to build a cell whose composition differs from its denominator's.
+    """
     directory = root / task_id
     (directory / "repo").mkdir(parents=True)
     (directory / "grading").mkdir()
@@ -59,18 +78,21 @@ def write_task(
     spec: dict[str, Any] = {
         "id": task_id,
         "category": category,
-        "scale": "single-file",
+        "scale": scale,
         "language": "python",
         "prompt": f"make answer() return 42 ({task_id})",
     }
     if knobs is not None:
         spec["construction"] = {
             "knobs": [{"id": knob, "level": level} for knob, level in knobs.items()],
-            "prediction": {
-                "rung": rung,
-                "rationale": "the levels this task sets should land it here",
-            },
+            "prediction": _PREDICTION,
         }
+        if substrate:
+            spec["construction"]["substrate"] = {
+                "origin": "https://example.invalid/cold/repo",
+                "commit": "0" * 40,
+                "license": "MIT",
+            }
     (directory / "task.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
 
 
@@ -89,7 +111,6 @@ def write_log(
     cost: dict[str, dict[str, float]] | None = None,
     models: tuple[str, ...] = (_HAIKU, _SONNET),
     agent: str = "claude-code",
-    as_of: date = date(2026, 8, 4),
 ) -> None:
     """A raw run log sweeping `tasks` with `models`.
 
@@ -117,7 +138,7 @@ def write_log(
                     cost_usd=(cost or {}).get(task.id, {}).get(model, 0.20),
                     latency_s=64.5,
                     turns=7,
-                    as_of=as_of,
+                    as_of=_AS_OF,
                     sweep="fixture-sweep",
                 )
             )
@@ -160,21 +181,65 @@ def category_block(out: str, category: str) -> str:
     )[0]
 
 
+def table_block(out: str, category: str) -> list[str]:
+    """The rows of one category's table, header first.
+
+    The denominator sits above it and the mix disclosures below it, both
+    carrying profile labels of their own, so a row picked out of the whole
+    block by its label could be picked out of the prose around it instead.
+    """
+    paragraphs = category_block(out, category).split("\n\n")
+    [block] = [
+        paragraph for paragraph in paragraphs
+        if paragraph.strip().startswith("profile")
+    ]
+    return [line for line in block.splitlines() if line.strip()]
+
+
 def cells(out: str, category: str, profile: str) -> dict[str, str]:
     """One row of one category's table, read by column.
 
     Column boundaries come from the header, so a cell keeps its own spaces —
     "1.62x (n=3)" is one cell and reads like one.
     """
-    lines = [line for line in category_block(out, category).splitlines() if line.strip()]
-    [header] = [line for line in lines if line.split()[:1] == ["profile"]]
+    header, *rows = table_block(out, category)
     starts = [header.index(column) for column in _COLUMNS]
-    [row] = [line for line in lines if line.split()[:1] == [profile]]
+    [row] = [line for line in rows if line.split()[:1] == [profile]]
     padded = row.ljust(len(header))
     return {
         column: padded[start:end].strip()
         for column, start, end in zip(_COLUMNS, starts, [*starts[1:], None])
     }
+
+
+def profiles(out: str, category: str) -> list[str]:
+    """The profile column of one category's table, in the order printed."""
+    return [line.split()[0] for line in table_block(out, category)[1:]]
+
+
+def mixes(out: str, category: str) -> dict[str, str]:
+    """The disclosed mix of every row whose own differs from its baseline's,
+    keyed by profile. Empty where the table disclosed nothing."""
+    paragraphs = category_block(out, category).split("\n\n")
+    disclosed = [
+        paragraph for paragraph in paragraphs
+        if "rows whose mix differs" in paragraph
+    ]
+    if not disclosed:
+        return {}
+    lines = [line for line in disclosed[0].splitlines()[1:] if line.strip()]
+    split = (line.strip().split(" ", 1) for line in lines)
+    return {label.rstrip(":"): mix.strip() for label, mix in split}
+
+
+def baseline_line(out: str, category: str, label: str) -> str:
+    """One of the two lines naming what a table's denominator was: its mean
+    cost per model, or what the controls behind that mean are made of."""
+    [line] = [
+        line for line in category_block(out, category).splitlines()
+        if line.strip().startswith(label)
+    ]
+    return line.strip().removeprefix(label).strip()
 
 
 def empty_cells(out: str) -> str:
@@ -306,6 +371,42 @@ def test_calibrate_v1_floors_the_checked_in_cells_at_their_weakest_rung(
         )
 
 
+def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The scope and substrate skew of the real corpus, on the page.
+
+    The row key is category x profile and the actuarial-loop design's own
+    primary key is category x scope, so every multiplier here divides tasks of
+    one scope mix by controls of another — and no control in the corpus is
+    vendored at all, so a vendored cell's multiplier prices the substrate too.
+    Neither is fixed by re-keying, which is a decision above this command; both
+    are disclosed, and this is the test that they are.
+
+    The feature-dev baseline's own mix is pinned rather than derived because
+    the zero-knob baseline is frozen in code: those eleven controls are the
+    denominator of every feature-dev multiplier this project will ever print,
+    and a round that changed their mix would have changed the frozen set.
+    """
+    main(checked_in_argv())
+    out = capsys.readouterr().out
+
+    assert baseline_line(out, "feature-dev", "baseline mix") == (
+        "6 single-file + 5 cross-file; 11 hand-authored"
+    )
+    # Every constructed feature-dev cell is single-file, so every one of them
+    # is read against a denominator nearly half of which is not.
+    disclosed = mixes(out, "feature-dev")
+    assert set(disclosed) == {
+        profile for (category, profile) in checked_in_profiles()
+        if category == "feature-dev" and profile != "(zero-knob)"
+    }
+    assert disclosed["K1=acceptance"] == "4 single-file; 4 hand-authored"
+    # The one cell built entirely on vendored substrate, priced against
+    # hand-authored controls because the corpus holds no other kind.
+    assert disclosed["K7=dense"] == "2 single-file; 2 vendored"
+
+
 def test_calibrate_v1_defaults_to_the_checked_in_task_set_and_run_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -375,6 +476,38 @@ def test_calibrate_v1_keys_a_row_by_its_sorted_knob_activation_profile(
 
     assert cells(out, "feature-dev", "K1=intent,K12=prose")["tasks"] == "2"
     assert "K12=prose,K1=intent" not in out
+
+
+def test_calibrate_v1_orders_the_zero_knob_row_first_then_knob_then_ladder(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The order a reader reads a column down: the denominator at the top,
+    then the single-knob profiles by knob number and by where their level
+    sits on that knob's ladder, then the composites below the knobs they are
+    composed of. Ladder order and not alphabetical — `none` before `single`
+    on K9, `acceptance` before `intent` on K1 — so that reading down a column
+    is reading up a ladder."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL)
+    write_task(tasks, "intent", knobs={"K1": "intent"})
+    write_task(tasks, "acceptance", knobs={"K1": "acceptance"})
+    write_task(tasks, "planted", knobs={"K9": "single"})
+    write_task(tasks, "stated", knobs={"K9": "none"})
+    write_task(tasks, "composite", knobs={"K1": "intent", "K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {})
+
+    out = calibrate(tasks, log, capsys)
+
+    assert profiles(out, "feature-dev") == [
+        "(zero-knob)",
+        "K1=acceptance",
+        "K1=intent",
+        "K9=none",
+        "K9=single",
+        "K1=intent,K9=single",
+    ]
 
 
 def test_calibrate_v1_keeps_one_profile_per_category(
@@ -448,7 +581,7 @@ def test_calibrate_v1_reads_the_cost_of_runs_that_failed_too(
     cells the selection tool most needs priced are the ones models fail in."""
     tasks = tmp_path / "tasks"
     write_task(tasks, _CONTROL)
-    write_task(tasks, "hard-crux", knobs={"K9": "single"}, rung="unsolved")
+    write_task(tasks, "hard-crux", knobs={"K9": "single"})
     loaded = firstparty_v1.load_task_set(tasks)
     log = tmp_path / "runs.jsonl"
     write_log(log, loaded, {_CONTROL: [_HAIKU]}, cost={
@@ -509,6 +642,135 @@ def test_calibrate_v1_counts_only_graded_tasks_into_a_floor(
     assert (row[_HAIKU], row[_SONNET]) == ("1.00x (n=1)", "1.00x (n=2)")
 
 
+# --- the mix: what the row key does not carry ----------------------------------
+
+
+def test_calibrate_v1_legends_the_three_counts_a_row_prints(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A row carries three counts of different things — its population, the
+    tasks a multiplier was meant over, and the tasks that landed on a rung —
+    and an unexplained one reads as whichever of the others the reader met
+    first. The header names all three, and the mix says what population it is
+    counted from."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL)
+    write_task(tasks, "crux", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {})
+
+    out = calibrate(tasks, log, capsys)
+    # Down to the first category's table, and the wrapping collapsed: the
+    # legend is a wrapped paragraph, so a sentence asserted against the raw
+    # text would pass or fail on where the wrap happened to fall.
+    header = " ".join(out.split("\ncategory ")[0].split())
+
+    assert "tasks: the row's whole population" in header
+    assert "a multiplier's n counts the tasks that ran that model" in header
+    assert "a floor's n the tasks that landed on a rung" in header
+    assert "mix: what a population of tasks is made of" in header
+    assert "category x scope" in header
+    # And why a vendored cell can never be read against its own substrate:
+    # provenance lives in a construction block and a control carries none.
+    assert "no control can be vendored" in header
+
+
+def test_calibrate_v1_discloses_a_cell_whose_scope_is_not_its_denominators(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A row of single-file tasks divided by a part-cross-file baseline says
+    so. Scope is the actuarial-loop design's primary key and this table keys
+    on the knob profile instead, so the multiplier is a comparison across the
+    scope difference as much as across the knob — and a reader who could not
+    see the difference would read the whole of it as the knob's price."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL, scale="single-file")
+    write_task(tasks, _OTHER_CONTROL, scale="cross-file")
+    write_task(tasks, "narrow-crux", knobs={"K9": "single"}, scale="single-file")
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {})
+
+    out = calibrate(tasks, log, capsys)
+
+    assert baseline_line(out, "feature-dev", "baseline mix") == (
+        "1 single-file + 1 cross-file; 2 hand-authored"
+    )
+    assert mixes(out, "feature-dev") == {
+        "K9=single": "1 single-file; 1 hand-authored"
+    }
+
+
+def test_calibrate_v1_discloses_a_vendored_cell_priced_off_hand_authored_controls(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A cell built on a vendored substrate names its provenance, because no
+    control in this corpus has one. There is no same-substrate denominator to
+    read such a cell against, so its multiplier prices the difference between
+    somebody else's repository and ours along with the knob — which is a
+    reading, not a defect, but only if the page says which it is."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL)
+    write_task(tasks, "found-terrain", knobs={"K7": "dense"}, substrate=True)
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {}, cost={
+        _CONTROL: {_HAIKU: 0.10},
+        "found-terrain": {_HAIKU: 0.50},
+    })
+
+    out = calibrate(tasks, log, capsys)
+
+    assert cells(out, "feature-dev", "K7=dense")[_HAIKU] == "5.00x (n=1)"
+    assert baseline_line(out, "feature-dev", "baseline mix") == (
+        "1 single-file; 1 hand-authored"
+    )
+    assert mixes(out, "feature-dev") == {"K7=dense": "1 single-file; 1 vendored"}
+
+
+def test_calibrate_v1_discloses_no_mix_where_a_row_matches_its_denominator(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The disclosure is about a difference, so a table where there is none
+    prints no list of differences. A row read against controls of its own
+    scope and its own substrate is the reading the multiplier claims to be."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL)
+    write_task(tasks, "matched-crux", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {})
+
+    out = calibrate(tasks, log, capsys)
+
+    assert baseline_line(out, "feature-dev", "baseline mix") == (
+        "1 single-file; 1 hand-authored"
+    )
+    assert mixes(out, "feature-dev") == {}
+
+
+def test_calibrate_v1_says_so_where_a_category_has_no_controls_to_be_made_of(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A category with no zero-knob control has no denominator and so nothing
+    for a mix to be taken over. "The controls are of this mix" and "there are
+    no controls" are different statements, and a blank would be neither."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _OTHER_CONTROL, category="bug-fix")
+    write_task(tasks, "unpriced-crux", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {})
+
+    out = calibrate(tasks, log, capsys)
+
+    assert baseline_line(out, "feature-dev", "baseline mix") == (
+        "(no zero-knob control in this category)"
+    )
+    assert mixes(out, "feature-dev") == {"K9=single": "1 single-file; 1 hand-authored"}
+
+
 # --- what v1 refuses: interpolation, backoff, pooling --------------------------
 
 
@@ -567,13 +829,46 @@ def test_calibrate_v1_will_not_back_off_to_another_level_of_the_same_knob(
     assert (planted[_HAIKU], planted[_SONNET], planted["rung floor"]) == ("-", "-", "-")
 
 
+def test_calibrate_v1_will_not_interpolate_a_level_its_neighbours_bracket(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The shape that would tempt an interpolator: a rung of K8's ladder
+    unswept with the rungs either side of it measured. `partial` sits between
+    `covered` at 2.00x and `bare` at 4.00x, so a table that filled it in from
+    its neighbours would print 3.00x — a number no sweep produced, and one a
+    consumer could not tell from a measured one. It prints empty instead."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL)
+    write_task(tasks, "covered", knobs={"K8": "covered"})
+    write_task(tasks, "partial", knobs={"K8": "partial"})
+    write_task(tasks, "bare", knobs={"K8": "bare"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, [task for task in loaded if task.id != "partial"], {}, cost={
+        _CONTROL: {_HAIKU: 0.10, _SONNET: 0.10},
+        "covered": {_HAIKU: 0.20, _SONNET: 0.20},
+        "bare": {_HAIKU: 0.40, _SONNET: 0.40},
+    })
+
+    out = calibrate(tasks, log, capsys)
+
+    assert cells(out, "feature-dev", "K8=covered")[_HAIKU] == "2.00x (n=1)"
+    assert cells(out, "feature-dev", "K8=bare")[_HAIKU] == "4.00x (n=1)"
+    bracketed = cells(out, "feature-dev", "K8=partial")
+    assert (bracketed[_HAIKU], bracketed[_SONNET]) == ("-", "-")
+    assert bracketed["rung floor"] == "-"
+    assert "3.00x" not in out
+    assert f"feature-dev K8=partial ({_HAIKU}):" in empty_cells(out)
+
+
 def test_calibrate_v1_will_not_pool_a_denominator_across_categories(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """A category with no swept control prices nothing, however well swept the
     other category is. Pooling is the one shortcut that would fill the cell,
-    and ADR-0001's grouping rule is that rows of different groups never pool
-    into one rate — a bug-fix baseline is not a feature-dev baseline."""
+    and the v1 contract this table is built to is that a cell is read against
+    its own category's controls — a bug-fix baseline is not a feature-dev
+    baseline."""
     tasks = tmp_path / "tasks"
     write_task(tasks, _OTHER_CONTROL, category="bug-fix")
     write_task(tasks, "feature-crux", knobs={"K9": "single"})
@@ -597,7 +892,12 @@ def test_calibrate_v1_will_not_divide_by_a_baseline_that_measured_zero(
 ) -> None:
     """No multiple of zero is anything, so a cell read against a zero
     denominator is unreadable rather than infinitely expensive — the reading
-    reconciliation gives an effort claim against a zero comparator."""
+    reconciliation gives an effort claim against a zero comparator.
+
+    The baseline line still carries the n it measured that zero over: an empty
+    *cell* is owed its reason in the list at the end, and the baseline line is
+    not in that list, so a bare dash there would drop the only statement of
+    how many controls produced the zero."""
     tasks = tmp_path / "tasks"
     write_task(tasks, _CONTROL)
     write_task(tasks, "crux", knobs={"K9": "single"})
@@ -613,6 +913,9 @@ def test_calibrate_v1_will_not_divide_by_a_baseline_that_measured_zero(
     row = cells(out, "feature-dev", "K9=single")
     assert (row[_HAIKU], row[_SONNET]) == ("-", "2.00x (n=1)")
     assert "measured $0.0000" in empty_cells(out)
+    assert baseline_line(out, "feature-dev", "baseline mean cost") == (
+        f"{_HAIKU} - (n=1), {_SONNET} $0.2000 (n=1)"
+    )
 
 
 def test_calibrate_v1_says_so_when_every_cell_is_filled(
@@ -633,17 +936,22 @@ def test_calibrate_v1_says_so_when_every_cell_is_filled(
     assert "(every cell the corpus holds is filled)" in empty_cells(out)
 
 
-def test_calibrate_v1_documents_its_refusals_in_its_help(
+def test_calibrate_v1_documents_its_refusals_and_disclosures_in_its_help(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The refusals are v1's contract with whatever reads the table, so they
-    are on the command's own help page and not only in the design note."""
+    """The refusals are v1's contract with whatever reads the table, and so is
+    what the table discloses because its key does not carry it. Both are on the
+    command's own help page and not only in the design note — a consumer
+    reading the table from a script meets the help before it meets the
+    header."""
     with pytest.raises(SystemExit):
         main(["calibrate-v1", "--help"])
 
-    help_text = capsys.readouterr().out
+    help_text = " ".join(capsys.readouterr().out.split())
     for refusal in ("interpolat", "backoff", "pool"):
         assert refusal in help_text
+    for disclosure in ("scope", "substrate", "category x scope"):
+        assert disclosure in help_text
 
 
 # --- provenance: the discipline reconcile-v1 reads under -----------------------

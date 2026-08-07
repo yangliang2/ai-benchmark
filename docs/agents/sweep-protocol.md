@@ -93,3 +93,8 @@ contents say which sweep it belongs to; its name says nothing.
 - Commit the logs, then reconcile: `uv run ai-bench reconcile-v1`. Every number
   in the report is recomputable from checked-in artifacts by that one command,
   which is only true once the logs are in.
+- Then publish the table the round added rows to: `uv run ai-bench calibrate-v1`.
+  It reads the same two inputs under the same discipline and answers the other
+  question — what a shape of work costs and who could do it — so a round that
+  reconciles but is never calibrated leaves the selection-facing artifact a
+  round behind the corpus.

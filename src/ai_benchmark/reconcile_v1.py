@@ -802,13 +802,28 @@ def _comparator(
 # --- rendering -----------------------------------------------------------------
 
 
-def _table(rows: Sequence[Sequence[str]], *, indent: str) -> list[str]:
-    """Header row first, columns padded to the widest cell."""
+def padded_table(rows: Sequence[Sequence[str]], *, indent: str) -> list[str]:
+    """Header row first, columns padded to the widest cell.
+
+    Public because the calibration view lays its tables out the same way, and
+    two copies of this would let one report's columns drift out of line with
+    the other's over the same corpus.
+    """
     widths = [max(len(cell) for cell in column) for column in zip(*rows)]
     return [
         indent + "  ".join(cell.ljust(width) for cell, width in zip(row, widths)).rstrip()
         for row in rows
     ]
+
+
+def money(value: float) -> str:
+    """One cost, in the one form every reading here quotes a cost in.
+
+    Four decimal places because a run of this benchmark costs cents: rounded
+    to two, most of the baseline means would print as the same number and a
+    multiplier could not be checked against them from the page.
+    """
+    return f"${value:.4f}"
 
 
 def _rung_counts(outcomes: Sequence[Outcome]) -> str:
@@ -877,18 +892,24 @@ def render(
     ])
 
 
-def _header(
-    outcomes: Sequence[Outcome], *, tasks_root: Path, logs: Sequence[Path]
+def corpus_header(
+    reading: str,
+    outcomes: Sequence[Outcome],
+    *,
+    tasks_root: Path,
+    logs: Sequence[Path],
 ) -> list[str]:
+    """What a reading of this corpus is, what it read, and how much there was.
+
+    Public because the calibration view opens on the same four lines over the
+    same two inputs: one implementation, because two would let one report
+    count a task set or name a log differently from the other while both
+    claimed to have read the same artifacts.
+    """
     swept = [outcome for outcome in outcomes if outcome.swept]
     runs = sum(len(outcome.resolved) for outcome in outcomes)
-    rounds = sorted(
-        {outcome.round for outcome in swept if outcome.round is not None},
-        key=lambda round: round.sort_key,
-    )
-    ladder = "; ".join(f"{model} -> {rung}" for model, rung in LADDER)
     lines = [
-        f"reconciliation: {BENCHMARK}",
+        f"{reading}: {BENCHMARK}",
         (
             f"  task set   {tasks_root} — {len(outcomes)} task(s): "
             f"{len(baseline(outcomes))} zero-knob baseline, "
@@ -899,22 +920,46 @@ def _header(
         f"  {'run logs' if index == 0 else '':<10} {log}"
         for index, log in enumerate(logs)
     ] or ["  run logs   (none)"]
-    lines += [
-        f"  runs       {runs} over {len(swept)} task(s)",
+    return [*lines, f"  runs       {runs} over {len(swept)} task(s)"]
+
+
+# The ladder every reading here is scoped to, and the provenance boundary
+# every one of them was taken under. Said once, for the two reports that owe
+# it to a reader: a disclaimer copied into a second report is a disclaimer
+# that can go on describing a discipline only the first one still keeps.
+PROVENANCE: tuple[str, ...] = (
+    "  ladder     "
+    + "; ".join(f"{model} -> {rung}" for model, rung in LADDER)
+    + "; neither -> unsolved",
+    "  verdicts   replayed: every logged diff re-graded by its task's held-out",
+    "             tests, the computation eval-v1 --replay does. No agent, no LLM,",
+    "             no network; the run logs are read and never added to, and no",
+    "             record is merged into the dataset.",
+)
+
+
+def _header(
+    outcomes: Sequence[Outcome], *, tasks_root: Path, logs: Sequence[Path]
+) -> list[str]:
+    rounds = sorted(
+        {
+            outcome.round
+            for outcome in outcomes
+            if outcome.swept and outcome.round is not None
+        },
+        key=lambda round: round.sort_key,
+    )
+    return [
+        *corpus_header("reconciliation", outcomes, tasks_root=tasks_root, logs=logs),
         # Rounds are counted off the tasks, not off the log files: a task's
         # round is the latest of the rounds its runs belong to, so one log can
         # carry more than one round and one round more than one log.
         f"  rounds     {len(rounds)} round(s)"
         + (f": {', '.join(round.label for round in rounds)}" if rounds else ""),
         f"             {_keying(rounds)}",
-        *_wrap(_ROUND_KEYING_NOTE, indent="             "),
-        f"  ladder     {ladder}; neither -> unsolved",
-        "  verdicts   replayed: every logged diff re-graded by its task's held-out",
-        "             tests, the computation eval-v1 --replay does. No agent, no LLM,",
-        "             no network; the run logs are read and never added to, and no",
-        "             record is merged into the dataset.",
+        *wrap(_ROUND_KEYING_NOTE, indent="             "),
+        *PROVENANCE,
     ]
-    return lines
 
 
 def _keying(rounds: Sequence[Round]) -> str:
@@ -965,7 +1010,7 @@ def _predictions(outcomes: Sequence[Outcome]) -> list[str]:
             verdict = "miss"
             misses.append(outcome)
         rows.append((outcome.task.id, prediction.rung, outcome.rung, verdict))
-    lines += ["", *_table(rows, indent="   ")]
+    lines += ["", *padded_table(rows, indent="   ")]
 
     if misses:
         lines += ["", "   misses, with the rationale that was registered for them:"]
@@ -977,12 +1022,15 @@ def _predictions(outcomes: Sequence[Outcome]) -> list[str]:
                     f"   {outcome.task.id}: predicted {prediction.rung}, "
                     f"observed {outcome.rung}"
                 ),
-                *_wrap(prediction.rationale, indent="     "),
+                *wrap(prediction.rationale, indent="     "),
             ]
     return lines
 
 
-def _wrap(text: str, *, indent: str, width: int = 74) -> list[str]:
+def wrap(text: str, *, indent: str = "", width: int = 74) -> list[str]:
+    """One paragraph of prose, wrapped and indented. Public for the same
+    reason `padded_table` is: the calibration view wraps its own prose, and a
+    second copy of this would be a second answer to how a report is shaped."""
     return textwrap.wrap(
         " ".join(text.split()), width=width,
         initial_indent=indent, subsequent_indent=indent,
@@ -1017,7 +1065,7 @@ def _knob_grouping(outcomes: Sequence[Outcome]) -> list[str]:
                 _BASELINE_LABEL, compared,
                 [control for control in controls if control.task.category == compared],
             ))
-        lines += ["", f"   {knob}", *_table(rows, indent="     ")]
+        lines += ["", f"   {knob}", *padded_table(rows, indent="     ")]
     return lines
 
 
@@ -1053,7 +1101,7 @@ def _families(outcomes: Sequence[Outcome]) -> list[str]:
         lines += [
             "",
             f"   {family} ({knob}: {ladder})",
-            *_table(rows, indent="     "),
+            *padded_table(rows, indent="     "),
             f"     monotonic along the ladder: {_monotonic(ordered)}",
         ]
     return lines
@@ -1139,18 +1187,18 @@ def _pairs(outcomes: Sequence[Outcome]) -> list[str]:
         ))
 
     if len(ranked) > 1:
-        lines += ["", *_table(ranked, indent="   ")]
+        lines += ["", *padded_table(ranked, indent="   ")]
     if len(unranked) > 1:
         lines += [
             "",
-            *_wrap(
+            *wrap(
                 "pairs varying a knob whose ladder the design note has not "
                 "enumerated: its levels carry no difficulty order, so neither "
                 "member is named the crux and no rung delta is claimed.",
                 indent="   ",
             ),
             "",
-            *_table(unranked, indent="   "),
+            *padded_table(unranked, indent="   "),
         ]
     return lines
 
@@ -1170,7 +1218,7 @@ def _flags(
 ) -> list[str]:
     lines = [
         "5. no-separation flags",
-        *_wrap(
+        *wrap(
             "criterion: a round counts for a knob only where it put the knob to a "
             "registered contrast — a task family or pair swept in that round whose "
             "varied knob this is, or an effort claim registered on a task "
@@ -1181,7 +1229,7 @@ def _flags(
             "printed below as informational and advance nothing.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "direction: a contrast separates only upward. Its levels are ordered "
             "on the knob's ladder, and it separates when some harder level's "
             "highest observed rung stands strictly above some easier level's "
@@ -1196,7 +1244,7 @@ def _flags(
             "the member that does not declare it and reads no direction.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "sample: the minimum-sample guard applies to a contrast too, turned in "
             "this reading's direction. A side of n graded tasks lands on at most n "
             "distinct rungs, so a harder side holding fewer graded tasks than the "
@@ -1208,7 +1256,7 @@ def _flags(
             "does silence read off balanced sides.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "effort: a counted round is non-silent when a registered contrast "
             "separated upward or when any effort claim scored to the knob hit on "
             "any model — a pair claim scoring to the pair's varied knob, a "
@@ -1219,7 +1267,7 @@ def _flags(
             "only on rungs is judged on an outcome its author never bet on.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "not assessable: silence needs a reading that could have spoken. A "
             "round whose contrasts are all unreadable and whose claim readings are "
             "all not assessable says nothing about the knob rather than saying the "
@@ -1229,7 +1277,7 @@ def _flags(
             "assessed miss.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "informational rows: the widest reading of where a level landed, and "
             "the only reading a knob with no contrast has. They carry the older "
             "direction-blind set comparison and its minimum-sample guard — a side "
@@ -1246,7 +1294,7 @@ def _flags(
             "counter.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             f"kill discipline: a knob silent for {SILENT_ROUNDS_TO_DEMOTE} round(s) "
             "is demoted (docs/design/task-difficulty-and-ex-ante-profiles.md "
             "section 9). A knob with no counted round is stalled rather than "
@@ -1623,7 +1671,7 @@ def _measured(value: float | None, metric: EffortMetric) -> str:
     if value is None:
         return "-"
     if metric == "cost":
-        return f"${value:.4f}"
+        return money(value)
     return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
@@ -1649,7 +1697,7 @@ def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
             f"   hit-rate: {len(hits)}/{len(graded)} assessed ({rate}); "
             f"{len(assessments) - len(graded)} not assessable"
         ),
-        *_wrap(
+        *wrap(
             "criterion: a claim is a hit when this task's own measurement is at "
             "least its registered factor times its comparator's, for that "
             "model. Read per model because that is how a run log measures: one "
@@ -1659,7 +1707,7 @@ def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
             "whether it worked.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "comparators: a pair claim is read against the one other member of "
             "this task's pair, and a baseline claim against the mean over the "
             "zero-knob baseline controls of this task's category that ran the "
@@ -1669,7 +1717,7 @@ def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
             "falsifiable were themselves read off means.",
             indent="   ",
         ),
-        *_wrap(
+        *wrap(
             "not assessable: a missing run on either side, a pair without a "
             "partner, a category with no swept control, or a comparator that "
             "measured zero — no multiple of zero is anything, so a claim read "
@@ -1701,7 +1749,7 @@ def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
             f"{assessment.ratio:.2f}x" if assessment.ratio is not None else "-",
             assessment.verdict,
         ))
-    lines += _table(rows, indent="   ")
+    lines += padded_table(rows, indent="   ")
 
     misses = [a for a in assessments if a.verdict == "miss"]
     if misses:
@@ -1716,7 +1764,7 @@ def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
             assert assessment.ratio is not None
             lines += [
                 f"   {assessment.task} ({assessment.model}):",
-                *_wrap(
+                *wrap(
                     f"claimed {metric} at least {factor}x {assessment.against}, "
                     f"which measured {_measured(assessment.comparator, metric)}; "
                     f"it spent {_measured(assessment.observed, metric)} "
@@ -1731,7 +1779,7 @@ def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
             assert assessment.reason is not None
             lines += [
                 f"   {assessment.task} ({assessment.model}):",
-                *_wrap(assessment.reason, indent="     "),
+                *wrap(assessment.reason, indent="     "),
             ]
     return lines
 

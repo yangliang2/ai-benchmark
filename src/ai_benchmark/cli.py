@@ -409,6 +409,7 @@ def main(argv: list[str] | None = None) -> None:
             "baseline controls, counting every logged run, resolved or not; "
             "the rung floor is the weakest rung any graded task in the cell "
             "landed on. Every reading prints the n it was taken over. "
+            f"{calibrate_v1.DISCLOSURES} "
             f"{calibrate_v1.REFUSALS} "
             "Writes nothing: no record is merged and no log is appended to. A "
             "run-log row carries the workdir diff but no verdict, so the "

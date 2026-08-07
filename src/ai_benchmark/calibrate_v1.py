@@ -25,11 +25,25 @@ one of those, its own n, because a multiplier over two tasks and a multiplier
 over eleven are not the same claim and a table that printed them alike would
 say so.
 
+**What a row does not say.** The key is category crossed with profile, and
+the actuarial-loop design's own primary key is category crossed with *scope*
+— so two things a row does not carry are priced into its multiplier anyway:
+the scope its tasks were at, and whether their starting repositories were
+hand-authored or vendored. Both are disclosed rather than keyed on, because
+re-keying the table is not this version's call and a reader who cannot see
+the difference would read a mix comparison as a knob's price. Every table
+prints what its denominator's controls are made of, and every row whose own
+mix differs from that prints its own. Substrate is the harder of the two: a
+control declares no construction block and provenance is declared inside one,
+so no control can be vendored and a vendored cell has no same-substrate
+denominator anywhere in the corpus to be read against instead.
+
 **What v1 refuses.** It fills no cell it did not measure. No interpolation
 between a knob's levels, no backoff to a coarser key when a cell is thin, no
-pooling of one category's controls into another's denominator (ADR-0001's
-grouping rule, which is why the report is a table per category rather than
-one table with a category column). An unmeasured cell prints empty and is
+pooling of one category's controls into another's denominator — the v1
+contract the actuarial-loop design sets for this table, and why the report is
+a table per category rather than one table with a category column: a refactor
+control is not a feature-dev control. An unmeasured cell prints a dash and is
 listed at the end with what was missing. Backoff is a real requirement of the
 actuarial design — it is how a sparse table still answers — but it has to
 arrive declaring the reduced confidence it was answered at, and a v1 that
@@ -50,7 +64,6 @@ no agent, no LLM, no network, no record merged. Every number here is
 recomputable from checked-in artifacts by this one command.
 """
 
-import textwrap
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -58,22 +71,26 @@ from itertools import chain
 from pathlib import Path
 
 from ai_benchmark.firstparty_v1 import (
-    BENCHMARK,
     GRADE_TIMEOUT_S,
     Task,
     load_runs,
 )
 from ai_benchmark.reconcile_v1 import (
-    LADDER,
     LADDER_MODELS,
+    PROVENANCE,
     RUNGS,
     Observed,
     Outcome,
     baseline,
+    corpus_header,
     knob_order,
     level_order,
+    money,
     observed_outcomes,
+    padded_table,
+    wrap,
 )
+from ai_benchmark.schema import Scale
 
 # The profile of a task that declares no knob at all. Spelled rather than left
 # blank: an empty profile cell would read as a row whose key went missing,
@@ -86,6 +103,71 @@ ZERO_KNOB = "(zero-knob)"
 EMPTY = "-"
 
 _FLOOR_COLUMN = "rung floor"
+
+# The scopes and the substrates, in the order a mix names them. Spelled out
+# rather than sorted, so that a mix reads in the same order everywhere and
+# `single-file` never sorts above `cross-file` in one line and below it in
+# the next.
+_SCOPES: tuple[Scale, ...] = ("single-file", "cross-file", "unknown")
+_HAND_AUTHORED = "hand-authored"
+_VENDORED = "vendored"
+_SUBSTRATES: tuple[str, ...] = (_HAND_AUTHORED, _VENDORED)
+
+
+@dataclass(frozen=True)
+class Composition:
+    """What a population of tasks is made of, on the two axes the row key
+    does not carry.
+
+    Scope is the annotation the actuarial-loop design keys its own table on
+    first — category x scope, refined from there — and this table keys on
+    category x profile instead, so a multiplier can divide a cell of one
+    scope mix by controls of another. Substrate is the same class of
+    difference one step further out, and structurally worse: provenance is
+    declared inside a construction block, a zero-knob control carries no
+    construction block, so no control can be vendored and a cell of vendored
+    tasks has no same-substrate denominator to be read against at all.
+    Neither is re-keyed here, because re-keying the table is a decision above
+    this version; both are printed, because a reader who cannot see the
+    difference reads a mix comparison as a knob's price.
+    """
+
+    scope: tuple[tuple[str, int], ...]
+    substrate: tuple[tuple[str, int], ...]
+
+    @property
+    def text(self) -> str:
+        return f"{_counts(self.scope)}; {_counts(self.substrate)}"
+
+
+def _counts(parts: Sequence[tuple[str, int]]) -> str:
+    return " + ".join(f"{count} {name}" for name, count in parts) or "(none)"
+
+
+def substrate(outcome: Outcome) -> str:
+    """Whether this task's starting repository was made or found.
+
+    Read off the construction block's substrate provenance, which is the task
+    set's own record of a vendored snapshot: a task that vendored a cold
+    repository has to declare where it came from, so its absence is the
+    hand-authored case rather than an unknown one.
+    """
+    construction = outcome.construction
+    if construction is None or construction.substrate is None:
+        return _HAND_AUTHORED
+    return _VENDORED
+
+
+def composition(members: Sequence[Outcome]) -> Composition:
+    """The mix of one population of tasks, counted in a fixed order."""
+    scope = Counter(member.task.scale for member in members)
+    substrates = Counter(substrate(member) for member in members)
+    return Composition(
+        scope=tuple((name, scope[name]) for name in _SCOPES if scope[name]),
+        substrate=tuple(
+            (name, substrates[name]) for name in _SUBSTRATES if substrates[name]
+        ),
+    )
 
 
 @dataclass(frozen=True)
@@ -112,6 +194,17 @@ class Cell:
         return f"{self.category} {self.label}"
 
     @property
+    def mix(self) -> Composition:
+        """What this row's tasks are made of, over its whole population.
+
+        Over the members and not over the tasks that ran one model, because a
+        mix describes the row rather than one of its readings: the `tasks`
+        column is the population it is counted from, and quoting it per model
+        would put three different mixes on a row with two multipliers.
+        """
+        return composition(self.members)
+
+    @property
     def sort_key(self) -> tuple[str, int, tuple[tuple[int, tuple[int, str]], ...]]:
         """Zero-knob first, then the single-knob profiles in knob and ladder
         order, then the composites. A reader comparing a level against the
@@ -135,7 +228,7 @@ def profile(outcome: Outcome) -> tuple[tuple[str, str], ...]:
     order their construction blocks listed them in, and a key that kept the
     authoring order would split one cell into two and halve both n's.
     """
-    construction = outcome.task.construction
+    construction = outcome.construction
     levels: Mapping[str, str] = {} if construction is None else construction.levels
     return tuple(sorted(levels.items(), key=lambda item: knob_order(item[0])))
 
@@ -179,7 +272,17 @@ class Denominator:
 
     @property
     def text(self) -> str:
-        return EMPTY if self.mean is None else f"{_money(self.mean)} (n={self.n})"
+        """The mean and its n — and the n even where there is no mean.
+
+        A denominator that measured zero over eleven controls and one that
+        measured zero over one are not the same statement about the corpus,
+        and this line is the only place either is said: an empty *cell* is
+        owed its reason in the list at the end, but the baseline line is not
+        in that list.
+        """
+        if self.mean is None:
+            return f"{EMPTY} (n={self.n})"
+        return f"{money(self.mean)} (n={self.n})"
 
 
 def denominator(controls: Sequence[Outcome], category: str, model: str) -> Denominator:
@@ -187,8 +290,9 @@ def denominator(controls: Sequence[Outcome], category: str, model: str) -> Denom
 
     Same category only. Pooling another category's controls in would be the
     one shortcut that fills an unpriced cell, and it would answer a question
-    nobody asked: ADR-0001 groups so that rows produced differently never pool
-    into one rate, and a refactor control is not a feature-dev control.
+    nobody asked: the v1 contract this table is built to is that a cell is
+    read against controls of its own category, and a refactor control is not
+    a feature-dev control.
     """
     ran = [
         control for control in controls
@@ -204,7 +308,7 @@ def denominator(controls: Sequence[Outcome], category: str, model: str) -> Denom
         # unreadable rather than infinite — the reading reconciliation gives
         # an effort claim whose comparator measured zero.
         return Denominator(None, len(ran), (
-            f"the {category} zero-knob baseline measured {_money(mean)} on {model} "
+            f"the {category} zero-knob baseline measured {money(mean)} on {model} "
             f"over {len(ran)} control(s), and no multiple of zero is anything"
         ))
     return Denominator(mean, len(ran), None)
@@ -252,7 +356,7 @@ def multiplier(cell: Cell, model: str, against: Denominator) -> Multiplier:
         assert against.reason is not None
         return Multiplier(None, len(ran), (
             f"{against.reason}, so this cell's mean of {len(ran)} task(s) "
-            f"({_money(mean)}) has nothing to divide by"
+            f"({money(mean)}) has nothing to divide by"
         ))
     return Multiplier(mean / against.mean, len(ran), None)
 
@@ -317,7 +421,7 @@ class Row:
         return [(column, reason) for column, reason in readings if reason is not None]
 
 
-def read(
+def read_rows(
     table: Sequence[Cell], against: Mapping[tuple[str, str], Denominator]
 ) -> list[Row]:
     """Every cell read into the numbers its row prints."""
@@ -334,37 +438,38 @@ def read(
     ]
 
 
+def control_mixes(outcomes: Sequence[Outcome]) -> dict[str, Composition]:
+    """What each category's zero-knob controls are made of.
+
+    Keyed by category and not by category and model, for the reason a cell's
+    mix is taken over its members: the composition describes the population a
+    denominator is drawn from, and a category whose controls did not all run
+    every model still prints the per-model n it did divide by beside the mean.
+    A category with no control at all is absent here rather than empty, so
+    that "the controls are of this mix" and "there are no controls" are two
+    different statements on the page.
+    """
+    grouped: dict[str, list[Outcome]] = {}
+    for control in baseline(outcomes):
+        grouped.setdefault(control.task.category, []).append(control)
+    return {category: composition(members) for category, members in grouped.items()}
+
+
 # --- rendering -------------------------------------------------------------------
-
-
-def _money(value: float) -> str:
-    return f"${value:.4f}"
-
-
-def _table(rendered: Sequence[Sequence[str]], *, indent: str) -> list[str]:
-    """Header row first, columns padded to the widest cell."""
-    widths = [max(len(cell) for cell in column) for column in zip(*rendered)]
-    return [
-        indent + "  ".join(cell.ljust(width) for cell, width in zip(row, widths)).rstrip()
-        for row in rendered
-    ]
-
-
-def _wrap(text: str, *, indent: str = "", width: int = 78) -> list[str]:
-    return textwrap.wrap(
-        " ".join(text.split()), width=width,
-        initial_indent=indent, subsequent_indent=indent,
-    )
 
 
 # Where a header line's value starts: two spaces, an eleven-column label, and
 # then the value, so a wrapped paragraph lines up under the one above it.
 _VALUE = " " * 13
 
+# How wide the prose in this report wraps. Wider than reconciliation's, whose
+# paragraphs sit inside numbered sections; these hang off a header label.
+_WIDTH = 78
+
 
 def _labelled(label: str, text: str) -> list[str]:
     """One header paragraph: its label, then the text wrapped under itself."""
-    wrapped = _wrap(text, width=78 - len(_VALUE))
+    wrapped = wrap(text, width=_WIDTH - len(_VALUE))
     return [
         f"  {label:<11}{wrapped[0]}",
         *(f"{_VALUE}{line}" for line in wrapped[1:]),
@@ -379,8 +484,9 @@ REFUSALS = (
     "v1 prints no number it did not measure: no interpolation between a "
     "knob's levels, no backoff to a coarser key where a cell is thin, and no "
     "pooling of one category's controls into another category's denominator "
-    "— which is why this is a table per category and not one table with a "
-    "category column (ADR-0001's grouping rule). A cell nothing measured "
+    "— the v1 contract the actuarial-loop design sets for this table, and why "
+    "this is a table per category and not one table with a category column: a "
+    "refactor control is not a feature-dev control. A cell nothing measured "
     f"prints {EMPTY!r} and is listed at the end with what was missing."
 )
 
@@ -401,6 +507,38 @@ _FLOORS = (
     "that n rather than read as the weakest."
 )
 
+_TASKS = (
+    "tasks: the row's whole population — every task of the set with this key, "
+    "swept or not. It is neither of the n's beside it: a multiplier's n counts "
+    "the tasks that ran that model and a floor's n the tasks that landed on a "
+    "rung, and this counts the tasks the row is made of. It is also the "
+    "population a mix is taken over."
+)
+
+DISCLOSURES = (
+    "mix: what a population of tasks is made of on the two axes this row key "
+    "does not carry — scope (single-file or cross-file) and substrate "
+    "(hand-authored or vendored). The actuarial-loop design keys its "
+    "calibration table on category x scope first and refines from there; this "
+    "one keys on category x profile, so wherever a row's mix differs from the "
+    "mix of the controls it is divided by, its multiplier compares across that "
+    "difference and prices it in alongside the knobs. Each table therefore "
+    "prints its baseline's mix, and every row differing from it prints its "
+    "own. Substrate is the same reading one step further out, and there is no "
+    "version of it that comes out even: substrate provenance is declared "
+    "inside a construction block and a zero-knob control declares no "
+    "construction block at all, so no control can be vendored and no vendored "
+    "cell has a same-substrate denominator anywhere in this corpus. Such a "
+    "cell's multiplier prices somebody else's repository along with the knobs, "
+    "which is why it names its substrate here. Neither axis is keyed on: "
+    "re-keying the table is a decision above this version, and disclosure is "
+    "what this version owes instead."
+)
+
+# The heading over the rows whose mix is not their denominator's. Named once,
+# because the tests read the block by it and a reader finds it by it.
+_DIFFERING = "rows whose mix differs from the baseline's:"
+
 
 def render(
     outcomes: Mapping[str, Outcome], *, tasks_root: Path, logs: Sequence[Path]
@@ -408,17 +546,18 @@ def render(
     ordered = [outcomes[task_id] for task_id in sorted(outcomes)]
     table = cells(ordered)
     against = denominators(ordered)
-    read_rows = read(table, against)
+    mixes = control_mixes(ordered)
+    rows = read_rows(table, against)
     by_category: dict[str, list[Row]] = {}
-    for row in read_rows:
+    for row in rows:
         by_category.setdefault(row.cell.category, []).append(row)
     return "\n".join(chain(
         _header(ordered, table, tasks_root=tasks_root, logs=logs),
         *(
-            ["", *_category(category, by_category[category], against)]
+            ["", *_category(category, by_category[category], against, mixes)]
             for category in by_category
         ),
-        ["", *_missing(read_rows)],
+        ["", *_missing(rows)],
     ))
 
 
@@ -429,67 +568,68 @@ def _header(
     tasks_root: Path,
     logs: Sequence[Path],
 ) -> list[str]:
-    controls = baseline(outcomes)
-    swept = [outcome for outcome in outcomes if outcome.swept]
-    runs = sum(len(outcome.resolved) for outcome in outcomes)
     categories = {cell.category for cell in table}
-    ladder = "; ".join(f"{model} -> {rung}" for model, rung in LADDER)
-    lines = [
-        f"calibration: {BENCHMARK}",
-        (
-            f"  task set   {tasks_root} — {len(outcomes)} task(s): "
-            f"{len(controls)} zero-knob baseline, "
-            f"{len(outcomes) - len(controls)} constructed"
-        ),
-    ]
-    lines += [
-        f"  {'run logs' if index == 0 else '':<10} {log}"
-        for index, log in enumerate(logs)
-    ] or ["  run logs   (none)"]
-    lines += [
-        f"  runs       {runs} over {len(swept)} task(s)",
+    return [
+        *corpus_header("calibration", outcomes, tasks_root=tasks_root, logs=logs),
         (
             f"  cells      {len(table)} cell(s) over {len(categories)} category(ies), "
             "keyed category x sorted knob-activation profile"
         ),
-        f"  ladder     {ladder}; neither -> unsolved",
-        "  verdicts   replayed: every logged diff re-graded by its task's held-out",
-        "             tests, the computation eval-v1 --replay does. No agent, no LLM,",
-        "             no network; the run logs are read and never added to, and no",
-        "             record is merged into the dataset.",
+        *PROVENANCE,
         *_labelled("reads", _READINGS),
         *_labelled("", _FLOORS),
+        *_labelled("", _TASKS),
+        *_labelled("discloses", DISCLOSURES),
         *_labelled("refuses", REFUSALS),
     ]
-    return lines
 
 
 def _category(
     category: str,
     category_rows: Sequence[Row],
     against: Mapping[tuple[str, str], Denominator],
+    mixes: Mapping[str, Composition],
 ) -> list[str]:
     """One category's table, under the denominator its multipliers were
-    divided by.
+    divided by and what that denominator is made of.
 
     A table per category rather than one table with a category column, because
     the denominator is per category: printing it once above the rows it
     divides is what makes the arithmetic checkable from the page, and what
     makes a pooled denominator impossible to write without it being visible.
+    The mix is printed beside it for the reading the key does not support —
+    a row of one scope or substrate mix divided by controls of another — and
+    the rows that differ are listed under the table rather than columned into
+    it, because most rounds will have few of them and a reader meets them
+    where the difference matters.
     """
     header = ("profile", "tasks", *LADDER_MODELS, _FLOOR_COLUMN)
     means = ", ".join(
         f"{model} {against[(category, model)].text}" for model in LADDER_MODELS
     )
-    return [
+    mix = mixes.get(category)
+    differing = [row for row in category_rows if row.cell.mix != mix]
+    lines = [
         f"category {category}",
         f"   baseline mean cost   {means}",
+        "   baseline mix         "
+        + (mix.text if mix is not None else "(no zero-knob control in this category)"),
         "",
-        *_table([header, *(row.columns for row in category_rows)], indent="   "),
+        *padded_table([header, *(row.columns for row in category_rows)], indent="   "),
     ]
+    if differing:
+        lines += [
+            "",
+            f"   {_DIFFERING}",
+            *padded_table(
+                [(f"{row.cell.label}:", row.cell.mix.text) for row in differing],
+                indent="     ",
+            ),
+        ]
+    return lines
 
 
-def _missing(read_rows: Sequence[Row]) -> list[str]:
+def _missing(rows: Sequence[Row]) -> list[str]:
     """Every empty cell, with what was missing.
 
     Printed even when there is nothing to print, because a section that
@@ -501,13 +641,13 @@ def _missing(read_rows: Sequence[Row]) -> list[str]:
     lines = ["empty cells, with what was missing:"]
     entries = [
         (row.cell.name, column, reason)
-        for row in read_rows
+        for row in rows
         for column, reason in row.missing
     ]
     if not entries:
         return [*lines, "   (every cell the corpus holds is filled)"]
     for name, column, reason in entries:
-        lines += [f"   {name} ({column}):", *_wrap(reason, indent="     ")]
+        lines += [f"   {name} ({column}):", *wrap(reason, width=_WIDTH, indent="     ")]
     return lines
 
 
