@@ -339,15 +339,21 @@ rule, which `reconcile-v1` mirrors verbatim:
    reconciliation's crux/control section names no crux in a pair whose knob
    has no enumerated ladder.
 
-   A member that does not declare the knob at all sits **below the ladder's
-   lowest rung**. The pair rule allows a crux and a control declaring
-   different knobs, and a control that never turns the knob is the least of
-   it — so a present level standing above an absent one is an upward
-   separation, and an absent level standing above a present one is not. What
-   makes that reading available is the *ladder*, not the presence: a
-   present/absent pair on an unenumerated ladder is as unreadable as any other
-   comparison on one, because absent is below rungs this section has never
-   written down.
+   Every side of a contrast declares the knob, and the task set is where that
+   is enforced rather than here: the lint refuses a pair or a family whose
+   members set *different* knobs, because a knob only one side was built for
+   leaves the other side with no level to print and no rung to be ordered
+   against. Reconciliation meets the shape anyway — an artifact replayed from
+   before the lint, a set assembled by hand — and where it does, the contrast
+   is **not assessable** in either direction and the row names the member that
+   does not declare the knob. What it must not say is either of the two things
+   it has said: "the ladder is not enumerated", which is false wherever the
+   ladder is written down right here, or a separation read off the undeclared
+   side as though it sat below the lowest rung. The second is the worse of the
+   two, because on every ladder whose bottom rung already means the knob is
+   *off* — K9's `none`, K8's `covered` — it would call two semantically
+   identical states separated and hand a demotion argument to whichever way
+   the noise fell.
 
    A contrast is read only where its sides were balanced enough to speak. The
    minimum-sample guard the informational rows carry applies to the counting
@@ -364,6 +370,18 @@ rule, which `reconcile-v1` mirrors verbatim:
    is **not assessable**. The guard only ever withdraws a verdict: an observed
    upward separation stands whatever the sampling, and so does silence read
    off sides that were balanced.
+
+   The two guards read the same data and answer different questions, so they
+   can disagree on it without either being wrong. The informational row's asks
+   whether two rung *sets* could have matched, and withdraws where one side
+   could not have reproduced the other's spread however its runs came out; the
+   counting row's asks whether an upward separation was *observed*, and an
+   observed separation stands whatever the sampling. So one task at the easier
+   level read against three at the harder one prints a counted row that
+   separated beside an informational row on the same two levels that is not
+   assessable. That is the mirror of the shape the paragraph above withdraws,
+   and the report prints both readings because the reader is owed the question
+   each of them answered.
 
 3. **Effort-bearing non-silence.** A counted round is **non-silent** for a
    knob when a registered contrast of that knob separated upward **or** when

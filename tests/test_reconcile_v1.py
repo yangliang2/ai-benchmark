@@ -1045,8 +1045,10 @@ def test_reconcile_v1_reads_an_effort_claim_hit_as_the_knob_speaking(
 
     counted = counted_block(out)
     assert "no rung delta" in pairs_block(out)
-    assert "non-silent — no contrast reached above an easier level" in counted
-    assert "1 of 2 registered effort reading(s) hit" in counted
+    assert (
+        "non-silent — 1 of 2 registered effort reading(s) hit "
+        "(0 of 1 registered contrast(s) separated)"
+    ) in counted
     assert "silent round(s): 0" in flags_block(out)
 
 
@@ -1105,76 +1107,72 @@ def test_reconcile_v1_will_not_read_a_contrast_on_an_unenumerated_ladder(
     out = reconcile(tasks, log, capsys)
 
     counted = counted_block(out)
-    assert "not assessable — 1 registered contrast(s)" in counted
+    assert "not assessable — none of 1 registered contrast(s) readable" in counted
     assert "pair terrain: K7's ladder is not enumerated" in counted
     assert "silent round(s): 0" in flags_block(out)
 
 
-def write_present_against_absent_pair(
-    tmp_path: Path, resolved: dict[str, list[str]]
-) -> Path:
-    """A pair whose control leaves the varied knob unset entirely.
+def write_pair_declaring_different_knobs(tmp_path: Path) -> Path:
+    """A pair whose control never declares the knob its crux varies: both
+    members write K1 at the same level and only the crux turns K9.
 
-    The pair rule allows members declaring different knobs, so a present level
-    against an absent one is a contrast an author can build: both members
-    write K1 at the same level and only the crux turns K9 at all. The control
-    that never turns the knob is the least of its ladder, which is what makes
-    the pair readable in a direction.
-    """
+    The two tests below are the two halves of one rule — the lint refuses this
+    shape, and reconciliation says so accurately where a replayed artifact
+    carries one anyway — so they read it off one fixture."""
     tasks = tmp_path / "tasks"
     write_task(tasks, "crux-task", construction=constructed(
         "K9", "single", "sonnet-only", pair="terrain", also={"K1": "acceptance"}))
     write_task(tasks, "control-task", construction=constructed(
         "K1", "acceptance", "haiku-solvable", pair="terrain"))
-    write_log(tmp_path / "runs.jsonl", firstparty_v1.load_task_set(tasks), resolved)
     return tasks
 
 
-def test_reconcile_v1_reads_a_present_level_standing_above_an_absent_one(
+def test_reconcile_v1_will_not_read_a_contrast_whose_control_never_declares_the_knob(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Absent is below the ladder's lowest rung, so the crux reaching above a
-    control that never set the knob is an upward separation — and was read as
-    "the ladder is not enumerated" before, which said the opposite of what the
-    pair had drawn."""
-    tasks = write_present_against_absent_pair(tmp_path, {
+    """The shape the task-set lint refuses, read here as what it is.
+
+    Both members write K1 at the same level and only the crux turns K9, so K9
+    has one side and nothing on the ladder opposite it. The crux landed a rung
+    above the control, and that is still not an upward separation: the control
+    is not at the bottom of K9's ladder, it is off it, and K9's bottom rung
+    (`none`, the zero-crux control) already means no crux was planted — so
+    reading the two as separated would call two states that mean the same
+    thing apart on whichever way the noise fell.
+
+    What the row owes the shape is an accurate refusal. Naming the member that
+    does not declare the knob is that; "K9's ladder is not enumerated" is not,
+    since K9's ladder is enumerated in the design note this rule lives in.
+    """
+    tasks = write_pair_declaring_different_knobs(tmp_path)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, firstparty_v1.load_task_set(tasks), {
         "crux-task": [_SONNET], "control-task": [_HAIKU, _SONNET],
     })
 
-    out = reconcile(tasks, tmp_path / "runs.jsonl", capsys)
+    out = reconcile(tasks, log, capsys)
 
     counted = counted_block(out)
+    assert "not assessable — none of 1 registered contrast(s) readable" in counted
     assert (
-        "separated — pair terrain: single {sonnet-only} above "
-        "(not set) {haiku-solvable}"
-    ) in counted
-    assert "silent round(s): 0" in flags_block(out)
-    # Section 4 names the same knob the counter read the pair off: the crux at
-    # its level and the control at none, rather than the knob both members
-    # happen to set alike.
-    pairs = pairs_block(out)
-    assert "crux-task (K9=single)" in pairs and "control-task (K9=-)" in pairs
-
-
-def test_reconcile_v1_will_not_read_an_absent_level_standing_above_a_present_one(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """The same pair with the rungs the other way up. The sets still differ,
-    and the level that landed higher is the one below the ladder — which is
-    the knob failing to reach, not the knob working."""
-    tasks = write_present_against_absent_pair(tmp_path, {
-        "crux-task": [_HAIKU, _SONNET], "control-task": [_SONNET],
-    })
-
-    out = reconcile(tasks, tmp_path / "runs.jsonl", capsys)
-
-    counted = counted_block(out)
-    assert (
-        "pair terrain: (not set) {sonnet-only}, single {haiku-solvable} — "
-        "no level reaches above an easier one"
+        "pair terrain: control-task does not declare K9 — a shape the task-set "
+        "lint refuses"
     ) in counted
     assert "separated —" not in counted
-    assert "silent round(s): 1" in flags_block(out)
+    assert "silent round(s): 0" in flags_block(out)
+
+
+def test_the_lint_refuses_the_shape_that_row_is_written_for(tmp_path: Path) -> None:
+    """The other half: the pair the test above reads is one no lint-clean task
+    set can hold, so that row is for artifacts replayed from before the lint
+    and for sets assembled by hand, and never for a set a sweep was paid on."""
+    tasks = write_pair_declaring_different_knobs(tmp_path)
+
+    problems = firstparty_v1.lint_task_set(firstparty_v1.load_task_set(tasks))
+
+    assert [
+        problem for problem in problems if "do not set the same knob(s)" in problem
+    ]
 
 
 def test_reconcile_v1_does_not_count_a_contrast_that_varies_two_knobs(
@@ -1230,8 +1228,14 @@ def test_reconcile_v1_scores_a_baseline_claim_on_a_composite_to_no_knob(
     main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
 
     out = capsys.readouterr().out
-    # The claim is graded and hits — section 6 says so — and still moves nothing.
-    assert "composite-task" in out.split("6. effort-claim")[1]
+    # The claim is graded and hits — section 6 says so on every row it wrote —
+    # and still moves nothing. The hit is the point: a claim that came out
+    # false would leave the three counters alone on its own merits.
+    graded = [
+        line for line in out.split("6. effort-claim")[1].splitlines()
+        if "composite-task" in line
+    ]
+    assert graded and all(line.split()[-1] == "hit" for line in graded)
     for knob in ("K1", "K7", "K9"):
         block = knob_block(out, knob)
         assert f"stalled: no round put {knob} to a registered contrast" in block
@@ -1291,7 +1295,7 @@ def test_reconcile_v1_will_not_read_silence_off_an_unbalanced_contrast(
     out = reconcile(tasks, log, capsys)
 
     counted = counted_block(out)
-    assert "not assessable — 1 registered contrast(s)" in counted
+    assert "not assessable — none of 1 registered contrast(s) readable" in counted
     assert (
         "intent has 1 graded task(s) against acceptance's 2 distinct rung(s), "
         "so its silence would be the sample as much as the knob"

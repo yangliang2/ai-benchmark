@@ -405,6 +405,27 @@ def rung_set(outcomes: Iterable[Outcome]) -> frozenset[Observed]:
     return frozenset(outcome.rung for outcome in outcomes if outcome.determined)
 
 
+def _levels(outcome: Outcome) -> Mapping[str, str]:
+    """The knob levels this task declares. Asserted rather than defaulted: a
+    task with no construction block is a zero-knob baseline control, and a
+    control belongs to no family, no pair and no contrast, so every caller
+    here has already selected the constructed tasks."""
+    assert outcome.construction is not None
+    return outcome.construction.levels
+
+
+def _level(outcome: Outcome, knob: str) -> str:
+    """The level this task sets the knob to, or `-` where it never declares it.
+
+    The dash is what the family and pair tables render a member built for
+    other knobs as, and the task-set lint's own message for refusing that
+    shape names it. The counting side does not read it as a level at all:
+    `read_contrast` reports such a contrast not assessable rather than
+    ordering the dash anywhere on the ladder.
+    """
+    return _levels(outcome).get(knob, "-")
+
+
 # --- registered contrasts ------------------------------------------------------
 
 
@@ -462,19 +483,19 @@ def registered_contrasts(outcomes: Iterable[Outcome]) -> list[Contrast]:
 def contrast_knob(members: Sequence[Outcome]) -> str | None:
     """The one knob these members vary, or None where that is not one knob.
 
-    A knob some members declare and others do not is varied too: the pair rule
-    allows members declaring different knobs, and a knob present on one side
-    and absent on the other is exactly the contrast such a pair draws. Where
-    two knobs move at once the contrast attributes its outcome to neither, and
-    where none moves there is nothing to attribute — both return None, and the
-    round goes uncounted rather than being scored against a knob that sat
-    still. Distinct from `_varied_knob`, which always answers, because a
-    section that has to render a malformed family still has to print something.
+    A knob some members declare and others do not counts as varied here, even
+    though the task-set lint refuses that shape: registering the contrast is
+    what lets `read_contrast` say what is wrong with it, where returning None
+    would drop it off the page and print the knob as stalled — never asked —
+    when a pair naming it was built and got its shape wrong. Where two knobs
+    move at once the contrast attributes its outcome to neither, and where
+    none moves there is nothing
+    to attribute — both return None, and the round goes uncounted rather than
+    being scored against a knob that sat still. Distinct from `_varied_knob`,
+    which always answers, because a section that has to render a malformed
+    family still has to print something.
     """
-    declared: list[dict[str, str]] = []
-    for member in members:
-        assert member.construction is not None
-        declared.append(member.construction.levels)
+    declared = [_levels(member) for member in members]
     varied = [
         knob for knob in sorted({knob for levels in declared for knob in levels})
         if len({levels.get(knob) for levels in declared}) > 1
@@ -504,12 +525,16 @@ def read_contrast(contrast: Contrast) -> Reading:
     the harder one, and the contrast is not assessable rather than scored on
     the alphabetical order `level_order` falls back to.
 
-    A member declaring no level of the knob sits below the ladder's lowest
-    rung: the pair rule allows members declaring different knobs, and a
-    control that never turns the knob is the least of it. What makes that
-    reading available is the enumerated ladder and not the absence, so a
-    present/absent pair on an unenumerated ladder is as unreadable as any
-    other comparison on one.
+    A contrast whose members do not all declare the knob is not assessable
+    either, and the row names the member that does not declare it. The
+    task-set lint refuses that shape (`_varied_knob_problem` in
+    `firstparty_v1`), so it arrives here only from an artifact replayed from
+    before the lint or a set assembled by hand — and neither of the readings
+    it used to get was true of it. "The ladder is not enumerated" is false
+    wherever the ladder is written down, and ordering the undeclared side
+    below the lowest rung separates two states that mean the same thing on
+    every ladder whose bottom rung already means the knob is off, as K9's
+    `none` and K8's `covered` do.
 
     The minimum-sample guard rides here as it does on the informational rows,
     adapted to the direction this reading runs: there it asks whether two rung
@@ -519,6 +544,17 @@ def read_contrast(contrast: Contrast) -> Reading:
     off sides that were balanced enough to speak.
     """
     ladder = KNOB_LEVELS.get(contrast.knob, ())
+    undeclared = sorted(
+        member.task.id for member in contrast.members
+        if contrast.knob not in _levels(member)
+    )
+    if undeclared:
+        return Reading(False, False, (
+            f"{contrast.label}: {', '.join(undeclared)} "
+            f"{'does not' if len(undeclared) == 1 else 'do not'} declare "
+            f"{contrast.knob} — a shape the task-set lint refuses, so its sides "
+            "are not all rungs of one ladder and no direction can be read"
+        ))
     by_level: dict[str, list[Outcome]] = {}
     for member in contrast.members:
         if member.determined:
@@ -527,22 +563,22 @@ def read_contrast(contrast: Contrast) -> Reading:
         return Reading(False, False, (
             f"{contrast.label}: fewer than two of its levels have a rung"
         ))
-    if any(level not in ladder and level != _ABSENT for level in by_level):
+    if any(level not in ladder for level in by_level):
         return Reading(False, False, (
             f"{contrast.label}: {contrast.knob}'s ladder is not enumerated, so "
             "neither level is the harder one and no direction can be read"
         ))
-    ordered = sorted(by_level, key=lambda level: _contrast_order(contrast.knob, level))
+    ordered = sorted(by_level, key=lambda level: level_order(contrast.knob, level))
     comparisons = list(combinations(ordered, 2))
     for easier, harder in comparisons:
         if _top(by_level[harder]) > _top(by_level[easier]):
             return Reading(True, True, (
-                f"{contrast.label}: {_level_text(harder)} "
-                f"{_rung_set_text(by_level[harder])} above {_level_text(easier)} "
+                f"{contrast.label}: {harder} "
+                f"{_rung_set_text(by_level[harder])} above {easier} "
                 f"{_rung_set_text(by_level[easier])}"
             ))
     described = ", ".join(
-        f"{_level_text(level)} {_rung_set_text(by_level[level])}" for level in ordered
+        f"{level} {_rung_set_text(by_level[level])}" for level in ordered
     )
     unbalanced = [
         (easier, harder) for easier, harder in comparisons
@@ -552,30 +588,14 @@ def read_contrast(contrast: Contrast) -> Reading:
         return Reading(False, False, (
             f"{contrast.label}: {described} — "
             + "; ".join(
-                _unbalanced_text((_level_text(easier), by_level[easier]),
-                                 (_level_text(harder), by_level[harder]))
+                _unbalanced_text((easier, by_level[easier]),
+                                 (harder, by_level[harder]))
                 for easier, harder in unbalanced
             )
         ))
     return Reading(False, True, (
         f"{contrast.label}: {described} — no level reaches above an easier one"
     ))
-
-
-# The level of a knob a contrast member does not declare at all: below every
-# rung of the ladder, and printed as what it is rather than as the dash the
-# tables use, because a verdict line reads as prose.
-_ABSENT = "-"
-
-
-def _contrast_order(knob: str, level: str) -> tuple[int, str]:
-    """The ladder order a contrast reads its levels in: `level_order`, with the
-    undeclared level sorted below every rung rather than after them."""
-    return (-1, level) if level == _ABSENT else level_order(knob, level)
-
-
-def _level_text(level: str) -> str:
-    return "(not set)" if level == _ABSENT else level
 
 
 def _top(members: Sequence[Outcome]) -> int:
@@ -1039,27 +1059,19 @@ def _families(outcomes: Sequence[Outcome]) -> list[str]:
     return lines
 
 
-def _level(outcome: Outcome, knob: str) -> str:
-    assert outcome.construction is not None
-    return outcome.construction.levels.get(knob, _ABSENT)
-
-
 def _varied_knob(members: Sequence[Outcome]) -> str:
     """The knob a family varies: the one its members do not all set alike.
 
     A knob one member declares and another does not is varied too, read the
-    way `contrast_knob` reads it — the undeclared side sits below the ladder —
-    so this section and the counting one name the same knob for the same pair.
-    The lint holds a family to exactly one such knob; a family that somehow has
+    way `contrast_knob` reads it, so this section and the counting one name
+    the same knob for the same pair — the counting one then refuses to read a
+    direction off it, but which knob the pair is about does not change. The
+    lint holds a family to exactly one such knob; a family that somehow has
     none (identical levels throughout) falls back to its lowest-numbered knob
     so the block still renders rather than the whole report failing.
     """
     activated = sorted(
-        {
-            knob for member in members if member.construction is not None
-            for knob in member.construction.levels
-        },
-        key=knob_order,
+        {knob for member in members for knob in _levels(member)}, key=knob_order
     )
     varied = [
         knob for knob in activated
@@ -1176,12 +1188,12 @@ def _flags(
             "highest. A set difference on its own is not separation: a level that "
             "resolves uniformly differs from a spread comparison, and reading that "
             "as the knob working credits an anti-saturation knob for coming out "
-            "easier. A member that does not declare the knob at all sits below the "
-            "ladder's lowest rung, so a level standing above a member that never "
-            "turned the knob separates upward and the reverse does not. Where the "
-            "knob's ladder is not enumerated, no level is the harder one and the "
-            "contrast is not assessable — a present-against-absent pair included, "
-            "since absent is below rungs nobody wrote down.",
+            "easier. Where the knob's ladder is not enumerated, no level is the "
+            "harder one and the contrast is not assessable. So is a contrast whose "
+            "members do not all declare the knob: the task-set lint refuses that "
+            "shape, and where a replayed artifact carries one anyway the "
+            "undeclared side has no rung to be ordered against, so the row names "
+            "the member that does not declare it and reads no direction.",
             indent="   ",
         ),
         *_wrap(
@@ -1224,7 +1236,13 @@ def _flags(
             "of n graded tasks lands on at most n distinct rungs, so a side "
             "holding fewer graded tasks than the other side has rungs could not "
             "have matched it however the runs came out, and is reported not "
-            "assessable naming the counts. No row under that label moves a "
+            "assessable naming the counts. That guard and the counting one above "
+            "answer different questions off the same data, so they can disagree "
+            "on it: this one asks whether two rung sets could have matched, the "
+            "counting one whether an upward separation was observed. One task at "
+            "the easier level against three at the harder one prints as separated "
+            "up there and not assessable here, and both readings are right about "
+            "the question they were asked. No row under this label moves a "
             "counter.",
             indent="   ",
         ),
@@ -1331,13 +1349,11 @@ def _counted(
         assessment for assessment in claims if assessment.verdict != "not assessable"
     ]
     assessable = [reading for reading in readings if reading.assessable]
-    contrast_tally = (
-        f"{len(readings)} registered contrast(s)" if readings
-        else "no registered contrast"
-    )
+    separated = [reading for reading in readings if reading.separated]
+    contrast_tally = _contrast_tally(separated, assessable, readings)
     claim_tally = _claim_tally(hits, readable, claims)
     tally = f"{contrast_tally}; {claim_tally}"
-    if separated := [reading for reading in readings if reading.separated]:
+    if separated:
         # The reading that spoke is named in the summary, so the detail lines
         # below carry the ones it does not: printing it in both places made the
         # row argue the same comparison with itself.
@@ -1347,10 +1363,13 @@ def _counted(
         return Verdict(round, False, f"separated — {separated[0].text} ({tally})", detail)
     detail = tuple(reading.text for reading in readings)
     if hits:
-        return Verdict(round, False, (
-            "non-silent — no contrast reached above an easier level, and "
-            f"{claim_tally} ({contrast_tally})"
-        ), detail)
+        # The claim half leads, the way the separated row leads with the
+        # contrast that spoke: what made the round non-silent is the first
+        # thing on it, and the tally beside it says the other half stayed
+        # quiet without a second sentence saying so.
+        return Verdict(
+            round, False, f"non-silent — {claim_tally} ({contrast_tally})", detail
+        )
     if not assessable and not readable:
         # Nothing here could have spoken: every contrast unreadable and every
         # claim reading unassessable. The round said nothing rather than saying
@@ -1359,10 +1378,7 @@ def _counted(
         return Verdict(round, False, f"not assessable — {tally}", detail)
     # Both halves of the silence are spelled out, because a knob is demoted off
     # this row and "no separation" alone does not say which axis stayed quiet.
-    return Verdict(round, True, "no separation — " + "; ".join([
-        _readable_contrast_tally(assessable, readings) if readings else contrast_tally,
-        claim_tally,
-    ]), detail)
+    return Verdict(round, True, f"no separation — {tally}", detail)
 
 
 def _claim_tally(
@@ -1388,16 +1404,28 @@ def _claim_tally(
     return f"{tally} ({unreadable} not assessable)" if unreadable else tally
 
 
-def _readable_contrast_tally(
-    assessable: Sequence[Reading], readings: Sequence[Reading]
+def _contrast_tally(
+    separated: Sequence[Reading],
+    assessable: Sequence[Reading],
+    readings: Sequence[Reading],
 ) -> str:
-    """The contrast half of a silent round, counting only what could be read."""
-    if len(assessable) == len(readings):
-        return f"{len(readings)} registered contrast(s), none reaching above an easier level"
-    return (
-        f"{len(assessable)} of {len(readings)} registered contrast(s) readable, "
-        "none reaching above an easier level"
-    )
+    """The contrast half of a knob's round, in the form the effort half uses.
+
+    "M of N separated", never a bare count of how many contrasts existed: one
+    parenthetical printing "3 registered contrast(s)" beside "1 of 2
+    registered effort reading(s) hit" left its two halves counting different
+    things, and the reader to work out which. As there, the denominator is the
+    readings that could be assessed and the ones that could not are named
+    beside it rather than folded in, because a contrast nothing could be read
+    off is not a contrast that came out flat.
+    """
+    if not readings:
+        return "no registered contrast"
+    if not assessable:
+        return f"none of {len(readings)} registered contrast(s) readable"
+    unreadable = len(readings) - len(assessable)
+    tally = f"{len(separated)} of {len(assessable)} registered contrast(s) separated"
+    return f"{tally} ({unreadable} not assessable)" if unreadable else tally
 
 
 def _swept_in(task_id: str, outcomes: Sequence[Outcome], round: Round) -> bool:
@@ -1514,11 +1542,12 @@ def _forced_apart(one: Sequence[Outcome], other: Sequence[Outcome]) -> bool:
     it: a set drawn from n tasks holds at most n rungs, so each side already
     has at least as many tasks as the shared set has rungs. The guard only
     ever withdraws a claim of separation.
+
+    The question is symmetric here, which is the whole of the difference from
+    `_outsampled`: a set comparison is withdrawn whichever side was the small
+    one, where the contrast reading only ever asks it of the harder side.
     """
-    return (
-        len(_graded(one)) < len(rung_set(other))
-        or len(_graded(other)) < len(rung_set(one))
-    )
+    return _outsampled(one, other) or _outsampled(other, one)
 
 
 def _graded(outcomes: Sequence[Outcome]) -> list[Outcome]:
@@ -1541,11 +1570,21 @@ def _outsampled(harder: Sequence[Outcome], easier: Sequence[Outcome]) -> bool:
     return len(_graded(harder)) < len(rung_set(easier))
 
 
-def _unbalanced_text(easier: Side, harder: Side) -> str:
+def _sample_text(short: Side, against: Side, consequence: str) -> str:
+    """The guard's arithmetic, said once for both readings that carry it: how
+    many tasks the short side graded against how many rungs the other side
+    spread over. Only the consequence differs between them, because only the
+    question does."""
     return (
-        f"{harder[0]} has {len(_graded(harder[1]))} graded task(s) against "
-        f"{easier[0]}'s {len(rung_set(easier[1]))} distinct rung(s), so its "
-        "silence would be the sample as much as the knob"
+        f"{short[0]} has {len(_graded(short[1]))} graded task(s) against "
+        f"{against[0]}'s {len(rung_set(against[1]))} distinct rung(s), "
+        f"{consequence}"
+    )
+
+
+def _unbalanced_text(easier: Side, harder: Side) -> str:
+    return _sample_text(
+        harder, easier, "so its silence would be the sample as much as the knob"
     )
 
 
@@ -1553,10 +1592,8 @@ def _forced_text(one: Side, other: Side) -> str:
     small, large = sorted(
         (one, other), key=lambda side: (len(_graded(side[1])), side[0])
     )
-    return (
-        f"{small[0]} has {len(_graded(small[1]))} graded task(s) against "
-        f"{large[0]}'s {len(rung_set(large[1]))} distinct rung(s), so the two "
-        "sets could not have matched however the runs came out"
+    return _sample_text(
+        small, large, "so the two sets could not have matched however the runs came out"
     )
 
 
