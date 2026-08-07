@@ -6,7 +6,7 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
-from ai_benchmark import firstparty_v1, reconcile_v1
+from ai_benchmark import calibrate_v1, firstparty_v1, reconcile_v1
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.classify import (
     Label,
@@ -170,6 +170,21 @@ def _reconcile_v1_command(args: argparse.Namespace) -> None:
     tasks = firstparty_v1.load_task_set(args.tasks)
     logs = reconcile_v1.collect_logs(args.replay or [DEFAULT_V1_RUNS])
     print(reconcile_v1.reconcile(tasks, args.tasks, logs))
+
+
+def _calibrate_v1_command(args: argparse.Namespace) -> None:
+    """Print the calibration table: what each category x knob profile cost.
+
+    Read-only over its inputs, exactly as reconcile-v1 is, and for the same
+    reason: the run logs and the task set are read and never written, the
+    costs come off the log rows, and the rungs come from replaying each logged
+    diff against its task's held-out tests. No agent, no LLM, no network, no
+    record merged — so every number in the table is recomputable from
+    checked-in artifacts by this one command.
+    """
+    tasks = firstparty_v1.load_task_set(args.tasks)
+    logs = reconcile_v1.collect_logs(args.replay or [DEFAULT_V1_RUNS])
+    print(calibrate_v1.calibrate(tasks, args.tasks, logs))
 
 
 def _report_command(args: argparse.Namespace) -> None:
@@ -377,6 +392,42 @@ def main(argv: list[str] | None = None) -> None:
         f"{DEFAULT_V1_RUNS})",
     )
     reconcile_v1_parser.set_defaults(command=_reconcile_v1_command)
+
+    calibrate_v1_parser = subcommands.add_parser(
+        "calibrate-v1",
+        help="print the calibration table over the v1 corpus: task category x "
+        "knob-activation profile, with a cost multiplier per model against "
+        "the category's zero-knob baseline, the cell's observed rung floor, "
+        "and the n behind each",
+        description=(
+            "Read the raw run logs and the task set, and print what each "
+            "category x knob-activation profile has cost and how far up the "
+            "difficulty ladder it landed. Rows are keyed by capability-matrix "
+            "category crossed with the sorted set of knob activations a task "
+            "declares; per model, the cost multiplier is this cell's mean run "
+            "cost over the mean cost of the same category's zero-knob "
+            "baseline controls, counting every logged run, resolved or not; "
+            "the rung floor is the weakest rung any graded task in the cell "
+            "landed on. Every reading prints the n it was taken over. "
+            f"{calibrate_v1.REFUSALS} "
+            "Writes nothing: no record is merged and no log is appended to. A "
+            "run-log row carries the workdir diff but no verdict, so the "
+            "rungs are obtained by replaying each logged diff against its "
+            "task's held-out grading tests — the same computation `eval-v1 "
+            "--replay` performs, with no agent, no LLM and no network, which "
+            "is what keeps every number here recomputable from checked-in "
+            "artifacts by this one command."
+        ),
+    )
+    calibrate_v1_parser.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    calibrate_v1_parser.add_argument(
+        "--replay",
+        type=Path,
+        action="append",
+        help="a raw run log, or a directory of them (repeatable; default: "
+        f"{DEFAULT_V1_RUNS})",
+    )
+    calibrate_v1_parser.set_defaults(command=_calibrate_v1_command)
 
     report = subcommands.add_parser(
         "report",
