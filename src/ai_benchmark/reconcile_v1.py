@@ -5,8 +5,9 @@ sweep can be scored against it afterwards by something other than memory. This
 module is that something: it reads the raw run logs and the task set, and
 reports per-task hits and misses, how outcomes group by knob and level against
 the zero-knob baseline, whether each family climbs its ladder, what each
-crux/control pair cost, which knobs moved nothing, and — for the tasks that
-registered one — whether each effort claim came true on each model.
+crux/control pair cost, which knobs moved nothing in a round that asked them,
+and — for the tasks that registered one — whether each effort claim came true
+on each model.
 
 **Where the verdicts come from.** A raw run-log row carries the workdir diff
 but no verdict, so an observed rung is not derivable from the log alone —
@@ -72,7 +73,12 @@ _HEIGHT: dict[Observed, int] = {rung: height for height, rung in enumerate(RUNGS
 _REPORTED: tuple[Observed, ...] = (*RUNGS, "incomplete", "unswept")
 
 # The kill discipline of docs/design/task-difficulty-and-ex-ante-profiles.md
-# section 9: a knob that separates nothing across this many sweeps is demoted.
+# section 9, as amended there for round 3 and mirrored here: a knob silent
+# across this many rounds it was actually asked in is demoted. What counts as
+# being asked is a registered contrast — a family or pair varying the knob, or
+# an effort claim registered on a task activating it — and what counts as
+# speaking is upward separation or a claim that hit. The number itself did not
+# change; what a silent round is did.
 SILENT_ROUNDS_TO_DEMOTE = 2
 
 # The header's legend for what a round is. Printed every time rather than only
@@ -384,6 +390,166 @@ def rung_set(outcomes: Iterable[Outcome]) -> frozenset[Observed]:
     return frozenset(outcome.rung for outcome in outcomes if outcome.determined)
 
 
+# --- registered contrasts ------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Contrast:
+    """A comparison the task set declares, as against one the report draws.
+
+    A family or a pair varying exactly one knob: the two shapes an author
+    builds when they mean two tasks to be read against each other. The kill
+    discipline counts a knob's rounds off these and off registered effort
+    claims, and off nothing else (design note section 9, as amended in round
+    3) — a level read against the frozen zero-knob baseline is a comparison
+    the report constructs out of tasks nobody built to be read against it,
+    which is why the baseline rows print as informational.
+    """
+
+    kind: Literal["family", "pair"]
+    name: str
+    knob: str
+    members: tuple[Outcome, ...]
+
+    @property
+    def label(self) -> str:
+        return f"{self.kind} {self.name}"
+
+    @property
+    def round(self) -> Round | None:
+        """The round this contrast was read in: the latest its members were
+        swept in, the same rule an Outcome dates itself by. A contrast whose
+        members were swept apart is read where it was completed."""
+        rounds = [member.round for member in self.members if member.round is not None]
+        return max(rounds, key=lambda round: round.sort_key) if rounds else None
+
+
+def designed_contrasts(outcomes: Iterable[Outcome]) -> list[Contrast]:
+    """Every registered contrast in the task set, families before pairs and
+    each group in name order, so the report reads the same way twice."""
+    families: dict[str, list[Outcome]] = {}
+    for outcome in constructed(outcomes):
+        assert outcome.construction is not None
+        if outcome.construction.family is not None:
+            families.setdefault(outcome.construction.family, []).append(outcome)
+    pairs = pairs_by_id(outcomes)
+    grouped: list[tuple[Literal["family", "pair"], str, list[Outcome]]] = [
+        *(("family", name, families[name]) for name in sorted(families)),
+        *(("pair", name, pairs[name]) for name in sorted(pairs)),
+    ]
+    contrasts = []
+    for kind, name, members in grouped:
+        if len(members) < 2 or (knob := contrast_knob(members)) is None:
+            continue
+        contrasts.append(Contrast(
+            kind=kind, name=name, knob=knob,
+            members=tuple(sorted(members, key=lambda member: member.task.id)),
+        ))
+    return contrasts
+
+
+def contrast_knob(members: Sequence[Outcome]) -> str | None:
+    """The one knob these members vary, or None where that is not one knob.
+
+    A knob some members declare and others do not is varied too: the pair rule
+    allows members declaring different knobs, and a knob present on one side
+    and absent on the other is exactly the contrast such a pair draws. Where
+    two knobs move at once the contrast attributes its outcome to neither, and
+    where none moves there is nothing to attribute — both return None, and the
+    round goes uncounted rather than being scored against a knob that sat
+    still. Distinct from `_varied_knob`, which always answers, because a
+    section that has to render a malformed family still has to print something.
+    """
+    declared: list[dict[str, str]] = []
+    for member in members:
+        assert member.construction is not None
+        declared.append(member.construction.levels)
+    varied = [
+        knob for knob in sorted({knob for levels in declared for knob in levels})
+        if len({levels.get(knob) for levels in declared}) > 1
+    ]
+    return varied[0] if len(varied) == 1 else None
+
+
+@dataclass(frozen=True)
+class Reading:
+    """What one registered contrast said, read in the harder direction only."""
+
+    contrast: Contrast
+    separated: bool
+    assessable: bool
+    text: str
+
+
+def read_contrast(contrast: Contrast) -> Reading:
+    """Whether this contrast's knob reached *upward*.
+
+    Order the levels on the knob's ladder; the contrast separates when some
+    harder level's highest observed rung stands strictly above some easier
+    level's highest. Set difference on its own is not separation — under the
+    direction-blind criterion this replaced, a level that resolved uniformly
+    differed from a spread comparison and read as the knob working, which is
+    how K11, commissioned to push tasks up, was credited for coming out easier
+    (design note section 19). Where the ladder is not enumerated no level is
+    the harder one, and the contrast is not assessable rather than scored on
+    the alphabetical order `level_order` falls back to.
+    """
+    ladder = KNOB_LEVELS.get(contrast.knob, ())
+    by_level: dict[str, list[Outcome]] = {}
+    for member in contrast.members:
+        if member.determined:
+            by_level.setdefault(_level(member, contrast.knob), []).append(member)
+    if len(by_level) < 2:
+        return Reading(contrast, False, False, (
+            f"{contrast.label}: fewer than two of its levels have a rung"
+        ))
+    if any(level not in ladder for level in by_level):
+        return Reading(contrast, False, False, (
+            f"{contrast.label}: {contrast.knob}'s ladder is not enumerated, so "
+            "neither level is the harder one and no direction can be read"
+        ))
+    ordered = sorted(by_level, key=lambda level: level_order(contrast.knob, level))
+    for easier, harder in combinations(ordered, 2):
+        if _top(by_level[harder]) > _top(by_level[easier]):
+            return Reading(contrast, True, True, (
+                f"{contrast.label}: {harder} {_rung_set_text(by_level[harder])} "
+                f"above {easier} {_rung_set_text(by_level[easier])}"
+            ))
+    described = ", ".join(
+        f"{level} {_rung_set_text(by_level[level])}" for level in ordered
+    )
+    return Reading(contrast, False, True, (
+        f"{contrast.label}: {described} — no level reaches above an easier one"
+    ))
+
+
+def _top(members: Sequence[Outcome]) -> int:
+    """The highest rung these outcomes reached. Only ever called on a level
+    with at least one determined rung, which is what makes the max defined."""
+    return max(_HEIGHT[member.rung] for member in members if member.determined)
+
+
+def claim_knobs(outcome: Outcome, contrasts: Sequence[Contrast]) -> frozenset[str]:
+    """The knobs this task's registered effort claim is scored to.
+
+    A claim is attributed the way the contrast it is read in attributes it: a
+    pair claim to the pair's varied knob, because that is the one knob that
+    moved between the two measurements, and a baseline claim to every knob its
+    task activates, because that is what the task varies from the baseline. A
+    pair claim on a pair that varies no single knob is scored nowhere, for the
+    same reason its rung delta is not attributed either.
+    """
+    construction = outcome.construction
+    if construction is None or construction.prediction.effort is None:
+        return frozenset()
+    if construction.prediction.effort.comparator == "baseline":
+        return frozenset(construction.levels)
+    return frozenset(
+        contrast.knob for contrast in contrasts
+        if contrast.kind == "pair" and contrast.name == construction.pair
+    )
+
+
 # --- grading the effort claims -------------------------------------------------
 
 # What an effort claim can come out as. "not assessable" is the third state
@@ -618,8 +784,9 @@ def render(
         # rather than beside section 1 where it belongs by subject. The report
         # is read by diffing one round's against the last one's, so renumbering
         # the existing sections would move every line of a report to add one
-        # block; and the kill discipline in section 5 still counts rung
-        # silence alone, so printing effort above it would read as feeding it.
+        # block. Section 5 now reads these claims as well as the rungs, so this
+        # block is the working of a verdict printed above it — which is the one
+        # place the numbering costs something, and cheaper than the churn.
         *_effort_claims(ordered),
     ])
 
@@ -905,37 +1072,69 @@ def _pairs(outcomes: Sequence[Outcome]) -> list[str]:
     return lines
 
 
+@dataclass(frozen=True)
+class Verdict:
+    """What one round said about one knob, and whether it counted as silence."""
+
+    round: Round
+    silent: bool
+    summary: str
+    detail: tuple[str, ...]
+
+
 def _flags(outcomes: Sequence[Outcome]) -> list[str]:
     lines = [
         "5. no-separation flags",
         *_wrap(
-            "criterion: within one round, a knob separates when two of its swept "
-            "levels produced different sets of observed rungs — or, when only one "
-            "level was swept, when that level's set differs from the zero-knob "
-            "baseline's over the same task categories. The levels are read within "
-            "the round, the baseline controls across all of them, because the "
-            "baseline is swept once and a cell is never swept twice. At n=1 per "
-            "cell a single task changes a set, so a flag is a reason to look, not "
-            "a test.",
+            "criterion: a round counts for a knob only where it put the knob to a "
+            "registered contrast — a task family or pair swept in that round whose "
+            "varied knob this is, or an effort claim registered on a task "
+            "activating it. Those are the comparisons the task set declares. A "
+            "level read against the frozen zero-knob baseline is one this report "
+            "draws instead, out of controls swept in an earlier round against "
+            "tasks nobody built to be read against this level; it is printed below "
+            "as informational and advances nothing.",
             indent="   ",
         ),
         *_wrap(
-            "minimum sample: a side of n graded tasks lands on at most n distinct "
-            "rungs, so a side holding fewer graded tasks than the other side has "
-            "rungs cannot reproduce that set however its runs come out. That "
-            "difference is arithmetic rather than a knob effect, and is reported "
-            "not assessable, naming the counts. The guard counts graded tasks per "
-            "side — per level within the round, and the baseline's own tasks where "
-            "a lone level is read against it — and it can only ever withdraw a "
-            "claim of separation: two sides landing on the same set always pass "
-            "it, so no knob is guarded into a silent round.",
+            "direction: a contrast separates only upward. Its levels are ordered "
+            "on the knob's ladder, and it separates when some harder level's "
+            "highest observed rung stands strictly above some easier level's "
+            "highest. A set difference on its own is not separation: a level that "
+            "resolves uniformly differs from a spread comparison, and reading that "
+            "as the knob working credits an anti-saturation knob for coming out "
+            "easier. Where the knob's ladder is not enumerated, no level is the "
+            "harder one and the contrast is not assessable.",
+            indent="   ",
+        ),
+        *_wrap(
+            "effort: a counted round is non-silent when a registered contrast "
+            "separated upward or when any effort claim scored to the knob hit on "
+            "any model — a pair claim scoring to the pair's varied knob, a "
+            "baseline claim to every knob its task activates. Effort is the axis "
+            "this experiment's signal has actually shown up on, and a knob judged "
+            "only on rungs is judged on an outcome its author never bet on.",
+            indent="   ",
+        ),
+        *_wrap(
+            "informational rows: the widest reading of where a level landed, and "
+            "the only reading a knob with no contrast has. They carry the older "
+            "direction-blind set comparison and its minimum-sample guard — a side "
+            "of n graded tasks lands on at most n distinct rungs, so a side "
+            "holding fewer graded tasks than the other side has rungs could not "
+            "have matched it however the runs came out, and is reported not "
+            "assessable naming the counts. No row under that label moves a "
+            "counter.",
             indent="   ",
         ),
         *_wrap(
             f"kill discipline: a knob silent for {SILENT_ROUNDS_TO_DEMOTE} round(s) "
             "is demoted (docs/design/task-difficulty-and-ex-ante-profiles.md "
-            "section 9). A round is one sweep, named below by the sweep id its "
-            "runs carried — or, for runs logged before that field existed, by "
+            "section 9). A knob with no counted round is stalled rather than "
+            "silent: it has not been shown to move nothing, it has never been "
+            "asked, and demoting it would be reading a verdict off evidence "
+            "nobody collected. A round is one sweep, named below by the sweep id "
+            "its runs carried — or, for runs logged before that field existed, by "
             "their as-of date, which is the weaker key: it still merges two "
             "sweeps run in one day and still splits one that ran past midnight. "
             "Read the labels below before reading a demotion off them.",
@@ -950,41 +1149,129 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         {outcome.round for outcome in outcomes if outcome.round is not None},
         key=lambda round: round.sort_key,
     )
+    contrasts = designed_contrasts(outcomes)
+    assessments = effort_assessments(outcomes)
+    scored = {
+        outcome.task.id: claim_knobs(outcome, contrasts) for outcome in outcomes
+    }
     for knob in sorted({knob for knob, _ in groups}, key=knob_order):
         verdicts = [
-            (round, _separation(knob, outcomes, round))
-            for round in rounds
-            if _activated_in(knob, outcomes, round)
+            verdict for round in rounds
+            if (verdict := _counted(knob, round, outcomes, contrasts, assessments, scored))
+            is not None
         ]
-        silent = [
-            round for round, verdict in verdicts
-            if verdict.startswith("no separation")
-        ]
-        block = [
-            f"   {knob}  {round.label}  {verdict}"
-            for round, verdict in verdicts
-        ] or [f"   {knob}  (no round has swept it)"]
-        tail = f"       silent round(s): {len(silent)}"
-        if len(silent) >= SILENT_ROUNDS_TO_DEMOTE:
+        silent = [verdict.round for verdict in verdicts if verdict.silent]
+        block: list[str] = []
+        for verdict in verdicts:
+            block.append(f"   {knob}  {verdict.round.label}  {verdict.summary}")
+            block += [f"          {line}" for line in verdict.detail]
+        if not block:
+            block = [(
+                f"   {knob}  (no registered contrast: no family or pair varies it, "
+                "and no task activating it registers an effort claim)"
+            )]
+        tail = [f"       silent round(s): {len(silent)}"]
+        if not verdicts:
+            tail = [(
+                f"       silent round(s): 0 — stalled: no round put {knob} to a "
+                "registered contrast, so the counter cannot advance"
+            )]
+        elif len(silent) >= SILENT_ROUNDS_TO_DEMOTE:
             # Naming them is the point: a demotion travels out of this report
             # into the design note and the tickets that follow it, and one
             # that does not say which rounds it counted cannot be checked
             # against the sweeps it was read off.
             counted = ", ".join(round.dated_label for round in silent)
-            tail += (
-                f" — demote {knob}: silent in {counted} — {len(silent)} round(s) "
-                f"against the {SILENT_ROUNDS_TO_DEMOTE} the kill discipline allows"
-            )
-        lines += ["", *block, tail]
+            tail = [(
+                f"       silent round(s): {len(silent)} — demote {knob}: silent in "
+                f"{counted} — {len(silent)} round(s) against the "
+                f"{SILENT_ROUNDS_TO_DEMOTE} the kill discipline allows"
+            )]
+        informational = [
+            f"          {round.label}  {_separation(knob, outcomes, round)}"
+            for round in rounds
+            if _activated_in(knob, outcomes, round)
+        ]
+        if informational:
+            tail += ["       informational, advancing no counter:", *informational]
+        lines += ["", *block, *tail]
     return lines
 
 
-def _activated_in(knob: str, outcomes: Sequence[Outcome], round: Round) -> bool:
-    """Whether any task activating this knob was swept in this round.
+def _counted(
+    knob: str,
+    round: Round,
+    outcomes: Sequence[Outcome],
+    contrasts: Sequence[Contrast],
+    assessments: Sequence[Assessment],
+    scored: Mapping[str, frozenset[str]],
+) -> Verdict | None:
+    """What this round said about this knob, or None if it did not ask.
 
-    A round that swept none of them has nothing to say about the knob, so it
-    gets no row: a printed "not assessable" would read as a round the knob was
-    tried in and the kill discipline would then have to explain it away.
+    A round asks when it holds a registered contrast of the knob: a family or
+    pair varying it, or a task activating it that registered an effort claim.
+    A round that holds neither gets no row at all — a printed verdict there
+    would read as a round the knob was tried in, and the kill discipline would
+    then have to explain it away.
+    """
+    readings = [
+        read_contrast(contrast) for contrast in contrasts
+        if contrast.knob == knob and contrast.round == round
+    ]
+    claims = [
+        assessment for assessment in assessments
+        if knob in scored.get(assessment.task, frozenset())
+        and _swept_in(assessment.task, outcomes, round)
+    ]
+    if not readings and not claims:
+        return None
+
+    hits = [assessment for assessment in claims if assessment.verdict == "hit"]
+    contrast_tally = (
+        f"{len(readings)} registered contrast(s)" if readings
+        else "no registered contrast"
+    )
+    claim_tally = (
+        f"{len(claims)} registered effort reading(s)" if claims
+        else "no effort claim registered"
+    )
+    tally = f"{contrast_tally}; {claim_tally}"
+    detail = tuple(reading.text for reading in readings)
+    if separated := [reading for reading in readings if reading.separated]:
+        return Verdict(round, False, f"separated — {separated[0].text} ({tally})", detail)
+    if hits:
+        return Verdict(round, False, (
+            f"non-silent — no contrast reached above an easier level, and "
+            f"{len(hits)} of {len(claims)} registered effort reading(s) hit ({tally})"
+        ), detail)
+    if not claims and not any(reading.assessable for reading in readings):
+        # Every contrast unreadable and nothing registered on effort: the round
+        # said nothing rather than saying the knob moved nothing, and an
+        # unreadable comparison has never been allowed to count as silence.
+        return Verdict(round, False, f"not assessable — {tally}", detail)
+    # Both halves of the silence are spelled out, because a knob is demoted off
+    # this row and "no separation" alone does not say which axis stayed quiet.
+    return Verdict(round, True, "no separation — " + "; ".join([
+        f"{contrast_tally}, none reaching above an easier level" if readings
+        else contrast_tally,
+        f"0 of {len(claims)} registered effort reading(s) hit" if claims
+        else claim_tally,
+    ]), detail)
+
+
+def _swept_in(task_id: str, outcomes: Sequence[Outcome], round: Round) -> bool:
+    return any(
+        outcome.task.id == task_id and outcome.round == round for outcome in outcomes
+    )
+
+
+def _activated_in(knob: str, outcomes: Sequence[Outcome], round: Round) -> bool:
+    """Whether any task activating this knob was swept in this round, which is
+    what earns the round an informational row.
+
+    A round that swept none of them has nothing to say about the knob at all,
+    so it gets no row on either side of the block: a printed "not assessable"
+    would read as a round the knob was tried in.
     """
     return any(
         outcome.round == round
@@ -995,12 +1282,19 @@ def _activated_in(knob: str, outcomes: Sequence[Outcome], round: Round) -> bool:
 
 
 def _separation(knob: str, outcomes: Sequence[Outcome], round: Round) -> str:
-    """Whether this knob's levels told outcomes apart in this round.
+    """Whether this knob's levels landed on different sets of rungs in this
+    round — the informational reading, which advances no counter.
+
+    The direction-blind set comparison the kill discipline used to be read
+    off, kept because it is the widest view of where a level landed and the
+    only view a knob with no registered contrast has. What it may no longer do
+    is count: two of the three flags it fired in round 2 said more about the
+    samples than about the knob (design note sections 19 and 22).
 
     The levels are read within the round; the zero-knob controls are read
     across every round. A cell is only ever swept once, so the baseline cannot
     be re-swept alongside a later round's tasks — scoping the controls to the
-    round too would leave every single-level knob permanently unassessable
+    round too would leave every single-level knob permanently unreadable
     from the round after the baseline's onwards.
     """
     in_round = [outcome for outcome in outcomes if outcome.round == round]

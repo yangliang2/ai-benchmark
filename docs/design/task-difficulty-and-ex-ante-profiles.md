@@ -280,8 +280,122 @@ architect experience (no puzzle difficulty, no obfuscation); one knob at a
 time (baseline + single-knob deviations + a few realistic composites, no
 full factorial); honest-variant probes as in #12/#13; knobs face the same
 kill discipline as profile dims — no separation after two sweeps → demoted.
+[Amended for round 3 by #37, immediately below. The sentence stays as it was
+registered, because what changed is *what a separation is* and not the two
+sweeps it takes; the amendment is written out rather than edited in, so the
+rule the first two rounds were scored under stays legible.]
 Ladder coverage is a design goal: anchors at every rung incl. headroom
 (expected all-fail) tasks; the existing 22 tasks serve as baseline controls.
+
+**Kill discipline, amended — round 3, #37.** Two rounds say the rule above
+counts the wrong thing. It counts any comparison the report can draw, in
+either direction, and round 2 fired its separation flag three times with only
+one of the three informative (§19): K9's was read level against level inside a
+designed contrast and is real; K1's fired off a level K12's families hold
+*constant* by design, so it flagged a knob round 2 never varied (§22.1); and
+K11's fired because its level came out uniformly *easier* than the baseline it
+was read against, crediting an anti-saturation knob for pushing a task down
+(§22.2). K7 meanwhile cannot be assessed at all, because its only comparison
+is against a baseline it can never match on sample size (§18) — and the axis
+that *has* separated in every round, effort, advances no counter whatever it
+says, so a knob that reliably makes work expensive faces demotion for staying
+quiet on an axis nobody registered it against (§§20, 22.3, 23.8). The amended
+rule, which `reconcile-v1` mirrors verbatim:
+
+1. **Contrast-only counting.** A round advances a knob's counter only where
+   that round put the knob to a **registered contrast** — a comparison the
+   *task set* declares, not one the report constructs. Two things are
+   registered contrasts and nothing else is: a **family or pair** swept in
+   that round whose **varied knob** this is, and an **effort claim**
+   registered on a task activating it, read against the comparator that claim
+   named. A knob's level read against the frozen zero-knob baseline's rung set
+   is *not* one: the baseline was swept once, in an earlier round, against
+   tasks nobody built to be read against this level, and the set difference
+   that falls out of that is a property of the two samples as much as of the
+   knob. Such comparisons stay **printed**, clearly labelled as informational
+   and advancing no counter, because they are still the widest view of where a
+   level landed and losing them would cost the report its only reading of a
+   knob that has no contrast yet.
+
+   A registered *effort claim* counts where a frozen-baseline *rung* set does
+   not, and the difference is registration rather than the comparator: an
+   author who writes `baseline, cost, 1.25x` into a task's construction block
+   before the run has named a comparator, a metric and a number in advance and
+   can lose. Nobody registered anything by activating a knob.
+
+2. **Direction-aware separation.** A contrast separates only *upward*. Order
+   its levels on the knob's ladder; a contrast separates when some harder
+   level's **highest observed rung stands strictly above** some easier
+   level's highest observed rung. Set difference on its own is not
+   separation — under the old criterion any level that resolved uniformly
+   differed from a spread comparison and read as the knob working, which is
+   how K11, commissioned to push tasks *up*, was credited for coming out
+   easier. Where the knob's ladder is not enumerated in this section, no level
+   is the harder one and the contrast is **not assessable**: the same reason
+   reconciliation's crux/control section names no crux in a pair whose knob
+   has no enumerated ladder.
+
+3. **Effort-bearing non-silence.** A counted round is **non-silent** for a
+   knob when a registered contrast of that knob separated upward **or** when
+   any effort claim scored to that knob **hit** on any model. Otherwise the
+   round is silent. Effort claims are scored to a knob the way the contrast
+   they are read in attributes them: a **pair** claim to the pair's varied
+   knob — the one knob that moved between the two measurements — and a
+   **baseline** claim to every knob its task activates, because that is what
+   the task varies from the baseline.
+
+4. **Two silent rounds still demote.** Unchanged, and the demotion still names
+   the rounds it counted, with their dates.
+
+5. **Stalled is not silent.** A knob with no counted round at all has not been
+   shown to move nothing; it has never been asked. Its counter does not
+   advance and it prints as **stalled**, naming what it lacks. This is a
+   standing invitation to author a contrast or register a claim, and the price
+   of it is that a knob can sit there forever — which is a fair price, because
+   the alternative is demoting a knob on evidence nobody collected.
+
+**What this does to the record, recomputed from the checked-in artifacts.**
+The counters are derived and never stored, so amending the rule re-reads all
+of history by itself. Where the recomputation and the recorded rulings of
+§§13 and 19 disagree:
+
+| knob | printed under the old rule | recomputed under the amended rule |
+| --- | --- | --- |
+| K1 | separated in both rounds; 0 silent | round 2 no longer counted at all — K12's families hold K1 constant, so K1 is nobody's varied knob there; round 1's four K1 families still separate upward. 0 silent, 1 counted round |
+| K7 | not assessable, round 1; 0 silent | **stalled** — no family, no pair, no registered claim, in any round. 0 counted rounds, exactly as §18 ruled and #35 recorded |
+| K8 | no separation, round 1; 1 silent | **stalled** — the seven K8 tasks are standalone and register no claim. 0 silent. **§13's demotion stands** as a recorded human verdict over two sweeps and an effort reading that ran the wrong way; it was never a counter reading and the amended counter does not reproduce it |
+| K9 | no separation round 1, separated round 2; 1 silent | unchanged at 1 silent. Round 1's three pairs are flat; round 2's digest and dossier reach a rung above their controls, and outage's claim hit on haiku, so the round is non-silent twice over |
+| K11 | separated, round 2; 0 silent | **silent 1 of 2** — no rung contrast exists, but four registered baseline claims do, and all eight readings missed. This is exactly the reading §19 wrote into the record by hand, and the counter now agrees without being told to |
+| K12 | no separation, round 2; 1 silent | unchanged at 1 silent — both families flat across all four levels and all eight claim readings missed |
+
+Two of those are the test that the amendment reads the evidence rather than
+leaning on it: §19 predicted in advance that a direction-aware criterion would
+print `no separation` for K11 and that "the counter would agree retroactively
+when recomputed", and #35 ruled K7 stalled-not-silent for the reason the rule
+now states in general. Neither was written into the code as a special case;
+both fall out of clauses 1–3.
+
+One weakness of K11's counted round is recorded rather than fixed: all four of
+its claims use the category-baseline comparator, which §22.4 calls the weak
+form — the baseline cells ran a different CLI version and are content-matched
+to nothing, where a pair comparator is matched on both. So K11's silent round
+rests on the weaker of the two comparators the schema offers. It is still a
+number its author registered in advance and lost, which is the standard this
+whole discipline is built on, and the identifiability argument of §23.5 is the
+reason K11's retirement does not wait on a stronger one.
+
+**Cost is the default effort metric** (#37). `turns` stays available and
+nothing is forbidden, but a claim should be registered on `cost` unless its
+author has a reason. §20 is why: turn counts here are small integers, so a
+turns claim's stringency depends on how cheap its comparator happened to be —
+from a 4-turn control the smallest possible step is exactly 1.25×, so a 1.25×
+turns claim is met by one extra turn there and needs two against an 8-turn
+control. Nobody registered that. Cost is continuous, and it accumulates the
+reading, thinking and retrying that happen *inside* a turn: `dossier` on
+sonnet spent its control's 5 turns and 54% more money. The claim schema is
+unchanged — `metric` has always been there and stays required, because a
+default that silently picks the metric would make old claims read as bets
+their authors did not place.
 
 ### 10. Substrate spectrum — construction method is one, substrate varies
 
@@ -435,6 +549,12 @@ both knobs, because the two knobs did not get the same number of sweeps:
   fix a filename would be letting the instrument's calendar overrule its
   evidence — particularly when the effort data has K8 moving difficulty the
   wrong way, so a further sweep is not being asked to break a tie.
+  [Under §9's round-3 amendment (#37) the recomputed counter reads K8
+  **stalled**, not silent: its seven tasks are standalone and register no
+  effort claim, so no round ever put it to a registered contrast. The
+  demotion above stands unchanged as what it always was — a human verdict on
+  two sweeps and an effort reading, argued here rather than read off a
+  counter.]
 - **K9 was swept once.** Every K9 task is Track A; Track B has none. K9 has
   one silent sweep, not two, and is not eligible for demotion under the
   rule as written. **K9 stays, flagged, with one sweep remaining.**
@@ -909,6 +1029,13 @@ are honest for the first time.
   retroactively when recomputed — which is the test that this ruling is a
   reading of the evidence and not a thumb on the scale.
 
+  [Closed by #37. §9's amended kill discipline is contrast-only, direction-
+  aware and effort-bearing, and the recomputation over the same artifacts
+  prints K11 **silent 1 of 2**: the direction-inverted baseline flag is now an
+  informational row advancing nothing, and what counts the round is K11's four
+  registered baseline claims, whose eight readings all missed. The hand-kept
+  reading and the printed counter agree, and the test above is passed.]
+
 ### 20. The effort instrument's first reading
 
 #30 shipped and it worked: 22 readings of 11 claims, **0 not assessable** —
@@ -1044,7 +1171,9 @@ the load-bearing one.
    inside a family or pair become the scoring comparison; level-against-frozen-
    baseline becomes informational output that advances no counter. Add
    direction-awareness while there: a level separates *upward* only when its
-   rung distribution reaches above its comparator's.
+   rung distribution reaches above its comparator's. [Shipped by #37: the
+   amended rule is registered in §9 and mirrored by `reconcile-v1`, and it
+   carries candidate 8 with it.]
 2. **Pre-register the K9 effort claims on cost, not turns, on new pairs.**
    §20's 3/3 correspondence is post-hoc and collinear with write volume;
    registering the same threshold on cost in advance is what turns it into a
@@ -1079,6 +1208,10 @@ the load-bearing one.
    kill discipline should read separation on either axis, as §16.1 proposed
    and #30 half-delivered — #30 grades effort claims but the demotion counter
    still counts rung silence only (recorded as deferred in #30's close).
+   [Shipped by #37 as clause 3 of §9's amended discipline: a registered effort
+   claim that hits makes the round non-silent, and one that is registered and
+   misses is what makes the round count at all — which is the whole difference
+   between K11, silent, and K7, stalled.]
 9. **Still unticketed from round 1:** the "misleading neighbour" knob
    candidate (the guard-transplant mechanism from `inventory-l3`) and K10
    coordination width, both untouched by round 2.

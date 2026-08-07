@@ -375,6 +375,71 @@ def test_reconcile_v1_report_is_byte_identical_on_a_second_run(
     assert reseeded.stdout == first
 
 
+def knob_block(out: str, knob: str) -> str:
+    """One knob's block of section 5, counted rows and informational alike."""
+    [block] = [
+        block for block in knob_blocks(out)
+        if block.lstrip().startswith(f"{knob}  ")
+    ]
+    return block
+
+
+def test_reconcile_v1_recomputes_the_checked_in_counters_under_the_amended_rule(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The rule change applied to history rather than grandfathered onto it.
+
+    Counters are derived and never stored, so amending the rule re-reads two
+    rounds of checked-in artifacts by itself. What that recomputation comes to
+    is registered in the design note's section 9 amendment, and this is the
+    test that the code and that table say the same thing — every expectation
+    below is a row of it.
+
+    Three of the six move, and each was argued in the record before the code
+    could produce it: K1's round-2 flag stops counting because K12's families
+    hold K1 constant and a knob nobody varied was not tested; K11 reads silent
+    on four registered claims whose eight readings all missed, which is what
+    section 19 predicted a direction-aware criterion would print; K7 and K8
+    read stalled because no family, pair or registered claim ever put them to
+    a contrast — K8's demotion stands in the note as the human verdict it
+    always was, not as a counter this report reproduces.
+    """
+    main(checked_in_argv())
+    out = capsys.readouterr().out
+
+    k1 = knob_block(out, "K1")
+    # Round 1's four K1 families are the only rounds K1 was ever varied in.
+    assert "as-of 2026-08-05  separated — family billing-split-by-weight" in k1
+    assert "sweep round-2" not in counted_block(k1)
+    assert "sweep round-2  separated" in informational_block(k1)
+    assert "silent round(s): 0" in k1
+
+    for stalled in ("K7", "K8"):
+        block = knob_block(out, stalled)
+        assert f"stalled: no round put {stalled} to a registered contrast" in block
+        assert "silent round(s): 0" in block
+
+    k9 = knob_block(out, "K9")
+    assert "as-of 2026-08-05  no separation" in counted_block(k9)
+    assert "sweep round-2  separated — pair digest" in counted_block(k9)
+    assert "silent round(s): 1" in k9
+
+    k11 = knob_block(out, "K11")
+    assert "sweep round-2  no separation" in counted_block(k11)
+    assert "0 of 8 registered effort reading(s) hit" in k11
+    assert "silent round(s): 1" in k11
+    assert "stalled" not in k11
+
+    k12 = knob_block(out, "K12")
+    assert "sweep round-2  no separation" in counted_block(k12)
+    assert "silent round(s): 1" in k12
+
+    # No knob has spent the two rounds the discipline allows, so nothing is
+    # demoted off this recomputation — K8's demotion lives in the design note
+    # as a human verdict and is not a counter reading.
+    assert not re.search(r"demote K\d+", out)
+
+
 # --- section 1: predictions ----------------------------------------------------
 
 
@@ -700,6 +765,55 @@ def test_reconcile_v1_names_no_crux_in_a_pair_on_an_unenumerated_ladder(
 
 
 # --- section 5: no-separation flags and the kill discipline --------------------
+#
+# The counting rule is the one registered in section 9 of the design note and
+# amended there for round 3: a round advances a knob's counter only where it
+# put the knob to a registered contrast — a family or pair varying it, or an
+# effort claim registered on it — separation is read only in the harder
+# direction, and a registered claim that hit counts as the knob speaking.
+# Everything a knob's level is read against the frozen baseline for is still
+# printed, labelled informational, and advances nothing.
+
+
+def flags_block(out: str) -> str:
+    """Section 5 alone — or, handed one knob's block of it, that block. Split
+    on the last header rather than the first so the three helpers here compose:
+    a per-knob assertion reads the same counted/informational split a
+    whole-report one does."""
+    return out.split("5. no-separation flags")[-1].split("6. effort-claim")[0]
+
+
+def knob_blocks(out: str) -> list[str]:
+    """Section 5's per-knob blocks, without the criterion prose above them.
+
+    The prose says what "separated" and "no separation" mean, in those words,
+    so an assertion that did not drop it would pass on the definition of the
+    verdict it was looking for rather than on the verdict."""
+    return [
+        block for block in flags_block(out).split("\n\n")
+        if re.match(r"^ +K\d+ ", block)
+    ]
+
+
+def counted_block(out: str) -> str:
+    """The rows the kill discipline reads, without the informational ones.
+
+    Split on the label rather than by indentation: "separated" and "no
+    separation" appear on both sides of it, so an unscoped assertion would
+    pass on a row that advances no counter — which is the whole distinction
+    these tests exist to hold."""
+    return "\n".join(
+        block.split("informational, advancing no counter:")[0]
+        for block in knob_blocks(out)
+    )
+
+
+def informational_block(out: str) -> str:
+    return "\n".join(
+        block.split("informational, advancing no counter:")[1]
+        for block in knob_blocks(out)
+        if "informational, advancing no counter:" in block
+    )
 
 
 def test_reconcile_v1_flags_a_knob_whose_levels_did_not_separate(
@@ -716,7 +830,7 @@ def test_reconcile_v1_flags_a_knob_whose_levels_did_not_separate(
     out = reconcile(tasks, log, capsys)
 
     flags = out.split("no-separation flags")[1]
-    assert "K1" in flags and "no separation" in flags
+    assert "K1" in flags and "no separation" in counted_block(out)
     assert "silent round(s): 1" in flags
 
 
@@ -737,20 +851,16 @@ def test_reconcile_v1_does_not_flag_a_knob_whose_levels_separated(
     out = reconcile(tasks, log, capsys)
 
     flags = out.split("no-separation flags")[1]
-    assert "separated" in flags
+    assert "separated" in counted_block(out)
     assert "silent round(s): 0" in flags
 
 
-def test_reconcile_v1_reads_a_single_level_knob_against_an_earlier_baseline(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """The knob's one level was swept a round after the baseline was, which is
-    the only shape a single-level knob can ever have: a cell is swept once, so
-    the zero-knob controls cannot be re-run beside a knob added later. The
-    levels are read within the round and the controls across all of them, or
-    K8 — the one knob whose ladder has a single level in the set — would read
-    "not assessable" in every round from the second on.
-    """
+def write_single_level_knob_against_an_earlier_baseline(tmp_path: Path) -> Path:
+    """A standalone knob task swept a round after the baseline it is read
+    against, which is the only shape a knob with no contrast can ever have: a
+    cell is swept once, so the zero-knob controls cannot be re-run beside a
+    knob added later. This is K8's shape and K7's and K11's — the three knobs
+    the round-3 amendment reclassifies."""
     tasks = tmp_path / "tasks"
     # A frozen zero-knob baseline id, so it counts as a control.
     write_task(tasks, "ledger-split-formatting", category="refactor")
@@ -764,17 +874,227 @@ def test_reconcile_v1_reads_a_single_level_knob_against_an_earlier_baseline(
     write_log(logs / "round-2.jsonl",
               [task for task in loaded if task.id == "net-misleading"], {},
               as_of=date(2026, 9, 1))
+    return logs
+
+
+def test_reconcile_v1_prints_a_frozen_baseline_comparison_as_informational(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The widest reading of where a level landed is still on the page.
+
+    K8's one level lands a rung above the frozen baseline it is read against,
+    which the report has always printed and should go on printing: it is the
+    only reading a knob with no contrast has. What it may no longer do is
+    count. The zero-knob controls were swept once, in an earlier round,
+    against tasks nobody built to be read against this level, so the row is
+    labelled and the counter does not move for it."""
+    logs = write_single_level_knob_against_an_earlier_baseline(tmp_path)
+
+    main(["reconcile-v1", "--tasks", str(tmp_path / "tasks"), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    informational = informational_block(out)
+    assert "2026-09-01  separated —" in informational
+    assert "misleading {unsolved} vs baseline {haiku-solvable}" in informational
+    # Round 1 swept no K8 task at all, so it is not a round K8 was read in.
+    assert "2026-08-04" not in flags_block(out)
+    # Nothing on the counting side, and the tail says why rather than reading
+    # as a knob that was asked and stayed quiet.
+    assert "separated" not in counted_block(out)
+    assert "silent round(s): 0" in flags_block(out)
+    assert "stalled: no round put K8 to a registered contrast" in flags_block(out)
+
+
+def test_reconcile_v1_will_not_demote_a_knob_off_frozen_baseline_silence(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The counting rule, on the shape that would otherwise demote a knob
+    nobody ever tested.
+
+    Two rounds, two standalone K8 tasks, each landing exactly where the frozen
+    baseline landed. Under the direction-blind rule that read the baseline as
+    a comparison, that is two silent rounds and a demotion. Under the amended
+    rule neither round put K8 to a registered contrast — no family, no pair,
+    no registered claim — so neither round counts, and a knob that was never
+    asked is stalled rather than silent. Demoting it would be reading a
+    verdict off evidence nobody collected."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "ledger-split-formatting", category="refactor")
+    for index in (1, 2):
+        write_task(tasks, f"net-misleading-{index}", category="refactor",
+                   construction=constructed("K8", "misleading", "haiku-solvable"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "round-0.jsonl",
+              [task for task in loaded if task.id == "ledger-split-formatting"],
+              {"ledger-split-formatting": [_HAIKU, _SONNET]}, as_of=date(2026, 8, 4))
+    for index, as_of in ((1, date(2026, 9, 1)), (2, date(2026, 10, 1))):
+        swept = [task for task in loaded if task.id == f"net-misleading-{index}"]
+        write_log(logs / f"round-{index}.jsonl", swept,
+                  {task.id: [_HAIKU, _SONNET] for task in swept}, as_of=as_of)
 
     main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
 
     out = capsys.readouterr().out
-    flags = out.split("5. no-separation flags")[1]
-    [verdict] = [line for line in flags.splitlines() if line.startswith("   K8")]
-    assert "2026-09-01  separated —" in verdict
-    assert "misleading {unsolved} vs baseline {haiku-solvable}" in verdict
-    # Round 1 swept no K8 task at all, so it is not a round K8 was silent in.
-    assert "2026-08-04" not in flags
+    flags = flags_block(out)
+    assert "3 round(s)" in out
+    # Both rounds are read, and both readings are informational.
+    assert "2026-09-01  no separation" in informational_block(out)
+    assert "2026-10-01  no separation" in informational_block(out)
     assert "silent round(s): 0" in flags
+    assert "demote K8" not in flags
+
+
+def test_reconcile_v1_counts_a_designed_contrast_and_names_the_one_that_spoke(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """What the counter does read: a family varying one knob, whose harder
+    level landed above its easier one. The row names the contrast, because a
+    demotion argued from this section has to say which comparison it was
+    read off."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "open-acceptance", construction=constructed(
+        "K1", "acceptance", "haiku-solvable", family="open"))
+    write_task(tasks, "open-intent", construction=constructed(
+        "K1", "intent", "sonnet-only", family="open"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {
+        "open-acceptance": [_HAIKU, _SONNET],
+        "open-intent": [_SONNET],
+    })
+
+    out = reconcile(tasks, log, capsys)
+
+    counted = counted_block(out)
+    assert (
+        "separated — family open: intent {sonnet-only} above "
+        "acceptance {haiku-solvable}"
+    ) in counted
+    assert "silent round(s): 0" in flags_block(out)
+
+
+def test_reconcile_v1_will_not_read_separation_in_the_easier_direction(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """K11's round-2 flag, moved inside a designed contrast where it can be
+    read at all.
+
+    The harder level came out uniformly easier than the level below it. The
+    two sets differ, and the direction-blind criterion this replaced called
+    that separation — which is how a knob commissioned to push tasks up was
+    credited for pushing one down. A knob separates only upward, so this is
+    silence, and it is the round's whole verdict."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "open-acceptance", construction=constructed(
+        "K1", "acceptance", "unsolved", family="open"))
+    write_task(tasks, "open-intent", construction=constructed(
+        "K1", "intent", "unsolved", family="open"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {"open-intent": [_HAIKU, _SONNET]})
+
+    out = reconcile(tasks, log, capsys)
+
+    counted = counted_block(out)
+    # The sets differ — {unsolved} against {haiku-solvable} — and the harder
+    # level is the one holding the lower rung.
+    assert "acceptance {unsolved}" in counted and "intent {haiku-solvable}" in counted
+    assert "no separation" in counted and "separated —" not in counted
+    assert "silent round(s): 1" in flags_block(out)
+
+
+def test_reconcile_v1_reads_an_effort_claim_hit_as_the_knob_speaking(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The round-3 amendment's third clause, on the shape it was written for.
+
+    The pair's rungs never moved, so on rungs alone this round is silent. The
+    crux registered a cost claim against its partner before the run and the
+    claim hit, which is the knob saying something on the axis it was
+    registered against — effort is where this experiment's signal has actually
+    shown up, and a knob judged only on rungs is judged on an outcome its
+    author never bet on."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "haiku-solvable", pair="thing",
+        effort=claim("pair", "cost", 1.25)))
+    write_task(tasks, "control-task", construction=constructed(
+        "K9", "none", "haiku-solvable", pair="thing"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "crux-task": {_HAIKU: (7, 0.60), _SONNET: (7, 0.21)},
+        "control-task": {_HAIKU: (7, 0.20), _SONNET: (7, 0.21)},
+    })
+
+    out = reconcile(tasks, log, capsys)
+
+    counted = counted_block(out)
+    assert "no rung delta" in pairs_block(out)
+    assert "non-silent — no contrast reached above an easier level" in counted
+    assert "1 of 2 registered effort reading(s) hit" in counted
+    assert "silent round(s): 0" in flags_block(out)
+
+
+def test_reconcile_v1_counts_the_round_of_a_registered_claim_that_missed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """K11's shape: no contrast, but four registered baseline claims.
+
+    Registration is what makes the round count. The author named a
+    comparator, a metric and a factor before the run and the measurement came
+    in under it, so the knob was asked and answered nothing — which is
+    silence, and is the difference between K11 and K7, whose tasks register
+    nothing and can sit where they are forever."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "checkout-discount-codes")
+    write_task(tasks, "net-far", construction=constructed(
+        "K11", "far", "haiku-solvable", effort=claim("baseline", "cost", 1.2)))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "round-1.jsonl",
+              [task for task in loaded if task.id == "checkout-discount-codes"],
+              {"checkout-discount-codes": [_HAIKU, _SONNET]}, as_of=date(2026, 8, 4),
+              effort={"checkout-discount-codes": {_HAIKU: (7, 0.20), _SONNET: (7, 0.20)}})
+    write_log(logs / "round-2.jsonl",
+              [task for task in loaded if task.id == "net-far"],
+              {"net-far": [_HAIKU, _SONNET]}, as_of=date(2026, 9, 1),
+              effort={"net-far": {_HAIKU: (7, 0.21), _SONNET: (7, 0.21)}})
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    counted = counted_block(out)
+    assert "2026-09-01  no separation" in counted
+    assert "0 of 2 registered effort reading(s) hit" in counted
+    assert "silent round(s): 1" in flags_block(out)
+    assert "stalled" not in knob_block(out, "K11")
+
+
+def test_reconcile_v1_will_not_read_a_contrast_on_an_unenumerated_ladder(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Direction needs a ladder to be a direction along. Where the design note
+    has not enumerated the knob's levels, neither member of the contrast is
+    the harder one — the same reason section 4 names no crux in such a pair —
+    so the contrast is not assessable and the round stays uncounted rather
+    than being scored on an alphabetical order nobody registered."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "net-dense", construction=constructed(
+        "K7", "dense", "sonnet-only", pair="terrain"))
+    write_task(tasks, "net-calm", construction=constructed(
+        "K7", "calm", "haiku-solvable", pair="terrain"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {"net-calm": [_HAIKU, _SONNET], "net-dense": [_SONNET]})
+
+    out = reconcile(tasks, log, capsys)
+
+    counted = counted_block(out)
+    assert "not assessable — 1 registered contrast(s)" in counted
+    assert "pair terrain: K7's ladder is not enumerated" in counted
+    assert "silent round(s): 0" in flags_block(out)
 
 
 # Three frozen zero-knob ids, so they count as controls, and one per rung of
@@ -809,9 +1129,11 @@ def test_reconcile_v1_will_not_read_separation_off_a_level_too_small_to_match(
 
     One swept cell lands on one rung, so a level of one can never reproduce a
     three-rung baseline whatever its run does: the sets differ by arithmetic
-    and not because the knob moved anything. The verdict has to be withdrawn
-    rather than counted as silence, too — a knob whose only comparison was
-    unreadable has not been shown to move nothing.
+    and not because the knob moved anything. The guard rides along on the
+    informational row, which is the only place a frozen-baseline comparison is
+    printed now — and where it was never allowed to be read as silence either,
+    since a knob whose only comparison was unreadable has not been shown to
+    move nothing.
     """
     tasks = tmp_path / "tasks"
     write_baseline_spanning_the_ladder(tasks)
@@ -827,12 +1149,13 @@ def test_reconcile_v1_will_not_read_separation_off_a_level_too_small_to_match(
     main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
 
     out = capsys.readouterr().out
-    flags = out.split("5. no-separation flags")[1]
-    [verdict] = [line for line in flags.splitlines() if line.startswith("   K7")]
+    [verdict] = [
+        line for line in informational_block(out).splitlines() if line.strip()
+    ]
     assert "not assessable" in verdict
     assert "dense {haiku-solvable} vs baseline " in verdict
     assert "dense has 1 graded task(s) against (baseline)'s 3 distinct rung(s)" in verdict
-    assert "silent round(s): 0" in flags
+    assert "silent round(s): 0" in flags_block(out)
 
 
 def test_reconcile_v1_still_reads_a_level_sampled_as_deeply_as_the_baseline(
@@ -860,8 +1183,9 @@ def test_reconcile_v1_still_reads_a_level_sampled_as_deeply_as_the_baseline(
     main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
 
     out = capsys.readouterr().out
-    flags = out.split("5. no-separation flags")[1]
-    [verdict] = [line for line in flags.splitlines() if line.startswith("   K7")]
+    [verdict] = [
+        line for line in informational_block(out).splitlines() if line.strip()
+    ]
     assert "separated —" in verdict and "not assessable" not in verdict
 
 
@@ -875,6 +1199,11 @@ def test_reconcile_v1_guards_two_levels_of_one_knob_against_each_other(
     Here acceptance and description each land on one rung and differ, which
     one cell each is enough to show; intent spans two rungs, which neither of
     them could have reproduced. The knob separated, on the pair that could.
+
+    These four tasks declare no family and no pair, so this is the
+    informational reading throughout — which is the point of keeping the
+    guard on it: the widest view of a knob is still the view a reader gets
+    when no contrast has been authored yet, and it should not be wrong.
     """
     tasks = tmp_path / "tasks"
     write_task(tasks, "open-acceptance",
@@ -895,9 +1224,11 @@ def test_reconcile_v1_guards_two_levels_of_one_knob_against_each_other(
 
     out = reconcile(tasks, log, capsys)
 
-    flags = out.split("5. no-separation flags")[1]
-    [verdict] = [line for line in flags.splitlines() if line.startswith("   K1")]
+    [verdict] = [
+        line for line in informational_block(out).splitlines() if line.strip()
+    ]
     assert "separated —" in verdict
+    assert "silent round(s): 0" in flags_block(out)
 
 
 def test_reconcile_v1_demotes_a_knob_silent_for_two_rounds(
@@ -1079,8 +1410,11 @@ def test_reconcile_v1_names_both_keyings_when_the_logs_are_mixed(
     out = capsys.readouterr().out
     assert "2 round(s): as-of 2026-08-04, sweep round-2" in out
     assert "1 keyed on a sweep id, 1 on an as-of date" in out
-    flags = out.split("5. no-separation flags")[1]
-    [verdict] = [line for line in flags.splitlines() if line.startswith("   K8")]
+    # K8 is standalone, so its round reads on the informational side — which is
+    # still keyed and labelled the same way, and is what this is checking.
+    [verdict] = [
+        line for line in informational_block(out).splitlines() if line.strip()
+    ]
     assert "sweep round-2  separated —" in verdict
     assert "misleading {unsolved} vs baseline {haiku-solvable}" in verdict
 

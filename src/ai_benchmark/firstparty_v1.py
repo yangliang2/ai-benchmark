@@ -243,6 +243,16 @@ class EffortClaim(BaseModel):
     on already has one, and the claim itself is three numbers a report can
     echo verbatim, so a second free-text field would be a second place for the
     same reasoning to be written and drift from.
+
+    `cost` is the metric to register unless there is a reason not to, and the
+    reason is quantization (design note section 20, and section 9 as amended
+    in round 3): turn counts here are small integers, so from a 4-turn
+    comparator the smallest possible step is exactly 1.25x — a 1.25x turns
+    claim is met by one extra turn there and needs two against an 8-turn
+    comparator, a stringency nobody registered. `turns` stays available and
+    the field stays required rather than defaulted, because a metric that
+    filled itself in would make an old claim read as a bet its author never
+    placed.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
