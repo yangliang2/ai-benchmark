@@ -1,0 +1,57 @@
+# K9 at none: the zero-crux control for bookcase-shelve-the-run. Same starting
+# repository byte for byte, same category, scale and language, and — which is
+# what round 3 adds to the design (#39) — a reference solution written to the
+# same number of added lines, so that the pair's contrast is crux depth and
+# not how much code there was to write. Every rule is stated step by step,
+# including the three places a reader might improvise (a title shelved twice
+# under one subject, what such a subject's width then comes to, and a book
+# filed under nothing at all), so there is nothing left to invent. Where the
+# crux task hands over a judgement about where a break reads well, this one
+# hands over a walk.
+#
+# feature-dev: the grading tests exercise index, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: bookcase-print-the-index
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  bookcase.py can say which subjects a run of books covers, but the printed
+  index at the back of the catalogue is still typed up by hand, and nothing
+  in the module gathers a subject's titles together.
+
+  Add a function `index(books)` to bookcase.py that returns the printed
+  index: a list holding one entry per subject the run covers, each a
+  `(subject, titles, width)` triple whose titles are a list of their own.
+
+  What to do with each part of it:
+
+  - the entries come out in alphabetical order of subject, one per subject,
+    however many separate stretches of the run that subject occupies;
+  - a subject's titles come out in the order the books stand in;
+  - a title shelved more than once under one subject is listed once, where it
+    first appears, and the copies after it are passed over;
+  - the width is what the books listed under that subject take up together,
+    so a copy passed over adds nothing to it;
+  - the same title under two different subjects is two listings, one under
+    each, and neither is passed over;
+  - a book filed under no subject at all — the empty string — is a mistake:
+    raise ValueError, naming the title it happened on;
+  - an empty run gives an empty index;
+  - the books you were given are left as they were.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  pair: bookcase
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated outright — what order the entries come in, what
+      order a subject's titles come in, which copy of a repeated title is
+      kept, what the width then counts, what a title under two subjects
+      amounts to, which mistake is refused — so the change is a walk down the
+      run with nothing left open to the author

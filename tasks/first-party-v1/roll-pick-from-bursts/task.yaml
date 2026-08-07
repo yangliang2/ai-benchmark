@@ -1,0 +1,86 @@
+# K9 at single: one planted inventive decision — which photograph of a burst
+# survives the cut — and nothing else. Every other rule the picks have to meet
+# is stated outright, including the three places a reader might improvise (two
+# photos taken in the same second, a burst every photo of which came out soft,
+# and a burst carrying two photos marked to keep), and the grading suite
+# checks what a set of picks has to be rather than one set of picks.
+#
+# Why recall does not resolve it, which is what a K9 crux has had to argue
+# since ticket #33. There is a named method in the neighbourhood — cutting a
+# run into bursts on a gap threshold is single-link clustering by another
+# name, and deduplication libraries do exactly this — and the prompt hands
+# that half over outright, which is the point: what a solver recalls here is
+# the part that was already given. The withheld half has no method at all.
+# Choosing which frame of a burst is worth keeping wants a notion of better,
+# and the roll carries none: no sharpness, no exposure, nothing a frame can be
+# scored on. The marks narrow the field without ordering it — blurred rules a
+# frame out, keep rules one in, and a burst of three unmarked frames is three
+# equally admissible answers. Every textbook dedupe picks its survivor by a
+# rule its author chose (the first seen, the lowest id), which is the decision
+# rather than a derivation of it, so naming the textbook problem hands over
+# the burst detection the prompt already gave away and names no frame.
+#
+# Written to the same write volume as its control, which is what round 3 adds
+# to the round-2 design (#39): round 2's two rung movements were confounded
+# with the crux writing 40-60% more code than the control beside it, so this
+# pair is authored with the reference solutions' added lines matched, and the
+# suite asserts the match.
+#
+# feature-dev: the grading tests exercise pick, which does not exist in repo/,
+# so they fail on the pristine repository as the lint requires.
+id: roll-pick-from-bursts
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  roll.py can say when each photograph was taken and which of them the
+  photographer marked, but nothing in it cuts the roll down — so the contact
+  sheet still comes back with nine near-identical herons along the top of it.
+
+  Add a function `pick(photos, pause)` to roll.py that returns one photograph
+  from each burst, as a list.
+
+  What the picks have to satisfy:
+
+  - a burst is a run of photographs each taken no more than `pause` seconds
+    after the one before it, so two photos taken in the same second are
+    always one burst, and a photo further than that from the photo on either
+    side of it is a burst of its own;
+  - exactly one photo comes back from each burst, and it is one of that
+    burst's own photos: no burst is passed over and nothing is invented;
+  - a photo marked "keep" is the one kept from its burst, and a burst holding
+    two photos so marked is a mistake — raise ValueError;
+  - a photo marked "blurred" is never the one kept, unless every photo of its
+    burst is marked "blurred", in which case one of them has to be;
+  - the picks come back in the order they were taken;
+  - a roll that does not run in time order is a mistake — raise ValueError;
+  - an empty roll gives an empty list;
+  - the roll you were given is left as it was.
+
+  Which photo of a burst you keep is yours to choose. Several sets of picks
+  satisfy the rules above for the same roll and the same pause, and any of
+  them is a correct answer.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  pair: roll
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule the picks have to meet is stated outright, and the one
+      decision left open — which frame of a burst survives — is met by any
+      preference at all among the frames the marks leave admissible, so there
+      is no narrow answer to miss; the bet is that with write volume matched
+      to the control the rung stays where round 1's flat K9 pairs put it and
+      the crux shows up in cost instead, which is the claim registered below,
+      and a crux coming back sonnet-only here would be the volume explanation
+      of round 2's two rung movements losing rather than this prediction being
+      merely unlucky
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25

@@ -1,0 +1,59 @@
+# K9 at none: the zero-crux control for remit-pay-what-fits. Same starting
+# repository byte for byte, same category, scale and language, and — which is
+# what round 3 adds to the design (#39) — a reference solution written to the
+# same number of added lines, so that the pair's contrast is crux depth and
+# not how much code there was to write. Every rule is stated step by step,
+# including the three places a reader might improvise (the day an invoice
+# falls due, an invoice already settled, and two invoices equally late), so
+# there is nothing left to invent. Where the crux task hands over a policy,
+# this one hands over a walk.
+#
+# feature-dev: the grading tests exercise overdue, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: remit-chase-the-overdue
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  remit.py can say what is owed on an invoice and what a customer owes
+  altogether, but the credit controller works the chase list out by hand
+  every morning, and nothing in the module says which invoices are late.
+
+  Add a function `overdue(invoices, today, terms)` to remit.py that returns
+  the chase list for a given day: one entry per invoice that is late, each a
+  `(reference, days overdue, pence owing)` triple.
+
+  What to do with each part of it:
+
+  - an invoice's age on a given day is that day less the day it was raised,
+    in whole days, and the days it is overdue by is its age less the terms it
+    was granted;
+  - an invoice exactly `terms` days old is not late yet — it falls due that
+    day and is chased from the day after, so only an invoice overdue by a day
+    or more reaches the list;
+  - an invoice settled in full is never chased, however old it is, and one
+    still owing is chased for what is left on it rather than for what it came
+    to;
+  - the list comes back with the most overdue first, and invoices equally
+    overdue in reference order;
+  - a day earlier than the day an invoice was raised is a mistake — raise
+    ValueError, naming the invoice it happened on;
+  - terms of fewer than no days are a mistake too, and refused the same way;
+  - an empty ledger gives an empty list;
+  - the invoices you were given are left as they were.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  pair: remit
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated outright — when an invoice falls due, what a
+      settled one contributes, what a late one is chased for, which of two
+      equally late invoices comes first, which two mistakes are refused — so
+      the change is a walk down the ledger with nothing left open to the
+      author

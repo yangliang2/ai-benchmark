@@ -37,6 +37,12 @@ haiku-solvable, which that assertion refuses; weakening it would edit what
 round 1 registered, and what round 1 registered is evidence. And these cruxes
 carry effort claims, which round 1's do not: the difficulty bet has moved axis,
 and pinning it needs tests of its own either way.
+
+The assertion that every K9 pair in the task set is probed by one suite or
+another was written here and now lives in the round-3 suite (#39), which is
+the only one able to see all three registries: keeping a copy here would take
+importing round 3's, which imports this module's, and a second answer to one
+question is free to disagree with the first.
 """
 
 import subprocess
@@ -56,7 +62,6 @@ from firstparty_v1_tasks import (
     task_by_id,
     visible_tests_pass,
 )
-from test_firstparty_v1_k9_tasks import PROBES as ROUND_ONE_PROBES
 
 from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
@@ -649,28 +654,6 @@ def test_the_control_is_a_comparable_amount_of_work(pair: Pair) -> None:
     control = added_lines(task_by_id(pair.control_id))
 
     assert 0.5 <= control / crux <= 2.0
-
-
-def test_every_k9_pair_in_the_task_set_is_probed_by_one_suite_or_the_other() -> None:
-    """K9 is probed by two suites, and nothing else says the two cover it.
-
-    A pair's probes are the part no metadata carries, and adding a seventh pair
-    to the task set is a change to a directory rather than to either suite —
-    so an unprobed pair would sweep looking exactly like a probed one, its crux
-    never shown to accept a second answer or refuse a non-answer. Registering
-    the same pair in both suites is the other way for the cover to be wrong,
-    and reads as agreement while one of the two goes stale.
-    """
-    declared_pairs = {
-        task.construction.pair
-        for task in load_task_set(TASKS)
-        if task.construction is not None
-        and task.construction.pair is not None
-        and "K9" in task.construction.levels
-    }
-
-    assert not set(ROUND_ONE_PROBES) & set(PROBES)
-    assert declared_pairs == set(ROUND_ONE_PROBES) | set(PROBES)
 
 
 def test_the_tasks_lint_clean() -> None:

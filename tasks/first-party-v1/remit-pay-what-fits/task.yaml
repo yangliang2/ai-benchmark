@@ -1,0 +1,90 @@
+# K9 at single: one planted inventive decision — which of the invoices a
+# payment settles — and nothing else. Every other rule the ledger has to come
+# back satisfying is stated outright, including the two a reader might
+# improvise over (an invoice already settled, and a payment that is not whole
+# pence), and the grading suite checks what a settled ledger has to be rather
+# than one settled ledger.
+#
+# Why recall does not resolve it, which is what a K9 crux has had to argue
+# since ticket #33. The shape invites a name: money against a list of amounts
+# is subset sum, and a solver who recognises it will reach for the largest
+# total that fits. That is the wrong instrument here, and deliberately so. The
+# office's rule is not "spend as much as possible" — it is "do not hand back
+# money that would have settled an invoice", which is maximality and not
+# maximum. On a ledger of 500, 300 and 250 against a payment of 550, the
+# optimum settles 300 and 250 and returns nothing; settling 500 alone returns
+# 50 and is equally correct here, because nothing still owing costs 50 or
+# less. So recalling the textbook problem hands over an answer to a question
+# the office did not ask, costs more work than the rules require, and names
+# none of the sets that satisfy them. What is left is a policy — the oldest
+# debts first, the largest, the ones that clear a customer's account — chosen
+# on grounds outside the arithmetic, and that is the decision this task
+# withholds.
+#
+# Written to the same write volume as its control, which is what round 3 adds
+# to the round-2 design (#39): round 2's two rung movements were confounded
+# with the crux writing 40-60% more code than the control beside it, so this
+# pair is authored with the reference solutions' added lines matched, and the
+# suite asserts the match.
+#
+# feature-dev: the grading tests exercise pay, which does not exist in repo/,
+# so they fail on the pristine repository as the lint requires.
+id: remit-pay-what-fits
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  remit.py can say what is owed on an invoice and what a customer owes
+  altogether, but nothing in it takes a payment in — so when a cheque arrives
+  the clerk works out by hand which invoices it clears, and last quarter two
+  of them were cleared twice.
+
+  Add a function `pay(invoices, payment)` to remit.py that applies a payment,
+  in pence, to a ledger of invoices. It returns a pair: the invoices as they
+  stand afterwards, and the pence of the payment that could not be used.
+
+  What the result has to satisfy:
+
+  - every invoice comes back, in the order it was given, with its reference,
+    the day it was raised and what it came to unchanged;
+  - the office does not part-pay: each invoice comes back either exactly as
+    it was or settled in full, and never anywhere between the two;
+  - an invoice that was already settled is left exactly as it was, there
+    being nothing on it left to pay;
+  - what the payment settled, added to the pence handed back, comes to the
+    payment itself — no money is lost and none is invented;
+  - nothing is handed back that would have settled an invoice outright: once
+    the payment is applied, every invoice still owing owes strictly more than
+    the pence handed back;
+  - the pence handed back is a whole number, and never less than none;
+  - a payment that is not a whole number of pence, or that is none at all or
+    less, is refused with ValueError;
+  - an empty ledger takes nothing and hands the whole payment back;
+  - the invoices you were given are left as they were.
+
+  Which of the invoices the payment settles is yours to choose. Several sets
+  of invoices satisfy the rules above for the same ledger and the same
+  payment, and any of them is a correct answer.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: single
+  pair: remit
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule the settled ledger has to meet is stated outright, and the
+      one decision left open — which invoices the payment clears — is met by
+      any preference at all, so there is no narrow answer to miss; the bet is
+      that with write volume matched to the control the rung stays where
+      round 1's flat K9 pairs put it and the crux shows up in cost instead,
+      which is the claim registered below, and a crux coming back sonnet-only
+      here would be the volume explanation of round 2's two rung movements
+      losing rather than this prediction being merely unlucky
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25

@@ -1,0 +1,56 @@
+# K9 at none: the zero-crux control for roll-pick-from-bursts. Same starting
+# repository byte for byte, same category, scale and language, and — which is
+# what round 3 adds to the design (#39) — a reference solution written to the
+# same number of added lines, so that the pair's contrast is crux depth and
+# not how much code there was to write. Every rule is stated step by step,
+# including the three places a reader might improvise (a photo taken exactly
+# on a window's opening second, a window nothing was taken in, and where the
+# windows start and stop), so there is nothing left to invent. Where the crux
+# task hands over a judgement about which frame is worth keeping, this one
+# hands over a walk.
+#
+# feature-dev: the grading tests exercise windows, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: roll-count-the-windows
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  roll.py can say how long the gap between one photograph and the next was,
+  but the strip printed down the side of the contact sheet — how busy the
+  shoot was minute by minute — is still counted off by hand.
+
+  Add a function `windows(photos, every)` to roll.py that returns how many
+  photographs fall in each window of `every` seconds, as a list of counts.
+
+  What to do with each part of it:
+
+  - the windows start at the second the first photograph was taken and each
+    runs `every` seconds, so the first window covers that second and the
+    `every - 1` seconds after it;
+  - there are as many windows as it takes to reach the last photograph, and
+    no more: the last window is the one the last photograph falls in;
+  - a photograph taken exactly on a window's opening second belongs to that
+    window and not to the one before it;
+  - a window nothing was taken in counts none, and still takes its place in
+    the list;
+  - a window of no seconds, or fewer, is a mistake — raise ValueError;
+  - a roll that does not run in time order is a mistake — raise ValueError;
+  - an empty roll gives an empty list;
+  - the roll you were given is left as it was.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K9
+      level: none
+  pair: roll
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every decision is stated outright — where the windows start, how far
+      they run, which side of a boundary a photograph falls on, what an empty
+      window counts and whether it is printed at all, which two mistakes are
+      refused — so the change is a walk along the roll with nothing left open
+      to the author
