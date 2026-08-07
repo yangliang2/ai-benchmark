@@ -600,15 +600,21 @@ def _category(
     The mix is printed beside it for the reading the key does not support —
     a row of one scope or substrate mix divided by controls of another — and
     the rows that differ are listed under the table rather than columned into
-    it, because most rounds will have few of them and a reader meets them
-    where the difference matters.
+    it, because a mix is a footnote to a multiplier rather than a reading of
+    its own, and carrying its two axes as columns would push the table past
+    the width the rest of this report wraps at. A category with no control
+    has no baseline mix for a row to differ from, and no multiplier for a mix
+    to footnote — every cell in such a table is empty for want of a
+    denominator — so the list is not printed there at all.
     """
     header = ("profile", "tasks", *LADDER_MODELS, _FLOOR_COLUMN)
     means = ", ".join(
         f"{model} {against[(category, model)].text}" for model in LADDER_MODELS
     )
     mix = mixes.get(category)
-    differing = [row for row in category_rows if row.cell.mix != mix]
+    differing = (
+        [] if mix is None else [row for row in category_rows if row.cell.mix != mix]
+    )
     lines = [
         f"category {category}",
         f"   baseline mean cost   {means}",

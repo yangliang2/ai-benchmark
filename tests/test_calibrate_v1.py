@@ -755,7 +755,12 @@ def test_calibrate_v1_says_so_where_a_category_has_no_controls_to_be_made_of(
 ) -> None:
     """A category with no zero-knob control has no denominator and so nothing
     for a mix to be taken over. "The controls are of this mix" and "there are
-    no controls" are different statements, and a blank would be neither."""
+    no controls" are different statements, and a blank would be neither.
+
+    Nor is any row listed as differing from that absent baseline: with no
+    control there is no denominator, so every multiplier in the table is
+    empty, and a mix disclosed there would footnote a reading the table does
+    not make."""
     tasks = tmp_path / "tasks"
     write_task(tasks, _OTHER_CONTROL, category="bug-fix")
     write_task(tasks, "unpriced-crux", knobs={"K9": "single"})
@@ -768,7 +773,8 @@ def test_calibrate_v1_says_so_where_a_category_has_no_controls_to_be_made_of(
     assert baseline_line(out, "feature-dev", "baseline mix") == (
         "(no zero-knob control in this category)"
     )
-    assert mixes(out, "feature-dev") == {"K9=single": "1 single-file; 1 hand-authored"}
+    assert cells(out, "feature-dev", "K9=single")[_HAIKU] == "-"
+    assert mixes(out, "feature-dev") == {}
 
 
 # --- what v1 refuses: interpolation, backoff, pooling --------------------------
@@ -950,7 +956,7 @@ def test_calibrate_v1_documents_its_refusals_and_disclosures_in_its_help(
     help_text = " ".join(capsys.readouterr().out.split())
     for refusal in ("interpolat", "backoff", "pool"):
         assert refusal in help_text
-    for disclosure in ("scope", "substrate", "category x scope"):
+    for disclosure in ("substrate", "category x scope"):
         assert disclosure in help_text
 
 
