@@ -18,7 +18,12 @@
 # equally admissible answers. Every textbook dedupe picks its survivor by a
 # rule its author chose (the first seen, the lowest id), which is the decision
 # rather than a derivation of it, so naming the textbook problem hands over
-# the burst detection the prompt already gave away and names no frame.
+# the burst detection the prompt already gave away and names no frame. What
+# that does not amount to is the textbook answer failing: a dedupe that keeps
+# the first admissible frame of each burst clears this grading suite, as it
+# must, since every admissible frame is a correct answer. The caveat that puts
+# on the round is recorded in section 23.3 of the design note, before any
+# sweep.
 #
 # Written to the same write volume as its control, which is what round 3 adds
 # to the round-2 design (#39): round 2's two rung movements were confounded
@@ -79,7 +84,13 @@ construction:
       the crux shows up in cost instead, which is the claim registered below,
       and a crux coming back sonnet-only here would be the volume explanation
       of round 2's two rung movements losing rather than this prediction being
-      merely unlucky
+      merely unlucky; the cost half is read with one confound the pair does
+      not remove, this prompt running 1.24x the control's word count, and the
+      reason it cannot manufacture the effect is arithmetic: 35 of the 57
+      extra words are the crux-announcement formula section 18.1 names as the
+      K9 treatment itself, net of which the two prompts run 1.09x, and 70-odd
+      more input tokens a turn comes to well under a tenth of the smallest
+      cost difference 1.25x can be met by, even at fifteen turns
     effort:
       comparator: pair
       metric: cost

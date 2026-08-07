@@ -39,9 +39,22 @@ answer a reader reaches by never treating the open decision as one graded
 0.0; a careless reading of a rule the crux *does* state graded 0.0 as well;
 the control probed with the slip a careless reader of a fully stated spec
 makes; and each crux arguing in its own task.yaml why recalling a named
-method resolves nothing. The probe machinery is imported from the round-2
-suite rather than copied a third time — it is the same instrument, and a
-third copy would be a third thing free to drift.
+method resolves nothing. The bookcase pair carries a second such careless
+reading, `pack-the-shelves-without-the-dividers`, because there the careless
+reading and the textbook method are the same program and the argument its
+task.yaml makes is worth having run.
+
+What "unchanged" covers is the vocabulary rather than the tests: the `Pair`,
+`Probes` and `Bend` records, the mutation and answer-running helpers, the line
+count and the task.yaml comment reader are all imported from the round-2
+suite, because a second definition of a measurement is a second answer free to
+disagree with the first. The tests themselves are written out again, which is
+what this repo does with tests.
+
+Section 23.3 of the design note carries a caveat this round is read under,
+recorded there before any sweep: a named method fails a K9 grading suite only
+where its output breaks a stated rule, and only one of these three pairs is
+built that way.
 """
 
 from pathlib import Path
@@ -123,7 +136,7 @@ CLEAR_THE_LARGEST_DEBTS_FIRST = '''def pay(invoices, payment):
 '''
 
 
-CLOSE_A_SHELF_ONCE_IT_LOOKS_FULL = '''def shelve(books, width):
+CLOSE_A_SHELF_ONCE_IT_LOOKS_FULL = '''def shelve(books, width, divider):
     """The run laid out on shelves `width` millimetres wide.
 
     The policy chosen: close a shelf as soon as it is half full, so that the
@@ -137,11 +150,12 @@ CLOSE_A_SHELF_ONCE_IT_LOOKS_FULL = '''def shelve(books, width):
                 f"the {stretch[0].subject} books take up {span(stretch)}mm, "
                 f"which no {width}mm shelf holds"
             )
-        standing = shelves[-1] if shelves else None
+        standing = shelves[-1] if shelves else []
+        taken = span(standing) + max(len(runs(standing)) - 1, 0) * divider
         if (
-            standing is None
-            or span(standing) * 2 >= width
-            or span(standing) + span(stretch) > width
+            not standing
+            or taken * 2 >= width
+            or taken + divider + span(stretch) > width
         ):
             shelves.append(list(stretch))
         else:
@@ -206,22 +220,18 @@ STOP_AT_THE_FIRST_ONE_YOU_CANNOT_AFFORD = '''def pay(invoices, payment):
 '''
 
 
-FILL_EACH_SHELF_BY_THE_BOOK = '''def shelve(books, width):
-    """The run laid out on shelves `width` millimetres wide: each shelf takes
-    books until the next one will not fit on it, and then the next shelf is
-    started."""
+ONE_STRETCH_TO_A_SHELF = '''def shelve(books, width, divider):
+    """The run laid out on shelves `width` millimetres wide: a shelf of its
+    own for each stretch of one subject, so that nothing has to be settled
+    about which stretches share and no divider is ever called for."""
+    shelves = []
     for stretch in runs(books):
         if span(stretch) > width:
             raise ValueError(
                 f"the {stretch[0].subject} books take up {span(stretch)}mm, "
                 f"which no {width}mm shelf holds"
             )
-    shelves = []
-    for book in books:
-        if shelves and span(shelves[-1]) + book.width <= width:
-            shelves[-1].append(book)
-        else:
-            shelves.append([book])
+        shelves.append(list(stretch))
     return shelves
 '''
 
@@ -286,7 +296,7 @@ PUT_THE_CHANGE_ON_THE_NEXT_INVOICE = '''def pay(invoices, payment):
 # come to more than any shelf holds while no single one of them does. This
 # reading applies the bar to each book, so a stretch nothing can hold is laid
 # out rather than refused.
-READ_THE_BAR_AS_ONE_BOOK_WIDE = '''def shelve(books, width):
+READ_THE_BAR_AS_ONE_BOOK_WIDE = '''def shelve(books, width, divider):
     """The run laid out on shelves `width` millimetres wide.
 
     The reference's policy — fill each shelf as far as it goes — with the
@@ -300,6 +310,30 @@ READ_THE_BAR_AS_ONE_BOOK_WIDE = '''def shelve(books, width):
                 raise ValueError(
                     f"{book.title} is {book.width}mm, wider than a {width}mm shelf"
                 )
+        shelf = shelves[-1] if shelves else []
+        if shelf and span(shelf) + len(runs(shelf)) * divider + span(stretch) <= width:
+            shelf.extend(stretch)
+        else:
+            shelves.append(list(stretch))
+    return shelves
+'''
+
+# And the crux's other stated rule, which is the one the textbook answer walks
+# into: a shelf holds its books *and* a divider for every stretch on it after
+# the first, so the sizes bin packing takes to add up do not. This is next fit
+# over the stretches, the method a solver who names the shape is handed, and
+# it overfills a shelf whose books alone came to less than the width.
+PACK_THE_SHELVES_WITHOUT_THE_DIVIDERS = '''def shelve(books, width, divider):
+    """The run laid out on shelves `width` millimetres wide: bin packing over
+    the stretches, next fit, each shelf taking whole stretches until the one
+    after will not fit on it and the next shelf started there."""
+    shelves = []
+    for stretch in runs(books):
+        if span(stretch) > width:
+            raise ValueError(
+                f"the {stretch[0].subject} books take up {span(stretch)}mm, "
+                f"which no {width}mm shelf holds"
+            )
         if shelves and span(shelves[-1]) + span(stretch) <= width:
             shelves[-1].extend(stretch)
         else:
@@ -424,7 +458,7 @@ run = [
     Book("Lichen", "rocks", 20),
     Book("Slate", "roofs", 20),
 ]
-print(describe(shelve(run, 100)))
+print(describe(shelve(run, 100, 10)))
 """
 
 PICKED = """
@@ -465,7 +499,7 @@ PROBES: dict[str, Probes] = {
         rung="haiku-solvable",
         at_least_factor=FACTOR,
         another_way=CLOSE_A_SHELF_ONCE_IT_LOOKS_FULL,
-        not_an_answer=FILL_EACH_SHELF_BY_THE_BOOK,
+        not_an_answer=ONE_STRETCH_TO_A_SHELF,
         careless=(
             Bend(
                 "count-the-copy-that-was-passed-over",
@@ -473,7 +507,13 @@ PROBES: dict[str, Probes] = {
             ),
         ),
         answers=SHELVED,
-        misread=(Bend("read-the-bar-as-one-book-wide", READ_THE_BAR_AS_ONE_BOOK_WIDE),),
+        misread=(
+            Bend("read-the-bar-as-one-book-wide", READ_THE_BAR_AS_ONE_BOOK_WIDE),
+            Bend(
+                "pack-the-shelves-without-the-dividers",
+                PACK_THE_SHELVES_WITHOUT_THE_DIVIDERS,
+            ),
+        ),
     ),
     "roll": Probes(
         module="roll.py",
@@ -760,10 +800,24 @@ def test_the_two_resolutions_really_do_answer_differently(pair: Pair) -> None:
 @pytest.mark.parametrize("pair", BY_PAIR)
 def test_not_making_the_decision_does_not_resolve(pair: Pair) -> None:
     """The other direction, and what keeps the tolerance above from being
-    indifference: the answer a reader arrives at by taking the route the
-    domain suggests and never treating the open decision as one satisfies
-    everything about the change except the rule the decision exists to
-    meet."""
+    indifference: the answer a reader arrives at by never treating the open
+    decision as one satisfies everything about the change except the rule the
+    decision exists to meet.
+
+    What each probe pins, since the three are not equally on the nose. Remit's
+    walks the ledger settling invoices until one it cannot afford and stops,
+    which leaves change that would have settled a later invoice — the
+    maximality rule, and the only rule the withheld policy answers to.
+    Bookcase's gives every stretch a shelf of its own, which is what "decide
+    nothing about which stretches share" comes to, and it trips the half-full
+    floor — again the rule the open decision lives under. Roll's keeps the
+    first frame of every burst without reading the marks, and what it trips is
+    the keep mark and the blurred rule, two stated rules, rather than anything
+    about which admissible frame survives: roll withholds a decision no rule
+    constrains at all, so there is no rule left for a non-answer to fail, and
+    this probe is a second misreading wearing the label rather than a third of
+    a kind. That is the same asymmetry §23.3 records for the round.
+    """
     task = task_by_id(pair.crux_id)
     diff = solution_diff(
         task,
@@ -930,6 +984,13 @@ def test_every_crux_argues_why_recalling_an_algorithm_would_not_resolve_it(
     from recall. A crux registered here has to make the case in its own
     task.yaml that no named algorithm resolves it — which the sweep cannot
     check and a reader of the task alone would have to take on trust.
+
+    What this holds a crux to is making the argument, not to the argument
+    coming out one particular way, and §23.3 records why the difference
+    matters: only `bookcase-shelve-the-run` reaches the strong form, where the
+    named method's answer breaks a stated rule. The other two make the honest
+    weaker case in their own comments, that the method lands inside the family
+    of answers the rules accept and nothing asked for it.
     """
     comment = authoring_comment(pair.crux_id)
 
@@ -944,7 +1005,13 @@ def test_every_crux_records_that_its_pair_was_matched_on_volume(pair: Pair) -> N
     than only where it is tested. A reader meeting one of these tasks on its
     own has no way to see that the control beside it was written to the same
     length on purpose, and that is the fact that separates a round-3 pair from
-    a round-2 one."""
+    a round-2 one.
+
+    Two words rather than one, because "volume" on its own is met by a comment
+    that happens to use the word: the pair has to be said to have been matched
+    on it.
+    """
     comment = authoring_comment(pair.crux_id)
 
     assert "volume" in comment
+    assert "matched" in comment

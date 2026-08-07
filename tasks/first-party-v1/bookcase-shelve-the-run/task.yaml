@@ -1,25 +1,32 @@
 # K9 at single: one planted inventive decision — which stretches of the run
 # share a shelf — and nothing else. Every other rule the shelving has to meet
-# is stated outright, including the two a reader might improvise over (a
-# subject that comes round again later in the run, and how empty the last
-# shelf may be left), and the grading suite checks what a shelving has to be
-# rather than one shelving.
+# is stated outright, including the three a reader might improvise over (a
+# subject that comes round again later in the run, what a divider between two
+# stretches costs the shelf they share, and how empty the last shelf may be
+# left), and the grading suite checks what a shelving has to be rather than
+# one shelving.
 #
 # Why recall does not resolve it, which is what a K9 crux has had to argue
 # since ticket #33. Books of given widths going onto shelves of a fixed width
 # is the most recognisable shape in this task set: it is bin packing, and the
 # ordered form of it is the line-breaking problem, and a solver who names
-# either is handed a method immediately. Neither method answers this. Both
-# minimise something — the number of bins, or a raggedness cost — and the
-# rules here ask for no minimum at all: a layout using more shelves than the
-# fewest possible is correct so long as no shelf but the last was left under
-# half full while the next stretch would have fitted on it. That clause is a
-# floor and not an objective, so the textbook answer is an optimisation
-# nobody asked for, more expensive than the rules require, and still names
-# none of the layouts that satisfy them. What is left is the shelver's
-# question — where a break reads well, whether a subject wants a shelf to
-# itself, whether the run should end tight or airy — and it is answered on
-# grounds the widths do not carry.
+# either is handed a method immediately. The method it is handed returns a
+# layout this task refuses. A shelf here does not hold the sum of what stands
+# on it: two stretches sharing one are kept apart by a divider, so what a
+# stretch costs a shelf depends on how many stretches are already there, and
+# packing the widths — first fit, next fit, or the optimum of either — comes
+# back with shelves over the width it was told to keep them under. Bin packing
+# takes the sizes to add up and here they do not, which makes the textbook
+# problem a different problem rather than a harder instance of this one. That
+# is not left as an author's assertion: the round-3 test suite runs next fit
+# against this grading suite as a checked-in probe, where it fails on the
+# width rule the prompt states outright. Repairing the arithmetic does not
+# resolve the task either, because the rules ask for no minimum at all: a
+# layout on more shelves than the fewest possible is correct so long as no
+# shelf but the last was left under half full while the next stretch and its
+# divider would have fitted. What is left is the shelver's question — where a break reads well,
+# whether a subject wants a shelf to itself, whether the run should end tight
+# or airy — and it is answered on grounds the widths do not carry.
 #
 # Written to the same write volume as its control, which is what round 3 adds
 # to the round-2 design (#39): round 2's two rung movements were confounded
@@ -35,28 +42,27 @@ scale: single-file
 language: python
 prompt: |
   bookcase.py can say what a stretch of books takes up and where one subject
-  gives way to the next, but nothing in it puts the run onto shelves — so the
-  layout is worked out on paper every time the collection is moved, and last
-  time the geology ended up spread over three of them.
+  gives way to the next, but nothing in it puts the run onto shelves, so the
+  layout is still worked out on paper.
 
-  Add a function `shelve(books, width)` to bookcase.py that lays the run out
-  on shelves `width` millimetres wide, and returns those shelves as a list of
-  lists of books.
+  Add a function `shelve(books, width, divider)` to bookcase.py that lays the
+  run out on shelves `width` millimetres wide, and returns those shelves as a
+  list of lists of books.
 
   What the shelving has to satisfy:
 
   - every book stands on exactly one shelf, in the order it was given, and
     the shelves come back in the order they will stand;
-  - no shelf holds more than `width` millimetres of books, and no shelf is
-    empty;
-  - books of one subject standing next to each other stay together: such a
-    stretch is never split across two shelves. A subject that comes round
-    again later in the run is a stretch of its own and need not join the
-    earlier one;
-  - no shelf but the last is left half empty for nothing: each of them either
-    holds at least half its width in books, or is already too full to have
-    taken the whole of the next stretch. The last shelf may be left as empty
-    as it likes;
+  - books of one subject standing next to each other are a stretch, never
+    split across two shelves; a subject that comes round again later in the
+    run is a stretch of its own;
+  - a divider `divider` millimetres wide stands between two stretches sharing
+    a shelf, so what a shelf holds is its books and one divider for every
+    stretch on it after the first;
+  - no shelf holds more than `width` millimetres, and no shelf is empty;
+  - no shelf but the last is left half empty for nothing: each holds at least
+    half its width, or was already too full to take the next stretch and its
+    divider. The last shelf may be as empty as it likes;
   - a stretch of one subject wider than a shelf is refused with ValueError,
     naming the subject;
   - an empty run gives no shelves at all;
@@ -83,7 +89,14 @@ construction:
       stays where round 1's flat K9 pairs put it and the crux shows up in cost
       instead, which is the claim registered below, and a crux coming back
       sonnet-only here would be the volume explanation of round 2's two rung
-      movements losing rather than this prediction being merely unlucky
+      movements losing rather than this prediction being merely unlucky; the
+      cost half is read with one confound the pair does not remove, this
+      prompt running 1.25x the control's word count, and the reason it cannot
+      manufacture the effect is arithmetic: 31 of the 60 extra words are the
+      crux-announcement formula section 18.1 names as the K9 treatment itself,
+      net of which the two prompts run 1.12x, and 80-odd more input tokens a
+      turn comes to well under a tenth of the smallest cost difference 1.25x
+      can be met by, even at fifteen turns
     effort:
       comparator: pair
       metric: cost

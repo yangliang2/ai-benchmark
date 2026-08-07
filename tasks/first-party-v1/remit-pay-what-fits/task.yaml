@@ -6,20 +6,26 @@
 # than one settled ledger.
 #
 # Why recall does not resolve it, which is what a K9 crux has had to argue
-# since ticket #33. The shape invites a name: money against a list of amounts
-# is subset sum, and a solver who recognises it will reach for the largest
-# total that fits. That is the wrong instrument here, and deliberately so. The
-# office's rule is not "spend as much as possible" — it is "do not hand back
-# money that would have settled an invoice", which is maximality and not
-# maximum. On a ledger of 500, 300 and 250 against a payment of 550, the
-# optimum settles 300 and 250 and returns nothing; settling 500 alone returns
-# 50 and is equally correct here, because nothing still owing costs 50 or
-# less. So recalling the textbook problem hands over an answer to a question
-# the office did not ask, costs more work than the rules require, and names
-# none of the sets that satisfy them. What is left is a policy — the oldest
-# debts first, the largest, the ones that clear a customer's account — chosen
-# on grounds outside the arithmetic, and that is the decision this task
-# withholds.
+# since ticket #33 — and here the honest answer is the weaker of the two forms
+# that argument takes, so it is written out rather than dressed up. The shape
+# invites a name: money against a list of amounts is subset sum, and a solver
+# who recognises it reaches for the largest total that fits. That answer
+# passes, and it has to. A subset-sum optimum is maximal by construction, and
+# maximality is the whole of what these rules ask, so 0/1 knapsack clears the
+# grading suite outright: the textbook method lands inside the family of
+# accepted answers rather than outside it, and this crux is not one whose
+# named neighbour fails a stated rule the way the bookcase pair's does. What
+# recall does not hand over is that nothing here asked for a maximum. The
+# office's rule is "do not hand back money that would have settled an
+# invoice", not "spend as much as possible": on a ledger of 500, 300 and 250
+# against a payment of 550 the optimum settles 300 and 250 and returns
+# nothing, and settling 500 alone and returning 50 is equally correct, because
+# nothing still owing costs 50 or less. So what is withheld is a policy — the
+# oldest debts first, the largest, the ones that clear a customer's account —
+# and reaching for the optimum is one member of the accepted family picked on
+# grounds the prompt does not supply, not a derivation of the answer. The
+# caveat this puts on the round is recorded in section 23.3 of the design
+# note, before any sweep.
 #
 # Written to the same write volume as its control, which is what round 3 adds
 # to the round-2 design (#39): round 2's two rung movements were confounded
@@ -83,7 +89,14 @@ construction:
       round 1's flat K9 pairs put it and the crux shows up in cost instead,
       which is the claim registered below, and a crux coming back sonnet-only
       here would be the volume explanation of round 2's two rung movements
-      losing rather than this prediction being merely unlucky
+      losing rather than this prediction being merely unlucky; the cost half
+      is read with one confound the pair does not remove, this prompt running
+      1.20x the control's word count, and the reason it cannot manufacture the
+      effect is arithmetic: 35 of the 55 extra words are the crux-announcement
+      formula section 18.1 names as the K9 treatment itself, net of which the
+      two prompts run 1.07x, and 70-odd more input tokens a turn comes to well
+      under a tenth of the smallest cost difference 1.25x can be met by, even
+      at fifteen turns
     effort:
       comparator: pair
       metric: cost

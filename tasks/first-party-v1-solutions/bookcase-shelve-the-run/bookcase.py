@@ -39,13 +39,12 @@ def describe(shelves):
     return [f"{', '.join(titles(shelf))} ({span(shelf)}mm)" for shelf in shelves]
 
 
-def shelve(books, width):
-    """The run laid out on shelves `width` millimetres wide.
+def shelve(books, width, divider):
+    """The run laid out on shelves `width` millimetres wide, a divider
+    `divider` wide standing wherever two stretches share one.
 
-    The policy chosen: fill each shelf as far as it goes. A stretch joins the
-    shelf being filled where the whole of it still fits, and starts the next
-    shelf where it does not — so a shelf is left under half full only when the
-    stretch that would have come next was too wide to join it.
+    The policy chosen: fill each shelf as far as it goes — a stretch joins the
+    shelf being filled where it and the divider before it both still fit.
     """
     shelves = []
     for stretch in runs(books):
@@ -54,8 +53,9 @@ def shelve(books, width):
                 f"the {stretch[0].subject} books take up {span(stretch)}mm, "
                 f"which no {width}mm shelf holds"
             )
-        if shelves and span(shelves[-1]) + span(stretch) <= width:
-            shelves[-1].extend(stretch)
+        shelf = shelves[-1] if shelves else []
+        if shelf and span(shelf) + len(runs(shelf)) * divider + span(stretch) <= width:
+            shelf.extend(stretch)
         else:
             shelves.append(list(stretch))
     return shelves

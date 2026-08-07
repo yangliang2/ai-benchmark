@@ -1,10 +1,11 @@
-"""How `windows` is graded. Nothing here is left open, so the strip of counts
-is checked against the one it has to be, worked out by hand beside each roll.
+"""How `windows` is graded: against the strips of counts the prompt spells out.
 
-The two rules a reader could slip on are graded on their own as well as inside
-the strip below: which side of a boundary a photograph falls on — the window
-that opens on its second, not the one that closes there — and a window nothing
-was taken in, which counts none and is still printed.
+Every decision is stated — which side of a boundary a photograph falls on,
+which is the window that opens on its second and not the one that closes
+there; a window nothing was taken in, which counts none and is still printed;
+and where the strip starts and stops, which is the first photograph and the
+last — so the expected strips are written out here in full. This is the
+zero-crux control the picking task is read against.
 """
 
 import pytest

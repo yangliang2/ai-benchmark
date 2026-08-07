@@ -1253,11 +1253,37 @@ the load-bearing one.
    §20's 3/3 correspondence is post-hoc and collinear with write volume;
    registering the same threshold on cost in advance is what turns it into a
    result. Registering it at a factor fitted to round 2's numbers is not — the
-   factor should stay at 1.25×.
+   factor should stay at 1.25×. [Shipped by #39, on the pairs candidate 3
+   asks for; each crux's rationale also registers the prompt-length gap it
+   carries, 1.20–1.25× the control's word count, following #31's precedent.]
 3. **Break K9's volume confound.** Match added lines within a pair (±10%), or
    author a crux/control pair where the crux writes *fewer* lines. Until this
    lands, K9 is not usable as an ex-ante profile dimension however good the
-   rung result looks.
+   rung result looks. [Shipped by #39: three pairs at 1.00×, 1.05× and 1.08×
+   added lines, each crux registering cost ≥1.25× against its pair partner.]
+
+   **The any-resolution property and the non-textbook justification pull
+   against each other, recorded before any sweep so the caveat cannot be
+   invented afterwards.** A K9 crux grades every answer satisfying the stated
+   rules at 1.0, and a named method fails such a suite *only* where its output
+   violates one of those rules. So "no named method resolves this" can never
+   mean "no named method passes"; it means one of two much weaker things, and
+   #39's three pairs are split across them. `bookcase-shelve-the-run` is the
+   strong form: a divider stands between two stretches sharing a shelf, so the
+   sizes bin packing takes to add up do not, and next fit, first fit and the
+   fewest-shelves optimum all overfill a shelf and fail the stated width rule
+   — the round-3 suite runs next fit as a checked-in probe, under the name
+   `pack-the-shelves-without-the-dividers`, and it fails 2 of the crux's 46
+   grading tests. `remit-pay-what-fits` is the weak form, and its task.yaml says
+   so outright: a subset-sum optimum is maximal by construction and maximality
+   is all the rules ask, so 0/1 knapsack passes the grading suite 63/63.
+   `roll-pick-from-bursts` is weak in the same way and always conceded it —
+   the prompt hands the clustering over, and a dedupe keeping the first
+   admissible frame of each burst passes 48/48. Read a round-3 K9 result,
+   therefore, as evidence about **a labelled open decision** and not about a
+   decision recall cannot reach: only one of the three pairs supports the
+   second reading, and two of the three sit beside a textbook method that
+   resolves them.
 4. **K9 deepening: the notice-the-crux variant.** Every K9 crux so far is
    announced by the same closing formula. A variant that plants the same
    decision and *does not label it* tests whether K9 measures resolution or

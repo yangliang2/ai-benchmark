@@ -1,10 +1,10 @@
-"""How `overdue` is graded. Nothing here is left open, so the chase list is
-checked against the one it has to be, worked out by hand beside each ledger.
+"""How `overdue` is graded: against the chase lists the prompt spells out.
 
-The two rules a reader could slip on are graded on their own as well as inside
-the lists below: the day an invoice falls due — the day it is granted, not the
-day after — and an invoice settled in full, which is never chased however old
-it is.
+Every decision is stated — the day an invoice falls due, which is the day its
+terms run out and from which it is chased the day after; an invoice settled in
+full, which is never chased however old it is; and the order two invoices
+equally late come back in — so the expected chase lists are written out here
+in full. This is the zero-crux control the payment task is read against.
 """
 
 import pytest

@@ -141,17 +141,16 @@ def test_an_invoice_already_settled_is_left_exactly_as_it_was(name):
 
 @pytest.mark.parametrize("name", NAMES)
 def test_what_was_settled_and_what_came_back_add_up_to_the_payment(name):
-    """No money lost and none invented, measured against what each invoice
-    was owing before rather than against anything the solution computed."""
+    """No money lost and none invented, and arithmetic that holds however much
+    of an invoice a solution moved: what every invoice took off the payment,
+    plus what came back, is the payment. Counting each touched invoice's whole
+    owing instead would over-count a part-payment, and would only be sound
+    read beside the rule that forbids one."""
     case = CASES[name]
     invoices, returned = applied(name)
 
-    spent = sum(
-        case.owed[invoice.reference]
-        for before, invoice in zip(case.ledger, invoices)
-        if invoice.paid != before.paid
-    )
-    assert spent + returned == case.payment
+    took = sum(after.paid - before.paid for before, after in zip(case.ledger, invoices))
+    assert took + returned == case.payment
 
 
 @pytest.mark.parametrize("name", NAMES)

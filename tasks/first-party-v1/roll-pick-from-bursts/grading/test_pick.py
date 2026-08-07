@@ -101,9 +101,18 @@ def given(name):
 
 
 def picked(name):
-    """What came back, as the places on the roll the picks were taken from."""
+    """What came back, as the places on the roll the picks were taken from.
+
+    Found by identity rather than by value: two frames of one burst can agree
+    in every field, and `list.index` would report both as the earlier one —
+    which would read a pick of the second as a pick of the first. A frame that
+    is on no roll at all reports -1, which fails the rule about that.
+    """
     case = CASES[name]
-    return [case.roll.index(photo) for photo in pick(given(name), case.pause)]
+    return [
+        next((place for place, on_roll in enumerate(case.roll) if on_roll is photo), -1)
+        for photo in pick(given(name), case.pause)
+    ]
 
 
 @pytest.mark.parametrize("name", NAMES)

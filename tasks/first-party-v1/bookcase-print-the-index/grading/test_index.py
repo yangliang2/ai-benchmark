@@ -1,11 +1,10 @@
-"""How `index` is graded. Nothing here is left open, so the printed index is
-checked against the one it has to be, worked out by hand beside each run.
+"""How `index` is graded: against the printed indexes the prompt spells out.
 
-The three rules a reader could slip on are graded on their own as well as
-inside the index below: a title shelved twice under one subject, which is
-listed once and adds its width once; the same title under two subjects, which
-is two listings and not a repeat; and a subject occupying two separate
-stretches of the run, which is still one entry.
+Every decision is stated — a title shelved twice under one subject, which is
+listed once where it first appears; what that subject's width then comes to,
+which is the listing and not the copy passed over; and a book filed under no
+subject at all, which is refused — so the expected indexes are written out
+here in full. This is the zero-crux control the shelving task is read against.
 """
 
 import pytest
