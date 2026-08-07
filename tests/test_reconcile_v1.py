@@ -72,12 +72,25 @@ def constructed(
     pair: str | None = None,
     rationale: str = "the level this task sets should land it here",
     effort: dict[str, Any] | None = None,
+    also: dict[str, str] | None = None,
 ) -> dict[str, Any]:
+    """One fixture construction block, activating `knob` and whatever `also`
+    names beside it.
+
+    `also` is what makes the composite shapes reachable: a task activating
+    several knobs at once is the case the counting rules exist to refuse — no
+    single knob is the varied one, and a baseline claim over three of them
+    names none — and a helper that could only write one activation left those
+    branches untestable.
+    """
     prediction: dict[str, Any] = {"rung": rung, "rationale": rationale}
     if effort is not None:
         prediction["effort"] = effort
     block: dict[str, Any] = {
-        "knobs": [{"id": knob, "level": level}],
+        "knobs": [
+            {"id": knob, "level": level},
+            *({"id": other, "level": at} for other, at in (also or {}).items()),
+        ],
         "prediction": prediction,
     }
     if family is not None:
@@ -373,15 +386,6 @@ def test_reconcile_v1_report_is_byte_identical_on_a_second_run(
     )
 
     assert reseeded.stdout == first
-
-
-def knob_block(out: str, knob: str) -> str:
-    """One knob's block of section 5, counted rows and informational alike."""
-    [block] = [
-        block for block in knob_blocks(out)
-        if block.lstrip().startswith(f"{knob}  ")
-    ]
-    return block
 
 
 def test_reconcile_v1_recomputes_the_checked_in_counters_under_the_amended_rule(
@@ -795,6 +799,15 @@ def knob_blocks(out: str) -> list[str]:
     ]
 
 
+def knob_block(out: str, knob: str) -> str:
+    """One knob's block of section 5, counted rows and informational alike."""
+    [block] = [
+        block for block in knob_blocks(out)
+        if block.lstrip().startswith(f"{knob}  ")
+    ]
+    return block
+
+
 def counted_block(out: str) -> str:
     """The rows the kill discipline reads, without the informational ones.
 
@@ -945,7 +958,7 @@ def test_reconcile_v1_will_not_demote_a_knob_off_frozen_baseline_silence(
     assert "demote K8" not in flags
 
 
-def test_reconcile_v1_counts_a_designed_contrast_and_names_the_one_that_spoke(
+def test_reconcile_v1_counts_a_registered_contrast_and_names_the_one_that_spoke(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """What the counter does read: a family varying one knob, whose harder
@@ -977,7 +990,7 @@ def test_reconcile_v1_counts_a_designed_contrast_and_names_the_one_that_spoke(
 def test_reconcile_v1_will_not_read_separation_in_the_easier_direction(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """K11's round-2 flag, moved inside a designed contrast where it can be
+    """K11's round-2 flag, moved inside a registered contrast where it can be
     read at all.
 
     The harder level came out uniformly easier than the level below it. The
@@ -1094,6 +1107,195 @@ def test_reconcile_v1_will_not_read_a_contrast_on_an_unenumerated_ladder(
     counted = counted_block(out)
     assert "not assessable — 1 registered contrast(s)" in counted
     assert "pair terrain: K7's ladder is not enumerated" in counted
+    assert "silent round(s): 0" in flags_block(out)
+
+
+def write_present_against_absent_pair(
+    tmp_path: Path, resolved: dict[str, list[str]]
+) -> Path:
+    """A pair whose control leaves the varied knob unset entirely.
+
+    The pair rule allows members declaring different knobs, so a present level
+    against an absent one is a contrast an author can build: both members
+    write K1 at the same level and only the crux turns K9 at all. The control
+    that never turns the knob is the least of its ladder, which is what makes
+    the pair readable in a direction.
+    """
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "sonnet-only", pair="terrain", also={"K1": "acceptance"}))
+    write_task(tasks, "control-task", construction=constructed(
+        "K1", "acceptance", "haiku-solvable", pair="terrain"))
+    write_log(tmp_path / "runs.jsonl", firstparty_v1.load_task_set(tasks), resolved)
+    return tasks
+
+
+def test_reconcile_v1_reads_a_present_level_standing_above_an_absent_one(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Absent is below the ladder's lowest rung, so the crux reaching above a
+    control that never set the knob is an upward separation — and was read as
+    "the ladder is not enumerated" before, which said the opposite of what the
+    pair had drawn."""
+    tasks = write_present_against_absent_pair(tmp_path, {
+        "crux-task": [_SONNET], "control-task": [_HAIKU, _SONNET],
+    })
+
+    out = reconcile(tasks, tmp_path / "runs.jsonl", capsys)
+
+    counted = counted_block(out)
+    assert (
+        "separated — pair terrain: single {sonnet-only} above "
+        "(not set) {haiku-solvable}"
+    ) in counted
+    assert "silent round(s): 0" in flags_block(out)
+    # Section 4 names the same knob the counter read the pair off: the crux at
+    # its level and the control at none, rather than the knob both members
+    # happen to set alike.
+    pairs = pairs_block(out)
+    assert "crux-task (K9=single)" in pairs and "control-task (K9=-)" in pairs
+
+
+def test_reconcile_v1_will_not_read_an_absent_level_standing_above_a_present_one(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The same pair with the rungs the other way up. The sets still differ,
+    and the level that landed higher is the one below the ladder — which is
+    the knob failing to reach, not the knob working."""
+    tasks = write_present_against_absent_pair(tmp_path, {
+        "crux-task": [_HAIKU, _SONNET], "control-task": [_SONNET],
+    })
+
+    out = reconcile(tasks, tmp_path / "runs.jsonl", capsys)
+
+    counted = counted_block(out)
+    assert (
+        "pair terrain: (not set) {sonnet-only}, single {haiku-solvable} — "
+        "no level reaches above an easier one"
+    ) in counted
+    assert "separated —" not in counted
+    assert "silent round(s): 1" in flags_block(out)
+
+
+def test_reconcile_v1_does_not_count_a_contrast_that_varies_two_knobs(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A pair moving two knobs at once attributes its rungs to neither, so it
+    is nobody's registered contrast and neither knob is counted off it. The
+    rung delta is not attributed either, and for the same reason."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux-task", construction=constructed(
+        "K9", "single", "sonnet-only", pair="terrain", also={"K1": "intent"}))
+    write_task(tasks, "control-task", construction=constructed(
+        "K9", "none", "haiku-solvable", pair="terrain", also={"K1": "acceptance"}))
+    log = tmp_path / "runs.jsonl"
+    write_log(log, firstparty_v1.load_task_set(tasks), {
+        "crux-task": [_SONNET], "control-task": [_HAIKU, _SONNET],
+    })
+
+    out = reconcile(tasks, log, capsys)
+
+    for knob in ("K1", "K9"):
+        block = knob_block(out, knob)
+        assert f"stalled: no round put {knob} to a registered contrast" in block
+        assert "silent round(s): 0" in block
+
+
+def test_reconcile_v1_scores_a_baseline_claim_on_a_composite_to_no_knob(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """One cost claim over three knobs names none of them.
+
+    A composite varies all three from the baseline at once, so a single
+    baseline claim cannot say which one moved the money — and reading it as a
+    round for each would advance three counters off one measurement. The task
+    is still swept, still graded, and still shows up on the informational
+    rows; what it does not do is count."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "checkout-discount-codes")
+    write_task(tasks, "composite-task", construction=constructed(
+        "K1", "intent", "unsolved", also={"K9": "single", "K7": "dense"},
+        effort=claim("baseline", "cost", 1.25)))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "round-1.jsonl",
+              [task for task in loaded if task.id == "checkout-discount-codes"],
+              {"checkout-discount-codes": [_HAIKU, _SONNET]}, as_of=date(2026, 8, 4),
+              effort={"checkout-discount-codes": {_HAIKU: (7, 0.20), _SONNET: (7, 0.20)}})
+    write_log(logs / "round-2.jsonl",
+              [task for task in loaded if task.id == "composite-task"], {},
+              as_of=date(2026, 9, 1),
+              effort={"composite-task": {_HAIKU: (9, 0.90), _SONNET: (9, 0.90)}})
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    # The claim is graded and hits — section 6 says so — and still moves nothing.
+    assert "composite-task" in out.split("6. effort-claim")[1]
+    for knob in ("K1", "K7", "K9"):
+        block = knob_block(out, knob)
+        assert f"stalled: no round put {knob} to a registered contrast" in block
+        assert "silent round(s): 0" in block
+
+
+def test_reconcile_v1_reports_a_round_of_unreadable_claims_as_not_assessable(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Silence needs a reading that could have spoken.
+
+    The claim is registered against a category baseline the sweep never ran,
+    so neither of its readings can be assessed at all. A round that got a
+    readable answer out of nothing said nothing about the knob, and rendering
+    its unreadable readings as "0 of 2 hit" would put an assessed miss on the
+    page where no measurement exists to have missed."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "net-far", construction=constructed(
+        "K11", "far", "haiku-solvable", effort=claim("baseline", "cost", 1.2)))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {"net-far": [_HAIKU, _SONNET]},
+              effort={"net-far": {_HAIKU: (7, 0.21), _SONNET: (7, 0.21)}})
+
+    out = reconcile(tasks, log, capsys)
+
+    counted = counted_block(out)
+    assert "not assessable — no registered contrast" in counted
+    assert "none of 2 registered effort reading(s) assessable" in counted
+    assert "hit" not in counted
+    assert "silent round(s): 0" in flags_block(out)
+
+
+def test_reconcile_v1_will_not_read_silence_off_an_unbalanced_contrast(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The minimum-sample guard, turned in the counting side's direction.
+
+    Three tasks at the easier level spread across two rungs; the harder level
+    got one. The one cell is read against the maximum of three draws, so its
+    failure to stand above them is an unbalanced sample as much as a quiet
+    knob — not the evidence a demotion is argued from."""
+    tasks = tmp_path / "tasks"
+    for index in (1, 2, 3):
+        write_task(tasks, f"open-acceptance-{index}", construction=constructed(
+            "K1", "acceptance", "haiku-solvable", family="open"))
+    write_task(tasks, "open-intent", construction=constructed(
+        "K1", "intent", "unsolved", family="open"))
+    log = tmp_path / "runs.jsonl"
+    write_log(log, firstparty_v1.load_task_set(tasks), {
+        "open-acceptance-1": [_HAIKU, _SONNET],
+        "open-acceptance-2": [_HAIKU, _SONNET],
+        "open-acceptance-3": [_SONNET],
+        "open-intent": [_HAIKU, _SONNET],
+    })
+
+    out = reconcile(tasks, log, capsys)
+
+    counted = counted_block(out)
+    assert "not assessable — 1 registered contrast(s)" in counted
+    assert (
+        "intent has 1 graded task(s) against acceptance's 2 distinct rung(s), "
+        "so its silence would be the sample as much as the knob"
+    ) in counted
     assert "silent round(s): 0" in flags_block(out)
 
 

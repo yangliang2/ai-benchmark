@@ -370,6 +370,21 @@ def by_knob_level(outcomes: Iterable[Outcome]) -> dict[tuple[str, str], list[Out
     return groups
 
 
+def families_by_id(outcomes: Iterable[Outcome]) -> dict[str, list[Outcome]]:
+    """The outcomes under each family id, unfamilied tasks left out.
+
+    Every member is kept, for the reason `pairs_by_id` keeps every member of a
+    pair: section 3 renders a family the lint would refuse and the contrast
+    reading declines to score it, and both have to see it to say so.
+    """
+    families: dict[str, list[Outcome]] = {}
+    for outcome in constructed(outcomes):
+        assert outcome.construction is not None
+        if outcome.construction.family is not None:
+            families.setdefault(outcome.construction.family, []).append(outcome)
+    return families
+
+
 def pairs_by_id(outcomes: Iterable[Outcome]) -> dict[str, list[Outcome]]:
     """The outcomes under each pair id, unpaired tasks left out.
 
@@ -424,20 +439,16 @@ class Contrast:
         return max(rounds, key=lambda round: round.sort_key) if rounds else None
 
 
-def designed_contrasts(outcomes: Iterable[Outcome]) -> list[Contrast]:
+def registered_contrasts(outcomes: Iterable[Outcome]) -> list[Contrast]:
     """Every registered contrast in the task set, families before pairs and
     each group in name order, so the report reads the same way twice."""
-    families: dict[str, list[Outcome]] = {}
-    for outcome in constructed(outcomes):
-        assert outcome.construction is not None
-        if outcome.construction.family is not None:
-            families.setdefault(outcome.construction.family, []).append(outcome)
+    families = families_by_id(outcomes)
     pairs = pairs_by_id(outcomes)
     grouped: list[tuple[Literal["family", "pair"], str, list[Outcome]]] = [
         *(("family", name, families[name]) for name in sorted(families)),
         *(("pair", name, pairs[name]) for name in sorted(pairs)),
     ]
-    contrasts = []
+    contrasts: list[Contrast] = []
     for kind, name, members in grouped:
         if len(members) < 2 or (knob := contrast_knob(members)) is None:
             continue
@@ -475,7 +486,6 @@ def contrast_knob(members: Sequence[Outcome]) -> str | None:
 class Reading:
     """What one registered contrast said, read in the harder direction only."""
 
-    contrast: Contrast
     separated: bool
     assessable: bool
     text: str
@@ -493,6 +503,20 @@ def read_contrast(contrast: Contrast) -> Reading:
     (design note section 19). Where the ladder is not enumerated no level is
     the harder one, and the contrast is not assessable rather than scored on
     the alphabetical order `level_order` falls back to.
+
+    A member declaring no level of the knob sits below the ladder's lowest
+    rung: the pair rule allows members declaring different knobs, and a
+    control that never turns the knob is the least of it. What makes that
+    reading available is the enumerated ladder and not the absence, so a
+    present/absent pair on an unenumerated ladder is as unreadable as any
+    other comparison on one.
+
+    The minimum-sample guard rides here as it does on the informational rows,
+    adapted to the direction this reading runs: there it asks whether two rung
+    sets could have matched, here whether the harder side had the draws to top
+    the easier side's spread. It only ever withdraws a verdict — an observed
+    upward separation stands whatever the sampling, and so does silence read
+    off sides that were balanced enough to speak.
     """
     ladder = KNOB_LEVELS.get(contrast.knob, ())
     by_level: dict[str, list[Outcome]] = {}
@@ -500,33 +524,64 @@ def read_contrast(contrast: Contrast) -> Reading:
         if member.determined:
             by_level.setdefault(_level(member, contrast.knob), []).append(member)
     if len(by_level) < 2:
-        return Reading(contrast, False, False, (
+        return Reading(False, False, (
             f"{contrast.label}: fewer than two of its levels have a rung"
         ))
-    if any(level not in ladder for level in by_level):
-        return Reading(contrast, False, False, (
+    if any(level not in ladder and level != _ABSENT for level in by_level):
+        return Reading(False, False, (
             f"{contrast.label}: {contrast.knob}'s ladder is not enumerated, so "
             "neither level is the harder one and no direction can be read"
         ))
-    ordered = sorted(by_level, key=lambda level: level_order(contrast.knob, level))
-    for easier, harder in combinations(ordered, 2):
+    ordered = sorted(by_level, key=lambda level: _contrast_order(contrast.knob, level))
+    comparisons = list(combinations(ordered, 2))
+    for easier, harder in comparisons:
         if _top(by_level[harder]) > _top(by_level[easier]):
-            return Reading(contrast, True, True, (
-                f"{contrast.label}: {harder} {_rung_set_text(by_level[harder])} "
-                f"above {easier} {_rung_set_text(by_level[easier])}"
+            return Reading(True, True, (
+                f"{contrast.label}: {_level_text(harder)} "
+                f"{_rung_set_text(by_level[harder])} above {_level_text(easier)} "
+                f"{_rung_set_text(by_level[easier])}"
             ))
     described = ", ".join(
-        f"{level} {_rung_set_text(by_level[level])}" for level in ordered
+        f"{_level_text(level)} {_rung_set_text(by_level[level])}" for level in ordered
     )
-    return Reading(contrast, False, True, (
+    unbalanced = [
+        (easier, harder) for easier, harder in comparisons
+        if _outsampled(by_level[harder], by_level[easier])
+    ]
+    if len(unbalanced) == len(comparisons):
+        return Reading(False, False, (
+            f"{contrast.label}: {described} — "
+            + "; ".join(
+                _unbalanced_text((_level_text(easier), by_level[easier]),
+                                 (_level_text(harder), by_level[harder]))
+                for easier, harder in unbalanced
+            )
+        ))
+    return Reading(False, True, (
         f"{contrast.label}: {described} — no level reaches above an easier one"
     ))
 
 
+# The level of a knob a contrast member does not declare at all: below every
+# rung of the ladder, and printed as what it is rather than as the dash the
+# tables use, because a verdict line reads as prose.
+_ABSENT = "-"
+
+
+def _contrast_order(knob: str, level: str) -> tuple[int, str]:
+    """The ladder order a contrast reads its levels in: `level_order`, with the
+    undeclared level sorted below every rung rather than after them."""
+    return (-1, level) if level == _ABSENT else level_order(knob, level)
+
+
+def _level_text(level: str) -> str:
+    return "(not set)" if level == _ABSENT else level
+
+
 def _top(members: Sequence[Outcome]) -> int:
     """The highest rung these outcomes reached. Only ever called on a level
-    with at least one determined rung, which is what makes the max defined."""
-    return max(_HEIGHT[member.rung] for member in members if member.determined)
+    grouped out of determined members, which is what makes the max defined."""
+    return max(_HEIGHT[member.rung] for member in members)
 
 
 def claim_knobs(outcome: Outcome, contrasts: Sequence[Contrast]) -> frozenset[str]:
@@ -534,16 +589,23 @@ def claim_knobs(outcome: Outcome, contrasts: Sequence[Contrast]) -> frozenset[st
 
     A claim is attributed the way the contrast it is read in attributes it: a
     pair claim to the pair's varied knob, because that is the one knob that
-    moved between the two measurements, and a baseline claim to every knob its
-    task activates, because that is what the task varies from the baseline. A
-    pair claim on a pair that varies no single knob is scored nowhere, for the
-    same reason its rung delta is not attributed either.
+    moved between the two measurements, and a baseline claim to the knob its
+    task activates where that is exactly one knob, because that is then what
+    the task varies from the baseline. A pair claim on a pair that varies no
+    single knob is scored nowhere, for the same reason its rung delta is not
+    attributed either, and a baseline claim on a task activating several knobs
+    is scored nowhere for that same reason: a composite varies all of them at
+    once and one reading over three knobs names none of them. Composites and
+    anchors declare their activations for the calibration table's profile key
+    and form no contrast on purpose; advancing a round for K1, K9 and K7
+    together off one cost claim is the artifact verdict this rule removes.
     """
     construction = outcome.construction
     if construction is None or construction.prediction.effort is None:
         return frozenset()
     if construction.prediction.effort.comparator == "baseline":
-        return frozenset(construction.levels)
+        activated = construction.levels
+        return frozenset(activated) if len(activated) == 1 else frozenset()
     return frozenset(
         contrast.knob for contrast in contrasts
         if contrast.kind == "pair" and contrast.name == construction.pair
@@ -767,6 +829,10 @@ def render(
     outcomes: Mapping[str, Outcome], *, tasks_root: Path, logs: Sequence[Path]
 ) -> str:
     ordered = [outcomes[task_id] for task_id in sorted(outcomes)]
+    # Graded once and read twice: section 5 counts these claims into its
+    # verdicts and section 6 shows the working, and grading them apart would
+    # let the two sections disagree about what a claim came out as.
+    assessments = effort_assessments(ordered)
     return "\n".join([
         *_header(ordered, tasks_root=tasks_root, logs=logs),
         "",
@@ -778,7 +844,7 @@ def render(
         "",
         *_pairs(ordered),
         "",
-        *_flags(ordered),
+        *_flags(ordered, assessments),
         "",
         # Last, and numbered after the five sections that were here before it,
         # rather than beside section 1 where it belongs by subject. The report
@@ -787,7 +853,7 @@ def render(
         # block. Section 5 now reads these claims as well as the rungs, so this
         # block is the working of a verdict printed above it — which is the one
         # place the numbering costs something, and cheaper than the churn.
-        *_effort_claims(ordered),
+        *_effort_claims(assessments),
     ])
 
 
@@ -947,12 +1013,7 @@ def _group_row(label: str, category: str, members: Sequence[Outcome]) -> Sequenc
 
 
 def _families(outcomes: Sequence[Outcome]) -> list[str]:
-    families: dict[str, list[Outcome]] = {}
-    for outcome in constructed(outcomes):
-        assert outcome.construction is not None
-        if outcome.construction.family is not None:
-            families.setdefault(outcome.construction.family, []).append(outcome)
-
+    families = families_by_id(outcomes)
     lines = ["3. family ladders"]
     if not families:
         return [*lines, "   (no task family in the task set)"]
@@ -980,21 +1041,31 @@ def _families(outcomes: Sequence[Outcome]) -> list[str]:
 
 def _level(outcome: Outcome, knob: str) -> str:
     assert outcome.construction is not None
-    return outcome.construction.levels.get(knob, "-")
+    return outcome.construction.levels.get(knob, _ABSENT)
 
 
 def _varied_knob(members: Sequence[Outcome]) -> str:
-    """The knob a family varies: the one its members do not all set alike. The
-    lint holds a family to exactly one such knob; a family that somehow has
+    """The knob a family varies: the one its members do not all set alike.
+
+    A knob one member declares and another does not is varied too, read the
+    way `contrast_knob` reads it — the undeclared side sits below the ladder —
+    so this section and the counting one name the same knob for the same pair.
+    The lint holds a family to exactly one such knob; a family that somehow has
     none (identical levels throughout) falls back to its lowest-numbered knob
-    so the block still renders rather than the whole report failing."""
-    activated: dict[str, set[str]] = {}
-    for member in members:
-        assert member.construction is not None
-        for knob, level in member.construction.levels.items():
-            activated.setdefault(knob, set()).add(level)
-    varied = [knob for knob, levels in activated.items() if len(levels) > 1]
-    return min(varied or activated, key=knob_order)
+    so the block still renders rather than the whole report failing.
+    """
+    activated = sorted(
+        {
+            knob for member in members if member.construction is not None
+            for knob in member.construction.levels
+        },
+        key=knob_order,
+    )
+    varied = [
+        knob for knob in activated
+        if len({_level(member, knob) for member in members}) > 1
+    ]
+    return (varied or activated)[0]
 
 
 def _monotonic(ordered: Sequence[Outcome]) -> str:
@@ -1082,18 +1153,20 @@ class Verdict:
     detail: tuple[str, ...]
 
 
-def _flags(outcomes: Sequence[Outcome]) -> list[str]:
+def _flags(
+    outcomes: Sequence[Outcome], assessments: Sequence[Assessment]
+) -> list[str]:
     lines = [
         "5. no-separation flags",
         *_wrap(
             "criterion: a round counts for a knob only where it put the knob to a "
             "registered contrast — a task family or pair swept in that round whose "
             "varied knob this is, or an effort claim registered on a task "
-            "activating it. Those are the comparisons the task set declares. A "
-            "level read against the frozen zero-knob baseline is one this report "
-            "draws instead, out of controls swept in an earlier round against "
-            "tasks nobody built to be read against this level; it is printed below "
-            "as informational and advances nothing.",
+            "activating it and scored to it. Those are the comparisons the task "
+            "set declares. A knob's levels read against each other within a round, "
+            "or against the frozen zero-knob baseline where the round swept only "
+            "one of them, are comparisons this report draws instead; they are "
+            "printed below as informational and advance nothing.",
             indent="   ",
         ),
         *_wrap(
@@ -1103,17 +1176,45 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
             "highest. A set difference on its own is not separation: a level that "
             "resolves uniformly differs from a spread comparison, and reading that "
             "as the knob working credits an anti-saturation knob for coming out "
-            "easier. Where the knob's ladder is not enumerated, no level is the "
-            "harder one and the contrast is not assessable.",
+            "easier. A member that does not declare the knob at all sits below the "
+            "ladder's lowest rung, so a level standing above a member that never "
+            "turned the knob separates upward and the reverse does not. Where the "
+            "knob's ladder is not enumerated, no level is the harder one and the "
+            "contrast is not assessable — a present-against-absent pair included, "
+            "since absent is below rungs nobody wrote down.",
+            indent="   ",
+        ),
+        *_wrap(
+            "sample: the minimum-sample guard applies to a contrast too, turned in "
+            "this reading's direction. A side of n graded tasks lands on at most n "
+            "distinct rungs, so a harder side holding fewer graded tasks than the "
+            "easier side has rungs is read against the maximum of more draws than "
+            "it took itself; its silence would be the sample as much as the knob, "
+            "and where every comparison a contrast could draw is unbalanced that "
+            "way the contrast is not assessable. The guard only ever withdraws a "
+            "verdict — an observed separation stands whatever the sampling, and so "
+            "does silence read off balanced sides.",
             indent="   ",
         ),
         *_wrap(
             "effort: a counted round is non-silent when a registered contrast "
             "separated upward or when any effort claim scored to the knob hit on "
             "any model — a pair claim scoring to the pair's varied knob, a "
-            "baseline claim to every knob its task activates. Effort is the axis "
+            "baseline claim to the one knob its task activates where that is "
+            "exactly one, and to no knob where the task activates several, since "
+            "one reading over several knobs names none of them. Effort is the axis "
             "this experiment's signal has actually shown up on, and a knob judged "
             "only on rungs is judged on an outcome its author never bet on.",
+            indent="   ",
+        ),
+        *_wrap(
+            "not assessable: silence needs a reading that could have spoken. A "
+            "round whose contrasts are all unreadable and whose claim readings are "
+            "all not assessable says nothing about the knob rather than saying the "
+            "knob moved nothing, so it prints not assessable and advances nothing. "
+            "Every tally below counts assessable readings, naming the unreadable "
+            "ones separately, so a row never renders an unreadable claim as an "
+            "assessed miss.",
             indent="   ",
         ),
         *_wrap(
@@ -1149,8 +1250,7 @@ def _flags(outcomes: Sequence[Outcome]) -> list[str]:
         {outcome.round for outcome in outcomes if outcome.round is not None},
         key=lambda round: round.sort_key,
     )
-    contrasts = designed_contrasts(outcomes)
-    assessments = effort_assessments(outcomes)
+    contrasts = registered_contrasts(outcomes)
     scored = {
         outcome.task.id: claim_knobs(outcome, contrasts) for outcome in outcomes
     }
@@ -1227,36 +1327,77 @@ def _counted(
         return None
 
     hits = [assessment for assessment in claims if assessment.verdict == "hit"]
+    readable = [
+        assessment for assessment in claims if assessment.verdict != "not assessable"
+    ]
+    assessable = [reading for reading in readings if reading.assessable]
     contrast_tally = (
         f"{len(readings)} registered contrast(s)" if readings
         else "no registered contrast"
     )
-    claim_tally = (
-        f"{len(claims)} registered effort reading(s)" if claims
-        else "no effort claim registered"
-    )
+    claim_tally = _claim_tally(hits, readable, claims)
     tally = f"{contrast_tally}; {claim_tally}"
-    detail = tuple(reading.text for reading in readings)
     if separated := [reading for reading in readings if reading.separated]:
+        # The reading that spoke is named in the summary, so the detail lines
+        # below carry the ones it does not: printing it in both places made the
+        # row argue the same comparison with itself.
+        detail = tuple(
+            reading.text for reading in readings if reading is not separated[0]
+        )
         return Verdict(round, False, f"separated — {separated[0].text} ({tally})", detail)
+    detail = tuple(reading.text for reading in readings)
     if hits:
         return Verdict(round, False, (
-            f"non-silent — no contrast reached above an easier level, and "
-            f"{len(hits)} of {len(claims)} registered effort reading(s) hit ({tally})"
+            "non-silent — no contrast reached above an easier level, and "
+            f"{claim_tally} ({contrast_tally})"
         ), detail)
-    if not claims and not any(reading.assessable for reading in readings):
-        # Every contrast unreadable and nothing registered on effort: the round
-        # said nothing rather than saying the knob moved nothing, and an
-        # unreadable comparison has never been allowed to count as silence.
+    if not assessable and not readable:
+        # Nothing here could have spoken: every contrast unreadable and every
+        # claim reading unassessable. The round said nothing rather than saying
+        # the knob moved nothing, and an unreadable comparison has never been
+        # allowed to count as silence.
         return Verdict(round, False, f"not assessable — {tally}", detail)
     # Both halves of the silence are spelled out, because a knob is demoted off
     # this row and "no separation" alone does not say which axis stayed quiet.
     return Verdict(round, True, "no separation — " + "; ".join([
-        f"{contrast_tally}, none reaching above an easier level" if readings
-        else contrast_tally,
-        f"0 of {len(claims)} registered effort reading(s) hit" if claims
-        else claim_tally,
+        _readable_contrast_tally(assessable, readings) if readings else contrast_tally,
+        claim_tally,
     ]), detail)
+
+
+def _claim_tally(
+    hits: Sequence[Assessment],
+    readable: Sequence[Assessment],
+    claims: Sequence[Assessment],
+) -> str:
+    """The effort half of a knob's round, in the one form the section uses.
+
+    Always "M of N hit", never a bare count: a row that printed how many
+    readings there were and not how many landed made the reader open section 6
+    to find out what its own verdict was read off. The denominator is the
+    readings that could be assessed, and the ones that could not are named
+    beside it rather than folded in, because a claim read against an unswept
+    comparator is not a bet that came out false.
+    """
+    if not claims:
+        return "no effort claim registered"
+    if not readable:
+        return f"none of {len(claims)} registered effort reading(s) assessable"
+    unreadable = len(claims) - len(readable)
+    tally = f"{len(hits)} of {len(readable)} registered effort reading(s) hit"
+    return f"{tally} ({unreadable} not assessable)" if unreadable else tally
+
+
+def _readable_contrast_tally(
+    assessable: Sequence[Reading], readings: Sequence[Reading]
+) -> str:
+    """The contrast half of a silent round, counting only what could be read."""
+    if len(assessable) == len(readings):
+        return f"{len(readings)} registered contrast(s), none reaching above an easier level"
+    return (
+        f"{len(assessable)} of {len(readings)} registered contrast(s) readable, "
+        "none reaching above an easier level"
+    )
 
 
 def _swept_in(task_id: str, outcomes: Sequence[Outcome], round: Round) -> bool:
@@ -1385,6 +1526,29 @@ def _graded(outcomes: Sequence[Outcome]) -> list[Outcome]:
     return [outcome for outcome in outcomes if outcome.determined]
 
 
+def _outsampled(harder: Sequence[Outcome], easier: Sequence[Outcome]) -> bool:
+    """Whether this comparison's harder side was too small to be read against
+    the easier one — the minimum-sample guard, turned in the direction the
+    contrast reading runs.
+
+    A side of n graded tasks lands on at most n distinct rungs, so a harder
+    side holding fewer graded tasks than the easier side has rungs is being
+    read against the maximum of more draws than it took itself. That does not
+    make its silence impossible — one task landing unsolved would still stand
+    above anything — but it makes the silence an unbalanced sample as much as
+    a quiet knob, which is not evidence a demotion may be argued from.
+    """
+    return len(_graded(harder)) < len(rung_set(easier))
+
+
+def _unbalanced_text(easier: Side, harder: Side) -> str:
+    return (
+        f"{harder[0]} has {len(_graded(harder[1]))} graded task(s) against "
+        f"{easier[0]}'s {len(rung_set(easier[1]))} distinct rung(s), so its "
+        "silence would be the sample as much as the knob"
+    )
+
+
 def _forced_text(one: Side, other: Side) -> str:
     small, large = sorted(
         (one, other), key=lambda side: (len(_graded(side[1])), side[0])
@@ -1426,9 +1590,8 @@ def _measured(value: float | None, metric: EffortMetric) -> str:
     return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
-def _effort_claims(outcomes: Sequence[Outcome]) -> list[str]:
+def _effort_claims(assessments: Sequence[Assessment]) -> list[str]:
     lines = ["6. effort-claim reconciliation"]
-    assessments = effort_assessments(outcomes)
     if not assessments:
         # The round-1 task set's state, and the honest one: no task registered
         # an effort claim, so there is nothing here to be right or wrong about.

@@ -291,7 +291,7 @@ Ladder coverage is a design goal: anchors at every rung incl. headroom
 counts the wrong thing. It counts any comparison the report can draw, in
 either direction, and round 2 fired its separation flag three times with only
 one of the three informative (§19): K9's was read level against level inside a
-designed contrast and is real; K1's fired off a level K12's families hold
+registered contrast and is real; K1's fired off a level K12's families hold
 *constant* by design, so it flagged a knob round 2 never varied (§22.1); and
 K11's fired because its level came out uniformly *easier* than the baseline it
 was read against, crediting an anti-saturation knob for pushing a task down
@@ -307,12 +307,16 @@ rule, which `reconcile-v1` mirrors verbatim:
    *task set* declares, not one the report constructs. Two things are
    registered contrasts and nothing else is: a **family or pair** swept in
    that round whose **varied knob** this is, and an **effort claim**
-   registered on a task activating it, read against the comparator that claim
-   named. A knob's level read against the frozen zero-knob baseline's rung set
-   is *not* one: the baseline was swept once, in an earlier round, against
-   tasks nobody built to be read against this level, and the set difference
-   that falls out of that is a property of the two samples as much as of the
-   knob. Such comparisons stay **printed**, clearly labelled as informational
+   registered on a task activating it *and scored to it by clause 3*, read
+   against the comparator that claim named. The qualification is not a detail:
+   clause 3 scores a pair claim to the pair's varied knob alone, so a task
+   activating K1 and K12 inside a K12 pair registers nothing about K1, and a
+   reader mirroring this clause without it would give K1 a counted round off a
+   bet nobody placed on it. A knob's level read against the frozen zero-knob
+   baseline's rung set is *not* one: the baseline was swept once, in an
+   earlier round, against tasks nobody built to be read against this level,
+   and the set difference that falls out of that is a property of the two
+   samples as much as of the knob. Such comparisons stay **printed**, clearly labelled as informational
    and advancing no counter, because they are still the widest view of where a
    level landed and losing them would cost the report its only reading of a
    knob that has no contrast yet.
@@ -335,19 +339,65 @@ rule, which `reconcile-v1` mirrors verbatim:
    reconciliation's crux/control section names no crux in a pair whose knob
    has no enumerated ladder.
 
+   A member that does not declare the knob at all sits **below the ladder's
+   lowest rung**. The pair rule allows a crux and a control declaring
+   different knobs, and a control that never turns the knob is the least of
+   it — so a present level standing above an absent one is an upward
+   separation, and an absent level standing above a present one is not. What
+   makes that reading available is the *ladder*, not the presence: a
+   present/absent pair on an unenumerated ladder is as unreadable as any other
+   comparison on one, because absent is below rungs this section has never
+   written down.
+
+   A contrast is read only where its sides were balanced enough to speak. The
+   minimum-sample guard the informational rows carry applies to the counting
+   side too, turned in the direction this reading runs: there it asks whether
+   two rung *sets* could have matched, here whether the harder side had the
+   draws to top the easier one's spread. A side of n graded tasks lands on at
+   most n distinct rungs, so a harder side holding fewer graded tasks than the
+   easier side has rungs is being read against the maximum of more draws than
+   it took itself — three easy tasks against one hard one. That does not make
+   its silence impossible, since one task landing unsolved would still stand
+   above anything; it makes the silence an unbalanced sample as much as a
+   quiet knob, which is not evidence a demotion may be argued from. Where
+   every comparison a contrast could draw is unbalanced that way, the contrast
+   is **not assessable**. The guard only ever withdraws a verdict: an observed
+   upward separation stands whatever the sampling, and so does silence read
+   off sides that were balanced.
+
 3. **Effort-bearing non-silence.** A counted round is **non-silent** for a
    knob when a registered contrast of that knob separated upward **or** when
    any effort claim scored to that knob **hit** on any model. Otherwise the
    round is silent. Effort claims are scored to a knob the way the contrast
    they are read in attributes them: a **pair** claim to the pair's varied
    knob — the one knob that moved between the two measurements — and a
-   **baseline** claim to every knob its task activates, because that is what
-   the task varies from the baseline.
+   **baseline** claim to the knob its task activates where that is **exactly
+   one** knob, and to no knob at all where the task activates several. A
+   single-knob task is the one shape where the baseline comparator names what
+   moved; a composite varies several things at once from the baseline, and one
+   cost reading over three knobs names none of them, for the same reason a
+   contrast moving two knobs attributes its outcome to neither. Composites and
+   anchors declare their activations for the calibration table's profile key
+   and form no contrast on purpose, and a counter that advanced a silent round
+   for K1, K9 and K7 together off one baseline claim would be the artifact
+   verdict this whole amendment removes.
 
-4. **Two silent rounds still demote.** Unchanged, and the demotion still names
+4. **Only a reading that could have spoken counts as silence.** A round that
+   put the knob to registered contrasts or claims and got a readable answer
+   out of none of them prints **not assessable** and advances nothing. An
+   unreadable comparison has never been allowed to count as silence: a
+   contrast on an unenumerated ladder, a contrast the sample guard withdrew,
+   and a claim read against an unswept or zero comparator each say nothing
+   about the knob, and a counter reading them as misses would demote off
+   measurements nobody made. Silence needs at least one contrast that could
+   have separated or one claim that could have hit — and the report's tally
+   says how many of each there were, so a row never renders an unreadable
+   claim as an assessed miss.
+
+5. **Two silent rounds still demote.** Unchanged, and the demotion still names
    the rounds it counted, with their dates.
 
-5. **Stalled is not silent.** A knob with no counted round at all has not been
+6. **Stalled is not silent.** A knob with no counted round at all has not been
    shown to move nothing; it has never been asked. Its counter does not
    advance and it prints as **stalled**, naming what it lacks. This is a
    standing invitation to author a contrast or register a claim, and the price
@@ -373,7 +423,7 @@ leaning on it: §19 predicted in advance that a direction-aware criterion would
 print `no separation` for K11 and that "the counter would agree retroactively
 when recomputed", and #35 ruled K7 stalled-not-silent for the reason the rule
 now states in general. Neither was written into the code as a special case;
-both fall out of clauses 1–3.
+both fall out of clauses 1–3 and 6.
 
 One weakness of K11's counted round is recorded rather than fixed: all four of
 its claims use the category-baseline comparator, which §22.4 calls the weak
@@ -382,7 +432,14 @@ to nothing, where a pair comparator is matched on both. So K11's silent round
 rests on the weaker of the two comparators the schema offers. It is still a
 number its author registered in advance and lost, which is the standard this
 whole discipline is built on, and the identifiability argument of §23.5 is the
-reason K11's retirement does not wait on a stronger one.
+reason K11's retirement does not wait on a stronger one. Recorded beside it:
+all eleven claims the task set registers — K11's four and the seven pair
+claims of round 2 — are written on `metric: turns`, the metric this same
+amendment stops defaulting to. The readings survive the deprecation because
+every one of them is read against a comparator that is a measurement or a mean
+of measurements rather than a threshold, so quantization moves a ratio and
+never the rule; what it cost is the stringency, which is why the metric
+changes for round 3 rather than the readings being rerun.
 
 **Cost is the default effort metric** (#37). `turns` stays available and
 nothing is forbidden, but a claim should be registered on `cost` unless its
