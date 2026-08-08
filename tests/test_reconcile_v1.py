@@ -208,20 +208,27 @@ def effort_block(out: str) -> str:
 # --- the demo: the checked-in sweeps against the checked-in task set ----------
 
 
-def checked_in_tasks_and_swept_ids() -> tuple[list[firstparty_v1.Task], set[str]]:
-    """The checked-in task set, and the ids some checked-in log has a run for.
+def checked_in_tasks_and_models() -> tuple[list[firstparty_v1.Task], dict[str, set[str]]]:
+    """The checked-in task set, and per task id the models some log ran it on.
 
     Read from the same artifacts the command reads, so that what this file
     expects of the report moves when the artifacts move. Sweeps are the thing
     that keeps arriving here — round 1 covered the baseline, round 2 the
-    Track-A tasks, Track B is next — and every count the report prints is a
-    count of them. Pinned as literals they would be a running total edited
-    once per round, and a number edited to match the output it is checking has
-    stopped testing anything."""
+    Track-A tasks, round 3 the pysm substrate — and every count the report
+    prints is a count of them. Pinned as literals they would be a running
+    total edited once per round, and a number edited to match the output it is
+    checking has stopped testing anything.
+
+    The models and not just the ids, because a task swept on one model is a
+    different report state from one swept on both: only the second can be
+    scored to a rung, and round 3 produced the first of the first kind."""
     tasks = firstparty_v1.load_task_set(_REPO / "tasks" / "first-party-v1")
     logs = reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
-    swept = {run.task_id for log in logs for run in firstparty_v1.load_runs(log)}
-    return tasks, swept
+    models: dict[str, set[str]] = {}
+    for log in logs:
+        for run in firstparty_v1.load_runs(log):
+            models.setdefault(run.task_id, set()).add(run.model)
+    return tasks, models
 
 
 def test_reconcile_v1_reports_the_checked_in_sweeps(
@@ -237,11 +244,21 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     is that the report accounts for exactly what the logs and the task set
     contain — a task dropped from a section, or counted in the header and
     missing from section 1, is what this is watching for."""
-    tasks, swept_ids = checked_in_tasks_and_swept_ids()
+    tasks, swept_models = checked_in_tasks_and_models()
     constructed = [task for task in tasks if task.construction is not None]
     baseline = [task for task in tasks if task.construction is None]
-    swept = [task for task in constructed if task.id in swept_ids]
-    unswept = [task for task in constructed if task.id not in swept_ids]
+    swept = [task for task in constructed if task.id in swept_models]
+    unswept = [task for task in constructed if task.id not in swept_models]
+    # A rung names the weakest model that resolved a task, so only a task the
+    # logs ran on every rung of the ladder can be scored to one. A task swept
+    # on some of them is `incomplete`: the report withholds a rung rather than
+    # reading the model that never ran as one that failed.
+    fully_swept = [
+        task
+        for task in swept
+        if swept_models[task.id] >= set(reconcile_v1.LADDER_MODELS)
+    ]
+    incomplete = [task for task in swept if task not in fully_swept]
     assert swept, "the demo has nothing to show until a round has been swept"
 
     main(checked_in_argv())
@@ -265,20 +282,25 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     # it, and a swept one is scored: predicted rung, observed rung, verdict.
     for task in constructed:
         assert task.id in predictions, f"{task.id} vanished from the report"
-    for task in swept:
+    for task in fully_swept:
         assert re.search(
             rf"^ +{task.id} +\S+ +\S+ +(hit|miss)$", predictions, re.MULTILINE
-        ), f"{task.id} has runs logged and should carry a scored verdict"
+        ), f"{task.id} ran on every ladder model and should carry a scored verdict"
+    for task in incomplete:
+        assert re.search(
+            rf"^ +{task.id} +\S+ +incomplete +incomplete$", predictions, re.MULTILINE
+        ), f"{task.id} ran on some ladder models and should say it is incomplete"
     for task in unswept:
         assert re.search(
             rf"^ +{task.id} +\S+ +unswept +unswept$", predictions, re.MULTILINE
         ), f"{task.id} has no runs logged and should say so"
 
-    # Only a swept task can be scored, so the hit-rate cannot outrun them.
+    # Only a task the whole ladder ran can be scored, so the hit-rate cannot
+    # outrun those: an incomplete task is swept and still carries no verdict.
     rate = re.search(r"hit-rate: (\d+)/(\d+) scored", predictions)
     assert rate
     hits, scored = int(rate[1]), int(rate[2])
-    assert hits <= scored <= len(swept)
+    assert hits <= scored <= len(fully_swept)
 
     # The baseline is on the page as every knob's comparison row, and round 1
     # swept all of it: no baseline row has a task it did not sweep.
@@ -407,6 +429,11 @@ def test_reconcile_v1_recomputes_the_checked_in_counters_under_the_amended_rule(
     read stalled because no family, pair or registered claim ever put them to
     a contrast — K8's demotion stands in the note as the human verdict it
     always was, not as a counter this report reproduces.
+
+    Round 3 moved K7 off that list by registering effort claims on tasks
+    activating it, so K8 is now the only stalled knob here. That is the
+    counter behaving as designed rather than an expectation loosened to fit:
+    stalled says a knob has never been asked, and K7 has now been asked.
     """
     main(checked_in_argv())
     out = capsys.readouterr().out
@@ -418,10 +445,21 @@ def test_reconcile_v1_recomputes_the_checked_in_counters_under_the_amended_rule(
     assert "sweep round-2  separated" in informational_block(k1)
     assert "silent round(s): 0" in k1
 
-    for stalled in ("K7", "K8"):
-        block = knob_block(out, stalled)
-        assert f"stalled: no round put {stalled} to a registered contrast" in block
-        assert "silent round(s): 0" in block
+    k8 = knob_block(out, "K8")
+    assert "stalled: no round put K8 to a registered contrast" in k8
+    assert "silent round(s): 0" in k8
+
+    # K7 was stalled beside K8 until round 3 registered effort claims on
+    # pysm tasks activating it, which is what a stalled knob being asked
+    # looks like: the counter starts, and it starts on effort rather than
+    # rungs, because K7's ladder is not enumerated and so its pairs order
+    # no level above another.
+    k7 = knob_block(out, "K7")
+    assert "stalled" not in k7
+    assert "sweep round-3  non-silent" in counted_block(k7)
+    assert "registered effort reading(s) hit" in counted_block(k7)
+    assert "K7's ladder is not enumerated" in counted_block(k7)
+    assert "silent round(s): 0" in k7
 
     k9 = knob_block(out, "K9")
     assert "as-of 2026-08-05  no separation" in counted_block(k9)
@@ -434,14 +472,24 @@ def test_reconcile_v1_recomputes_the_checked_in_counters_under_the_amended_rule(
     assert "silent round(s): 1" in k11
     assert "stalled" not in k11
 
+    # K12 is the first knob the counter itself demotes. Round 2 left it one
+    # silent round short; round 3 asked it again with the nightbus family and
+    # got the same silence — no contrast separating upward, no effort reading
+    # hitting — which is the second of the two rounds the discipline allows.
     k12 = knob_block(out, "K12")
     assert "sweep round-2  no separation" in counted_block(k12)
-    assert "silent round(s): 1" in k12
+    assert "sweep round-3  no separation" in counted_block(k12)
+    assert "silent round(s): 2" in k12
+    assert (
+        "demote K12: silent in sweep round-2 (2026-08-06), "
+        "sweep round-3 (2026-08-08)"
+    ) in k12
 
-    # No knob has spent the two rounds the discipline allows, so nothing is
-    # demoted off this recomputation — K8's demotion lives in the design note
-    # as a human verdict and is not a counter reading.
-    assert not re.search(r"demote K\d+", out)
+    # And it is the only one: a demotion travels out of this report into the
+    # design note, so a second one appearing unnoticed is what this catches.
+    # K8's demotion lives in the note as a human verdict and is not a counter
+    # reading, which is why it is absent here despite being demoted there.
+    assert re.findall(r"demote K\d+", out) == ["demote K12"]
 
 
 # --- section 1: predictions ----------------------------------------------------
