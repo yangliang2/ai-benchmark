@@ -9,20 +9,26 @@
 #
 # The passage is worded around the module's glossary rather than out of it,
 # which is the lesson #32 had to fix in the album family after writing the
-# prose in the module's own words and thereby handing over the crux. Here the
+# prose in the module's own words and thereby handing over the crux. The
 # module's words for the decision are "operating day", "working" and
-# "belongs to", and the passage uses none of them: "the date it sets off on"
-# is calendar vocabulary the module never uses, and `departs.date()` is where
-# it leads. The decision is still recoverable from the repository, exactly as
-# at level 3 — the prose narrows nothing the module says, it only offers
-# somewhere else to look. The repo, the grading suite and the reference
-# solution are identical across the four variants, and so is every non-crux
-# criterion.
+# "belongs to", and no part of this prompt uses any of them. Not the passage:
+# "the date it sets off on" is calendar vocabulary the module never uses, and
+# `departs.date()` is where it leads. And not the acceptance block the four
+# variants share, which said "operating day" twice and "that day's working"
+# once until it was reworded to speak of a block's day instead — that block is
+# `c3`'s whole prompt, so the module's own name for the crux-carrying
+# primitive was reaching all four variants through it, and the round-3 K12
+# suite now refuses the module's exported names there as well as the hour.
+# The decision is still recoverable from the repository, exactly as at level
+# 3 — the prose narrows nothing the module says, it only offers somewhere
+# else to look. The repo, the grading suite and the reference solution are
+# identical across the four variants, and so is every non-crux criterion.
 #
 # The trap is verified rather than argued. The round-3 K12 suite checks in the
 # answer this sentence transcribes to — `file-under-the-departure-date`, the
 # reference solution with `operating_day(trip.departs)` replaced by
-# `trip.departs.date()` and nothing else changed — and grades it: the
+# `trip.departs.date()` and nothing else changed, which the suite applies and
+# compares rather than takes on trust — and grades it: the
 # repository's own tests pass on it, because they cover the readers it did not
 # touch and nothing else, and the held-out suite grades it 0.0 on every
 # variant including this one. A second answer is checked in beside it,
@@ -46,6 +52,18 @@
 # the same claim registered against round 2's own sweep would have gone 1 of
 # 4, and this one can plainly lose.
 #
+# What the calibration table cannot show, recorded because that row is where
+# a reader meets this family. All four variants declare `K1=acceptance` and a
+# K12 level, which is the profile key round 2's two families already occupy,
+# so `calibrate-v1` pools this 32-line change into the same cells as album's
+# 5 and pricelist's 9. K9 is not declared to hold them apart, because it would
+# not be true: `single` is a labelled open decision, and section 23.3's
+# any-resolution property — a K9 crux grades every answer satisfying the
+# stated rules at 1.0 — fails here, where the 04:00 boundary has one right
+# answer and the transcription of it grades 0.0. So the row key cannot express
+# change size, and the pooling is stated here instead: a K12 cost multiplier
+# read off that table is a mean over changes of 5, 9 and 32 added lines.
+#
 # feature-dev: the grading tests exercise running_sheet, which does not exist
 # in repo/, so they fail on the pristine repository as the lint requires.
 id: nightbus-print-the-sheet-c4
@@ -59,13 +77,13 @@ prompt: |
   trips out as the depot's printed running sheet, returned as a list of
   lines. It must satisfy all of the following:
 
-  - The sheet carries one block per operating day, and the blocks come in
-    date order.
-  - A block opens with a heading line holding that operating day's date,
-    written `YYYY-MM-DD` and nothing else.
-  - After the heading comes one line per trip of that day's working, in
-    departure order, two trips leaving at the same moment coming in
-    alphabetical route order.
+  - The sheet carries one block for each day the run covers, and the blocks
+    come in date order.
+  - A block opens with a heading line holding that day's date, written
+    `YYYY-MM-DD` and nothing else.
+  - After the heading comes one line per trip in that block, in departure
+    order, two trips leaving at the same moment coming in alphabetical route
+    order.
   - A trip's line is two spaces, its route, two spaces, its departure, two
     spaces, its arrival.
   - A time is written `HH:MM`, counted from midnight at the start of the

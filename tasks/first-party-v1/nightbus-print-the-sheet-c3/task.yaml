@@ -20,6 +20,14 @@
 # to" and `runs_on` says "whether the trip belongs to `day`'s working", which
 # name the question without answering it.
 #
+# The prompt is the other place that channel runs, and this variant is where
+# it runs hardest, because `c3`'s whole prompt is the block all four share. A
+# block calling the grouping an "operating day" would hand the two variants
+# built to withhold the rule the module's own name for the function holding
+# it — not the rule, but where to find it, which is what level 2 is. So the
+# block is worded off the module's glossary, and the round-3 K12 suite holds
+# it clear of the module's exported names as well as of the hour.
+#
 # So this is the discoverability walk, and it is a walk through code and tests
 # rather than through prose. The module lists seven names; two of them,
 # `operating_day` and `runs_on`, are about days, and `first_off` is written on
@@ -27,12 +35,25 @@
 # the moment before taking its date, and that line is the whole decision. The
 # repository's own test suite, which the agent is invited to run and can read,
 # pins it three times over: an evening moment belongs to its own date, a 01:20
-# moment to the date before, and 03:59 and 04:00 land on opposite sides. A solver who never opens
-# the module has no way to the answer; a solver who opens it has three. That
-# the recovered answer is sufficient is not an assertion here — the round-3
-# K12 suite grades an answer composed out of `runs_on` and `operating_day`
-# alone, taking its boundary from the repository and nothing else, and it
-# resolves against all four variants' held-out suites.
+# moment to the date before, and 03:59 and 04:00 land on opposite sides. A
+# solver who never opens the module has no way to the answer; a solver who
+# opens it has three. That the recovered answer is sufficient is not an
+# assertion here — the round-3 K12 suite grades an answer composed out of
+# `runs_on` and `operating_day` alone, taking its boundary from the repository
+# and nothing else, and it resolves against all four variants' held-out
+# suites.
+#
+# What the calibration table cannot show, recorded because that row is where
+# a reader meets this family. All four variants declare `K1=acceptance` and a
+# K12 level, which is the profile key round 2's two families already occupy,
+# so `calibrate-v1` pools this 32-line change into the same cells as album's
+# 5 and pricelist's 9. K9 is not declared to hold them apart, because it would
+# not be true: `single` is a labelled open decision, and section 23.3's
+# any-resolution property — a K9 crux grades every answer satisfying the
+# stated rules at 1.0 — fails here, where the 04:00 boundary has one right
+# answer and the transcription of it grades 0.0. So the row key cannot express
+# change size, and the pooling is stated here instead: a K12 cost multiplier
+# read off that table is a mean over changes of 5, 9 and 32 added lines.
 #
 # feature-dev: the grading tests exercise running_sheet, which does not exist
 # in repo/, so they fail on the pristine repository as the lint requires.
@@ -47,13 +68,13 @@ prompt: |
   trips out as the depot's printed running sheet, returned as a list of
   lines. It must satisfy all of the following:
 
-  - The sheet carries one block per operating day, and the blocks come in
-    date order.
-  - A block opens with a heading line holding that operating day's date,
-    written `YYYY-MM-DD` and nothing else.
-  - After the heading comes one line per trip of that day's working, in
-    departure order, two trips leaving at the same moment coming in
-    alphabetical route order.
+  - The sheet carries one block for each day the run covers, and the blocks
+    come in date order.
+  - A block opens with a heading line holding that day's date, written
+    `YYYY-MM-DD` and nothing else.
+  - After the heading comes one line per trip in that block, in departure
+    order, two trips leaving at the same moment coming in alphabetical route
+    order.
   - A trip's line is two spaces, its route, two spaces, its departure, two
     spaces, its arrival.
   - A time is written `HH:MM`, counted from midnight at the start of the

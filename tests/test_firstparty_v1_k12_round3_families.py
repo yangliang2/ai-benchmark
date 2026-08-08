@@ -34,12 +34,17 @@ says what a trip is; it does not say when a day's working begins, and neither
 does the README, and neither does any function docstring — `operating_day`
 says "the day's working a moment belongs to", which names the question and
 does not answer it. Three tests hold that. The first reads every docstring out
-of the module with `ast`, adds the README, and refuses the boundary in any
-form a sentence could carry it. The second closes the same leak in the
-prompts, where it would do the same damage by a different road: the four
-variants share their acceptance block, so a boundary stated there is stated to
-all four at once, and the test holds the block silent and exactly one
-passage — `criterion`'s — speaking. The third shows that the channel replacing
+of the module with `ast`, adds the README, and refuses the hour in the forms a
+sentence spells it in — as a clock time, bare, run together, or as the word —
+which is a list rather than an exhaustive claim. The second closes the same
+leak in the prompts, where it would do the same damage by a different road:
+the four variants share their acceptance block, so a boundary stated there is
+stated to all four at once, and the test holds the block silent and exactly
+one passage — `criterion`'s — speaking. It holds the block clear of the
+module's own names for the primitive the boundary lives in as well, because
+that block *is* `unmentioned`'s whole prompt and a block calling the grouping
+an operating day hands three variants the module's word for the thing they
+were built to withhold. The third shows that the channel replacing
 prose actually carries: rewrite `operating_day` to take the calendar date and
 the repository's *own* visible suite goes red, so the boundary is pinned by
 tests the agent is invited to run rather than by a sentence it is told.
@@ -154,20 +159,32 @@ FLOOR_OVER_ROUND_TWO = 3.0
 # with that one substitution and nothing else changed — which is what makes it
 # the transcription rather than a strawman. Right for every trip that leaves
 # before midnight, wrong for every one that leaves after it.
+#
+# "Nothing else changed" is checked rather than promised, by
+# `test_the_transcription_is_the_reference_with_one_call_replaced`: the claim
+# is made in three places and a copy that drifted — a renamed local, a
+# shortened docstring — would turn the trap into a strawman quietly.
 FILE_UNDER_THE_DEPARTURE_DATE = '''def running_sheet(trips):
-    """The depot's running sheet: one block per date, in date order."""
+    """The depot's running sheet: one block per day's working, in date order.
+
+    A block opens with its day's date, carries a line for each trip of that
+    working in departure order, and closes with how many trips it holds and
+    how long they take between them. Times are counted from midnight at the
+    start of the block's own date, so a trip that is still out after midnight
+    prints past 24:00.
+    """
 
     def clock(moment, day):
         hours = (moment.date() - day).days * 24 + moment.hour
         return f"{hours:02d}:{moment.minute:02d}"
 
-    filed = {}
+    workings = {}
     for trip in trips:
-        filed.setdefault(trip.departs.date(), []).append(trip)
+        workings.setdefault(trip.departs.date(), []).append(trip)
 
     sheet = []
-    for day in sorted(filed):
-        running = sorted(filed[day], key=lambda trip: (trip.departs, trip.route))
+    for day in sorted(workings):
+        running = sorted(workings[day], key=lambda trip: (trip.departs, trip.route))
         sheet.append(day.isoformat())
         for trip in running:
             sheet.append(
@@ -271,32 +288,67 @@ for name, trips in runs.items():
 INSIDE_ONE_DATE = "inside one date"
 
 
+class Transcription(NamedTuple):
+    """The careless answer that is the reference solution with one call
+    swapped, named beside the swap so the claim made for it can be checked."""
+
+    bend: str
+    written: str
+    instead: str
+
+
 class Conditions(NamedTuple):
     """The three things round 3 adds to a K12 family, in checkable form.
 
-    `boundary` is the withheld decision as a pattern — every form a sentence
-    could state it in — and it is a pattern rather than a list of substrings
-    for a reason the shared acceptance block supplies: that block prints
-    `24:00`, and a plain search for "4:00" finds the hour inside it and fails
-    a passage that says nothing about when a working begins. `guessed` is the
-    crux line in `repo/` beside what a solver who never opened it would have
-    written instead, which is how the visible suite is shown to pin the
-    decision. `runs` prints one run the boundary cannot touch and two it can.
+    `boundary` is the withheld decision as a pattern, and it is a pattern
+    rather than a list of substrings for a reason the shared acceptance block
+    supplies: that block prints `24:00`, and a plain search for "4:00" finds
+    the hour inside it and fails a passage that says nothing about when a
+    day turns over. The forms it covers are the hour as a clock time (`04:00`,
+    `4.00`), bare (`4`, `04`, and so "4 in the morning" and "the small hours
+    end at 4" with it), run together (`0400`, `4am`, `4 a.m.`), and as a word
+    (`four`). Those are the forms, and the list is the claim: a paraphrase
+    that never names the hour would walk past this, and nothing here says
+    otherwise.
+
+    `crux_words` is the module's own prose for the decision — the phrases its
+    docstrings use, which are not export names and so are not reachable from
+    the module's parse tree. `nameable` is the other side of that guard: the
+    exports the shared block is entitled to name, being the change asked for,
+    the total it prints and the type every criterion is about, none of them
+    touching the boundary.
+
+    `guessed` is the crux line in `repo/` beside what a solver who never
+    opened it would have written instead, which is how the visible suite is
+    shown to pin the decision. `runs` prints one run the boundary cannot touch
+    and two it can. `transcribed` is the swap the prose trap is built out of.
     """
 
     boundary: re.Pattern[str]
+    crux_words: tuple[str, ...]
+    nameable: frozenset[str]
     guessed: tuple[str, str]
     runs: str
+    transcribed: Transcription
 
 
 CONDITIONS: dict[str, Conditions] = {
     "nightbus-print-the-sheet": Conditions(
-        boundary=re.compile(r"\b0?4[:.]00\b|\bfour\b|\b4\s?a\.?m\.?\b", re.IGNORECASE),
+        boundary=re.compile(
+            r"\b0?4([:.]00)?\b|\b0400\b|\b4\s?a\.?m\.?\b|\bfour\b", re.IGNORECASE
+        ),
+        crux_words=("working", "belongs to"),
+        nameable=frozenset({"Trip", "running_time", "running_sheet"}),
         guessed=(
             "return (moment - timedelta(hours=4)).date()",
             "return moment.date()",
         ),
         runs=THREE_RUNS,
+        transcribed=Transcription(
+            bend="file-under-the-departure-date",
+            written="operating_day(trip.departs)",
+            instead="trip.departs.date()",
+        ),
     ),
 }
 
@@ -352,6 +404,16 @@ BY_BEND = [
     for bend in family.careless
 ]
 
+# Grading is per variant, so a bend has to be graded against each of the four
+# held-out suites; what a bend *prints* is a property of the reference tree
+# every variant ships a copy of, so running it four times would be running it
+# once, four times.
+BY_CARELESS = [
+    pytest.param(family, bend, id=f"{family.stem}-{bend.name}")
+    for family in FAMILIES
+    for bend in family.careless
+]
+
 
 def conditions(family: Family) -> Conditions:
     return CONDITIONS[family.stem]
@@ -372,6 +434,32 @@ def prose_of(family: Family, repo: Path) -> str:
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
     ]
     return "\n".join([*docstrings, (repo / "README.md").read_text()]).casefold()
+
+
+def defines(family: Family, repo: Path) -> set[str]:
+    """Every name the starting module defines at its top level, plus the one
+    the change adds — the module's glossary as code spells it, read out of the
+    repository so that renaming an export cannot leave this guard behind."""
+    module = ast.parse((repo / family.module).read_text())
+    defined = {
+        node.name
+        for node in module.body
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+    } | {
+        target.id
+        for node in module.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    return defined | {family.definition.removeprefix("def ").rstrip("(")}
+
+
+def spellings(name: str) -> tuple[str, str]:
+    """The two ways a prompt can reach for an identifier: as written, and with
+    its underscores opened out — which is what makes `operating_day` and
+    "operating day" one word as far as this guard is concerned."""
+    return (name.casefold(), name.casefold().replace("_", " "))
 
 
 def guessing_the_boundary(family: Family) -> Callable[[Path], None]:
@@ -593,8 +681,9 @@ def test_the_crux_is_nowhere_in_the_repositorys_prose(family: Family) -> None:
     the withheld rule in all three, on the reasoning that discoverability
     required it, and the consequence was that a docstring-reading agent met
     `criterion` and `unmentioned` as one variant. Nothing in this repository's
-    prose says when a day's working begins, in any of the forms prose could
-    say it in.
+    prose says when a day's working begins, in any of the forms
+    `Conditions.boundary` enumerates — which is the guarantee, and it is
+    narrower than "no prose could convey it".
     """
     boundary = conditions(family).boundary
 
@@ -624,16 +713,40 @@ def test_the_crux_is_stated_in_exactly_one_of_the_four_prompts(
     The shared block does say the printed clock can run past `24:00`, and that
     is deliberately not a leak: an arrival past midnight happens under the
     calendar-date reading too, so the sentence is equally true whatever the
-    solver believes a working to be, and it settles the format question that
-    would otherwise be a second withheld decision.
+    solver believes a day to be, and it settles the format question that would
+    otherwise be a second withheld decision.
+
+    The hour is not the only thing the block can leak, and the second half of
+    this test is the half the first shipping of this family failed. A block
+    calling the grouping an "operating day" hands `unmentioned` and `prose`
+    the module's own name for the primitive the boundary lives in — the
+    solver has not been told the rule, but has been told which function holds
+    it, which is `repo-primitive`'s whole content arriving free. So the block
+    is held clear of every name the module defines, in either spelling, apart
+    from the three it is entitled to use: the change it asks for, the total it
+    prints and the type its criteria are about. The module's prose words for
+    the same decision are checked beside them, since "working" and "belongs
+    to" are in no parse tree.
     """
-    boundary = conditions(family).boundary
+    condition = conditions(family)
+    boundary = condition.boundary
     before, after, passages = taken_apart(family)
+    shared = (before + after).casefold()
 
     assert boundary.search(before + after) is None
     stated = [level for level in LADDER if boundary.search(passages[level])]
 
     assert stated == ["criterion"]
+
+    withheld = defines(family, variants(family)[0].repo_dir) - condition.nameable
+    spoken = [
+        spelling
+        for name in sorted(withheld)
+        for spelling in spellings(name)
+        if spelling in shared
+    ] + [word for word in condition.crux_words if word in shared]
+
+    assert spoken == [], f"the shared block speaks the module's glossary: {spoken}"
 
 
 @pytest.mark.parametrize("family", BY_FAMILY)
@@ -656,6 +769,37 @@ def test_the_repositorys_own_tests_would_catch_a_guess_at_the_crux(
 
 
 # --- what the conveyance buys, and what it costs --------------------------------
+
+
+@pytest.mark.parametrize("family", BY_FAMILY)
+def test_the_transcription_is_the_reference_with_one_call_replaced(
+    family: Family,
+) -> None:
+    """The prose trap's claim on its reader, made mechanical.
+
+    Three places say `file-under-the-departure-date` is the reference solution
+    with `operating_day(trip.departs)` swapped for `trip.departs.date()` and
+    nothing else changed, and that sentence is what makes the bend a
+    transcription rather than a strawman. A copy that had also shortened a
+    docstring or renamed a local would be a worse answer than the passage
+    invites and would grade 0.0 partly for reasons the passage never
+    suggested, while the three sentences went on saying it was the reference
+    with one call moved. So the swap is applied here rather than trusted, and
+    what comes out is compared against the checked-in bend character for
+    character.
+    """
+    swap = conditions(family).transcribed
+    [bend] = [one for one in family.careless if one.name == swap.bend]
+    reference = (SOLUTIONS / f"{family.stem}-c1" / family.module).read_text()
+    _, marker, tail = reference.partition(family.definition)
+
+    assert marker, f"{family.module} has no {family.definition}"
+    written = marker + tail
+    assert written.count(swap.written) == 1, (
+        f"the reference no longer calls {swap.written} exactly once"
+    )
+
+    assert written.replace(swap.written, swap.instead) == bend.answer
 
 
 @pytest.mark.parametrize("family, task_id, bend", BY_BEND)
@@ -684,9 +828,9 @@ def test_a_careless_answer_passes_the_visible_suite_and_still_grades_unresolved(
     assert record.quality_value == 0.0
 
 
-@pytest.mark.parametrize("family, task_id, bend", BY_BEND)
+@pytest.mark.parametrize("family, bend", BY_CARELESS)
 def test_a_careless_answer_is_right_until_the_run_crosses_the_boundary(
-    family: Family, task_id: str, bend: Bend
+    family: Family, bend: Bend
 ) -> None:
     """What makes these answers careless rather than broken, and the reason a
     solver has no reason to doubt one.
@@ -697,8 +841,13 @@ def test_a_careless_answer_is_right_until_the_run_crosses_the_boundary(
     their own change writes — and part from it only where the night crosses
     over. That is the near half of the grading suite made a direct comparison
     rather than a count of passing tests.
+
+    Once per bend rather than once per variant, unlike the grading test above
+    it: this runs the answer instead of grading it, in a copy of the reference
+    solution the four variants ship byte-identical copies of, so the prompt
+    the copy came from cannot reach the output.
     """
-    task = task_by_id(task_id)
+    task = task_by_id(f"{family.stem}-c1")
     printed = conditions(family).runs
 
     reference = sheets(answer_of(task, printed, None))

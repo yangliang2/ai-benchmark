@@ -1302,24 +1302,59 @@ the load-bearing one.
    actually lives.
    [Shipped by #40 as the `nightbus-print-the-sheet` family: one underlying
    change — a printed running sheet whose reference solution adds 32 lines
-   against the album family's 5 — conveyed at all four levels, with the
-   withheld decision (a day's working runs 04:00 to 04:00) absent from every
-   docstring, from the README and from the acceptance block all four prompts
-   share, discoverable instead through `operating_day`'s body and through
-   three of the repository's own visible tests. Three readings the round is
-   taken under, recorded here before the sweep so they cannot be invented
-   after it, the way §23.3 records K9's.
+   against the album family's 5 and the pricelist family's 9 — conveyed at all
+   four levels, with the withheld decision (a day's working runs 04:00 to
+   04:00) absent from every docstring, from the README and from the acceptance
+   block all four prompts share, discoverable instead through
+   `operating_day`'s body and through three of the repository's own visible
+   tests.]
+
+   **The readings this round is taken under, recorded before the sweep so they
+   cannot be invented after it, the way §23.3 records K9's:**
+
+   **The floor is 3.6× round 2's, not 6.4×.** The family's suite binds the
+   ratio against the *larger* of round 2's two changes — pricelist's 9, at a
+   threshold of 3× — so 32 lines is 3.6 times the change this comparison is
+   actually made against. The 6.4× that 32-against-album's-5 suggests is the
+   friendlier of the two numbers and is not the one under test. #40's own
+   commit prose and its `-c1` authoring comment said "32 against album's 5"
+   without naming which comparison binds; corrected here.
+
    **One family, not round 2's two.** K12 buys 8 cells this round rather
    than 16. Sixteen would be over a third of a 34–44 cell round spent on a
    knob already at silent 1 of 2, ahead of K10 and K4, which have never been
    built at all. So a flat result is a result about one change conveyed four
-   ways under the three conditions, and it is a fair falsification of the
-   ladder only in the sense round 2's was not: the floor and the docstring
-   channel are gone, the sample is not larger.
+   ways under the three conditions, and the sample is no larger than round
+   2's.
+
+   **What #40 raises is the change's floor, not the ladder's.** The docstring
+   channel is closed and the underlying change is no longer a five-line set
+   intersection, and both were real faults. But three of the four rungs #40
+   registers are `haiku-solvable` and only `prose` is bet a rung up, so by the
+   author's own pre-registration three of the four variants sit on the bottom
+   rung before a model is run. §18's objection — "a ladder cannot show an
+   ordering when every rung is the floor" — therefore remains available for
+   the rung axis: a family that comes back flat at haiku-solvable×4 has
+   returned exactly what was predicted for three of its four members, and the
+   rung cannot falsify the ladder off that. The cost claims are what carry
+   this round.
+
+   **The prior is asymmetric, and here it is before the fact.** Under §9's
+   amended discipline the round is non-silent only if a registered contrast
+   separates upward or an effort claim scored to K12 hits. With three rungs
+   registered at the floor, and with `-c2`'s claim discounted in advance two
+   paragraphs below, the outcome that plainly keeps K12 non-silent is `-c4`'s
+   claim hitting — or, failing that, `prose` landing above `unmentioned` on
+   the rung. Against round 2's own prose-over-unmentioned cost multiples
+   (1.30×, 1.01×, 1.20×, 1.20×) a 1.25× claim goes 1 of 4. That is the number
+   this lane is entered on and it is written down here rather than
+   reconstructed from a flat report afterwards.
+
    **Its `repo-primitive` pointer is the strong kind.** `operating_day` is the
    whole of the withheld decision, so following the pointer lands on 1.0 —
    album's asymmetry, not pricelist's (#32). A miss at that level is the level
    failing and may be read as one; there is no weaker pointer to blame.
+
    **The stated pair's cost claim is registered against the only evidence
    there is.** Round 2 measured repo-primitive ÷ criterion at 0.99×, 0.96×,
    0.71× and 1.00×, so the 1.25× registered on `-c2` bets against all four
@@ -1328,7 +1363,43 @@ the load-bearing one.
    claim misses it is not news, and a miss there should not be read as
    evidence against the ladder; the withheld pair's claim on `-c4` is the one
    carrying the contrast, and 1.25× would have gone 1 of 4 against round 2's
-   own prose-over-unmentioned cost multiples.]
+   own prose-over-unmentioned cost multiples.
+
+   **And the symmetric half of that discount.** A `-c2` hit would contradict
+   all four readings anyone has, which makes it the weaker kind of surprise
+   until its mechanism is shown. What the claim asserts is not a number but a
+   read: that following the pointer costs an inspection of `operating_day`
+   the criterion variant never makes. So a hit is confirmed from the run's
+   diff and turn record showing that read, not from the multiple alone — a
+   1.25× produced by a model that wandered is the same 1.25×. A discount
+   applied only to the losing direction is a thumb on the scale.
+
+   **What a third `prose` miss means, read now.** This is the third time
+   `prose` is bet `sonnet-only` — album's and pricelist's were the other two,
+   and both missed. Upward rung bets outside K1 stand at 0/14 lifetime (§21),
+   every one of the 14 lost. A third `prose` miss would leave that ledger
+   still at zero after a round built specifically to give an upward bet room,
+   and at that point it stops being a fact about K12: it is the instrument
+   reporting that authors of this material cannot pick in advance which of
+   their own tasks a model will fail. The reading to take then, fixed now, is
+   §21's — keep the rung prediction as the falsification record it is and stop
+   asking it to carry selection — taken as a conclusion this paragraph
+   pre-committed to, not as a fresh inference invented to explain a
+   disappointing round.
+
+   **What the calibration table will not show.** All four variants declare
+   `K1=acceptance` with a K12 level, which is exactly the profile key round
+   2's two families already occupy, so `calibrate-v1` pools a 32-line change
+   with album's 5 and pricelist's 9 into one row and the row key has no way to
+   say so. Declaring K9 to hold them apart was considered and rejected as
+   untrue rather than inconvenient: §23.3's any-resolution property — a K9
+   crux grades every answer satisfying the stated rules at 1.0 — fails here,
+   where the boundary has one right answer and the transcription of it grades
+   0.0, and §18's surviving formulation is a *labelled* open decision, which
+   this one is neither. So the pooling is recorded instead, here and in all
+   four authoring comments: a K12 cost multiplier read off that table is a
+   mean over changes of 5, 9 and 32 added lines, and the table cannot be asked
+   which.
 7. **K7: register claims or retire it.** New tasks, effort claims registered
    before the run, at least 3 graded tasks at the dense level, and the
    size-matched control §12 asked for in round 1. It is the largest effort
