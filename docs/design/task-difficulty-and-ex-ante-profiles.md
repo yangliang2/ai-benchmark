@@ -430,10 +430,10 @@ of history by itself. Where the recomputation and the recorded rulings of
 | knob | printed under the old rule | recomputed under the amended rule |
 | --- | --- | --- |
 | K1 | separated in both rounds; 0 silent | round 2 no longer counted at all — K12's families hold K1 constant, so K1 is nobody's varied knob there; round 1's four K1 families still separate upward. 0 silent, 1 counted round |
-| K7 | not assessable, round 1; 0 silent | **stalled** — no family, no pair, no registered claim, in any round. 0 counted rounds, exactly as §18 ruled and #35 recorded |
+| K7 | not assessable, round 1; 0 silent | **stalled** — no family, no pair, no registered claim, in any round. 0 counted rounds, exactly as §18 ruled and #35 recorded. [Round 3 gives it two pairs and two registered cost claims (#41, §23.7), so the next recomputation reads a counted round rather than a stall — the rung side stays not assessable while K7's ladder is empty] |
 | K8 | no separation, round 1; 1 silent | **stalled** — the seven K8 tasks are standalone and register no claim. 0 silent. **§13's demotion stands** as a recorded human verdict over two sweeps and an effort reading that ran the wrong way; it was never a counter reading and the amended counter does not reproduce it |
 | K9 | no separation round 1, separated round 2; 1 silent | unchanged at 1 silent. Round 1's three pairs are flat; round 2's digest and dossier reach a rung above their controls, and outage's claim hit on haiku, so the round is non-silent twice over |
-| K11 | separated, round 2; 0 silent | **silent 1 of 2** — no rung contrast exists, but four registered baseline claims do, and all eight readings missed. This is exactly the reading §19 wrote into the record by hand, and the counter now agrees without being told to |
+| K11 | separated, round 2; 0 silent | **silent 1 of 2** — no rung contrast exists, but four registered baseline claims do, and all eight readings missed. This is exactly the reading §19 wrote into the record by hand, and the counter now agrees without being told to. [**Retired** by #41 at this count, on the identifiability argument of §23.5, not on the counter: no round after round 2 asks it, so 1 of 2 is where it stays. Its four tasks and their construction blocks stay in the set, because every counter here is derived from the artifacts and a knob deleted from the registry would leave the report unable to read its own past] |
 | K12 | no separation, round 2; 1 silent | unchanged at 1 silent — both families flat across all four levels and all eight claim readings missed |
 
 Two of those are the test that the amendment reads the evidence rather than
@@ -571,7 +571,11 @@ K7, re-run it with a size-matched control. [Not done in round 2 and still
 required. Round 2 gave K7 no tasks and K7 carries no effort claims, so it
 produced nothing and its rung flag reads `not assessable` under #29's guard —
 which advances no counter, leaving the knob unfalsifiable rather than silent.
-Ruled stalled at §18; round-3 conditions at §23.7.]
+Ruled stalled at §18; round-3 conditions at §23.7. **Done in round 3 by #41**,
+and matched harder than this sentence asked: each of the two new pairs holds
+its dense task and its calm control on the *same* pysm snapshot byte for byte,
+so repository size is identical rather than similar, and the reference
+solutions are matched on added lines within 10% as well.]
 
 **K8 (safety-net quality, misleading) — DEMOTED.** Two sweeps, silent in
 both, and the effort data says it is worse than inert. 7/7 misleading-net
@@ -984,6 +988,11 @@ was not. Round 3's decision is pair-it-or-drop-it (§23), and note the
 identifiability problem before pairing: removing the prompt clause that lets
 a self-check catch the defect moves K1, not K11, so K11 may not be
 identifiable against spec completeness at all.
+[Dropped, by #41. The identifiability problem this paragraph raises turned out
+to be decisive rather than a caveat — the pair §23.5 asks for would move K1
+and K11 together, which the task-set lint refuses outright — and the
+retirement is argued in full there. The four tasks stay in the set as data;
+the counter stays at silent 1 of 2, where §19 put it.]
 
 **K12 (decision conveyance) — SILENT round 1 of 2 on rungs; the ladder is
 untested, not falsified; the *effort* deviation is falsified.** Both families
@@ -1038,6 +1047,18 @@ built to end. For K7 to survive round 3 it must (a) register effort claims on
 dense level so the min-n guard admits it. §12's round-1 follow-up — re-run
 with a size-matched control — is still outstanding and still required, since
 the K7 cells remain the only ones on large vendored substrates.
+
+[All three conditions met by #41, and the registered readings are at §23.7.
+Four new tasks as two dense/calm pairs on one pysm snapshot; the two dense
+members register `pair, cost, 1.25×` before the run, which is neither the 1.5×
+this paragraph forbids nor any other number K7 has produced; and the control
+is size-matched by byte-identity of `repo/` rather than by approximation, with
+added lines matched to 10% on top. One condition of this paragraph is
+superseded rather than met: (b) asked for 3 graded tasks at the dense level so
+the **rung** min-n guard would admit K7, and #37's amendment has since made
+that unreachable — an unenumerated ladder reads not assessable on the rung
+whatever the sample. The round-3 tasks clear the count anyway (4 graded, 2 of
+them dense) and the evidence runs entirely through the claims.]
 
 **K1 — validated in round 1, not tested in round 2.** The report's
 `K1 sweep round-2 separated` flag must not be read as evidence: the
@@ -1110,6 +1131,11 @@ are honest for the first time.
   informational row advancing nothing, and what counts the round is K11's four
   registered baseline claims, whose eight readings all missed. The hand-kept
   reading and the printed counter agree, and the test above is passed.]
+
+  [And there it stops. #41 **retires K11** on the identifiability argument
+  §23.5 records, so no round after round 2 asks it and this counter is the
+  last one it will carry: silent 1 of 2, not a demotion. The four tasks stay
+  in the task set as data.]
 
 ### 20. The effort instrument's first reading
 
@@ -1294,6 +1320,84 @@ the load-bearing one.
    the prompt clause that lets a self-check catch the defect is K1's variable,
    not K11's. Retirement is a defensible outcome and cheaper than a second
    negative round.
+
+   [**Retired by #41, on identifiability and not on the counter.** K11 is
+   dropped: no new K11 task is authored, no future round asks it, and the four
+   tasks it already has stay in the set as the data they are — swept once,
+   graded, read at §18 and counted at §19. The argument this candidate asked
+   for is the one that retires it, and it is written out here because it is
+   the whole of the case.
+
+   **Why the pair cannot be built.** K11's lever is meant to be *when* a
+   defect makes itself known: near, and the run that introduced it shows it;
+   far, and it shows several calls or several runs downstream. What the four
+   tasks actually varied is whether a clause-by-clause self-check written off
+   the prompt's own bullets catches the planted bend, and §18's reading of the
+   run logs is that it does — on all four tasks, on both models, with sonnet
+   spending exactly five turns each time. To make the self-check *miss*, the
+   author has to take the clause out of the prompt. A prompt with a
+   requirement removed is a prompt at a different level of decision openness,
+   which is K1's ladder — the one knob this experiment has actually validated
+   (§12) — so the near/far pair candidate 5 asks for moves K1 and K11
+   together by construction, and §9's clause 2 attributes a two-knob
+   contrast's outcome to neither. Declared honestly, that pair does not even
+   load: the **task-set lint holds a pair to exactly one varied knob**, and a
+   near/far pair whose two members declare different K1 levels varies two.
+   The lint cannot force the honesty — an author who wrote the same K1 level
+   on both members would pass it — which is why this is recorded here as a
+   verdict rather than left to the gate. What it comes to is that pairing K11
+   is not merely expensive, it is unauthorable under the rule that makes a
+   pair readable, and that is a stronger result than a second negative round
+   would have bought, available without spending one.
+
+   **What is not being claimed.** Not that detection distance is unreal. It is
+   something architects experience and §9's list is right to name it. What is
+   claimed is narrower and, being narrower, is the part that can be wrong:
+   *this instrument* cannot separate detection distance from spec
+   completeness, because its lever is the prompt and the prompt is K1's. A
+   future round that wants the knob back needs a lever that moves when the
+   failure surfaces while leaving the brief identical — a repository-side
+   lever rather than a spec-side one — and that is a different knob from the
+   one K11 was authored as. It would be registered as one, with its own
+   ladder and its own contrast, rather than inheriting K11's counter.
+
+   **The counter it retires on, stated so the record is not read as harsher
+   than it is.** K11 stands at **silent 1 of 2** (§19, and §9's recomputation
+   table), not at a demotion, and this retirement does not advance it.
+   Retirement here is not a verdict the evidence forced; it is the author
+   declining to spend a second round on a knob whose one counted round ran the
+   wrong way and whose contrast cannot be built. Two weaknesses in that
+   counted round are the reason the case is argued from identifiability rather
+   than from the reading: all four claims used the frozen-baseline comparator,
+   which §22.4 calls the weak form, and all four were registered on `turns`,
+   the metric §9 stops defaulting to. Neither weakness is repaired by
+   retirement and neither is needed by it.
+
+   **What stays, and why nothing in code changes.** `KNOB_LEVELS` keeps `K11`
+   with its empty ladder, and the four tasks keep their construction blocks
+   and their registered claims. Removing either would rewrite history rather
+   than record it: every counter in this experiment is *derived* — nothing is
+   stored, `reconcile-v1` re-reads the artifacts on each run, and replay grades
+   a logged diff against the task's own declarations — so a retired knob
+   deleted from the registry would leave the report unable to read its own
+   past. What makes the retirement effective is the authoring side: nothing
+   new declares K11, so no round can put it to a registered contrast, so its
+   counter cannot advance. That is exactly the shape §9's clause 6 calls
+   **stalled**, reached deliberately instead of by neglect — which is also why
+   the retirement has to live here in prose. A stalled counter cannot tell the
+   difference between a knob nobody has got to yet and a knob that was
+   argued out, and this one was argued out.
+
+   **Precedent, and how this differs from it.** K8's demotion (§13) is the
+   other verdict in this document that the counter does not reproduce: under
+   the amended rule K8 also prints stalled, and §13 carries its demotion as a
+   recorded human verdict over two sweeps and an effort reading that ran the
+   wrong way. K11's entry is written the same way and means something
+   different. K8 was demoted for what it *did* — a lever measured moving
+   difficulty downward. K11 is retired for what it cannot be *shown* to do
+   separately from K1, which is a claim about the instrument rather than about
+   the world, and would be answered by a better lever rather than by more
+   sweeps of this one.]
 6. **K12's second round must raise the floor.** Four levels at the bottom rung
    test nothing. Cross K12 with an underlying change that is not haiku-trivial
    (the K9 substrate is the obvious host), handle or measure the docstring
@@ -1408,6 +1512,116 @@ the load-bearing one.
    before the run, at least 3 graded tasks at the dense level, and the
    size-matched control §12 asked for in round 1. It is the largest effort
    effect ever measured here and the only activated knob carrying no claim.
+
+   [**Shipped by #41 as two pairs on one substrate, and the rung is not the
+   channel.** Four new tasks, all four graded this round, each pair one
+   dense-terrain task and the calm-terrain control built beside it. Every
+   condition §18 set is met and the one §12 left outstanding is met in its
+   strongest available form.
+
+   **The contrast, and why it is the control §12 asked for.** Round 1's two
+   K7 cells are the only ones in the corpus on a large vendored repository, so
+   their multiples against the frozen feature-dev baseline conflate invariant
+   density with plain repository size — §12 recorded the confound and asked
+   for a size-matched control, round 2 built none, and §18 ruled the knob
+   stalled partly for that reason. A control on a *different* repository of
+   similar size would have answered it approximately. These controls answer it
+   exactly: each pair's two members start from the same pgularski/pysm
+   snapshot at the same pinned commit, and the **pair lint holds `repo/`
+   byte-identical across them**, so repository size is not matched to within a
+   tolerance, it is the same bytes. What is left between the two members is
+   where in the library the change lands.
+
+   Dense is `pysm/pysm.py`'s transition machinery: the exit walk that pushes
+   the leaf it left onto the leaf-state stack and every state it climbs past
+   onto its parent's state stack, the entry walk that rebuilds its path by
+   descending a `.state` the exit walk has just reset to `initial_state`, the
+   root-only `_leaf_state` every handler's view of the machine goes through,
+   and the three stacks a `StateMachine` carries of which only two are
+   history. Calm is `pysm/builder.py`, a 105-line opt-in fluent helper that
+   nothing else in the package imports, whose entire state is one dictionary
+   from path tuple to state and whose every invariant is written in the file
+   being edited. Neither snapshot carries a knob-setting edit — the density is
+   the library's own, as round 1's was — which is also forced, since an edit
+   would break the byte-identity the pair rests on.
+
+   Calm is **local, not easy**: the chain control has to refuse a colliding
+   name before it has added anything, and the rename control has to move every
+   path running *through* the state it renames. Both are real slips and both
+   are registered as careless-answer probes that must grade 0.0. A control
+   that were merely trivial would make the pair a reading of task difficulty
+   wearing a terrain label.
+
+   **Size-matched, on §23.3's axis and by its test.** Reference added lines
+   within 10% inside each pair, asserted by the suite: 31 against 29 (1.07×)
+   for `pysm-reset`, 28 against 26 (1.08×) for `pysm-pushdown`. Same
+   tolerance and same measurement as the K9 pairs, deliberately — two knobs
+   read against one definition of "the same amount to write". Without it,
+   "dense terrain costs more" and "the dense task was bigger" would be one
+   measurement, which is the fault round 2's K9 result was rejected for
+   (§18).
+
+   **The claims, and the argument that 1.25× is unfitted.** Each dense member
+   registers `pair, cost, 1.25×` against the calm member beside it; the calm
+   members register nothing, as §23.3's controls do. The numbers a fitted
+   claim would have reached for are all on the record and none of them is this
+   one: round 1 measured K7 at 3.7× turns, 5.1× cost and 8.6× input tokens on
+   haiku and 2.0× / 2.2× on sonnet against the frozen baseline, with per-task
+   turns of 2.65× (`pysm-remember-substate-history`) and 4.68×
+   (`rbql-like-escape-wildcards`), and §18 names **≥1.5× on turns** as the
+   claim that would have gone 4/4 and forbids registering it. Round 2 gave K7
+   no tasks, so there is nothing since. 1.25× is the house factor — round 2
+   registered it on turns, #39 and #40 carry it into round 3 on cost — fixed
+   before K7 had a pair to be read against, and it sits **below every multiple
+   K7 has ever produced**, which is the opposite of the direction fitting
+   pulls.
+
+   The factor is the weaker half of the argument and the comparator is the
+   stronger. Every one of those multiples is read against the frozen zero-knob
+   baseline: hand-authored repositories of a few hundred lines, run on an
+   earlier CLI, content-matched to nothing. Not one of them measures dense
+   terrain against calm terrain *inside one library* — which is precisely the
+   quantity §12 said round 1 could not separate from repository size, and
+   precisely what these four tasks bet on. There is no prior reading of that
+   quantity at any factor, so no factor registered against it can be fitted to
+   one. What would have been fitted is carrying 2.6–4.7× across from a
+   comparison whose confound this pair exists to remove.
+
+   **The rung will say nothing, and it is registered here rather than
+   discovered at reconcile time.** K7 has no enumerated ladder in §9 and none
+   in `KNOB_LEVELS`, so under the amended clause 2 neither `dense` nor `calm`
+   is the harder level and both pairs read **not assessable** on the rung
+   axis. #36's own spec review raised this and left the enumeration to a
+   human; nothing here enumerates one, and the suite asserts the ladder is
+   still empty so that the day somebody fills it, this reading is flagged
+   rather than silently outdated. The whole of K7's round-3 evidence is
+   therefore the four claim readings — two claims, two models — and the round
+   is non-silent only if one of them hits. All four rungs are registered
+   `haiku-solvable`, which is where round 1 actually put both dense K7 tasks
+   after betting them a rung up, and where round 2's sixteen bottom-rung bets
+   went fourteen of sixteen; four more upward bets would have been the
+   fifteenth through eighteenth losses of a bet nothing outside K1 has ever
+   won (§21). So: a flat rung result returns exactly what was predicted and
+   falsifies nothing, and four missed claims make K7 **silent 1 of 2** — the
+   first time in three rounds the knob has been able to lose anything at all,
+   which is the whole purpose of the ticket.
+
+   **Two caveats recorded before the sweep, so they cannot be invented after
+   it.** *One substrate, not two.* Both pairs sit on pysm, so this round
+   replicates the dense/calm contrast twice inside one library rather than
+   once in each of two. That buys the cleaner reading — the two pairs differ
+   only in the change asked for, where a pysm pair and an RBQL pair would
+   differ in the library as well — and gives up the cross-substrate agreement
+   §10 wants from K7, which round 1 had and round 3 does not. The trade was
+   taken on authoring risk: RBQL's visible suite builds its fixtures with the
+   unseeded global `random` (§15.5, and the seeding the harness injects into
+   its throwaway copies), where pysm's 138 tests are deterministic and the
+   library is small enough to be read whole. *And the two dense sites are the
+   same machinery.* Both are the transition walks of `pysm/pysm.py`, so the
+   four claim readings are not four independent draws: a model that reads that
+   machinery well is likely to read it well twice, and two claims both hitting
+   is closer to one result than to two. Read a hit as evidence about one
+   terrain measured twice.]
 8. **Make effort the primary registered outcome.** §22.3: the rung has
    saturated on this material and effort has separated in every round. The
    kill discipline should read separation on either axis, as §16.1 proposed
