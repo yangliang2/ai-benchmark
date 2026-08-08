@@ -10,7 +10,7 @@
 # The passage is worded around the module's glossary rather than out of it,
 # which is the lesson #32 had to fix in the album family after writing the
 # prose in the module's own words and thereby handing over the crux. The
-# module's words for the decision are "operating day", "working" and
+# module's words for the decision are "operating day", "a day's working" and
 # "belongs to", and no part of this prompt uses any of them. Not the passage:
 # "the date it sets off on" is calendar vocabulary the module never uses, and
 # `departs.date()` is where it leads. And not the acceptance block the four
@@ -18,7 +18,9 @@
 # once until it was reworded to speak of a block's day instead — that block is
 # `c3`'s whole prompt, so the module's own name for the crux-carrying
 # primitive was reaching all four variants through it, and the round-3 K12
-# suite now refuses the module's exported names there as well as the hour.
+# suite now refuses the module's exported names there as well as the hour —
+# and refuses them in this passage too, holding the glossary to one speaker,
+# `c2`, which is the variant whose level is naming the primitive.
 # The decision is still recoverable from the repository, exactly as at level
 # 3 — the prose narrows nothing the module says, it only offers somewhere
 # else to look. The repo, the grading suite and the reference solution are
@@ -56,13 +58,18 @@
 # a reader meets this family. All four variants declare `K1=acceptance` and a
 # K12 level, which is the profile key round 2's two families already occupy,
 # so `calibrate-v1` pools this 32-line change into the same cells as album's
-# 5 and pricelist's 9. K9 is not declared to hold them apart, because it would
-# not be true: `single` is a labelled open decision, and section 23.3's
-# any-resolution property — a K9 crux grades every answer satisfying the
-# stated rules at 1.0 — fails here, where the 04:00 boundary has one right
-# answer and the transcription of it grades 0.0. So the row key cannot express
-# change size, and the pooling is stated here instead: a K12 cost multiplier
-# read off that table is a mean over changes of 5, 9 and 32 added lines.
+# 5 and pricelist's 9. K9 is not declared to hold them apart, because no one
+# level of it would be true of all four variants: `single` is a labelled open
+# decision, and this boundary is labelled but not open in `c1`, whose
+# criterion states it and where an answer satisfying the stated rules grades
+# 1.0, and open but not labelled in `c3` and `c4`, where nothing announces
+# that a decision is being left at all. In those two the stated rules leave
+# the boundary undetermined and the answer transcribing the prose still grades
+# 0.0, which is the sense in which section 23.3's any-resolution property does
+# not describe this family — a caveat on how a K9 result should be read rather
+# than a test a task is put to. So the row key cannot express change size, and
+# the pooling is stated here instead: a K12 cost multiplier read off that
+# table is a mean over changes of 5, 9 and 32 added lines.
 #
 # feature-dev: the grading tests exercise running_sheet, which does not exist
 # in repo/, so they fail on the pristine repository as the lint requires.
@@ -114,8 +121,9 @@ construction:
       the described shape spells naturally as filing each trip under
       `departs.date()`, which is right for every trip leaving before midnight
       and wrong for every one leaving after it, and the prose displaces the
-      criteria that would otherwise have sent the reader to the module — the
-      mechanism that sank both models on round 1's settings-l2; the bet is
+      module as the source of truth, offering a shape to transcribe where the
+      criteria now say nothing about the boundary at all — the mechanism that
+      sank both models on round 1's settings-l2; the bet is
       made again after round 2 missed it twice because round 2's misses were
       read under a floor its whole family sat on, which this change removes,
       and because the transcription is checked in and graded 0.0 rather than

@@ -40,11 +40,13 @@ which is a list rather than an exhaustive claim. The second closes the same
 leak in the prompts, where it would do the same damage by a different road:
 the four variants share their acceptance block, so a boundary stated there is
 stated to all four at once, and the test holds the block silent and exactly
-one passage — `criterion`'s — speaking. It holds the block clear of the
-module's own names for the primitive the boundary lives in as well, because
-that block *is* `unmentioned`'s whole prompt and a block calling the grouping
-an operating day hands three variants the module's word for the thing they
-were built to withhold. The third shows that the channel replacing
+one passage — `criterion`'s — speaking. It holds the module's own names for the
+primitive the boundary lives in to the same shape as the hour — silent in the
+block, spoken in exactly one passage, `repo-primitive`'s — because that block
+*is* `unmentioned`'s whole prompt and a block calling the grouping an
+operating day hands three variants the module's word for the thing they were
+built to withhold, and because a passage may hand it over just as freely.
+The third shows that the channel replacing
 prose actually carries: rewrite `operating_day` to take the calendar date and
 the repository's *own* visible suite goes red, so the boundary is pinned by
 tests the agent is invited to run rather than by a sentence it is told.
@@ -313,10 +315,14 @@ class Conditions(NamedTuple):
 
     `crux_words` is the module's own prose for the decision — the phrases its
     docstrings use, which are not export names and so are not reachable from
-    the module's parse tree. `nameable` is the other side of that guard: the
-    exports the shared block is entitled to name, being the change asked for,
-    the total it prints and the type every criterion is about, none of them
-    touching the boundary.
+    the module's parse tree. They are patterns rather than substrings because
+    one of them has an innocent twin: the module's noun is "that day's
+    working", and `repo-primitive`'s passage uses the same letters as a verb,
+    "rather than working it out from the calendar". A determiner is what tells
+    the two apart, so the pattern carries one and the verb goes free.
+    `nameable` is the other side of that guard: the exports a prompt is
+    entitled to name, being the change asked for, the total it prints and the
+    type every criterion is about, none of them touching the boundary.
 
     `guessed` is the crux line in `repo/` beside what a solver who never
     opened it would have written instead, which is how the visible suite is
@@ -337,7 +343,7 @@ CONDITIONS: dict[str, Conditions] = {
         boundary=re.compile(
             r"\b0?4([:.]00)?\b|\b0400\b|\b4\s?a\.?m\.?\b|\bfour\b", re.IGNORECASE
         ),
-        crux_words=("working", "belongs to"),
+        crux_words=(r"belongs to", r"(?:\w+'s|the|that|a|each) working"),
         nameable=frozenset({"Trip", "running_time", "running_sheet"}),
         guessed=(
             "return (moment - timedelta(hours=4)).date()",
@@ -460,6 +466,24 @@ def spellings(name: str) -> tuple[str, str]:
     its underscores opened out — which is what makes `operating_day` and
     "operating day" one word as far as this guard is concerned."""
     return (name.casefold(), name.casefold().replace("_", " "))
+
+
+def glossary_of(family: Family, repo: Path) -> re.Pattern[str]:
+    """The module's own vocabulary for the withheld decision, as one matcher.
+
+    Two halves. The exported names no prompt but `repo-primitive`'s is
+    entitled to reach for, read out of the repository in both spellings so
+    that renaming one cannot leave this guard behind; and the prose phrases
+    above, which are in no parse tree. Whole words throughout, because a
+    prompt is not speaking the glossary by containing its letters — "arrival"
+    is not `arrives`, and "working it out" is not a day's working.
+    """
+    condition = conditions(family)
+    withheld = defines(family, repo) - condition.nameable
+    words = [
+        re.escape(spelling) for name in sorted(withheld) for spelling in spellings(name)
+    ] + list(condition.crux_words)
+    return re.compile(rf"\b(?:{'|'.join(words)})\b", re.IGNORECASE)
 
 
 def guessing_the_boundary(family: Family) -> Callable[[Path], None]:
@@ -721,32 +745,34 @@ def test_the_crux_is_stated_in_exactly_one_of_the_four_prompts(
     calling the grouping an "operating day" hands `unmentioned` and `prose`
     the module's own name for the primitive the boundary lives in — the
     solver has not been told the rule, but has been told which function holds
-    it, which is `repo-primitive`'s whole content arriving free. So the block
-    is held clear of every name the module defines, in either spelling, apart
-    from the three it is entitled to use: the change it asks for, the total it
-    prints and the type its criteria are about. The module's prose words for
-    the same decision are checked beside them, since "working" and "belongs
-    to" are in no parse tree.
+    it, which is `repo-primitive`'s whole content arriving free. So the
+    glossary is held to the same shape as the hour: silent in the shared
+    block, and spoken in exactly one passage — `repo-primitive`'s, where
+    naming the primitive is what the level *is*. `prose` is where that second
+    half bites hardest, because its authoring comment claims no part of its
+    prompt uses the module's words, and the passage is the part of its prompt
+    the block guard cannot see.
     """
-    condition = conditions(family)
-    boundary = condition.boundary
+    boundary = conditions(family).boundary
+    glossary = glossary_of(family, variants(family)[0].repo_dir)
     before, after, passages = taken_apart(family)
-    shared = (before + after).casefold()
+    shared = before + after
 
-    assert boundary.search(before + after) is None
+    assert boundary.search(shared) is None
     stated = [level for level in LADDER if boundary.search(passages[level])]
 
     assert stated == ["criterion"]
 
-    withheld = defines(family, variants(family)[0].repo_dir) - condition.nameable
-    spoken = [
-        spelling
-        for name in sorted(withheld)
-        for spelling in spellings(name)
-        if spelling in shared
-    ] + [word for word in condition.crux_words if word in shared]
+    said = glossary.search(shared)
 
-    assert spoken == [], f"the shared block speaks the module's glossary: {spoken}"
+    assert said is None, f"the shared block speaks the module's glossary: {said}"
+
+    spoken = [level for level in LADDER if glossary.search(passages[level])]
+
+    assert spoken == ["repo-primitive"], (
+        f"the module's glossary is spoken by {spoken} rather than by the one "
+        "passage whose level is pointing at it"
+    )
 
 
 @pytest.mark.parametrize("family", BY_FAMILY)

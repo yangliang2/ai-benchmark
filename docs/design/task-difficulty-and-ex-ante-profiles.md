@@ -1392,14 +1392,18 @@ the load-bearing one.
    2's two families already occupy, so `calibrate-v1` pools a 32-line change
    with album's 5 and pricelist's 9 into one row and the row key has no way to
    say so. Declaring K9 to hold them apart was considered and rejected as
-   untrue rather than inconvenient: §23.3's any-resolution property — a K9
-   crux grades every answer satisfying the stated rules at 1.0 — fails here,
-   where the boundary has one right answer and the transcription of it grades
-   0.0, and §18's surviving formulation is a *labelled* open decision, which
-   this one is neither. So the pooling is recorded instead, here and in all
-   four authoring comments: a K12 cost multiplier read off that table is a
-   mean over changes of 5, 9 and 32 added lines, and the table cannot be asked
-   which.
+   untrue rather than inconvenient: §18's surviving formulation is a
+   *labelled* open decision, and this boundary is labelled but not open in
+   `-c1`, whose criterion states it and where an answer satisfying the stated
+   rules grades 1.0, and open but not labelled in `-c3` and `-c4`, where
+   nothing announces that a decision is being left. In those two the stated
+   rules leave the boundary undetermined and the transcription still grades
+   0.0, which is the sense in which §23.3's any-resolution property does not
+   describe this family — it is a caveat on how a K9 result should be read,
+   not a test a task is put to. So the pooling is recorded instead, here and
+   in all four authoring comments: a K12 cost multiplier read off that table
+   is a mean over changes of 5, 9 and 32 added lines, and the table cannot be
+   asked which.
 7. **K7: register claims or retire it.** New tasks, effort claims registered
    before the run, at least 3 graded tasks at the dense level, and the
    size-matched control §12 asked for in round 1. It is the largest effort
