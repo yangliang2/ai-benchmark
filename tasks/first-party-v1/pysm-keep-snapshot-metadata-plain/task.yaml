@@ -1,0 +1,111 @@
+# K4 at narrow, and the control side of the pysm-snapshot pair (#42). Same
+# vendored pysm snapshot as pysm-refuse-a-snapshot-in-flight, byte for byte,
+# and — unlike the K7 pair this design inherits from — the same module to
+# write in as well. Both members add a guard to pysm/serialization.py, of
+# almost the same length and at almost the same place. What differs is how
+# far the author has to read to write it.
+#
+# Narrow means every fact the change turns on is in the file being edited.
+# `snapshot` is the first function in the file, calls what it returns "a
+# plain-data snapshot" in its own docstring, and shows the metadata being
+# taken in unread and set on the dict; `StateMachineException` is already
+# imported at the top and already raised fourteen times below. Nothing outside
+# pysm/serialization.py answers any question this task asks — which is the
+# whole of the contrast, because the crux beside it turns on facts that live
+# in three modules it never touches, one of them the 265-line pysm/aio.py.
+# (Read that crux's own comment for the limit on that: a defensively written
+# guard could reach the right answer off a shorter read. What is not in doubt
+# is the asymmetry, which is what the pair varies — there is no read for this
+# member to skip.)
+#
+# Narrow is not easy. Two slips are stated in the prompt and both are the
+# obvious move: checking only the top level of the metadata rather than all
+# the way down, and letting a tuple pass as a list because both are
+# sequences. The first is registered as this task's careless-answer probe and
+# must grade 0.0; the second is caught by the same suite. A control that were
+# merely trivial would make the pair a reading of task difficulty wearing a
+# read-set label.
+#
+# Matched with pysm-refuse-a-snapshot-in-flight on write volume, the axis #39
+# added to the pair design: the two reference solutions add 16 and 17 lines
+# to the same snapshot, a ratio of 1.06, and the suite asserts the match.
+# Without it "a wide read costs more" and "the wide task was bigger" are the
+# same measurement. This member registers no effort claim, as a control does
+# not.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty: the
+# scatter the crux beside this one is pitched on is the library's own
+# three-layer layout, not something planted, and an edit would break the
+# byte-identity the pair rests on anyway. Empty is not the same as
+# untouched — what was left out of every pysm snapshot for reasons answering
+# to no knob is recorded in docs/research/substrate-candidate-repos.md,
+# because `modifications` is not the place for it.
+#
+# K4 has no enumerated ladder in KNOB_LEVELS, so "narrow" is recorded as
+# written and nothing checks that another task's K4 level means the same
+# thing.
+#
+# feature-dev, single-file: the reference diff touches pysm/serialization.py
+# alone, and the grading tests exercise a refusal the pristine repository
+# does not make, so they fail on it as the lint requires.
+id: pysm-keep-snapshot-metadata-plain
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  `snapshot` promises plain data, and everything it builds is plain — lists
+  of names, strings, None — except the one part it does not build. The
+  `metadata` a caller hands it goes into the snapshot unread, so a snapshot
+  can come back carrying anything at all, and nothing says so until something
+  tries to write it out.
+
+  Make `snapshot` refuse it.
+
+    * `snapshot(machine, metadata=...)` raises StateMachineException when the
+      metadata is not plain data. It refuses before building anything, so a
+      refused call returns nothing at all.
+    * Plain data means one of: a string, an integer, a float, a boolean,
+      None, a list of plain data, or a dict whose keys are strings and whose
+      values are plain data.
+    * All the way down. A list holding a dict holding a list is checked to
+      the bottom, and one thing that is not plain data anywhere inside is
+      enough to refuse the whole of it.
+    * A tuple is not a list. What comes back from writing plain data out and
+      reading it in again is a list, so a tuple would not survive the round
+      trip, and it is refused rather than quietly changing shape.
+    * A dict key that is not a string is refused, wherever in the metadata
+      that dict is.
+    * `metadata=None` is the default and means no metadata at all: nothing is
+      checked and the snapshot carries no `metadata` entry, exactly as now.
+      An empty dict, an empty list, an empty string, 0 and False are metadata
+      like anything else, and they travel.
+    * `restore` is unchanged. It reads what `snapshot` writes and pays no
+      attention to the metadata, and it goes on paying none.
+
+  Everything else about the library stays as it is: what a snapshot holds,
+  what a restore validates, and what either does to a machine are all
+  unchanged.
+construction:
+  knobs:
+    - id: K4
+      level: narrow
+  pair: pysm-snapshot
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule is stated outright — what counts as plain, that the check
+      goes all the way down, that a tuple is not a list, which keys are
+      allowed, what the default means — so nothing is left open, and the read
+      set is one module: the guard, the function it guards and the exception
+      it raises are all in pysm/serialization.py, and no other file answers
+      any question the task asks. The control's job is to be the same amount
+      of code to write as the crux beside it, in the same module and at
+      almost the same place, off facts a reader never has to leave that
+      module to find: if this one lands anywhere but the bottom rung, the
+      pair is measuring how hard the task was rather than how far the reading
+      had to go, and the round's cost reading should be discounted
+      accordingly
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

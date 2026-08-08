@@ -1,0 +1,113 @@
+# K10 at narrow, and the control side of the pysm-trace pair (#42). Same
+# vendored pysm snapshot as pysm-trace-what-the-machine-did, byte for byte,
+# so the two members are matched on repository size, on library and on
+# familiarity. What differs is how many places one decision has to be
+# carried to.
+#
+# Narrow means this, counted rather than described: the reference solution
+# touches 2 places in 2 modules, against the crux's 14 in 3, and the suite
+# counts the hunks of both reference diffs and holds each to its band. The
+# change is deliberately the same *kind* as the crux's — a small addition
+# mirrored across the package's execution layers, so that what separates the
+# two members is the number of sites and not the character of the work. Two
+# is the smallest number that is still a mirroring: QueuedStateMachine and
+# AsyncQueuedStateMachine keep the same two queues under the same two names
+# and share no base class that has them, so even the narrow member is
+# written twice.
+#
+# Narrow is not easy, and it is worth saying which parts are not. The order
+# the two queues come back in is the order the machine drains them and not
+# the order the events were dispatched in, which is the opposite way round
+# from the one queue a caller ever sees; and the list has to be the caller's
+# own, because the obvious answer hands back the machine's working deques. A
+# control that were merely trivial would make the pair a reading of task
+# difficulty wearing a coordination label. Both slips are stated in the
+# prompt and both are registered as careless-answer probes that must grade
+# 0.0.
+#
+# Matched with pysm-trace-what-the-machine-did on write volume, the axis #39
+# added to the pair design: the two reference solutions add 26 and 24 lines
+# to the same snapshot, a ratio of 1.08, and the suite asserts the match.
+# Without it "many sites cost more" and "the wide task was bigger" are the
+# same measurement. This member registers no effort claim, as a control does
+# not.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty: the
+# coordination width the crux beside this one is pitched on is the library's
+# own duplicated machinery, not something planted, and an edit would break
+# the byte-identity the pair rests on anyway. Empty is not the same as
+# untouched — what was left out of every pysm snapshot for reasons answering
+# to no knob is recorded in docs/research/substrate-candidate-repos.md,
+# because `modifications` is not the place for it.
+#
+# K10 has no enumerated ladder in KNOB_LEVELS, so "narrow" is recorded as
+# written and nothing checks that another task's K10 level means the same
+# thing.
+#
+# feature-dev, cross-file: the reference diff touches pysm/queued.py and
+# pysm/aio.py, and the grading tests exercise methods that do not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: pysm-list-the-waiting-events
+category: feature-dev
+scale: cross-file
+language: python
+prompt: |
+  A queued pysm machine can be holding events nobody has handled yet — one a
+  handler dispatched while the machine was already running, one another task
+  sent in while it was busy — and there is no way to ask it what they are, or
+  to throw them away.
+
+  Add both to the queued execution layers: QueuedStateMachine in
+  pysm/queued.py and AsyncQueuedStateMachine in pysm/aio.py. The two answer
+  alike — the same events waiting on the same machine come back the same way
+  whichever layer is holding them — and ThreadSafeQueuedStateMachine answers
+  like the queued machine it extends, without being given anything of its
+  own.
+
+      def pending(self):
+
+    * It returns the events waiting to be handled, in the order they will be
+      handled: everything the machine put aside while it was running comes
+      first, then everything that came in from outside. That is the order the
+      machine takes them in, which is not the order they were dispatched in.
+    * The list is the caller's own. Changing it changes nothing about the
+      machine, and asking twice hands back two lists rather than one twice.
+    * A machine with nothing waiting returns an empty list — which is what a
+      machine standing still between events always is, since a run does not
+      end until both queues are empty.
+    * Asking builds nothing, handles nothing and changes nothing.
+
+      def drop_pending(self):
+
+    * It throws away every waiting event and returns how many it threw away.
+    * A machine with nothing waiting returns 0.
+    * The machine goes on working afterwards: what was thrown away is never
+      handled, and the next event dispatched to the machine is.
+
+  Both are ordinary methods and may be called at any time, including from
+  inside a handler while the machine is part-way through an event, which is
+  the one moment there is anything to see.
+
+  Everything else about the library stays as it is: the queueing, the
+  draining and what happens to waiting events when a handler raises are all
+  unchanged.
+construction:
+  knobs:
+    - id: K10
+      level: narrow
+  pair: pysm-trace
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule is stated outright — which queue comes first and why, that
+      the list is a copy, what an empty machine answers, what the count means
+      — so nothing is left open, and the two methods go into the two modules
+      the prompt names. The control's job is to be the same amount of code to
+      write as the crux beside it at two sites rather than fourteen: if this
+      one lands anywhere but the bottom rung, the pair is measuring how hard
+      the task was rather than how many places the work had to reach, and the
+      round's cost reading should be discounted accordingly
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

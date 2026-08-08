@@ -1,0 +1,146 @@
+# K10 at wide, and the crux side of the first contrast the knob has ever had
+# (#42). K10 — coordination width, N consistent edit sites — has been in
+# section 9's list since round 1 and has never been built: section 16.2 named
+# it a secondary candidate, section 23.9 recorded it still untouched after
+# round 2, and the round-3 spec commissioned it. So there is no prior reading
+# of this knob at any level, which is also why the effort factor below cannot
+# be fitted to one.
+#
+# Wide means this, counted rather than described: the reference solution
+# touches 14 places in 3 modules, and 12 of them are the same recording
+# written again — ten of those a single appended line, the two that record
+# thrown-away events four apiece; the remaining two places declare the
+# attribute and document it. The suite counts the hunks of the reference diff
+# and holds this member to the 8-15 band the ticket asks for and the control
+# to a handful. What makes the 12 irreducible is the shape of the library
+# rather than a rule the task invents: pysm/aio.py does not override the
+# core's entry walk, exit walk and dispatching step, it carries its own
+# copies of all three, and pysm/queued.py carries its own copy of the queue
+# draining. A decision about what those walks record therefore has to be
+# written out once per copy, and inheritance cannot collect them. The prompt
+# states the rule for every layer and states the consequence — one graph
+# driven the same way records the same trace whichever layer ran it — so
+# nothing here is withheld; what is being asked for is that a stated rule be
+# carried to all of its sites.
+#
+# The control beside it, pysm-list-the-waiting-events, is the same kind of
+# change — a small addition mirrored across the package's execution layers —
+# at 2 sites instead of 14. Matched with it on write volume, the axis #39
+# added to the pair design: the two reference solutions add 24 and 26 lines
+# to the same snapshot, a ratio of 1.08, and the suite asserts the match.
+# Without it "many sites cost more" and "the wide task was bigger" are the
+# same measurement, which is the confound round 2's K9 result was rejected
+# for.
+#
+# What this pair holds that its K4 sibling varies, and the reverse, recorded
+# because the two knobs are adjacent and a reader is owed the difference:
+# here the site count moves (14 against 2) while both members are told which
+# modules to edit, and in the K4 pair (pysm-refuse-a-snapshot-in-flight
+# against pysm-keep-snapshot-metadata-plain) the site count is held nearly
+# still (3 against 2, in one and the same module) while how far the author
+# has to read to place them moves. Each pair is the other's control on the
+# adjacent knob, as far as two pairs can be.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty: the
+# coordination width this pair is pitched on is the library's own duplicated
+# machinery, not something planted, and an edit would break the byte-identity
+# the pair rests on anyway. Empty is not the same as untouched — what was
+# left out of every pysm snapshot for reasons answering to no knob is
+# recorded in docs/research/substrate-candidate-repos.md, because
+# `modifications` is not the place for it.
+#
+# K10 has no enumerated ladder in KNOB_LEVELS, so "wide" is recorded as
+# written and the pair reads not assessable on the rung axis under section
+# 9's amended clause 2. The registered cost claim below is the whole of what
+# this task can say, and that is registered here rather than discovered at
+# reconcile time.
+#
+# feature-dev, cross-file: the reference diff touches pysm/pysm.py,
+# pysm/queued.py and pysm/aio.py, and the grading tests exercise a `trace`
+# that does not exist in repo/, so they fail on the pristine repository as
+# the lint requires.
+id: pysm-trace-what-the-machine-did
+category: feature-dev
+scale: cross-file
+language: python
+prompt: |
+  pysm machines forget what they did. A handler can see where the machine is
+  now, but after a run there is nothing to read back: no record of which
+  states were entered and left, in what order, or of which events waited.
+
+  Give StateMachine a `trace`.
+
+    * `trace` is a list and it starts empty. Like `leaf_state` it belongs to
+      the root machine: every layer writes to the root machine's trace, and a
+      nested machine's own trace stays empty however often its states are
+      entered and left.
+    * Every entry is a pair, `(kind, name)`, and there are five kinds:
+
+        ('event', name)     an event has reached an initialized machine and
+                            is about to be handled
+        ('exit', name)      a state's `exit` handler is about to run
+        ('enter', name)     a state's `enter` handler is about to run
+        ('queued', name)    a dispatched event is being put aside instead of
+                            handled now, because the machine is already
+                            running one
+        ('dropped', name)   an event that was put aside is being thrown away
+                            without ever being handled
+
+      `name` is the state's name for `enter` and `exit`, and the event's name
+      for the other three.
+    * Entries go on in the order the things happened, and nothing is ever
+      taken off.
+    * An event reaching a machine that was never initialized is refused as it
+      is today and records nothing; an event matching no transition still
+      records having reached the machine.
+    * Initializing without firing the entry handlers records nothing;
+      initializing with them records the initial path being entered.
+
+  This package runs machines three ways — the classic core, the queued layers
+  in pysm/queued.py, and the asyncio layer in pysm/aio.py — and all three
+  record the same way. What that comes to is this: one graph, initialized and
+  sent the same events, comes out with the same trace whichever ran it.
+
+  Everything else about the library stays as it is: the transitions, the
+  handlers and the history stacks are all unchanged.
+construction:
+  knobs:
+    - id: K10
+      level: wide
+  pair: pysm-trace
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule is stated outright and no single site is hard: ten of the
+      fourteen are one line appended to a list, the two that record thrown-away
+      events are four apiece, the largest is a five-line docstring entry, and
+      every module they live in is named in the prompt. The bet is on price
+      and not on the rung,
+      because the mechanism here is width rather than depth — fourteen places
+      to carry one decision to, twelve of them the same line, spread over
+      three modules of which two are copies of machinery the third also has,
+      while the control beside it asks for the same twenty-odd lines at two
+      sites in two of those same modules.
+      The rung is registered at the floor because that is where round 2's
+      sixteen bottom-rung bets went fourteen for sixteen and where upward
+      bets outside K1 stand at nought for fourteen lifetime; a fifteenth is
+      not worth the falsification record. What could beat this prediction is
+      the one thing the design is built to make visible — an answer that
+      stops after the core and the queued layer, which the cross-layer
+      grading test refuses — and if that is what comes back the rung moves
+      for the reason the knob names. Prompt length is checked here rather
+      than assumed away, and it needs no defusing arithmetic because it runs
+      the wrong way for this task: the brief is 324 words to the control's
+      331, a ratio of 0.98, so the member holding the claim is the shorter of
+      the two and a cost hit cannot be read off a longer brief. If the wide
+      side does not cost more here, with the repository byte-identical, write
+      volume matched to 1.08 and every module named, coordination width has no
+      price to charge on this material and the round says so
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

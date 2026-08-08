@@ -1,0 +1,151 @@
+# K4 at wide, and the crux side of the first contrast the knob has ever had
+# (#42). K4 — the read-set/write-set ratio — has been in section 9's list
+# since round 1 and has never been built: section 23.9 recorded it still
+# untouched after round 2 and the round-3 spec commissioned it. There is no
+# prior reading of the knob at any level, which is also why the effort factor
+# below cannot be fitted to one.
+#
+# Wide means the write is small and the facts that decide it are somewhere
+# else. The write is 17 lines in one module, pysm/serialization.py, at three
+# places: one guard function and the two calls to it. The walk that places it
+# correctly goes through three modules the change never touches, and it is
+# written out here because a reader of this task alone cannot see it:
+#
+#   1. pysm/queued.py. QueuedStateMachine raises a flag on itself,
+#      `_is_processing`, for the length of a run-to-completion cycle, and
+#      lowers it in a `finally`. That is the fact the guard reads, and the
+#      prompt deliberately does not name it: it says only that the layers
+#      already keep it. ThreadSafeQueuedStateMachine inherits it, so reading
+#      this module answers for two of the four classes.
+#   2. pysm/aio.py, 265 lines of it, and the module that decides the task.
+#      AsyncQueuedStateMachine keeps the same flag under the same name and
+#      **extends StateMachine directly rather than QueuedStateMachine**, so
+#      an author who reads only queued.py and writes an isinstance check
+#      against the class they found there produces a guard that lets every
+#      async machine through. That answer is checked in as this task's
+#      careless probe and grades 0.0 on one test.
+#   3. pysm/pysm.py. The plain StateMachine sets no such flag at all, so the
+#      guard has to tolerate its absence rather than read it — and a graph is
+#      a tree of States of which only some are machines, so the walk has to
+#      be the one serialization.py already has for machines rather than a
+#      pass over `states`. This is also where `root_machine` lives, which is
+#      why the refusal can be written once and answer for a call made on any
+#      machine in the graph.
+#
+# The read set is wide and shallow on purpose, which is what distinguishes
+# K4 from K7 on this same substrate: not one of those three facts is subtle
+# once it is in front of you, and none of them can be guessed from
+# pysm/serialization.py. #41's K7 pair is the other shape — four contracts
+# decided four frames away in one module — and holding the two apart is why
+# this crux's own module is where the whole write goes.
+#
+# What the walk is not, recorded before the sweep so it cannot be softened
+# after it. The walk is what a *confident* answer costs, not what a correct
+# one strictly requires: an author who read pysm/queued.py alone and then
+# wrote the defensive `getattr(machine, '_is_processing', False)` out of habit
+# would pass every grading test without ever opening pysm/aio.py, because
+# duck typing happens to cover the class they never saw. So this task does not
+# claim the third module is unreachable; it claims that skipping it costs you
+# the ability to know, and that the idiomatic non-defensive answer — the
+# isinstance check against the one class the read turned up — is wrong, which
+# is what the careless probe grades 0.0. Read a hit on the cost claim as
+# evidence about how much the reading costs, and a resolved run as evidence
+# about nothing in particular, since both roads reach it.
+#
+# Matched with pysm-keep-snapshot-metadata-plain on write volume, the axis
+# #39 added to the pair design: the two reference solutions add 17 and 16
+# lines to the same snapshot, a ratio of 1.06, and the suite asserts the
+# match. Both members also edit the same module and land within one hunk of
+# each other, so what is left between them is how far the author has to read
+# and not how much there is to write or where it goes.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty: the
+# scatter this pair is pitched on is the library's own three-layer layout,
+# not something planted, and an edit would break the byte-identity the pair
+# rests on anyway. Empty is not the same as untouched — what was left out of
+# every pysm snapshot for reasons answering to no knob is recorded in
+# docs/research/substrate-candidate-repos.md, because `modifications` is not
+# the place for it.
+#
+# K4 has no enumerated ladder in KNOB_LEVELS, so "wide" is recorded as
+# written and the pair reads not assessable on the rung axis under section
+# 9's amended clause 2. The registered cost claim below is the whole of what
+# this task can say, and that is registered here rather than discovered at
+# reconcile time.
+#
+# feature-dev, single-file: the reference diff touches pysm/serialization.py
+# alone, and the grading tests exercise a refusal the pristine repository
+# does not make, so they fail on it as the lint requires.
+id: pysm-refuse-a-snapshot-in-flight
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  pysm/serialization.py assumes the machine is standing still. `snapshot`
+  reads a graph's configuration and `restore` writes one back, both of them a
+  machine at a time, and neither asks whether the graph is in the middle of
+  moving. Taken while a transition is walking it, a snapshot records a
+  configuration the machine is half out of; applied then, a restore moves the
+  graph out from under the walk.
+
+  Make both refuse.
+
+    * `snapshot(machine, metadata=None)` and `restore(machine, data)` raise
+      StateMachineException when any machine in the graph is part-way through
+      handling an event — before reading anything and before writing
+      anything, so a refused restore leaves the graph exactly as it was.
+    * Being part-way through an event is something this package's execution
+      layers already keep on the machine while they are running one. It is
+      not a thing to add, and the classic core never has it. Every layer that
+      runs events counts, and a graph that mixes plain core machines with
+      ones that queue is judged by the ones that queue.
+    * Any machine in the graph, not only the one the call was made on and not
+      only the root: a machine that queues may be nested anywhere underneath
+      a plain one.
+    * A graph that is standing still is not refused, whatever its machines
+      are made of. Snapshotting or restoring a machine that has finished the
+      last event it was sent works exactly as it does today.
+    * Both functions already climb to the root before doing anything, and the
+      refusal climbs with them, so it makes no difference which machine in
+      the graph the call was made on.
+
+  Everything else about the library stays as it is: what a snapshot holds,
+  what a restore validates, and how either behaves on a graph standing still
+  are all unchanged.
+construction:
+  knobs:
+    - id: K4
+      level: wide
+  pair: pysm-snapshot
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the rule is closed — what to refuse, when, from where, and what not to
+      refuse are all stated — and the code that expresses it is seventeen
+      lines in one module. The bet is on price, and the mechanism is the read
+      set rather than the write: three modules have to be visited before
+      seventeen lines can be placed with any confidence, and the one that
+      decides the task is the 265-line pysm/aio.py, where the async layer
+      keeps the same flag under the same name while extending StateMachine
+      rather than the queued class an author who stopped at pysm/queued.py
+      would have found. The
+      control beside it asks for sixteen lines in the same module off facts
+      that are all written in that module. The rung is registered at the
+      floor for the reason round 1's two dense K7 cells came back there after
+      being bet a rung up, and because upward bets outside K1 are nought for
+      fourteen lifetime. Prompt length is registered rather than left for a
+      reader to measure, and it needs no defusing arithmetic because it runs
+      the wrong way for this task: the brief is 299 words to the control's
+      307, a ratio of 0.97, so the member holding the claim is the shorter of
+      the two and a cost hit cannot be read off a longer brief. A miss here,
+      with the repository byte-identical, write volume matched to 1.06 and the
+      module written in held the same, says that reading three modules instead
+      of one is not what costs the money
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT
