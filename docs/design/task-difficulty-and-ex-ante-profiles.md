@@ -1999,6 +1999,171 @@ the load-bearing one.
    registration of it made out: wherever a prompt says "the root's" and every
    test drives from the root, the gap is not one site but every site, and
    closing the one review happened to find leaves the class open.]
+10. **Not a round-2 candidate: the ceiling, commissioned by the round-3 spec.**
+    Everything above this entry was recovered from round 2's evidence. This one
+    was not — it is #36's US-13 and US-14, which ask for the top of the ladder
+    to be built on purpose because §22.3 says the corpus has never had one, and
+    it is numbered here so it sits with the rest of the round rather than
+    because round 2 proposed it.
+
+    [**Shipped by #43 as two composites and two headroom anchors, none of
+    which advances any counter.** Four new tasks for this round's sweep, all
+    four registered `unsolved`, none of them in a family or a pair, none of
+    them carrying an effort claim.
+
+    **The recipe, corrected against the record before anything is built on
+    it.** The spec calls "intent-level spec × planted open decision ×
+    substrate terrain" the only recipe that ever produced unsolved cells. It
+    is not, and the correction matters because everything downstream would
+    otherwise inherit a claim the artifacts do not support. The three unsolved
+    cells this corpus has ever produced are `settings-l2`, `duration-l3` and
+    `inventory-l3` (§14): all three hand-authored, all three declaring K1 and
+    nothing else, two at `intent` and one at `description`. Neither K9 nor a
+    vendored substrate has ever produced an unsolved cell at any level. So the
+    ingredient with a record is **K1 at intent**, and what a composite does is
+    stack on it the two levers with the largest measured *effort* effects —
+    K7's 5.1× on haiku in round 1 (§12) and K9's 1.5–2.1× on the weaker model
+    in round 2 (§20). That is a mechanism-based bet and not a replication, it
+    is registered as such in both composites' `task.yaml` comments, and a
+    later round may not cite the composites as "the recipe rebuilt" without
+    this paragraph beside it.
+
+    **The composites.** `pysm-work-out-a-way-there` gives `StateMachine` a
+    `route(target)` that hands back the events which would put the machine on
+    a state, or `None` where nothing does.
+    `pysm-rebuild-a-graph-from-a-snapshot` gives `pysm/serialization.py` a
+    `rebuild(data)` that builds a fresh graph out of a snapshot, so that
+    snapshotting what comes back gives the snapshot back.
+    Both declare `K1=intent, K7=dense, K9=single`. The
+    briefs state what is wanted and no acceptance criteria beyond the
+    interface, one refusal convention and the K9 label; the terrain is
+    `pysm/pysm.py`'s transition walks in the first and the plain-data round
+    trip's invariants in the second, neither restated in the brief; and the
+    labelled open decision is which run of events comes back, and which of a
+    machine's states becomes its initial one.
+
+    **Both K9 cruxes are the weak form of §23.3's caveat and say so.** A
+    named method resolves the first — breadth-first search over the graph's
+    configurations — and the second's open decision is a *choice* the snapshot
+    format leaves rather than an algorithm to invent, which is weaker again.
+    So a resolved run on either says nothing about a decision recall cannot
+    reach, exactly as `remit-pay-what-fits` and `roll-pick-from-bursts`
+    concede. What the label buys is that the grading honours it: the held-out
+    tests dispatch whatever route came back rather than comparing it with
+    ours, and never ask which initial state was picked, only that the choice
+    is legal.
+
+    **The anchors, and why they declare a knob at all.** The ticket's framing
+    was that an anchor follows `calc-infix-evaluator`, which carries no
+    construction block. That is unavailable and the reason is the design's
+    own: absence of the block *is* the zero-knob baseline's declaration,
+    `BASELINE_TASK_IDS` freezes that set at the 22 tasks authored before the
+    experiment, and the lint refuses a task outside it that declares nothing.
+    So an anchor declares, and what it honestly declares is the level its spec
+    is written at — `K1=acceptance`, every rule stated as a criterion.
+    `sieve-select-what-matches` is a filter language over records with
+    three-valued logic; `gauge-evaluate-in-units` is literally the calc-infix
+    class with one axis added, an infix evaluator whose quantities carry
+    dimensions the arithmetic has to carry through. Neither withholds
+    anything. The difficulty bet on is the *width* of a closed contract, and
+    §9's list has no knob that names width, which is recorded here as the gap
+    it is rather than papered over by declaring a knob that sounds close.
+
+    **What that costs the calibration table, registered rather than
+    discovered.** `calibrate-v1` keys a row on category × sorted profile, so
+    both anchors land in `feature-dev K1=acceptance` beside round 1's four
+    `-l1` variants, whose changes are a fraction of the size and which all
+    came back haiku-solvable. All six are single-file and hand-authored, so
+    #38's mix disclosure prints nothing, and if the rung bets land the row's
+    floor moves to `unsolved` with no way for the key to say which tasks put
+    it there. This is #40's pooling problem in a second place and it gets
+    #40's answer: recorded here and in both anchors' comments, and asserted by
+    the suite so it cannot drift into being a surprise. The composites have
+    the opposite property and it is asserted the same way:
+    `K1=intent,K7=dense,K9=single` is a key nothing else in the corpus has, so
+    they are a cell of two rather than a contribution to somebody else's.
+
+    **Counter-neutrality, and why it is structural rather than promised.**
+    §9's amended clause 1 counts a knob's rounds off two things: a family or
+    pair whose varied knob it is, and an effort claim registered on a task
+    activating it and scored to it. None of these four declares a family or a
+    pair, so `registered_contrasts` cannot see them; none registers an effort
+    claim, so `claim_knobs` returns nothing for them. #43's suite asserts both
+    against those two functions rather than against a restatement of the rule,
+    over the whole task set rather than a subset, and separately asserts that
+    nothing new declares the retired K11 and that the frozen baseline is still
+    its 22.
+
+    **No effort claim was registered, and clause 3 is the whole reason.** A
+    baseline claim on a task activating several knobs is scored to *no* knob —
+    one cost reading over K1, K7 and K9 names none of them — so a claim on a
+    composite would have been a bet nothing could ever be attributed to. The
+    anchors are the case that needed care rather than the composites: each
+    activates exactly *one* knob, so a baseline claim on one **would** have
+    scored to K1 and made it a registered contrast, giving K1 a counted round
+    off a task built to measure the ceiling. That is the artifact verdict this
+    round's whole amendment removes, arriving by the back door, and not
+    registering the claim is what keeps it out.
+
+    **Two of each, not three, and the arithmetic is the reason.** #36 budgets
+    ~34–44 new cells for round 3. #39, #40, #41 and #42 have put 18 tasks in,
+    which is 36 cells on two models; four more makes 22 tasks and 44 cells,
+    exactly the top of the range. Six would be 48 and would spend a fifth of
+    the round's budget past its own estimate on the lane with the poorest
+    prior. Both acceptance criteria say "2–3" and this takes the bottom of
+    the band deliberately.
+
+    **One substrate again, and the part of §23.9's warning that transfers.**
+    Both composites sit on the same pysm snapshot #41's and #42's pairs use,
+    so round 3 now puts ten of its twenty-two tasks on one library. §23.9
+    registers that a single pysm-specific effect would push the round's
+    readings the same way and be attributed to three knobs separately — but it
+    argues that about *cost claims*, and these composites register none, so
+    the part that transfers is narrower and is stated rather than assumed:
+    **two unsolved rungs on one library are one library's ceiling**, and no
+    later round may read them as the corpus's until a second substrate says
+    the same. RBQL was weighed and declined, and on a weaker ground than
+    #41's and #42's: §15.5's unseeded visible suite is noise in a measured
+    cost and there is no measured cost here, so what actually decided it was
+    authoring risk on a 1,772-line engine nobody in this round had read.
+    Declining for the weaker reason is recorded as what it is.
+
+    **Four more upward rung bets, on a ledger that says they lose.** Upward
+    rung bets outside K1 stand at nought for fourteen lifetime (§21) and these
+    are the fifteenth through eighteenth. §23.9 declined to buy a literal
+    reading of "expected to be beaten" with a fifteenth, and this entry buys
+    four — the difference being that there the rung was structurally
+    unreadable and the cost claims carried the lane, whereas here the rung is
+    the *only* registered outcome and an unsolved bet is the only bet that
+    measures a ceiling. The pre-registered reading, fixed before the sweep:
+    **a beaten anchor is ceiling data and not a failure.** An anchor either
+    marks where the ceiling is or discovers the ceiling is above it, and the
+    second is the more useful of the two on a corpus where sixteen of
+    eighteen tasks landed on the floor. The suite requires the phrase in every
+    one of the four rationales, and requires each to name what would defeat
+    it.
+
+    **What a flat result would mean, taken now rather than after the fact.**
+    If all four come back resolved, the reading is §21's, applied to the
+    ceiling rather than to the instrument: this material has no headroom left
+    at single-file scale, on a hand-authored module or on a vendored one, and
+    the next anchor needs an axis other than width and a substrate other than
+    a small library — which is a conclusion about where to build next and not
+    a fact about these four tasks. If any comes back unsolved, what it
+    measures is one cell of the ceiling and the composite's three knobs are
+    not separable within it, by construction: that is the price of a composite
+    and the reason it advances nothing.
+
+    **Each careless probe stays invisible to the agent.** All four are checked
+    in: the route search reading the destination off the configuration before
+    the exit walk rather than after it, `rebuild` inferring which paths are
+    machines from the shape instead of from the snapshot's own list, `NOT`
+    spelled as Python's `not` so the unknown flips to true, and the unit
+    arithmetic carried in written units rather than base ones. Every one grades
+    0.0 and every one leaves the repository's visible tests green — asserted
+    by the suite, because that is why these rungs are bet where they are:
+    nothing the agent can run inside its workdir distinguishes a half-right
+    answer from a finished one.]
 
 ## Open questions (superseded list resolved 2026-08-05)
 
