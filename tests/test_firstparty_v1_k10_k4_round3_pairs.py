@@ -25,10 +25,22 @@ be carried to — 14 hunks in 3 modules against 2 in 2 — while both prompts na
 the modules to edit, so neither member has much to find. The K4 pair holds the
 site count nearly still — 3 hunks against 2, in one and the same module — while
 varying how far the author has to read before those lines can be written: the
-crux's three facts live in three modules it never touches, and the control's
-all live in the file being edited. Neither pair is a clean instrument for the
-other knob and neither claims to be; what they are is two contrasts that move
-different things.
+wide member's three facts live in three modules it never touches, and the
+narrow member's all live in the file being edited. Neither pair is a clean
+instrument for the other knob and neither claims to be; what they are is two
+contrasts that move different things.
+
+**Fourteen is the reference's count and not the task's floor**, which belongs
+in front of a reader of the numbers above. Both `pysm/pysm.py` and
+`pysm/aio.py` funnel their entry and exit walks through an `_on`, so a solution
+that records there instead of at each walk collects three sites into one in
+each of those two modules and comes to **10 hunks** — checked, and it grades
+every held-out test. Ten is still inside the band asserted below, so nothing
+here is loosened by it; what the collapse shows is that the irreducibility is
+*across* modules and not within them. `pysm/queued.py` and `pysm/aio.py` carry
+their own copies of machinery `pysm/pysm.py` also has, and no spelling of the
+change collects those, which is why the property that survives is the
+three-module spread rather than any particular count above ten.
 
 **The claims are the whole instrument, and that is registered rather than
 discovered.** Neither K10 nor K4 has an enumerated ladder in `KNOB_LEVELS`, so
@@ -105,7 +117,7 @@ FACTOR = 1.25
 # difference in how much there was to write, whichever side wrote more.
 VOLUME_TOLERANCE = 1.10
 
-# The band the ticket asks a K10 crux to sit in, counted as hunks of the
+# The band the ticket asks K10's wide member to sit in, counted as hunks of the
 # reference diff. A hunk is the mechanical reading of "edit site": git starts a
 # new one wherever changed lines are more than six apart, so two edits that
 # would be one thought to a reader are one hunk here too.
@@ -204,6 +216,23 @@ TRACE_THROUGH_A_HELPER = (
 # trace whichever ran it".
 TRACE_MISSING_ONE_ASYNC_SITE = (
     (AIO, _APPEND_EXIT + _EXIT_EVENT, _EXIT_EVENT),
+)
+
+# And the slip that used to go unpunished: `self` where the prompt says the
+# root machine, in the one walk that can be started anywhere in the graph.
+# Every other recording site is reached through a call made on the root, so
+# there `self` and `self.root_machine` are the same object and the substitution
+# is invisible; `initialize` is the exception, because any machine can be
+# initialized. The held-out suite gained a case for it in the fix pass for #42,
+# and this asserts the case bites.
+_APPEND_ENTER_TO_SELF = "            self.trace.append(('enter', state.name))\n"
+
+TRACE_RECORDED_ON_THE_MACHINE_INITIALIZED = (
+    (
+        CORE,
+        _APPEND_ENTER + _INITIAL_ENTER_EVENT,
+        _APPEND_ENTER_TO_SELF + _INITIAL_ENTER_EVENT,
+    ),
 )
 
 
@@ -418,6 +447,28 @@ BY_TASK = [
     for task_id, probes, files in MEMBERS
 ]
 
+# What each side's rationale has to point at, and why the two phrases differ. A
+# pair is read from either end, so each member has to name the other: the wide
+# ones the control they are priced against, the narrow ones the member whose
+# price they are the baseline for.
+#
+# "The wide member" rather than "the crux" on the narrow side. Neither of these
+# knobs has an enumerated ladder, and a pair on an unenumerated ladder names no
+# crux (CONTEXT.md, on upward separation) — the two levels are `wide` and
+# `narrow` and neither is the harder one, so the level is the only vocabulary
+# that is true here. #41 reached the same place from the other direction with
+# `dense` and `calm`.
+POINTS_AT = {"wide": "the control beside it", "narrow": "the wide member beside it"}
+
+BY_SIDE = [
+    pytest.param(task_id, POINTS_AT[level], id=task_id)
+    for contrast in CONTRASTS
+    for task_id, level in (
+        (contrast.wide_id, "wide"),
+        (contrast.narrow_id, "narrow"),
+    )
+]
+
 
 def tasks() -> list[Task]:
     return [task_by_id(task_id) for task_id, _, _ in MEMBERS]
@@ -556,7 +607,14 @@ def test_the_reference_solution_touches_the_files_the_task_is_pitched_on(
     """Pinned so that "wide" and "narrow" are not free text all the way down.
     Neither knob has an enumerated ladder, so nothing in the task model can
     check that two tasks setting `wide` mean the same thing; this suite can,
-    for the four it owns."""
+    for the four it owns.
+
+    How much this settles differs by knob. For K10 the file set *is* the
+    contrast — three modules against two — so this pins the level. For K4 both
+    members declare the same single-module frozenset by design, and the check
+    is only that neither wandered; what makes that pair's levels mean anything
+    is the module facts asserted at
+    `test_the_k4_wide_member_reads_three_modules_it_never_writes_to`."""
     assert touched(task_by_id(task_id)) == files
 
 
@@ -588,7 +646,7 @@ def test_every_task_in_the_set_declaring_one_of_these_pairs_is_probed_here() -> 
 # --- K10: the coordination width is real, and counted ---------------------------
 
 
-def test_the_k10_crux_spreads_over_the_band_the_ticket_asks_for() -> None:
+def test_the_k10_wide_member_spreads_over_the_band_the_ticket_asks_for() -> None:
     """The knob's whole claim, as a number rather than as a description.
 
     K10 is "N consistent edit sites", and a task asserting a wide N without
@@ -597,6 +655,14 @@ def test_the_k10_crux_spreads_over_the_band_the_ticket_asks_for() -> None:
     reading: git opens a new one wherever changed lines are more than six
     apart, so this is a lower bound on what a reader would call separate
     places, never an inflated one.
+
+    What is measured here is the *reference* diff, which is 14. A solver is
+    not held to 14, and this assertion should not be read as saying they are:
+    routing the entry and exit walks through the `_on` each of the two large
+    modules already has collects three sites into one in each of them and
+    comes to 10, which grades. So the floor this task actually imposes is
+    ten — comfortably inside the band either way, which is why the assertion
+    passes on the reference and would pass on the collapse too.
     """
     [k10] = [contrast for contrast in CONTRASTS if contrast.knob == "K10"]
     wide = edit_sites(task_by_id(k10.wide_id))
@@ -607,11 +673,20 @@ def test_the_k10_crux_spreads_over_the_band_the_ticket_asks_for() -> None:
     assert wide >= narrow * 4
 
 
-def test_the_k10_crux_spreads_its_sites_over_more_than_one_module() -> None:
-    """Across files, as the ticket asks. Fourteen sites in one file would be a
-    long function to edit rather than a decision to carry, and the reason the
-    twelve recording sites here cannot be collected into one is that
-    `pysm/aio.py` copies the core's walks rather than inheriting them."""
+def test_the_k10_wide_member_spreads_its_sites_over_more_than_one_module() -> None:
+    """Across files, as the ticket asks, and this is the part of the width
+    that no spelling of the solution can take away.
+
+    Fourteen sites in one file would be a long function to edit rather than a
+    decision to carry. *Within* a module the recordings do collect: both
+    `pysm/pysm.py` and `pysm/aio.py` route their entry and exit walks through
+    an `_on`, and a solution recording there is three sites shorter in each.
+    What does not collect is the spread across modules — `pysm/aio.py` carries
+    its own copies of the core's walks rather than inheriting them, and
+    `pysm/queued.py` its own copy of the draining — so the decision has to be
+    written out once per module however tidily each module writes it. That is
+    what this asserts, and it is the claim that holds at 10 sites as well as
+    at 14."""
     [k10] = [contrast for contrast in CONTRASTS if contrast.knob == "K10"]
 
     assert len(touched(task_by_id(k10.wide_id))) >= 3
@@ -632,18 +707,18 @@ def test_the_k4_pair_does_not_vary_the_coordination_width_as_well() -> None:
 # --- K4: the read really does leave the module being written in -----------------
 
 
-def test_the_k4_crux_reads_three_modules_it_never_writes_to() -> None:
+def test_the_k4_wide_member_reads_three_modules_it_never_writes_to() -> None:
     """The documented walk, pinned to the substrate rather than to the prose.
 
-    The crux's guard turns on one fact, `_is_processing`, and on the shape of
-    the classes that carry it. This asserts the three things that make the walk
-    unavoidable, each in the module that holds it: the queued layer defines the
-    flag; the async layer defines it too and does **not** inherit from the
-    queued one, so reading either module alone answers for at most half the
-    package; and the core defines it nowhere, so it cannot be read off the
-    class the write is about. If any of the three stopped being true the walk
-    would be shorter than the task claims, and this fails rather than the
-    claim going quietly stale.
+    The wide member's guard turns on one fact, `_is_processing`, and on the
+    shape of the classes that carry it. This asserts the three things that
+    make the walk unavoidable, each in the module that holds it: the queued
+    layer defines the flag; the async layer defines it too and does **not**
+    inherit from the queued one, so reading either module alone answers for at
+    most half the package; and the core defines it nowhere, so it cannot be
+    read off the class the write is about. If any of the three stopped being
+    true the walk would be shorter than the task claims, and this fails rather
+    than the claim going quietly stale.
     """
     [k4] = [contrast for contrast in CONTRASTS if contrast.knob == "K4"]
     repo = task_by_id(k4.wide_id).repo_dir
@@ -663,7 +738,7 @@ def test_the_k4_crux_reads_three_modules_it_never_writes_to() -> None:
     assert "_is_processing" not in (repo / SERIALIZATION).read_text()
 
 
-def test_the_k4_control_reads_nothing_outside_the_module_it_writes_in() -> None:
+def test_the_k4_narrow_member_reads_nothing_outside_the_module_it_writes_in() -> None:
     """The other half of the contrast, and the half that could quietly rot: a
     control whose facts drifted into another module would stop being narrow
     without anything failing. Everything its rule turns on — the promise, the
@@ -796,6 +871,30 @@ def test_a_careless_answer_does_not_resolve(
     assert record.quality_value == 0.0
 
 
+def test_the_k10_wide_member_refuses_a_trace_kept_on_the_wrong_machine() -> None:
+    """One probe of its own, for the one rule the held-out suite used to state
+    without checking.
+
+    The prompt gives the trace to the root machine — "a nested machine's own
+    trace stays empty however often its states are entered and left" — and
+    every recording site but one is reached through a call made on the root, so
+    writing `self.trace` instead is a distinction without a difference
+    everywhere the rest of the suite drives the machine. `initialize` is the
+    exception, and until #42's fix pass added a held-out case that initializes
+    a nested machine, this answer graded 1.0 with a stated rule broken. This
+    asserts it no longer does, which is the only way that gap stays shut.
+    """
+    [k10] = [contrast for contrast in CONTRASTS if contrast.knob == "K10"]
+    task = task_by_id(k10.wide_id)
+    diff = solution_diff(
+        task, mutate=rewriting(*TRACE_RECORDED_ON_THE_MACHINE_INITIALIZED)
+    )
+
+    [record] = evaluate([task], [run_for(task, diff)], source="run-log")
+
+    assert record.quality_value == 0.0
+
+
 # --- pre-registered predictions -------------------------------------------------
 
 
@@ -804,10 +903,10 @@ def test_the_registered_rungs_all_sit_at_the_floor() -> None:
 
     Not modesty. Both of round 1's dense K7 cells — one of them on this very
     snapshot — were registered `sonnet-only` and both resolved on haiku, and
-    upward rung bets outside K1
-    stand at nought for fourteen lifetime (section 21). Registering four more
-    of them would be spending the round's falsification record on a bet this
-    corpus has never won. What the round bets instead is below.
+    upward rung bets outside K1 stand at nought for fourteen lifetime
+    (section 21). Registering four more of them would be spending the round's
+    falsification record on a bet this corpus has never won. What the round
+    bets instead is below.
     """
     registered = {
         task.id: task.construction.prediction.rung
@@ -889,27 +988,33 @@ def test_the_claim_is_not_carried_across_a_longer_brief(
     )
 
 
-@pytest.mark.parametrize(("task_id", "probes", "files"), BY_TASK)
+@pytest.mark.parametrize(("task_id", "points_at"), BY_SIDE)
 def test_every_prediction_names_the_mechanism_it_turns_on(
-    task_id: str, probes: Probes, files: frozenset[str]
+    task_id: str, points_at: str
 ) -> None:
     """A rationale is what a missed prediction teaches, and for these two knobs
     what it has to teach is which reading was expected to cost the money.
 
-    Phrases rather than words, and both of them, following the correction #41
-    made to its own version of this test: an any-of-three over short words was
-    met by any one of them arriving incidentally, and its loosest disjunct
-    matched inside an unrelated word. What every member here has to say is how
-    much there is to write and how far the work reaches — the crux members
-    because that is the price they bet on, the controls because being small in
-    both is the whole of their job.
+    Phrases rather than words, following the correction #41 made to its own
+    version of this test: an any-of-three over short words was met by any one
+    of them arriving incidentally, and its loosest disjunct matched inside an
+    unrelated word. What every member here has to say is how much there is to
+    write and how far the work reaches — the wide members because that is the
+    price they bet on, the narrow ones because being small in both is the whole
+    of their job.
+
+    Required per side rather than as a disjunction, which is the fault this
+    replaces: `A or B` over all four members was satisfied by four rationales
+    that all pointed the same way, and a control that never named the member it
+    is the baseline for would have passed it. Each side now has to point at the
+    other, and only at the other.
     """
     task = task_by_id(task_id)
 
     assert task.construction is not None
     rationale = task.construction.prediction.rationale.lower()
     assert len(rationale.split()) >= 15
-    assert "the crux beside it" in rationale or "the control beside it" in rationale
+    assert points_at in rationale
     assert "module" in rationale
 
 
@@ -928,26 +1033,46 @@ def test_each_member_records_that_its_pair_was_matched_on_volume(
         assert "matched" in comment
 
 
-def test_the_k10_crux_argues_why_its_sites_cannot_be_collected() -> None:
+def test_the_k10_wide_member_argues_why_its_sites_cannot_be_collected() -> None:
     """A count on its own would not settle it: fourteen sites that a competent
     author could have written as one would be a badly factored reference
     solution rather than a wide task. So the task.yaml has to say, where a
-    reader of the task alone would look, why the library forces the
-    repetition."""
+    reader of the task alone would look, why the library forces the repetition,
+    and — since three sites per module *can* be collected — how far the
+    argument actually reaches.
+
+    Phrases from the argument rather than from the vocabulary. "Edit site",
+    which this checked before, is the knob's own definition and arrives in any
+    comment that says what K10 is; "counted rather than described" is a claim
+    only a comment making the argument would make.
+    """
     [k10] = [contrast for contrast in CONTRASTS if contrast.knob == "K10"]
     comment = prose(k10.wide_id)
 
-    assert "edit site" in comment
+    assert "counted rather than described" in comment
     assert "copies" in comment
     assert "inheritance cannot collect them" in comment
+    # And the limit, so the argument above cannot be read wider than it is. A
+    # phrase and not the bare word: "ten" is inside "written", which this
+    # comment says a dozen times, and that is the fault #41 corrected.
+    assert "ten sites" in comment
     assert len(comment.split()) >= 120
 
 
-def test_the_k4_crux_walks_the_read_its_write_set_depends_on() -> None:
+def test_the_k4_wide_member_walks_the_read_its_write_set_depends_on() -> None:
     """The ticket's "documented walk". K4's level is free text, so `wide` is an
     authorial claim and nothing in the task model can check it; what can be
     checked is that the walk was written down in the place a reader of the task
-    alone would look, naming each module it passes through."""
+    alone would look, naming each module it passes through.
+
+    And that the two shortcuts round it are written down beside it, which is
+    the harder half. The prompt has to say what it says to be an honest brief,
+    and what it says supplies two of the walk's three steps outright, leaving
+    one identifier to be found; a defensive `getattr` skips the third module
+    altogether. Neither shortcut can be closed without making the task
+    dishonest, so both are registered — and a comment that made the walk sound
+    unavoidable would be the overstatement this asserts against.
+    """
     [k4] = [contrast for contrast in CONTRASTS if contrast.knob == "K4"]
     comment = prose(k4.wide_id)
 
@@ -955,4 +1080,6 @@ def test_the_k4_crux_walks_the_read_its_write_set_depends_on() -> None:
         assert module in comment
     assert "read set" in comment
     assert "wide and shallow" in comment
+    assert "the prompt supplies" in comment
+    assert "getattr" in comment
     assert len(comment.split()) >= 120

@@ -1,4 +1,4 @@
-# K4 at wide, and the crux side of the first contrast the knob has ever had
+# K4 at wide, and the wide side of the first contrast the knob has ever had
 # (#42). K4 — the read-set/write-set ratio — has been in section 9's list
 # since round 1 and has never been built: section 23.9 recorded it still
 # untouched after round 2 and the round-3 spec commissioned it. There is no
@@ -37,20 +37,56 @@
 # once it is in front of you, and none of them can be guessed from
 # pysm/serialization.py. #41's K7 pair is the other shape — four contracts
 # decided four frames away in one module — and holding the two apart is why
-# this crux's own module is where the whole write goes.
+# this task's own module is where the whole write goes.
 #
-# What the walk is not, recorded before the sweep so it cannot be softened
-# after it. The walk is what a *confident* answer costs, not what a correct
-# one strictly requires: an author who read pysm/queued.py alone and then
-# wrote the defensive `getattr(machine, '_is_processing', False)` out of habit
-# would pass every grading test without ever opening pysm/aio.py, because
-# duck typing happens to cover the class they never saw. So this task does not
-# claim the third module is unreachable; it claims that skipping it costs you
-# the ability to know, and that the idiomatic non-defensive answer — the
-# isinstance check against the one class the read turned up — is wrong, which
-# is what the careless probe grades 0.0. Read a hit on the cost claim as
-# evidence about how much the reading costs, and a resolved run as evidence
-# about nothing in particular, since both roads reach it.
+# How much of that walk a solver is actually made to take, registered here
+# rather than left for a reviewer to find, because the honest answer is less
+# than the three steps above suggest. **The prompt supplies two of them.**
+# Step 3 is in the brief verbatim — "the classic core never has it" — so
+# nobody has to open pysm/pysm.py to learn that the guard must tolerate the
+# flag's absence. Step 2's operative conclusion is in the brief too: "every
+# layer that runs events counts, and a graph that mixes plain core machines
+# with ones that queue is judged by the ones that queue" is exactly the
+# sentence that refuses an isinstance against QueuedStateMachine, so what
+# pysm/aio.py adds is the evidence for a conclusion already stated rather than
+# the conclusion. The graph walk and the climb to the root are in the brief as
+# well and are visible in the file being edited, which already does both. What
+# is left requiring a read outside pysm/serialization.py is one identifier:
+# the name `_is_processing`, which the prompt deliberately withholds and only
+# pysm/queued.py and pysm/aio.py can supply.
+#
+# So "a genuine hunt through three modules with a wrong turn in it"
+# overstates this task, and nothing downstream should lean on that phrasing.
+# What is true is narrower and still worth measuring: the facts do live in
+# three modules and the brief is the only thing standing in for two of them,
+# so a solver who trusts the prose writes the same lines off a much shorter
+# read than a solver who checks it — and the second is the one this task is
+# priced on.
+#
+# The prompt says those things because a brief that withheld them would be a
+# different knob. Leaving out "the classic core never has it" would make the
+# core's absence a planted crux, which is K9's mechanism and not K4's, and
+# would put this task's rung bet somewhere other than the floor. The right
+# repair is registration, not prompt surgery: the shortcut is written down
+# here so it can be read off the record rather than discovered afterwards.
+#
+# The second shortcut, and the older of the two. The walk is what a
+# *confident* answer costs, not what a correct one strictly requires: an
+# author who read pysm/queued.py alone and then wrote the defensive
+# `getattr(machine, '_is_processing', False)` out of habit would pass every
+# grading test without ever opening pysm/aio.py, because duck typing happens
+# to cover the class they never saw. So this task does not claim the third
+# module is unreachable; it claims that skipping it costs you the ability to
+# know, and that the idiomatic non-defensive answer — the isinstance check
+# against the one class the read turned up — is wrong, which is what the
+# careless probe grades 0.0.
+#
+# Both shortcuts point the same way, and it is the way the claim was already
+# registered: read a hit on the cost claim as evidence about how much the
+# reading costs, and a resolved run as evidence about nothing in particular,
+# since several roads reach it. The cost claim carries the whole of this
+# task's reading, and it carries it a little less far than the ticket's own
+# framing of K4 implies.
 #
 # Matched with pysm-keep-snapshot-metadata-plain on write volume, the axis
 # #39 added to the pair design: the two reference solutions add 17 and 16
@@ -128,8 +164,10 @@ construction:
       decides the task is the 265-line pysm/aio.py, where the async layer
       keeps the same flag under the same name while extending StateMachine
       rather than the queued class an author who stopped at pysm/queued.py
-      would have found. The
-      control beside it asks for sixteen lines in the same module off facts
+      would have found. How far that read is forced is registered in this
+      task's comment rather than assumed here: the prompt states two of the
+      three facts, and what only a read supplies is the flag's name. The
+      control beside it asks for sixteen lines in the same module, off facts
       that are all written in that module. The rung is registered at the
       floor for the reason round 1's two dense K7 cells came back there after
       being bet a rung up, and because upward bets outside K1 are nought for

@@ -5,15 +5,15 @@
 # carried to.
 #
 # Narrow means this, counted rather than described: the reference solution
-# touches 2 places in 2 modules, against the crux's 14 in 3, and the suite
-# counts the hunks of both reference diffs and holds each to its band. The
-# change is deliberately the same *kind* as the crux's — a small addition
-# mirrored across the package's execution layers, so that what separates the
-# two members is the number of sites and not the character of the work. Two
-# is the smallest number that is still a mirroring: QueuedStateMachine and
-# AsyncQueuedStateMachine keep the same two queues under the same two names
-# and share no base class that has them, so even the narrow member is
-# written twice.
+# touches 2 places in 2 modules, against the wide member's 14 in 3, and the
+# suite counts the hunks of both reference diffs and holds each to its band.
+# The change is deliberately the same *kind* as that member's — a small
+# addition mirrored across the package's execution layers, so that what
+# separates the two members is the number of sites and not the character of
+# the work. Two is the smallest number that is still a mirroring:
+# QueuedStateMachine and AsyncQueuedStateMachine keep the same two queues
+# under the same two names and share no base class that has them, so even the
+# narrow member is written twice.
 #
 # Narrow is not easy, and it is worth saying which parts are not. The order
 # the two queues come back in is the order the machine drains them and not
@@ -33,12 +33,13 @@
 # not.
 #
 # The snapshot carries no knob-setting edit, so `modifications` is empty: the
-# coordination width the crux beside this one is pitched on is the library's
-# own duplicated machinery, not something planted, and an edit would break
-# the byte-identity the pair rests on anyway. Empty is not the same as
-# untouched — what was left out of every pysm snapshot for reasons answering
-# to no knob is recorded in docs/research/substrate-candidate-repos.md,
-# because `modifications` is not the place for it.
+# coordination width the wide member beside this one is pitched on is the
+# library's own duplicated machinery, not something planted, and an edit
+# would break the byte-identity the pair rests on anyway. Empty is not the
+# same as untouched — what was left out of every pysm snapshot for reasons
+# answering to no knob is recorded in the substrate research note at
+# docs/research/substrate-candidate-repos.md, because `modifications` is not
+# the place for it.
 #
 # K10 has no enumerated ladder in KNOB_LEVELS, so "narrow" is recorded as
 # written and nothing checks that another task's K10 level means the same
@@ -103,10 +104,10 @@ construction:
       the list is a copy, what an empty machine answers, what the count means
       — so nothing is left open, and the two methods go into the two modules
       the prompt names. The control's job is to be the same amount of code to
-      write as the crux beside it at two sites rather than fourteen: if this
-      one lands anywhere but the bottom rung, the pair is measuring how hard
-      the task was rather than how many places the work had to reach, and the
-      round's cost reading should be discounted accordingly
+      write as the wide member beside it at two sites rather than ten to
+      fourteen: if this one lands anywhere but the bottom rung, the pair is
+      measuring how hard the task was rather than how many places the work had
+      to reach, and the round's cost reading should be discounted accordingly
   substrate:
     origin: https://github.com/pgularski/pysm
     commit: 0c47a5067974951c75a498ee4ed025cf881f48fd

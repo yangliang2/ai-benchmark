@@ -110,7 +110,7 @@ construction:
       to write a state's `name`. The one axis this pair does not hold is
       prompt length, and it is registered here rather than left for a reader
       to find: this brief runs 328 words to the control's 255, a ratio of 1.29
-      and the widest of the seven pairs round 3 registers, so a longer brief
+      and the widest of the nine pairs round 3 registers, so a longer brief
       is the standing alternative explanation for any cost hit this task
       records. The arithmetic that defuses it is not close. Seventy-three more
       words is 504 more characters, on the order of 130 input tokens added to

@@ -1,4 +1,4 @@
-# K10 at wide, and the crux side of the first contrast the knob has ever had
+# K10 at wide, and the wide side of the first contrast the knob has ever had
 # (#42). K10 — coordination width, N consistent edit sites — has been in
 # section 9's list since round 1 and has never been built: section 16.2 named
 # it a secondary candidate, section 23.9 recorded it still untouched after
@@ -22,6 +22,25 @@
 # driven the same way records the same trace whichever layer ran it — so
 # nothing here is withheld; what is being asked for is that a stated rule be
 # carried to all of its sites.
+#
+# The floor is ten sites, not fourteen, and that is registered here rather
+# than left for a reviewer. Fourteen is what the reference diff measures, but
+# the reference appends inline at every walk, and both of the large modules
+# funnel their entry and exit walks through an `_on` — State._on in
+# pysm/pysm.py and AsyncQueuedStateMachine._on in pysm/aio.py. A solution that
+# records at those two choke points instead collects three sites into one in
+# each of them and comes to ten hunks: this was written out and graded, and it
+# passes every held-out test, as it should. Ten is still inside the 8-15 band
+# the ticket asks for and the suite asserts, so nothing about the level
+# changes; what the collapse corrects is the *reason*. The irreducibility is
+# across modules and not within them. Within a module three recordings can be
+# collected into one; across modules they cannot, because pysm/aio.py and
+# pysm/queued.py hold their own copies of machinery pysm/pysm.py also has, and
+# a decision about what the machine records has to be written into each of
+# the three whatever spelling is chosen inside them. Read the width claim as
+# "one decision, ten to fourteen places, three modules, no way down to two",
+# which is what survives, and not as "fourteen places, none of them
+# collectible", which does not.
 #
 # The control beside it, pysm-list-the-waiting-events, is the same kind of
 # change — a small addition mirrored across the package's execution layers —
@@ -114,13 +133,14 @@ construction:
       every rule is stated outright and no single site is hard: ten of the
       fourteen are one line appended to a list, the two that record thrown-away
       events are four apiece, the largest is a five-line docstring entry, and
-      every module they live in is named in the prompt. The bet is on price
-      and not on the rung,
-      because the mechanism here is width rather than depth — fourteen places
-      to carry one decision to, twelve of them the same line, spread over
-      three modules of which two are copies of machinery the third also has,
-      while the control beside it asks for the same twenty-odd lines at two
-      sites in two of those same modules.
+      every module they live in is named in the prompt. The bet is on price and
+      not on the rung, because the mechanism here is width rather than depth —
+      ten to fourteen places to carry one decision to, most of them the same
+      line, spread over three modules of which two are copies of machinery the
+      third also has, while the control beside it asks for the same twenty-odd
+      lines at two sites in two of those same modules. The band rather than the
+      count, because a solution recording at each module's own `_on` reaches
+      ten and grades; what no spelling reaches is fewer than three modules.
       The rung is registered at the floor because that is where round 2's
       sixteen bottom-rung bets went fourteen for sixteen and where upward
       bets outside K1 stand at nought for fourteen lifetime; a fifteenth is

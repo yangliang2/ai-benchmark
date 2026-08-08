@@ -99,6 +99,27 @@ def test_only_the_root_machine_records():
     assert len(root.trace) > 1
 
 
+def test_a_nested_machine_initialized_on_its_own_records_on_the_root():
+    """The one place `self` and `self.root_machine` come apart on the initial
+    walk, and until this test existed nothing here separated them.
+
+    `initialize` may be called on any machine in the graph, and every other
+    recording site is reached through a call made on the root, so a solution
+    that wrote `self.trace` in the initial-path walk instead of
+    `self.root_machine.trace` recorded into the right list everywhere the rest
+    of this suite looks. Here it does not: the entries belong to the root, and
+    the nested machine's own trace stays empty, which is what the prompt asks
+    for in as many words.
+    """
+    root, states = graph()
+    root.initialize()
+
+    states['work'].initialize(fire_events_on_init=True)
+
+    assert list(root.trace) == [('enter', 'a')]
+    assert list(states['work'].trace) == []
+
+
 def test_the_recording_keeps_going_across_several_events():
     root, _ = graph()
     root.initialize()

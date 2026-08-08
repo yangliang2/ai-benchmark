@@ -11,12 +11,13 @@
 # taken in unread and set on the dict; `StateMachineException` is already
 # imported at the top and already raised fourteen times below. Nothing outside
 # pysm/serialization.py answers any question this task asks — which is the
-# whole of the contrast, because the crux beside it turns on facts that live
-# in three modules it never touches, one of them the 265-line pysm/aio.py.
-# (Read that crux's own comment for the limit on that: a defensively written
-# guard could reach the right answer off a shorter read. What is not in doubt
-# is the asymmetry, which is what the pair varies — there is no read for this
-# member to skip.)
+# whole of the contrast, because the wide member beside it turns on facts
+# that live in three modules it never touches, one of them the 265-line
+# pysm/aio.py. (Read that member's own comment for the two limits on that:
+# its prompt states two of the three facts outright, and a defensively
+# written guard could reach the right answer off a shorter read still. What
+# is not in doubt is the asymmetry, which is what the pair varies — every
+# read that member could shorten is a read this one does not have at all.)
 #
 # Narrow is not easy. Two slips are stated in the prompt and both are the
 # obvious move: checking only the top level of the metadata rather than all
@@ -34,7 +35,7 @@
 # not.
 #
 # The snapshot carries no knob-setting edit, so `modifications` is empty: the
-# scatter the crux beside this one is pitched on is the library's own
+# scatter the wide member beside this one is pitched on is the library's own
 # three-layer layout, not something planted, and an edit would break the
 # byte-identity the pair rests on anyway. Empty is not the same as
 # untouched — what was left out of every pysm snapshot for reasons answering
@@ -99,7 +100,7 @@ construction:
       set is one module: the guard, the function it guards and the exception
       it raises are all in pysm/serialization.py, and no other file answers
       any question the task asks. The control's job is to be the same amount
-      of code to write as the crux beside it, in the same module and at
+      of code to write as the wide member beside it, in the same module and at
       almost the same place, off facts a reader never has to leave that
       module to find: if this one lands anywhere but the bottom rung, the
       pair is measuring how hard the task was rather than how far the reading
