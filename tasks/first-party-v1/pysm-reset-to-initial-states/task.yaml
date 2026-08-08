@@ -1,0 +1,121 @@
+# K7 at dense, and the crux side of the first contrast the knob has ever
+# had (#41). Round 1 measured K7's two tasks against the frozen zero-knob
+# baseline and got the largest effort effect in the corpus — 3.7x turns and
+# 5.1x cost on haiku — off a comparison whose control was a hand-authored
+# repository of a few hundred lines. Section 12 recorded that the reading
+# conflates invariant density with plain repository size and asked for a
+# size-matched control; round 2 did not build one and section 18 ruled the
+# knob stalled. This pair is that control, built the strongest way the task
+# format allows: the calm member starts from the same pysm snapshot byte for
+# byte, so repository size is matched exactly rather than approximately, and
+# what is left between the two members is where in the library the change
+# lands.
+#
+# Dense means this: the write is one method and the read set is the
+# statechart contracts around it, none of which the prompt restates. The exit
+# walk pushes the leaf it left onto the leaf-state stack and every state it
+# climbs past onto its parent's state stack, so the obvious answer — hand the
+# work to _exit_states and _enter_states, which is how set_previous_leaf_state
+# performs a dynamic transition — records history the prompt says a reset must
+# not record, and only reading those two methods says so. `_leaf_state` lives
+# on the root machine alone, so a handler asking a nested machine where it is
+# is asking the root. The entry walk rebuilds its path by descending `.state`,
+# which the exit walk has just reset to `initial_state`. And a StateMachine
+# carries three stacks, only two of which are history.
+#
+# Matched with pysm-chain-and-outline-states on write volume, which is what
+# #39 added to the pair design and this pair inherits: the two reference
+# solutions add 31 and 29 lines to the same snapshot, a ratio of 1.07, and the
+# suite asserts the match. Without it "dense terrain costs more" and "the
+# dense task was bigger" are the same measurement.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty:
+# the density this pair is pitched on is the library's own, as round 1's two
+# K7 tasks were, and an edit would break the byte-identity the pair rests on
+# anyway. Empty is not the same as untouched — what was left out of every
+# pysm snapshot for reasons answering to no knob, down to the two
+# MicroPython-fallback import tests that reach for pysm/pysm.py through the
+# upstream test/ layout, is recorded in
+# docs/research/substrate-candidate-repos.md, because `modifications` is not
+# the place for it.
+#
+# K7 has no enumerated ladder in KNOB_LEVELS, so "dense" is recorded as
+# written and the pair reads not assessable on the rung axis under section 9's
+# amended clause 2. The registered cost claim below is the whole of what this
+# task can say, and that is recorded in section 23.7 rather than discovered at
+# reconcile time.
+#
+# feature-dev: the grading tests exercise reset, which does not exist in
+# repo/, so they fail on the pristine repository as the lint requires.
+id: pysm-reset-to-initial-states
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  pysm machines run forwards. Once a StateMachine has been initialized and
+  events have moved it around, there is no way to put it back where it
+  started short of building the graph again.
+
+  In pysm/pysm.py, add a method to StateMachine:
+
+      def reset(self, event=None):
+
+  It returns the whole machine graph to the configuration initialize() leaves
+  it in, and it gets there the way a transition does rather than by
+  assignment:
+
+    * every state the machine is currently in is left, from the leaf state
+      outwards, and then the initial states are entered again from the top
+      down, so the `exit` and `enter` handlers run exactly as they do during a
+      dispatched transition — including when the machine is already sitting in
+      its initial configuration, which is left and entered again like any
+      other;
+    * while a state's handler runs, `leaf_state` names that state, as it does
+      during a transition;
+    * afterwards every machine in the graph is on its own initial state, and
+      `leaf_state` names the leaf of the initial path;
+    * the event you pass, if you pass one, reaches those handlers as the
+      `source_event` of their enter and exit events, and is marked with the
+      machine the way dispatch marks an event it is handed; pass nothing and
+      the `source_event` is None;
+    * nothing is recorded on the stacks of historical states — the state
+      stacks and the leaf-state stack come out of a reset holding exactly what
+      they held going in, and so does the stack kept for pushdown work;
+    * resetting a machine that was never initialized raises
+      StateMachineException.
+
+  Call it on the root machine, the way dispatch is called.
+
+  Everything else about the library stays as it is: dispatch, the transition
+  callbacks, the history stacks and what they are for are all unchanged, and
+  a machine that is never reset behaves exactly as it does today.
+construction:
+  knobs:
+    - id: K7
+      level: dense
+  pair: pysm-reset
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the rung is registered where round 1 actually put both dense K7 tasks —
+      both were bet sonnet-only and both resolved on haiku — and where round
+      2's sixteen bottom-rung bets went fourteen for sixteen; betting a rung
+      up here would be the fifteenth loss of a bet this corpus has never won
+      outside K1. What the task is built to move is price, and the mechanism
+      is the read set rather than the write: one method of twenty lines whose
+      correctness turns on four contracts nothing in the prompt states — the
+      leaf-state stack the exit walk pushes, the state stack each parent gets,
+      the root-only `_leaf_state`, and the entry walk descending a `.state`
+      the exit walk has just reset — against a control asking for the same
+      amount of code in a module that imposes none of them. If the dense side
+      does not cost more here, with repository size held byte-identical and
+      write volume matched, K7 has no price left to charge and the round says
+      so
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

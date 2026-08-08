@@ -402,9 +402,17 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
         if category == "feature-dev" and profile != "(zero-knob)"
     }
     assert disclosed["K1=acceptance"] == "4 single-file; 4 hand-authored"
-    # The one cell built entirely on vendored substrate, priced against
-    # hand-authored controls because the corpus holds no other kind.
-    assert disclosed["K7=dense"] == "2 single-file; 2 vendored"
+    # The cells built entirely on vendored substrate, priced against
+    # hand-authored controls because no control in the corpus is vendored:
+    # round 1's two dense K7 tasks, joined by round 3's two (#41), and the calm
+    # controls those were paired with. What the row key cannot show is that
+    # those calm tasks are the corpus's first vendored *comparator* — they are
+    # a K7 cell of their own here, not a denominator, because a zero-knob
+    # control declares no construction and these declare K7. The pair they
+    # close is read by `reconcile-v1`, which compares the two members directly;
+    # this table goes on dividing both cells by the hand-authored eleven.
+    assert disclosed["K7=dense"] == "4 single-file; 4 vendored"
+    assert disclosed["K7=calm"] == "2 single-file; 2 vendored"
 
 
 def test_calibrate_v1_defaults_to_the_checked_in_task_set_and_run_logs(

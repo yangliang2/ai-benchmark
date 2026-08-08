@@ -1,0 +1,119 @@
+# K7 at dense, and the crux side of the second contrast the knob has ever had
+# (#41). The reasoning is pysm-reset-to-initial-states': round 1's K7 effect
+# was measured against hand-authored controls a fraction of the substrate's
+# size (section 12), and the fix asked for is a control on the same terrain.
+# This pair supplies a second one at a smaller write volume, so the round
+# reads the dense/calm contrast twice rather than once.
+#
+# Dense means this: StateMachine's own docstring advertises pushdown-automaton
+# use and the class carries a `stack` for it, and nothing in the library ever
+# touches that stack. Filling the gap is a dozen lines, and every one of the
+# ways to get it wrong lives outside them. The transition has to be performed
+# by the same exit and enter walks a dispatch uses, which means finding out
+# that `_exit_states` returns the common ancestor `_enter_states` then needs
+# and that it also pushes the leaf-state and state stacks — history the prompt
+# says a push and a pop record like any other transition, so an answer that
+# walks the hierarchy itself has to reproduce it. The state that goes on the
+# stack is the one being left, which has to be read before the walk starts.
+# Entering a composite state descends through `.state`, which the exit walk
+# resets to `initial_state` on its way out. And `Stack.pop` raises IndexError
+# on an empty stack rather than returning None.
+#
+# This pair is matched with pysm-rename-and-list-states on write volume, the
+# axis #39 added to the pair design: the two reference solutions add 28 and 26
+# lines to the same snapshot, a ratio of 1.08, and the suite asserts it. Without
+# "dense terrain costs more" and "the dense task was bigger" are the same
+# measurement.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty:
+# the density this pair is pitched on is the library's own, as round 1's two
+# K7 tasks were, and an edit would break the byte-identity the pair rests on
+# anyway. Empty is not the same as untouched — what was left out of every
+# pysm snapshot for reasons answering to no knob, down to the two
+# MicroPython-fallback import tests that reach for pysm/pysm.py through the
+# upstream test/ layout, is recorded in
+# docs/research/substrate-candidate-repos.md, because `modifications` is not
+# the place for it.
+#
+# K7 has no enumerated ladder in KNOB_LEVELS, so "dense" is recorded as
+# written and the pair reads not assessable on the rung axis under section 9's
+# amended clause 2. The registered cost claim below is the whole of what this
+# task can say; section 23.7 records that before the sweep rather than after
+# it, and records with it that the two dense sites of this round are both the
+# transition machinery of pysm/pysm.py, so the four claim readings are not
+# four independent draws.
+#
+# feature-dev: the grading tests exercise push_state and pop_state, neither of
+# which exists in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: pysm-push-and-pop-states
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  A StateMachine carries a `stack` "that can be used if the Pushdown Automaton
+  functionality is needed", as its docstring puts it, and nothing in pysm ever
+  puts anything on it. So the obvious thing a pushdown machine does — break
+  off to somewhere, then come back to wherever you happened to be — has to be
+  written by hand at every call site.
+
+  In pysm/pysm.py, add two methods to StateMachine:
+
+      def push_state(self, to_state, event=None):
+      def pop_state(self, event=None):
+
+  `push_state` puts the state the machine is currently in onto that `stack`
+  and moves the machine to `to_state`. `pop_state` takes the state on top of
+  that `stack` off again and moves the machine back to it, returning that
+  state. What they come to:
+
+    * the move each of them makes is an ordinary transition — the same exit
+      handlers from the leaf outwards, the same enter handlers inwards, and
+      the same entries recorded on the stacks of historical states as a
+      dispatched transition to that state would record;
+    * what goes on the stack is the state being left, not the state being
+      moved to, and the states come back off it in the reverse of the order
+      they went on;
+    * `to_state` may be a state machine, in which case the move descends to
+      the substate that machine is on, exactly as a transition to it does;
+    * `pop_state` on an empty stack returns None, moves nothing and runs no
+      handlers;
+    * the event you pass, if you pass one, reaches those handlers as the
+      `source_event` of their enter and exit events, and is marked with the
+      machine the way dispatch marks an event it is handed;
+    * pushing from a machine that was never initialized raises
+      StateMachineException.
+
+  Call them on the root machine, the way dispatch is called.
+
+  Everything else about the library stays as it is: dispatch, the transition
+  callbacks and the history stacks are unchanged, and a machine that never
+  pushes behaves exactly as it does today.
+construction:
+  knobs:
+    - id: K7
+      level: dense
+  pair: pysm-pushdown
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the rung is registered at the floor for the reason
+      pysm-reset-to-initial-states registers it there: both round-1 K7 tasks
+      were bet sonnet-only and both resolved on haiku, and upward bets outside
+      K1 are nought for fourteen lifetime. The bet this task places is on
+      price, and the mechanism is a write of a dozen lines whose every failure
+      mode is decided elsewhere — the common ancestor _exit_states returns and
+      the history it pushes on the way, the `.state` the entry walk descends
+      after the exit walk has reset it, the IndexError an empty Stack raises —
+      against a control asking for the same amount of code in a module where
+      nothing outside the file being edited decides anything. A miss on the
+      cost claim with size and volume both held says the terrain is not what
+      is being paid for
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

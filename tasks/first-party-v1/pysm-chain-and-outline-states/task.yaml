@@ -1,0 +1,108 @@
+# K7 at calm, and the control side of the pysm-reset pair (#41). Same
+# vendored pysm snapshot as pysm-reset-to-initial-states, byte for byte, so
+# the two members are matched on the thing round 1's K7 reading could not
+# control for: repository size. What differs is where the change lands.
+#
+# Calm means this: pysm/builder.py is a 105-line opt-in fluent helper that
+# nothing else in the package imports, and that builds machines through the
+# public core API rather than reaching into it. Its whole state is one
+# dictionary from path tuple to state, and the invariants a change here has to
+# respect are visible in the file — _ensure_new_path refuses a path already
+# taken, _path_for walks the dictionary backwards, _normalize_path reads a
+# string path by splitting it on '/'. Calm is not easy: the chain has to
+# refuse a colliding name before it has added anything, which means checking
+# every name up front rather than letting add_state raise halfway through, and
+# that is a real slip a reader can make. It is *local* — everything that
+# decides whether the answer is right is in the one file being edited, where
+# the crux beside it is decided four frames away in code the prompt never
+# mentions.
+#
+# Matched with pysm-reset-to-initial-states on write volume, the axis #39
+# added to the pair design: the two reference solutions add 29 and 31 lines to
+# the same snapshot, a ratio of 1.07, and the suite asserts the match. Without
+# it "dense terrain costs more" and "the dense task was bigger" are the same
+# measurement. This member registers no effort claim, as a control does not.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty:
+# the density this pair is pitched on is the library's own, as round 1's two
+# K7 tasks were, and an edit would break the byte-identity the pair rests on
+# anyway. Empty is not the same as untouched — what was left out of every
+# pysm snapshot for reasons answering to no knob, down to the two
+# MicroPython-fallback import tests that reach for pysm/pysm.py through the
+# upstream test/ layout, is recorded in
+# docs/research/substrate-candidate-repos.md, because `modifications` is not
+# the place for it.
+#
+# K7 has no enumerated ladder in KNOB_LEVELS, so "calm" is recorded as written
+# and nothing checks that another task's K7 level means the same thing.
+#
+# feature-dev: the grading tests exercise chain and outline, neither of which
+# exists in repo/, so they fail on the pristine repository as the lint
+# requires.
+id: pysm-chain-and-outline-states
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  pysm/builder.py builds a machine one state and one transition at a time.
+  Two things it will not do: lay out a run of states that simply follow one
+  another, and tell you what you have built so far.
+
+  Add both to StateMachineBuilder.
+
+      def chain(self, names, events, parent_path=None, initial=False):
+
+  It adds each name in `names` as a state under `parent_path` — the root
+  machine when that is None — and a transition from each of them to the one
+  after it on `events`, which is a single event name or several. What it
+  comes to:
+
+    * the states are added in the order they are given, and there is no
+      transition from the last back to the first;
+    * `initial=True` makes the first state of the run the parent's initial
+      state, and nothing else in the run initial; `initial=False` makes none
+      of them initial;
+    * fewer than two names is refused with StateMachineException, and so is a
+      run that uses one name twice;
+    * a name already taken under that parent is refused the same way, and a
+      refused chain adds nothing at all — not the states before the one that
+      collided, and not their transitions;
+    * it returns the builder, so calls can be chained.
+
+      def outline(self, path=None):
+
+  It reports what has been built, without building anything, as one nested
+  tuple per state:
+
+      (name, kind, initial, children)
+
+  where `kind` is `'machine'` for a state machine and `'state'` for a plain
+  state, `initial` is whether that state is its parent's initial one, and
+  `children` is a tuple of the same shape for the states added under it, in
+  alphabetical order of name — empty for a plain state. `path` names the
+  state to report on, in any of the spellings the builder already accepts;
+  None means the root machine, whose own `initial` is False.
+
+  Everything else about the builder stays as it is.
+construction:
+  knobs:
+    - id: K7
+      level: calm
+  pair: pysm-reset
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      every rule is stated outright — how many names a chain needs, which of
+      them is initial, what a collision does and that it does it before
+      anything is added, what shape the outline comes back in and in what
+      order — so nothing is left open, and the module the change goes into is
+      105 lines of self-contained bookkeeping that no other part of the
+      package imports. The control's job is to be the same amount of code to
+      write as the crux beside it and none of the same amount to read: if this
+      one lands anywhere but the bottom rung, the pair is measuring how hard
+      the task was rather than how dense the terrain is, and the round's cost
+      reading should be discounted accordingly
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT
