@@ -1,0 +1,141 @@
+# The second of #43's two composites, and the same recipe on a different site
+# of the same substrate: K1 at intent, K9 at single, K7 at dense (design note
+# section 23.10).
+#
+# **The recipe, corrected against the record, because a reader of this task
+# alone is owed it and not a pointer to the other one.** The round-3 spec
+# calls "intent-level spec x planted open decision x substrate terrain" the
+# only recipe that ever produced unsolved cells. The record is narrower: the
+# three unsolved cells this corpus has ever produced are settings-l2,
+# duration-l3 and inventory-l3 (section 14), every one of them hand-authored
+# and declaring K1 and nothing else, two at intent and one at description.
+# Neither K9 nor a vendored substrate has ever produced one. So the
+# ingredient with a record is K1 at intent, and what a composite does is
+# stack on it the two levers with the largest measured *effort* effects —
+# K7's 5.1x on haiku in round 1 (section 12), K9's 1.5-2.1x on the weaker
+# model in round 2 (section 20). A mechanism-based bet, then, and not a
+# replication of anything. The longer form of the argument is in
+# pysm-work-out-a-way-there's comment; what is below is what differs.
+#
+# It forms no family and no pair and registers no effort claim. Section 9's
+# amended clause 3 scores a baseline claim on a multi-knob task to no knob, so
+# a claim here would be a bet nothing could be attributed to; the task exists
+# for the calibration table's profile key and for the ceiling, and its whole
+# registered outcome is the rung.
+#
+# **A different site, and the limit of that.** #43's two composites sit on the
+# same pysm snapshot, so round 3 now puts ten of its tasks on one library.
+# What holds these two apart is the machinery: this one is
+# pysm/serialization.py's plain-data round trip and the graph invariants
+# underneath it, where the other is pysm/pysm.py's transition walks. What it
+# does not buy is the cross-substrate agreement section 10 wants, and section
+# 23.9 has already registered that a single pysm-specific effect would push
+# round 3's readings the same way. That warning was written about cost claims
+# and these composites register none, so the part of it that transfers is
+# narrower and is stated rather than assumed: two unsolved rungs on one
+# library are one library's ceiling, and a later round may not read them as
+# the corpus's until a second substrate says the same. RBQL was weighed and
+# declined for authoring risk rather than on section 23.9's grounds — its
+# unseeded visible suite is noise in a measured cost and there is no measured
+# cost here — and declining it for the weaker reason is recorded as what it
+# is.
+#
+# **The K9 crux, and it is the thinner of the two shapes.** What the brief
+# labels open is which of a machine's own states becomes its initial one: a
+# snapshot does not record that, a graph cannot be initialized without it, and
+# the recorded configuration is written over the initial one before the graph
+# is handed back, so every choice is correct. That is a *choice* the format
+# leaves rather than an algorithm to invent, which is weaker than
+# bookcase-shelve-the-run's and no stronger than the two of #39's three pairs
+# that section 23.3 calls the weak form. It is registered as such. The suite
+# grades it the only way an open decision may be graded: it never asks which
+# state was picked, and asks instead that re-initializing the rebuilt graph
+# leaves every machine holding one of its own states.
+#
+# **The terrain, and why "dense" is the honest level.** A round trip that
+# comes back equal turns on facts none of which is in the brief and none of
+# which is in the module being written in alone. `leaf_state` is not computed
+# by descending the graph -- it reads `_leaf_state` off the root machine, so a
+# graph whose machines all stand correctly can still report the wrong leaf,
+# which is the contradiction `_validate_active_state_paths` exists to catch.
+# `snapshot` sorts its `states` and `machines` lists, so the shape has to be
+# recovered out of path prefixes rather than read off an order. A path is a
+# list of names from the root down and two states may share a name in
+# different branches, so nodes cannot be keyed on names. `add_state` demands
+# exactly one initial child per machine and `initialize` validates it, so the
+# open decision above is forced rather than optional. The history stacks come
+# back through `_replace_stack`, which reads a maxlen off the deque it is
+# replacing. And a machine with no states under it is a legal leaf, because
+# `_get_leaf_state` stops where `.state` is None.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty: the
+# density is the library's own. Empty is not the same as untouched -- what was
+# left out of every pysm snapshot for reasons answering to no knob is recorded
+# in docs/research/substrate-candidate-repos.md.
+#
+# feature-dev, single-file: the reference diff touches pysm/serialization.py
+# alone, and the grading tests exercise a function the pristine repository
+# does not have, so they fail on it as the lint requires.
+id: pysm-rebuild-a-graph-from-a-snapshot
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  pysm can write a graph's configuration out as plain data and read it back
+  into the same graph. What it cannot do is give you the graph. A snapshot
+  that outlives the process it came from is unusable — `restore` wants the
+  states and the machines already built and wired — and building them by hand
+  off a saved snapshot is what everybody ends up writing.
+
+  Add `rebuild(data)` to pysm/serialization.py. Hand it a snapshot and get
+  back a fresh graph standing exactly where the snapshot said it stood, so
+  that snapshotting what comes back gives you the snapshot you handed in. The
+  snapshot you handed in is left as it was. One that does not describe a
+  graph is refused the way `restore` refuses one.
+
+  A snapshot does not record which of a machine's states is its initial one,
+  and a graph cannot be initialized without one. Any of that machine's own
+  states will do, and which you pick is yours to choose.
+
+  Transitions are not in a snapshot and are not yours to invent: what comes
+  back is a graph standing in a configuration, not a working machine.
+
+  Keep everything else about the library as it is, and keep the package
+  dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: intent
+    - id: K7
+      level: dense
+    - id: K9
+      level: single
+  prediction:
+    rung: unsolved
+    rationale: >-
+      the bet is on the union of a wide graded surface and a read set the
+      brief stands in for none of. What is asked for is one sentence — a
+      snapshot in, a graph out, snapshotting it gives the snapshot back — and
+      what satisfies it is every invariant the module and the core keep
+      between them: the leaf is read off the root's own `_leaf_state` rather
+      than descended, so a graph with every machine standing correctly can
+      still contradict itself; the lists a snapshot carries are sorted, so the
+      shape has to come out of path prefixes; two states may share a name in
+      different branches; a machine wants exactly one initial child before it
+      will initialize; and a machine with nothing under it is a legal leaf.
+      The failure mechanism is section 14's, which produced all three unsolved
+      cells this corpus has: every one of those holes is invisible to the
+      happy-path check an agent runs on itself, since the repository's own 138
+      tests are green whether or not `rebuild` exists and a round trip on one
+      flat machine passes with most of them unmet. Registered against a ledger
+      that says this loses — upward rung bets outside K1 stand at nought for
+      fourteen lifetime (section 21) — and a beaten composite is ceiling data
+      rather than a failure, which is fixed here before the sweep. What would
+      defeat it is either model coming back resolved; the reading then
+      available is that a one-sentence brief over dense terrain does not reach
+      the ceiling on this material, which is a result about the corpus rather
+      than about this task
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

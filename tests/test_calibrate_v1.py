@@ -401,7 +401,16 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
         profile for (category, profile) in checked_in_profiles()
         if category == "feature-dev" and profile != "(zero-knob)"
     }
-    assert disclosed["K1=acceptance"] == "4 single-file; 4 hand-authored"
+    # Round 1's four `-l1` variants and, since #43, the two headroom anchors —
+    # which declare `K1=acceptance` because a task outside the frozen baseline
+    # has to declare something and that is the level their specs are written
+    # at. The mix is what stays even across the join, and it is the reading
+    # this row cannot give: those six are alike in scope and substrate and
+    # nothing else, since four are five-to-fifteen-line changes bet at the
+    # floor and two are wide contracts bet unsolved. The pooling is registered
+    # in the design note's section 23.10 and in both anchors' own comments,
+    # because the row key has no way to say it.
+    assert disclosed["K1=acceptance"] == "6 single-file; 6 hand-authored"
     # The cells built entirely on vendored substrate, priced against
     # hand-authored controls because no control in the corpus is vendored:
     # round 1's two dense K7 tasks, joined by round 3's two (#41), and the calm

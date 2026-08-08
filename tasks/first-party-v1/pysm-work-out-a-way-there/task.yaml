@@ -1,0 +1,142 @@
+# A composite, and one of two rebuilding the only recipe that ever produced
+# unsolved cells (#43, design note section 23.10). Three knobs at once:
+# K1 at intent, so the brief says what is wanted and states no acceptance
+# criteria; K9 at single, so exactly one decision is labelled open; and K7 at
+# dense, so the terrain the change lands in is the invariant-heavy transition
+# machinery of pysm/pysm.py rather than a helper.
+#
+# It forms no family and no pair and registers no effort claim, on purpose.
+# Under section 9's amended clause 3 a baseline effort claim on a task
+# activating several knobs is scored to no knob at all — one cost reading over
+# K1, K7 and K9 names none of them — so a claim here would be a bet nothing
+# could be attributed to. What this task is for is the calibration table's
+# profile key and the ceiling, and its whole registered outcome is the rung.
+#
+# **What the recipe actually is, corrected against the record.** The round-3
+# spec calls "intent-level spec x planted open decision x substrate terrain"
+# the only recipe that ever produced unsolved cells. The record is narrower
+# and is written out here so nothing downstream leans on the wider claim: the
+# three unsolved cells this corpus has ever produced are settings-l2,
+# duration-l3 and inventory-l3 (section 14), all three hand-authored, all
+# three K1 alone, two of the three at intent and one at description. Neither
+# K9 nor a vendored substrate has ever produced an unsolved cell. So the
+# ingredient with a record is K1 at intent, and what these composites do is
+# stack on it the two levers that have produced the largest *effort* effects
+# measured here — K7's 5.1x on haiku in round 1 (section 12) and K9's 1.5-2.1x
+# on the weaker model in round 2 (section 20). That is a mechanism-based bet
+# and not a replication.
+#
+# **The K9 crux is the weak form of section 23.3's caveat, and says so.** What
+# is labelled open is which run of events comes back, and a named method --
+# breadth-first search over the graph's configurations -- resolves it. So a
+# resolved run here says nothing about a decision recall cannot reach, exactly
+# as remit-pay-what-fits and roll-pick-from-bursts concede. What the crux is
+# is a genuine choice the brief hands over and the grading suite honours: the
+# held-out tests dispatch whatever came back and look at where the machine
+# ends up, so any run of events that gets there grades 1.0.
+#
+# **The terrain, and why "dense" is the honest level.** The correctness of any
+# answer turns on the walk in _exit_states and _enter_states, which the prompt
+# does not restate and no visible test exercises in the direction that
+# matters: the exit walk pushes the leaf it left onto the leaf-state stack and
+# every state it climbs past onto its parent's state stack, and sets each of
+# those parents' `state` back to `initial_state`; the entry walk then rebuilds
+# its path by descending a `.state` the exit walk has just reset. So the state
+# a transition lands on is not the one a machine's current `.state` chain
+# points at -- a self-transition on a nested machine re-enters at that
+# machine's initial state however deep inside it the graph was standing. A
+# search that reads the destination off the configuration as it stands before
+# the walk never finds that route, and that answer is checked in as this
+# task's careless probe and grades 0.0. Four more contracts sit around it and
+# none is in the brief either: transitions are keyed on the owning machine's
+# *local* state rather than on the leaf; _get_transition climbs from the
+# leaf's parent so an inner machine's transition shadows an outer one's;
+# add_transition substitutes the machine's own `_nop` for an absent condition,
+# so "registered without a condition" is a fact about identity rather than
+# about None; and a transition to None moves nothing at all.
+#
+# **What the brief does say, and why each clause is there.** That the answer
+# is a list of events to dispatch in order, which is interface rather than
+# behaviour; that working it out must leave the machine as it was with nothing
+# dispatched and no handler run, which is stated rather than left derivable
+# because the grading suite checks it and a dispatch-and-undo answer would
+# otherwise be graded on a rule it was never given; that a conditional or
+# input-keyed transition is not usable, which is what makes "no run of events
+# reaches it" a decidable question; and that any reaching run is a correct
+# answer, which is the K9 label. Everything else the suite grades -- that
+# already being there asks for nothing, that a cycle terminates, that an
+# internal transition is never a step -- follows from those or from the module.
+#
+# The snapshot carries no knob-setting edit, so `modifications` is empty: the
+# density is the library's own, as round 1's two K7 tasks and #41's two pairs
+# were. Empty is not the same as untouched -- what was left out of every pysm
+# snapshot for reasons answering to no knob is recorded in
+# docs/research/substrate-candidate-repos.md.
+#
+# K7's, K10's and K4's ladders are unenumerated and K9's and K1's are not, but
+# no ladder is read here at all: a level is ordered against another level only
+# inside a registered contrast, and this task is in none.
+#
+# feature-dev, single-file: the reference diff touches pysm/pysm.py alone, and
+# the grading tests exercise a method the pristine repository does not have,
+# so they fail on it as the lint requires.
+id: pysm-work-out-a-way-there
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  pysm can always say where a machine is standing. What it cannot say is how
+  to get it somewhere else. Everyone who uses the library works that out by
+  hand from the transitions they registered, and on a hierarchy they get it
+  wrong.
+
+  Give StateMachine a `route(target)` that answers the question. Hand it a
+  state from the graph and get back the events to dispatch, in order, that
+  leave the machine standing on that state — or None when no run of events
+  does. Working the answer out must leave the machine exactly as it was:
+  nothing dispatched, no handler run.
+
+  Several different runs of events may reach the same state, and any of them
+  is a correct answer. Which one you hand back is yours to choose.
+
+  Only a transition the library can be sure of is yours to use. One that was
+  registered with a condition, or against a particular input, may or may not
+  fire when the event arrives, and a route that leans on one is not a route.
+
+  Keep everything else about the library as it is, and keep the package
+  dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: intent
+    - id: K7
+      level: dense
+    - id: K9
+      level: single
+  prediction:
+    rung: unsolved
+    rationale: >-
+      a composite, and the bet is on the union rather than on any one knob.
+      The brief is at intent level, so every decision but the one it labels
+      open has to be recovered from pysm/pysm.py; the read set is the
+      transition machinery, where the exit walk resets each machine it climbs
+      past to its initial state and the entry walk then descends the `.state`
+      it just reset, so the state a transition lands on is not the one the
+      configuration points at before the walk; and the answer is a search
+      whose step function is that walk. The mechanism the bet rests on is
+      section 14's, which produced all three unsolved cells this corpus has:
+      the defect is invisible to the happy-path check an agent runs on itself,
+      because the repository's own 138 tests are green either way and a route
+      that is wrong only for a self-transition on a nested machine still
+      reaches most targets. Registered against a ledger that says this loses —
+      upward rung bets outside K1 stand at nought for fourteen lifetime
+      (section 21), and a beaten composite is ceiling data rather than a
+      failure, which is the reading this batch is entered under and is fixed
+      here before the sweep. What would defeat it is either model coming back
+      resolved, and the reading then available is that an intent-level brief
+      over dense terrain does not reach the ceiling on this material either,
+      which is a result about the corpus and not about this task
+  substrate:
+    origin: https://github.com/pgularski/pysm
+    commit: 0c47a5067974951c75a498ee4ed025cf881f48fd
+    license: MIT

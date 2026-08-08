@@ -1,0 +1,168 @@
+# A headroom anchor, and one of two (#43, design note section 23.10). Its job
+# is to keep the ceiling visible: it is registered `unsolved`, it forms no
+# family and no pair, it registers no effort claim, and it advances no
+# counter. A beaten anchor is ceiling data and not a failure — that reading is
+# pre-registered here, before the sweep, rather than reached for afterwards.
+#
+# **Why it declares K1 at acceptance and nothing else.** The ticket's own
+# framing was that an anchor follows calc-infix-evaluator, which carries no
+# construction block at all. That is not available and the reason is worth
+# writing down: absence of the block *is* the zero-knob baseline declaration,
+# BASELINE_TASK_IDS freezes that set at the 22 tasks authored before the knob
+# experiment, and the lint refuses a task outside it that declares nothing.
+# So an anchor declares, and what it honestly declares is the level its spec
+# is written at. Every rule this task is graded on is stated in the brief as
+# an acceptance criterion, which is K1's `acceptance`, and nothing else in
+# section 9's list describes where the difficulty actually comes from: the
+# difficulty is the *width* of a closed contract, and no knob names that.
+#
+# **What that costs the calibration table, registered rather than
+# discovered.** `calibrate-v1` keys a row on category x sorted profile, so
+# this task lands in `feature-dev K1=acceptance` beside the four `-l1`
+# variants of round 1's K1 families — small hand-authored changes that all
+# came back haiku-solvable. All six are single-file and hand-authored, so the
+# mix disclosure section 38 added prints nothing, and if the rung bet here
+# lands the row's floor moves to `unsolved` with no way for the key to say
+# which task put it there. This is #40's pooling problem in a second place
+# and it gets #40's answer: recorded here, in the other anchor, and in the
+# design note, so a reader of that row is not left to infer it. What the row
+# means and does mean honestly is "feature-dev tasks whose whole spec is
+# written as acceptance criteria", which is a population that spans a
+# five-line merge and a filter language; the row is right and the key is
+# coarse.
+#
+# **Why an anchor is expected to be beaten, and why it is still worth
+# building.** Upward rung bets outside K1 stand at nought for fourteen
+# lifetime (section 21), and this is a fifteenth of that kind: K1 is declared
+# here at its *easiest* level, so nothing about this bet is K1's ladder
+# working. The value of the task does not depend on the bet: an anchor that
+# comes back resolved has measured the ceiling as being above it, which is
+# what section 9's "anchors at every rung incl. headroom" asks for and what
+# section 22.3 says the corpus has never had.
+#
+# **The mechanism the bet rests on.** Section 14's, which is what produced
+# all three unsolved cells this corpus has ever had: the rung is decided by
+# the union of the held-out assertions and one narrow hole sinks the cell.
+# The clauses were chosen so that the idiomatic Python transcription of each
+# is wrong in a way a happy-path check does not show. Three-valued logic is
+# the whole of it: Python's `not None` is True where `NOT UNKNOWN` is
+# UNKNOWN; Python's `all()`/`any()` over three values collapse the middle
+# one; `True == 1` is true in Python and false here, which the starting
+# module states and `kind_of` enforces; a missing key and a known-absent
+# value are the same thing to a comparison and opposite things to `IS NULL`;
+# and `x IN (1, NULL)` is unknown rather than false when x is 2. Each is one
+# clause of many and each is stated outright in the brief, so a miss is the
+# solver's and not the task's.
+#
+# **The brief is long, and that is the archetype rather than an accident.**
+# 562 words against calc-infix-evaluator's 109. K1 at acceptance over a
+# wide contract means every clause is written down; a shorter brief would be
+# a different knob setting. Nothing is matched against anything here — the
+# task is in no pair — so prompt length carries no confound, and it is
+# recorded only because round 3's other lanes made prompt length a thing a
+# task registers.
+#
+# Solvable by construction: the reference solution in
+# tasks/first-party-v1-solutions/ grades 1.0 through the same execution-
+# verified pipeline a real run goes through, and the empty diff grades 0.0.
+# `unsolved` is a bet about models, not about the task.
+#
+# feature-dev, single-file: the reference diff touches sieve.py alone, and the
+# grading tests exercise a function the pristine module does not have, so they
+# fail on it as the lint requires.
+id: sieve-select-what-matches
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  sieve.py picks records out of a list one field at a time, and `compare`
+  already knows what to do with a value nobody knows. What the module cannot
+  express is a condition — "active, and either under 18 or over 65" — so
+  every caller writes that loop again by hand.
+
+  Add a function `select(records, expression)` to sieve.py that returns the
+  records the expression is true of, in the order they were given.
+
+  The language, in full:
+
+    * A test is one of: `field = value` and the same for `!=`, `<`, `<=`,
+      `>`, `>=`; `field IS NULL` and `field IS NOT NULL`; `field IN (value,
+      value, ...)` with at least one value; `field BETWEEN low AND high`; or
+      the word `TRUE` or `FALSE` standing on its own.
+    * Tests combine with `NOT`, `AND` and `OR`, binding in that order — `NOT`
+      tightest and `OR` loosest — with `AND` and `OR` grouping leftwards.
+      Round brackets group.
+    * A value is a number (digits, optionally a point and more digits,
+      optionally a leading minus — there is no arithmetic in this language),
+      or text in single quotes with `''` standing for one quote, or `NULL`,
+      or `TRUE`, or `FALSE`.
+    * A field name starts with a letter or an underscore and goes on with
+      letters, digits and underscores. The words above are keywords and may
+      be written in any case; a field name matches exactly as written.
+    * Whitespace separates tokens: required between two words, optional
+      everywhere else.
+
+  What a test answers, and what that makes of a record:
+
+    * Every test answers true, false or unknown, and comparisons answer
+      exactly as `compare` does. A field the record does not carry is
+      unknown, the same as a field it carries with an unknown value.
+    * `IS NULL` is true when the field is unknown or missing and false
+      otherwise; `IS NOT NULL` is the other way round. Neither is ever
+      unknown.
+    * `IN` is true when the field equals one of the values; false when it
+      equals none of them and no comparison came out unknown; unknown
+      otherwise. `BETWEEN low AND high` is `field >= low` and `field <= high`
+      put together by the rule below.
+    * `NOT` turns true into false and false into true, and leaves unknown
+      alone.
+    * `AND` is false if any part is false, whatever the other parts are;
+      otherwise unknown if any part is unknown; otherwise true. `OR` is true
+      if any part is true, whatever the other parts are; otherwise unknown if
+      any part is unknown; otherwise false.
+    * A record is selected only when the whole expression answers true.
+
+  The refusals:
+
+    * A field name that no record in the list carries is a mistake in the
+      expression: ValueError. With no records at all there is nothing to
+      check a name against, and the answer is an empty list.
+    * An expression that does not parse — an unclosed bracket or quote, a
+      missing value, a character belonging to no token, a field name with no
+      test on it, anything trailing after the expression ends — raises
+      ValueError.
+    * An ordering `compare` refuses goes on raising ValueError.
+
+  Neither the list nor the records in it are copied or changed: what comes
+  back holds the very objects that went in.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+  prediction:
+    rung: unsolved
+    rationale: >-
+      a headroom anchor of the calc-infix class, and the bet is on the union
+      of the held-out assertions rather than on any single clause. Every rule
+      is stated as an acceptance criterion and the module states the rest, so
+      nothing here is withheld; what is bet is that a contract this wide has
+      no answer that gets every clause, because the idiomatic Python spelling
+      of each clause is wrong somewhere. Three-valued logic is the mechanism:
+      `not None` is True in Python where NOT UNKNOWN is UNKNOWN, `all` and
+      `any` collapse the middle value, `True == 1` holds in Python and not
+      here, a missing key is unknown to a comparison and true to IS NULL, and
+      `x IN (1, NULL)` is unknown rather than false. Section 14's reading is
+      the one this rests on — the rung is decided by the union and one narrow
+      hole sinks the cell — and it is the reading that produced all three
+      unsolved cells this corpus has. Registered knowing the ledger: upward
+      rung bets outside K1 are nought for fourteen lifetime, this is a
+      fifteenth of that kind, and a beaten anchor is ceiling data rather than
+      a failure — an anchor either measures the ceiling or discovers the
+      ceiling is above it, and both are the reason to build it. What would
+      defeat the bet is either model coming back resolved, and the reading
+      then fixed in advance is that this material has no headroom left at
+      single-file hand-authored scale and the next anchor has to be built
+      somewhere else

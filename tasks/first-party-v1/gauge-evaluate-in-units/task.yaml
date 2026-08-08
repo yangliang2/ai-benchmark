@@ -1,0 +1,151 @@
+# The second of #43's two headroom anchors, and the one that is literally the
+# calc-infix class: an infix expression evaluator with precedence, grouping,
+# unary minus and a full refusal surface, plus one axis calc-infix-evaluator
+# does not have — every quantity carries a kind, and the arithmetic has to
+# carry it through. Registered `unsolved`, in no family and no pair, carrying
+# no effort claim, advancing no counter. A beaten anchor is ceiling data and
+# not a failure, and that reading is registered here before the sweep.
+#
+# Why it declares K1 at acceptance and nothing else, and what that costs the
+# calibration table, is argued in sieve-select-what-matches' comment and is
+# the same argument: absence of a construction block is the frozen zero-knob
+# baseline's declaration and BASELINE_TASK_IDS holds that set at 22, so an
+# anchor declares; what it honestly declares is that every rule it is graded
+# on is stated in the brief as an acceptance criterion; and the row it lands
+# in, `feature-dev K1=acceptance`, pools it with the four `-l1` variants of
+# round 1's K1 families, whose changes are a fraction of the size. That
+# pooling is #40's problem in a second place and gets #40's answer: recorded
+# where a reader of the row can find it rather than left to be inferred.
+#
+# **The mechanism the bet rests on, and it is not the parser.** An infix
+# parser with four levels of binding is a solved shape and recall reaches it;
+# nothing here bets otherwise. What the union of the held-out assertions asks
+# is that the *kind* survives every operation, and each place it can be lost
+# is one clause of a wide spec: `*` adds the exponents and `/` subtracts them
+# rather than either of them scaling a factor; `^` multiplies them through,
+# including `^ 0` to nothing at all and a negative power to their negatives;
+# `+` and `-` compare kinds rather than units, so `2 km + 300 m` is legal and
+# `2 km + 300 s` is not; the answer's kind is checked against the unit asked
+# for rather than against the leftmost operand's; and every unit in this
+# module is worth some number of *base* units, so the arithmetic has to
+# happen in base units and be divided out at the end — an implementation that
+# tracks the written unit gets `1 km / 1 m` wrong by a thousand. Around that
+# sit the ordinary infix traps the class is named for, each of them stated:
+# `^` binds tighter than a leading minus so `-2 ^ 2` is minus four, `/` and
+# `-` group leftwards so `8 / 4 / 2` is one, a power is a whole number and is
+# written once, and six distinct ways of not parsing all raise ValueError.
+#
+# Section 14 is the reading this rests on: the rung is decided by the union
+# of the held-out assertions and one narrow hole sinks the cell, which is how
+# all three of this corpus's unsolved cells were produced. Every clause above
+# is invisible to a happy-path check — the module's own ten tests are green
+# whether or not `evaluate` exists, and an implementation that gets addition
+# and conversion right passes anything an author would try by hand.
+#
+# The brief is 491 words against calc-infix-evaluator's 109, for the
+# reason the other anchor's is long: K1 at acceptance over a wide contract
+# means every clause is written down. The task is in no pair, so the length
+# is matched against nothing and confounds nothing; it is recorded because
+# round 3's other lanes made prompt length a thing a task registers.
+#
+# The starting module is hand-authored, so there is no substrate block. The
+# unit table it ships is deliberately small and deliberately mixed: three
+# base units, nine that scale one of them, and four derived ones whose
+# dimensions have two and three terms, which is what makes the exponent
+# arithmetic do work rather than cancel.
+#
+# Solvable by construction: the reference solution in
+# tasks/first-party-v1-solutions/ grades 1.0 through the same execution-
+# verified pipeline a real run goes through, and the empty diff grades 0.0.
+# `unsolved` is a bet about models, not about the task.
+#
+# feature-dev, single-file: the reference diff touches gauge.py alone, and the
+# grading tests exercise a function the pristine module does not have, so they
+# fail on it as the lint requires.
+id: gauge-evaluate-in-units
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  gauge.py knows what each unit is worth and what kind of quantity it
+  measures, and it can rewrite one measurement in another unit. What it
+  cannot do is work anything out, so "1.2 kg m^2 per second cubed, for 40
+  min, in J" is still done by hand.
+
+  Add a function `evaluate(expression, unit)` to gauge.py that works the
+  expression out and returns the answer as a float, in `unit`.
+
+  The language:
+
+    * A quantity is a number — digits, and optionally a point and more digits
+      — with one of the module's units written after it, or standing on its
+      own, in which case it is of nothing at all. `one` is the unit for that.
+    * Between quantities: `+`, `-`, `*`, `/` and `^`. Round brackets group,
+      and a `-` in front of a quantity negates it.
+    * Binding, tightest first: `^`, then a leading `-`, then `*` and `/`,
+      then `+` and `-`. All of `*`, `/`, `+` and `-` group leftwards, so
+      `8 / 4 / 2` is one. A power applies to the quantity in front of it,
+      number and unit together, so `2 m ^ 3` is eight cubic metres, and it
+      binds tighter than a leading minus, so `-2 ^ 2` is minus four.
+    * The right-hand side of `^` is a whole number, optionally negative, with
+      no unit on it. A power is written once: `2 ^ 3 ^ 2` is not an
+      expression this language has.
+    * Whitespace between tokens is allowed and never required.
+
+  What the arithmetic does to the kinds:
+
+    * `+` and `-` want both sides to be the same kind of quantity — the same
+      kind, not the same unit, so `2 km + 300 m` is two point three
+      kilometres — and the answer is that kind.
+    * `*` adds the two kinds together and `/` takes one away from the other,
+      counting each base unit: metres times metres is square metres, and
+      metres over metres is nothing at all.
+    * `^ n` multiplies the kind through by n, so `^ 0` leaves nothing at all
+      and a negative power turns the kind upside down.
+    * The answer must be the kind of quantity `unit` measures, and it comes
+      back written in that unit.
+
+  The refusals, every one of them a ValueError:
+
+    * a `+` or a `-` across two kinds;
+    * an answer that is not the kind `unit` measures;
+    * a unit the module does not know, in the expression or as `unit`;
+    * a division by nothing, including a negative power of nothing;
+    * a power that is not a whole number;
+    * an expression that does not parse — an unclosed bracket, a missing
+      number, a number with nothing after its point, a character belonging to
+      no token, anything trailing after the expression ends, or nothing at
+      all.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+  prediction:
+    rung: unsolved
+    rationale: >-
+      a headroom anchor of the calc-infix class with one axis that task does
+      not have, and the bet is on the union of the held-out assertions rather
+      than on the parser, which is a solved shape recall reaches. What the
+      union asks is that the kind of a quantity survives every operation:
+      that `*` and `/` add and subtract exponents rather than scale a factor,
+      that `^ 0` leaves nothing at all and a negative power inverts, that `+`
+      compares kinds rather than units so `2 km + 300 m` is legal, that the
+      answer's kind is checked against the unit asked for, and that the
+      arithmetic runs in base units and is divided out at the end — the last
+      of which an implementation carrying the written unit gets wrong by a
+      factor of a thousand on `1 km / 1 m`. Around it sit the infix traps the
+      class is named for, all stated: `^` above a leading minus, leftward
+      grouping, whole-number powers, and six ways of not parsing. Section
+      14's reading is the one this rests on — the rung is decided by the
+      union and one narrow hole sinks the cell — and it is what produced all
+      three unsolved cells this corpus has. Registered against a ledger that
+      says it loses: upward rung bets outside K1 stand at nought for fourteen
+      lifetime, this is one of that kind, and a beaten anchor is ceiling data
+      rather than a failure. What would defeat it is either model coming back
+      resolved, and the reading fixed in advance for that outcome is that a
+      wide closed contract on a small hand-authored module is not where this
+      benchmark's ceiling is, and the next anchor needs a different axis
+      than width
