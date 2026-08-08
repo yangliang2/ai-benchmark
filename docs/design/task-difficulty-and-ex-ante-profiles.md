@@ -1300,6 +1300,35 @@ the load-bearing one.
    channel that compresses c1→c3, and register the effort claims **in the
    ladder's direction on cost** — which §18 shows is where the ordering
    actually lives.
+   [Shipped by #40 as the `nightbus-print-the-sheet` family: one underlying
+   change — a printed running sheet whose reference solution adds 32 lines
+   against the album family's 5 — conveyed at all four levels, with the
+   withheld decision (a day's working runs 04:00 to 04:00) absent from every
+   docstring, from the README and from the acceptance block all four prompts
+   share, discoverable instead through `operating_day`'s body and through
+   three of the repository's own visible tests. Three readings the round is
+   taken under, recorded here before the sweep so they cannot be invented
+   after it, the way §23.3 records K9's.
+   **One family, not round 2's two.** K12 buys 8 cells this round rather
+   than 16. Sixteen would be over a third of a 34–44 cell round spent on a
+   knob already at silent 1 of 2, ahead of K10 and K4, which have never been
+   built at all. So a flat result is a result about one change conveyed four
+   ways under the three conditions, and it is a fair falsification of the
+   ladder only in the sense round 2's was not: the floor and the docstring
+   channel are gone, the sample is not larger.
+   **Its `repo-primitive` pointer is the strong kind.** `operating_day` is the
+   whole of the withheld decision, so following the pointer lands on 1.0 —
+   album's asymmetry, not pricelist's (#32). A miss at that level is the level
+   failing and may be read as one; there is no weaker pointer to blame.
+   **The stated pair's cost claim is registered against the only evidence
+   there is.** Round 2 measured repo-primitive ÷ criterion at 0.99×, 0.96×,
+   0.71× and 1.00×, so the 1.25× registered on `-c2` bets against all four
+   readings, on the ground that with the boundary out of the module's prose
+   the pointer now costs a read the criterion variant does not make. If that
+   claim misses it is not news, and a miss there should not be read as
+   evidence against the ladder; the withheld pair's claim on `-c4` is the one
+   carrying the contrast, and 1.25× would have gone 1 of 4 against round 2's
+   own prose-over-unmentioned cost multiples.]
 7. **K7: register claims or retire it.** New tasks, effort claims registered
    before the run, at least 3 graded tasks at the dense level, and the
    size-matched control §12 asked for in round 1. It is the largest effort
