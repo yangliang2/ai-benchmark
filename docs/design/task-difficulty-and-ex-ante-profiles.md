@@ -839,7 +839,8 @@ from a repo suite that never imports `merged`).
    inert — cheaper than baseline on both metrics, 0/8 on effort, no rung
    movement. As instrumented it measured spec self-checking, which the models
    have. §18; the pair-it-or-drop-it decision is §23.5. K10 is still
-   untouched.]
+   untouched.] [Both secondary candidates are taken up in round 3: K7 by #41
+   (§23.7) and K10 by #42, alongside K4, as the intensity batch (§23.9).]
 3. **Split K1 by *how* a decision is conveyed, not by how much prose.** The
    K1 ladder is validated but its levels are the wrong variable. Round 2's
    K1 should vary along the ordering section 14 recovered — criterion stated
@@ -1571,11 +1572,17 @@ the load-bearing one.
    readings here differ. `pysm-reset` is level at 310 words against 313, a
    ratio of 0.99, with the dense member the shorter of the two.
    `pysm-pushdown` is not: 328 against 255, a ratio of **1.29**, the widest of
-   the seven pairs round 3 registers and carried by the member holding the
+   the nine pairs round 3 registers and carried by the member holding the
    claim, which is the direction that matters — a longer brief is a direct
-   alternative explanation for a cost hit. On that quantity — a registered
-   effort claim carried by the longer-prompted member of its pair — 1.29× is
-   the corpus maximum, and the whole ranking is short enough to print:
+   alternative explanation for a cost hit. [Seven when #41 wrote this;
+   #42's two intensity-batch pairs bring it to nine, and neither of them
+   disturbs the ranking below, because in both of them the member holding the
+   claim is the *shorter* one — 0.98 for `pysm-trace` and 0.97 for
+   `pysm-snapshot`. The count is corrected here rather than the sentence being
+   rewritten, so that what #41 registered stays legible.] On that quantity — a
+   registered effort claim carried by the longer-prompted member of its
+   pair — 1.29× is the corpus maximum, and the whole ranking is short enough
+   to print:
    `pysm-pushdown` 1.29, `bookcase` 1.25, `roll` 1.24, `digest` 1.22, `remit`
    1.20, `outage` 1.18, `dossier` 1.17, `nightbus`-withheld 1.11. Wider *raw*
    gaps do exist — `pricelist`-withheld at 1.49, round 1's `settleup` at 1.39,
@@ -1698,6 +1705,150 @@ the load-bearing one.
 9. **Still unticketed from round 1:** the "misleading neighbour" knob
    candidate (the guard-transplant mechanism from `inventory-l3`) and K10
    coordination width, both untouched by round 2.
+
+   [**K10 and K4 shipped by #42 as the intensity batch: one pair each, both on
+   pysm, and the scale axis turned for the first time.** The "misleading
+   neighbour" candidate stays parked, as the round-3 spec puts it out of
+   scope. Four new tasks for this round's sweep. Neither knob has ever been
+   swept at any level before, in any round, so everything below is a first
+   reading and nothing in it can have been fitted to a measurement — which is
+   a stronger version of the unfitted argument §23.7 has to make at length for
+   K7, and it is the one advantage of a knob nobody has built.
+
+   **The contrasts.** `pysm-trace` is K10: `pysm-trace-what-the-machine-did`
+   at `wide` against `pysm-list-the-waiting-events` at `narrow`. The wide
+   member adds a `trace` to `StateMachine` recording what was entered, exited,
+   handled, deferred and thrown away, and the reference solution carries that
+   one stated decision to **14 places in 3 modules**, 12 of them the same
+   recording written again — ten a single appended line, the two that record
+   thrown-away events four apiece — and the other two declaring the attribute
+   and documenting it. What makes the 12 irreducible is the library's own shape:
+   `pysm/aio.py` does not override the core's entry walk, exit walk and
+   dispatching step, it carries its own copies of all three, and
+   `pysm/queued.py` carries its own copy of the queue draining, so no amount
+   of inheritance collects them. The narrow member is the same *kind* of
+   change — two small methods mirrored across the package's two queued
+   layers — at **2 places in 2 modules**. `pysm-snapshot` is K4:
+   `pysm-refuse-a-snapshot-in-flight` at `wide` against
+   `pysm-keep-snapshot-metadata-plain` at `narrow`. Both write into
+   `pysm/serialization.py`, at 3 hunks and 2, and what moves is how far the
+   author must read: the wide member's guard turns on `_is_processing`, which
+   is defined in `pysm/queued.py`, defined again in `pysm/aio.py` by a class
+   that extends `StateMachine` rather than the queued one, and defined nowhere
+   in `pysm/pysm.py`, so the guard must tolerate its absence. The narrow
+   member's every fact — the promise of plain data in `snapshot`'s own
+   docstring, the function guarded, the exception raised — is in the file
+   being edited.
+
+   **The site count is asserted, not described.** K10 is "N consistent edit
+   sites", and §23.7 records that K7's `dense` is free text nothing checks.
+   This suite counts the hunks of each reference diff and holds the wide
+   member to the ticket's 8–15 band and the narrow one to a handful; it also
+   requires the wide member's `task.yaml` to argue, where a reader of the task
+   alone would look, why the library forces the repetition — because fourteen
+   sites a competent author could have written as one would be a badly
+   factored solution rather than a wide task. The K4 crux's `task.yaml`
+   carries the ≥3-module walk in the same way, and the suite pins the three
+   substrate facts the walk depends on, so the claim fails loudly rather than
+   going quietly stale if the library is ever re-snapshotted.
+
+   **What the K4 walk is not, and it is registered rather than discovered.**
+   The walk is what a *confident* answer costs, not what a correct one
+   strictly requires. An author who read `pysm/queued.py` alone and then wrote
+   the defensive `getattr(machine, '_is_processing', False)` out of habit
+   would pass every grading test without opening `pysm/aio.py`, because duck
+   typing happens to cover the class they never saw. So the claim this task
+   makes is narrower than "three modules are unreachable otherwise": it is
+   that skipping the third costs you the ability to know you are right, and
+   that the idiomatic non-defensive answer — an `isinstance` against the one
+   class the short read turns up — is wrong, which is what the careless probe
+   grades 0.0. A resolved run therefore says little, since both roads reach
+   it; the cost claim is what carries the reading. This is K4's version of the
+   caveat §23.3 records for K9's any-resolution property and §18.1 for its
+   labelled cruxes, and it is written here for the same reason: a limit
+   admitted before the sweep is evidence, and one admitted after it is an
+   excuse.
+
+   **The two pairs hold each other's knob still, as far as two pairs can.**
+   K10 and K4 are adjacent and the batch is built so the readings do not
+   collapse into one: the K10 pair moves the site count (14 against 2) while
+   both prompts name the modules to edit, and the K4 pair holds the site count
+   nearly still (3 against 2, in one and the same module) while moving the
+   reading. Neither is a clean instrument for the other knob, and neither
+   claims to be.
+
+   **Matched the way #39 and #41 match.** Each pair's two members start from
+   the same pysm snapshot byte for byte, so repository size is identical
+   rather than similar; reference added lines are within 10% inside each pair,
+   asserted by the suite — 24 against 26 (1.08×) for `pysm-trace`, 17 against
+   16 (1.06×) for `pysm-snapshot`. Neither snapshot carries a knob-setting
+   edit, so `modifications` is empty in all four: the width and the scatter
+   are the library's own, and an edit would break the byte-identity the pairs
+   rest on.
+
+   **Prompt length runs the favourable way in both, which is the one axis
+   these pairs did not have to argue.** In each pair the member holding the
+   claim is the *shorter* of the two — 324 words against 331 for `pysm-trace`,
+   299 against 307 for `pysm-snapshot` — so the gap cuts against the claim
+   rather than for it, no defusing arithmetic is needed, and neither pair
+   joins the ranking §23.7 keeps of claims carried across a wide gap. A suite
+   assertion holds it that way, because a later edit to either prompt could
+   turn it around silently.
+
+   **One substrate, and the choice is recorded either way.** Both pairs sit on
+   pysm, as #41's two K7 pairs do, so round 3 now puts eight of its tasks on
+   one library. RBQL was weighed and declined for the same reason #41 declined
+   it and for one more: §15.5 records that RBQL's visible suite builds its
+   fixtures with the unseeded global `random`, and while the *harness* seeds
+   the throwaway copies it runs a visible suite in, the agent's own copy is
+   not seeded — so an agent checking its work against that suite can be told
+   something different on two consecutive runs. Under a task whose entire
+   evidence is a cost reading, that is noise in the measured quantity and not
+   merely an authoring nuisance. What the choice gives up is the
+   cross-substrate agreement §10 wants, and it gives it up for a second round
+   running.
+
+   **What the round can say, registered rather than discovered at reconcile
+   time.** Neither K10 nor K4 has an enumerated ladder in §9 or in
+   `KNOB_LEVELS`, so under the amended clause 2 neither `wide` nor `narrow` is
+   the harder level and **both pairs read not assessable on the rung axis**,
+   exactly as K7's do; the suite asserts both ladders are still empty so that
+   the day somebody fills one, this reading is flagged rather than silently
+   outdated. All four rungs are registered `haiku-solvable`, which is where
+   round 1 actually put both of its dense K7 cells after betting them a rung up,
+   and where round 2's sixteen bottom-rung bets went fourteen of sixteen. So
+   the whole of the evidence is four claim readings — two claims, two
+   models — and the round is non-silent for each knob only if one of that
+   knob's two readings hits.
+
+   **The base rate these two lanes are entered on, and the honest reading
+   pre-committed.** 1.25× on cost went 4 of 6 on round 2's three K9 pairs when
+   read post-hoc (§20), so the factor is not a stretch on this corpus, and
+   clause 3 makes a round non-silent on a single hit on either model — two
+   readings per knob are two chances at one thing rather than one test. Set
+   against that: unlike K7, neither knob here has a prior effort effect of any
+   size to replicate, so there is no number a hit can be said to have
+   confirmed and none it can be said to have missed. **A bare hit at around
+   1.3× is therefore a first reading and a small one**, and nothing in a later
+   round may cite it as more. What would be a real result is the same shape
+   §23.7 fixes for K7: 2× or better on both models, or 2× on haiku with sonnet
+   at 1.5× or better. And the asymmetry is worth stating before the sweep,
+   because the two knobs are not equally likely to speak — K10's wide member
+   is fourteen easy edits and a model that finds them all may simply do them,
+   where K4's wide member is a genuine hunt through three modules with a
+   wrong turn in it, so if only one of the two hits, K4 hitting is the less
+   surprising outcome and should not be read as the batch working.
+
+   **And the failure this batch is most likely to record instead.** Every
+   careless probe checked in for the two wide members omits the async layer —
+   the K10 one leaves out a single one of its fourteen sites, the K4 one asks
+   `isinstance` against the class `pysm/queued.py` defines — and both grade
+   0.0 while leaving the repository's own 138 tests green. That is the
+   mechanism each knob is named after, and it is also the reason a model could
+   fail these tasks on the *rung* despite four floor bets: nothing the agent
+   can run inside its workdir distinguishes a half-carried change from a
+   finished one. If either wide member comes back unsolved, that is the
+   registered explanation and not a fresh one.]
 
 ## Open questions (superseded list resolved 2026-08-05)
 
