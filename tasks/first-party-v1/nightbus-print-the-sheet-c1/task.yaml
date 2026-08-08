@@ -1,0 +1,87 @@
+# K12 family nightbus-print-the-sheet, level 1 of 4 (criterion): the one
+# withheld decision — that a day's working runs from 04:00 to 04:00, so a trip
+# in the small hours belongs to the date before — is handed over as an
+# acceptance criterion, boundary case and all. The repo, the grading suite and
+# the reference solution are identical across the four variants, and so is
+# every non-crux criterion: the prompts share one block verbatim and differ
+# only in the passage the crux travels in.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# Round 3's first condition, and the one this variant carries: the family
+# floor is above trivial. Round 2's two K12 families came back at
+# {haiku-solvable} x 8 — two families' four levels each, every one of them on
+# the bottom rung, which is a ladder no ordering can show itself on (section
+# 18) — and the album family's underlying change was a five-line set
+# intersection. This one is not. With the crux
+# stated outright there is still a page of work left, none of it recoverable
+# by transcribing the prompt: group the trips by a derived key, sort each
+# group on two keys, compute each arrival from a duration, convert two moments
+# per trip into a clock counted from the start of the block's own date rather
+# than from their own, pad the hours, pluralise the count, and interleave
+# heading, trip and total lines in order. The reference solution adds 32 lines
+# to the module where the album family's adds 5 and the pricelist family's 9,
+# and the round-3 K12 suite holds that ratio rather than leaving it as an
+# author's impression. Six of the grading suite's thirteen tests are its near
+# half, where the boundary cannot be got wrong and the sheet's shape is the
+# whole of what is graded. That is what "the criterion variant is not a
+# transcription exercise" means here, and it is the condition section 23.6
+# asks round 3 for.
+#
+# feature-dev: the grading tests exercise running_sheet, which does not exist
+# in repo/, so they fail on the pristine repository as the lint requires.
+id: nightbus-print-the-sheet-c1
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small night-bus timetable module in nightbus.py.
+
+  Add a function `running_sheet(trips)` to nightbus.py that lays a list of
+  trips out as the depot's printed running sheet, returned as a list of
+  lines. It must satisfy all of the following:
+
+  - The sheet carries one block per operating day, and the blocks come in
+    date order.
+  - A block opens with a heading line holding that operating day's date,
+    written `YYYY-MM-DD` and nothing else.
+  - After the heading comes one line per trip of that day's working, in
+    departure order, two trips leaving at the same moment coming in
+    alphabetical route order.
+  - A trip's line is two spaces, its route, two spaces, its departure, two
+    spaces, its arrival.
+  - A time is written `HH:MM`, counted from midnight at the start of the
+    block's own date — so a trip that gets in after midnight has an arrival
+    past `24:00` — with hours below ten carrying a leading zero.
+  - A block closes with a line of two spaces, how many trips it holds, a
+    space, `trip` or `trips` to suit that number, a comma and a space, and
+    the block's total running time written as `<minutes> minutes`.
+  - A run with no trips in it gives no lines at all.
+  - The list you were given is left in the order it was given.
+
+  - An operating day runs from 04:00 to 04:00, so a trip departing at 01:20
+    belongs to the operating day of the date before, and one departing at
+    04:00 to the operating day of its own date.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: criterion
+  family: nightbus-print-the-sheet
+  pair: nightbus-print-the-sheet-stated
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the day boundary is handed over as an acceptance criterion with its
+      04:00 case spelled out, so nothing about it has to be recovered from the
+      module; what is left is not a transcription of the prompt but the sheet
+      itself — grouping, a two-key sort, a clock counted from the block's own
+      date and a pluralised total — and the bet is that this floor is still a
+      rung the weaker model reaches, which is what makes a family flat at the
+      bottom evidence about K12 rather than about the change it was hung on

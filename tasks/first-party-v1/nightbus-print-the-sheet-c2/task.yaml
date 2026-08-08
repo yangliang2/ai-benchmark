@@ -1,0 +1,93 @@
+# K12 family nightbus-print-the-sheet, level 2 of 4 (repo-primitive): the
+# crux is not stated. The prompt points at the module function that already
+# embodies it — `operating_day`, which answers which day's working a moment
+# belongs to — and leaves the rule itself to be read off there. The repo, the
+# grading suite and the reference solution are identical across the four
+# variants, and so is every non-crux criterion: the prompts share one block
+# verbatim and differ only in the passage the crux travels in.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# The strength of this pointer, recorded before the sweep reads it. #32 asked
+# every K12 family to say how much of the withheld decision its pointer hands
+# over, because album's and pricelist's differed and a reconciler cannot tell
+# a weak pointer from a failing level afterwards. This one is album-class and
+# then some: `operating_day` is the whole of the withheld decision and nothing
+# else, so a solver who follows the pointer has thereby decided the boundary
+# and lands on the right sheet. If this variant misses, the level failed —
+# there is no weaker reading of the pointer to fall back on.
+#
+# Round 3's third condition, and the one this variant carries first: the cost
+# claim below runs in the LADDER's direction rather than the reading-burden
+# direction round 2 registered. Round 2 bet that effort peaks at `unmentioned`
+# and all eight of its readings missed, every one of them leaning the ladder's
+# way instead (section 18). So the claim is now held by the harder member of
+# each pair — repo-primitive against criterion here, prose against unmentioned
+# in c4 — on cost rather than turns, at the round's standing 1.25x. Against
+# round 2's own measurements this pair is the stringent one: repo-primitive
+# divided by criterion came out 0.99x, 0.96x, 0.71x and 1.00x there, so the
+# claim is registered against the only four readings anyone has, and it rests
+# on the condition that changed — with the boundary no longer stated anywhere
+# in the module's prose, following the pointer now costs a read of the code
+# that the criterion variant does not make.
+#
+# feature-dev: the grading tests exercise running_sheet, which does not exist
+# in repo/, so they fail on the pristine repository as the lint requires.
+id: nightbus-print-the-sheet-c2
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small night-bus timetable module in nightbus.py.
+
+  Add a function `running_sheet(trips)` to nightbus.py that lays a list of
+  trips out as the depot's printed running sheet, returned as a list of
+  lines. It must satisfy all of the following:
+
+  - The sheet carries one block per operating day, and the blocks come in
+    date order.
+  - A block opens with a heading line holding that operating day's date,
+    written `YYYY-MM-DD` and nothing else.
+  - After the heading comes one line per trip of that day's working, in
+    departure order, two trips leaving at the same moment coming in
+    alphabetical route order.
+  - A trip's line is two spaces, its route, two spaces, its departure, two
+    spaces, its arrival.
+  - A time is written `HH:MM`, counted from midnight at the start of the
+    block's own date — so a trip that gets in after midnight has an arrival
+    past `24:00` — with hours below ten carrying a leading zero.
+  - A block closes with a line of two spaces, how many trips it holds, a
+    space, `trip` or `trips` to suit that number, a comma and a space, and
+    the block's total running time written as `<minutes> minutes`.
+  - A run with no trips in it gives no lines at all.
+  - The list you were given is left in the order it was given.
+
+  `nightbus.py` already answers which operating day a moment belongs to, the
+  way this module answers that question; take the day from that answer rather
+  than working it out from the calendar yourself.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: repo-primitive
+  family: nightbus-print-the-sheet
+  pair: nightbus-print-the-sheet-stated
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      the boundary is not stated, but the prompt names the answer the module
+      already holds, so the module has to be opened and read where the
+      criterion variant did not; the pointer hands over the whole of the
+      withheld decision once followed, which is why this stays at the bottom
+      rung, and what the extra read is bet to cost is the claim below rather
+      than a rung
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25

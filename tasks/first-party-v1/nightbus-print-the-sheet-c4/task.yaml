@@ -1,0 +1,108 @@
+# K12 family nightbus-print-the-sheet, level 4 of 4 (prose): the crux is not
+# stated and nothing is pointed at. What the prompt adds instead is a
+# description of the change's shape — file each trip under the date it sets
+# off on, then take those dates in turn — which is true of every trip that
+# leaves before midnight and whose canonical Python spelling is
+# `trip.departs.date()`. This is the level round 1 found to be the hardest,
+# below saying nothing at all, because prose displaces the module as the
+# source of truth (design note section 14).
+#
+# The passage is worded around the module's glossary rather than out of it,
+# which is the lesson #32 had to fix in the album family after writing the
+# prose in the module's own words and thereby handing over the crux. Here the
+# module's words for the decision are "operating day", "working" and
+# "belongs to", and the passage uses none of them: "the date it sets off on"
+# is calendar vocabulary the module never uses, and `departs.date()` is where
+# it leads. The decision is still recoverable from the repository, exactly as
+# at level 3 — the prose narrows nothing the module says, it only offers
+# somewhere else to look. The repo, the grading suite and the reference
+# solution are identical across the four variants, and so is every non-crux
+# criterion.
+#
+# The trap is verified rather than argued. The round-3 K12 suite checks in the
+# answer this sentence transcribes to — `file-under-the-departure-date`, the
+# reference solution with `operating_day(trip.departs)` replaced by
+# `trip.departs.date()` and nothing else changed — and grades it: the
+# repository's own tests pass on it, because they cover the readers it did not
+# touch and nothing else, and the held-out suite grades it 0.0 on every
+# variant including this one. A second answer is checked in beside it,
+# `add-a-day-to-the-small-hours`, which is what a solver writes once the
+# boundary has been pointed out and the clock has not: the grouping is right
+# and the printed hour is spelled as a rule about hours below four, which is
+# correct until a trip is still out at 04:00. Both pass the visible suite and
+# both grade 0.0.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# The cost claim below is the contrast the ladder turns on, registered in the
+# ladder's direction for the first time. Round 2 registered the opposite
+# direction here — effort peaking at `unmentioned`, on reading burden — and
+# all eight of its readings missed, prose coming out costlier in six of them
+# and level in the other two (section 18). 1.25x on cost is the round's
+# standing factor and is not fitted to those readings: round 2's four
+# prose-over-unmentioned cost multiples were 1.30x, 1.01x, 1.20x and 1.20x, so
+# the same claim registered against round 2's own sweep would have gone 1 of
+# 4, and this one can plainly lose.
+#
+# feature-dev: the grading tests exercise running_sheet, which does not exist
+# in repo/, so they fail on the pristine repository as the lint requires.
+id: nightbus-print-the-sheet-c4
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small night-bus timetable module in nightbus.py.
+
+  Add a function `running_sheet(trips)` to nightbus.py that lays a list of
+  trips out as the depot's printed running sheet, returned as a list of
+  lines. It must satisfy all of the following:
+
+  - The sheet carries one block per operating day, and the blocks come in
+    date order.
+  - A block opens with a heading line holding that operating day's date,
+    written `YYYY-MM-DD` and nothing else.
+  - After the heading comes one line per trip of that day's working, in
+    departure order, two trips leaving at the same moment coming in
+    alphabetical route order.
+  - A trip's line is two spaces, its route, two spaces, its departure, two
+    spaces, its arrival.
+  - A time is written `HH:MM`, counted from midnight at the start of the
+    block's own date — so a trip that gets in after midnight has an arrival
+    past `24:00` — with hours below ten carrying a leading zero.
+  - A block closes with a line of two spaces, how many trips it holds, a
+    space, `trip` or `trips` to suit that number, a comma and a space, and
+    the block's total running time written as `<minutes> minutes`.
+  - A run with no trips in it gives no lines at all.
+  - The list you were given is left in the order it was given.
+
+  Think of it as filing each trip under the date it sets off on, then taking
+  those dates in turn and printing what is filed under each.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: prose
+  family: nightbus-print-the-sheet
+  pair: nightbus-print-the-sheet-withheld
+  prediction:
+    rung: sonnet-only
+    rationale: >-
+      the described shape spells naturally as filing each trip under
+      `departs.date()`, which is right for every trip leaving before midnight
+      and wrong for every one leaving after it, and the prose displaces the
+      criteria that would otherwise have sent the reader to the module — the
+      mechanism that sank both models on round 1's settings-l2; the bet is
+      made again after round 2 missed it twice because round 2's misses were
+      read under a floor its whole family sat on, which this change removes,
+      and because the transcription is checked in and graded 0.0 rather than
+      asserted
+    effort:
+      comparator: pair
+      metric: cost
+      at_least_factor: 1.25

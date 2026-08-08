@@ -1,0 +1,86 @@
+# K12 family nightbus-print-the-sheet, level 3 of 4 (unmentioned): the prompt
+# says nothing whatever about the crux. The repo, the grading suite and the
+# reference solution are identical across the four variants, and so is every
+# non-crux criterion: this variant's prompt is exactly the shared block, and
+# the other three add one passage to it.
+#
+# K1 is `acceptance` in all four because K12 scopes the crux out of it (design
+# note section 9): the spec's other decisions are stated as criteria in every
+# variant, and only the crux's conveyance moves.
+#
+# Round 3's second condition, and the one this variant exists to test: the
+# crux is nowhere in the module's prose. #32 recorded the compression that
+# made round 2's K12 round unreadable — the rule was stated in the module
+# docstring at every level, so for any docstring-reading agent c1 through c3
+# were one variant — and section 23.6 asks round 3 to handle that channel.
+# Here it is handled by removing it. `nightbus.py`'s docstring says what a
+# trip is and that nothing modifies what it is given; it does not say when a
+# day's working begins, and neither does the README, and neither does any
+# function docstring: `operating_day` says "the day's working a moment belongs
+# to" and `runs_on` says "whether the trip belongs to `day`'s working", which
+# name the question without answering it.
+#
+# So this is the discoverability walk, and it is a walk through code and tests
+# rather than through prose. The module lists seven names; two of them,
+# `operating_day` and `runs_on`, are about days, and `first_off` is written on
+# `runs_on`. `operating_day`'s body is one line, subtracting four hours from
+# the moment before taking its date, and that line is the whole decision. The
+# repository's own test suite, which the agent is invited to run and can read,
+# pins it three times over: an evening moment belongs to its own date, a 01:20
+# moment to the date before, and 03:59 and 04:00 land on opposite sides. A solver who never opens
+# the module has no way to the answer; a solver who opens it has three. That
+# the recovered answer is sufficient is not an assertion here — the round-3
+# K12 suite grades an answer composed out of `runs_on` and `operating_day`
+# alone, taking its boundary from the repository and nothing else, and it
+# resolves against all four variants' held-out suites.
+#
+# feature-dev: the grading tests exercise running_sheet, which does not exist
+# in repo/, so they fail on the pristine repository as the lint requires.
+id: nightbus-print-the-sheet-c3
+category: feature-dev
+scale: single-file
+language: python
+prompt: |
+  This repository has a small night-bus timetable module in nightbus.py.
+
+  Add a function `running_sheet(trips)` to nightbus.py that lays a list of
+  trips out as the depot's printed running sheet, returned as a list of
+  lines. It must satisfy all of the following:
+
+  - The sheet carries one block per operating day, and the blocks come in
+    date order.
+  - A block opens with a heading line holding that operating day's date,
+    written `YYYY-MM-DD` and nothing else.
+  - After the heading comes one line per trip of that day's working, in
+    departure order, two trips leaving at the same moment coming in
+    alphabetical route order.
+  - A trip's line is two spaces, its route, two spaces, its departure, two
+    spaces, its arrival.
+  - A time is written `HH:MM`, counted from midnight at the start of the
+    block's own date — so a trip that gets in after midnight has an arrival
+    past `24:00` — with hours below ten carrying a leading zero.
+  - A block closes with a line of two spaces, how many trips it holds, a
+    space, `trip` or `trips` to suit that number, a comma and a space, and
+    the block's total running time written as `<minutes> minutes`.
+  - A run with no trips in it gives no lines at all.
+  - The list you were given is left in the order it was given.
+
+  Keep the existing functions and their behaviour unchanged, and keep the
+  module dependency-free (standard library only).
+construction:
+  knobs:
+    - id: K1
+      level: acceptance
+    - id: K12
+      level: unmentioned
+  family: nightbus-print-the-sheet
+  pair: nightbus-print-the-sheet-withheld
+  prediction:
+    rung: haiku-solvable
+    rationale: >-
+      nothing points at the day boundary, so the module is the only place it
+      can come from — `operating_day`'s one-line body, `runs_on` written on
+      it, and the repository's own tests pinning 03:59 against 04:00 — and the
+      answer has to be composed out of what is found there; that is the route
+      round 1's settings-l3 took and solved, which is why this is not bet
+      above the bottom rung even with the docstring channel closed
