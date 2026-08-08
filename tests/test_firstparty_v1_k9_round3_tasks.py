@@ -39,10 +39,14 @@ answer a reader reaches by never treating the open decision as one graded
 0.0; a careless reading of a rule the crux *does* state graded 0.0 as well;
 the control probed with the slip a careless reader of a fully stated spec
 makes; and each crux arguing in its own task.yaml why recalling a named
-method resolves nothing. The bookcase pair carries a second such careless
-reading, `pack-the-shelves-without-the-dividers`, because there the careless
-reading and the textbook method are the same program and the argument its
-task.yaml makes is worth having run.
+method resolves nothing. The bookcase pair carries three such careless
+readings rather than one, because its crux states three rules a reader can
+slip on and each of the three is worth having run: the bar read as one book
+wide, `pack-the-shelves-without-the-dividers`, where the careless reading and
+the textbook method are the same program and the argument its task.yaml makes
+turns on it, and `fill-each-shelf-by-the-book`, the one program here that
+splits a stretch across two shelves and so the only demonstration that the
+rule against it can be failed.
 
 What "unchanged" covers is the vocabulary rather than the tests: the `Pair`,
 `Probes` and `Bend` records, the mutation and answer-running helpers, the line
@@ -341,6 +345,37 @@ PACK_THE_SHELVES_WITHOUT_THE_DIVIDERS = '''def shelve(books, width, divider):
     return shelves
 '''
 
+# And the rule the crux states that the two readings above both happen to
+# respect: a stretch of one subject is never split across two shelves. This
+# reading lays the run out a book at a time rather than a stretch at a time,
+# with the dividers counted correctly, so it never overfills a shelf and never
+# refuses a stretch it should have taken — it just breaks a subject in half
+# where the shelf runs out mid-stretch. Kept registered because it is the only
+# program in this suite that demonstrates the stretch rule can be failed at
+# all, and a rule no probe fails is a rule the grading suite is not shown to
+# enforce.
+FILL_EACH_SHELF_BY_THE_BOOK = '''def shelve(books, width, divider):
+    """The run laid out on shelves `width` millimetres wide: each shelf takes
+    books until the next one will not stand beside what is already there,
+    dividers counted, and then the next shelf is started."""
+    for stretch in runs(books):
+        if span(stretch) > width:
+            raise ValueError(
+                f"the {stretch[0].subject} books take up {span(stretch)}mm, "
+                f"which no {width}mm shelf holds"
+            )
+    shelves = []
+    for book in books:
+        standing = shelves[-1] if shelves else None
+        if standing is not None:
+            grown = standing + [book]
+            if span(grown) + (len(runs(grown)) - 1) * divider <= width:
+                standing.append(book)
+                continue
+        shelves.append([book])
+    return shelves
+'''
+
 # The crux states that a burst holds photographs taken no *more* than `pause`
 # seconds apart, and this reading cuts at a gap of exactly the pause instead
 # of holding it together — which splits a burst the roll does not.
@@ -513,6 +548,7 @@ PROBES: dict[str, Probes] = {
                 "pack-the-shelves-without-the-dividers",
                 PACK_THE_SHELVES_WITHOUT_THE_DIVIDERS,
             ),
+            Bend("fill-each-shelf-by-the-book", FILL_EACH_SHELF_BY_THE_BOOK),
         ),
     ),
     "roll": Probes(

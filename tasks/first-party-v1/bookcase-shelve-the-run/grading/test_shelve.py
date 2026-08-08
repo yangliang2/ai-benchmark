@@ -143,10 +143,20 @@ def given(name):
 
 def held(shelf, case):
     """What a shelf holds: its books, and one divider for every stretch on it
-    after the first — counted off the titles the case's stretches open with
-    rather than read back through `runs`."""
-    opening = {stretch[0] for stretch in case.stretches}
-    standing = sum(1 for book in shelf if book.title in opening)
+    after the first — counted off the books the case's stretches open with
+    rather than read back through `runs`.
+
+    Which books those are is taken positionally and matched by identity, the
+    way `pick`'s suite finds a frame's place on its roll: a run may bring a
+    title round again as a stretch of its own, and counting openings by title
+    would then count one shelf's dividers twice over.
+    """
+    opening = []
+    place = 0
+    for stretch in case.stretches:
+        opening.append(case.books[place])
+        place += len(stretch)
+    standing = sum(1 for book in shelf if any(book is start for start in opening))
     return sum(book.width for book in shelf) + max(standing - 1, 0) * case.divider
 
 
