@@ -1339,8 +1339,8 @@ the load-bearing one.
    requirement removed is a prompt at a different level of decision openness,
    which is K1's ladder — the one knob this experiment has actually validated
    (§12) — so the near/far pair candidate 5 asks for moves K1 and K11
-   together by construction, and §9's clause 2 attributes a two-knob
-   contrast's outcome to neither. Declared honestly, that pair does not even
+   together by construction, and a contrast moving two knobs attributes its
+   outcome to neither (§9, clause 3). Declared honestly, that pair does not even
    load: the **task-set lint holds a pair to exactly one varied knob**, and a
    near/far pair whose two members declare different K1 levels varies two.
    The lint cannot force the honesty — an author who wrote the same K1 level
@@ -1514,10 +1514,11 @@ the load-bearing one.
    effect ever measured here and the only activated knob carrying no claim.
 
    [**Shipped by #41 as two pairs on one substrate, and the rung is not the
-   channel.** Four new tasks, all four graded this round, each pair one
-   dense-terrain task and the calm-terrain control built beside it. Every
-   condition §18 set is met and the one §12 left outstanding is met in its
-   strongest available form.
+   channel.** Four new tasks for this round's sweep, each pair one
+   dense-terrain task and the calm-terrain control built beside it. §12's
+   outstanding condition is met in its strongest available form, and §18's
+   three are met but for one that has since been superseded — the note there
+   says which and why.
 
    **The contrast, and why it is the control §12 asked for.** Round 1's two
    K7 cells are the only ones in the corpus on a large vendored repository, so
@@ -1600,8 +1601,8 @@ the load-bearing one.
    `haiku-solvable`, which is where round 1 actually put both dense K7 tasks
    after betting them a rung up, and where round 2's sixteen bottom-rung bets
    went fourteen of sixteen; four more upward bets would have been the
-   fifteenth through eighteenth losses of a bet nothing outside K1 has ever
-   won (§21). So: a flat rung result returns exactly what was predicted and
+   fifteenth through eighteenth placings of a bet that stands at nought for
+   fourteen outside K1 (§21). So: a flat rung result returns what was predicted and
    falsifies nothing, and four missed claims make K7 **silent 1 of 2** — the
    first time in three rounds the knob has been able to lose anything at all,
    which is the whole purpose of the ticket.
