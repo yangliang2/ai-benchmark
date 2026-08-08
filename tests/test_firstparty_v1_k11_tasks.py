@@ -38,6 +38,23 @@ the reference diff — plus the pre-registration. Round 1's authors went 0 for
 12 on "this knob makes the task harder" bets, so every rung here is
 registered at the bottom of the ladder and the difficulty claim is carried
 by an effort claim instead; both are pinned below, before any paid run.
+
+**K11 was retired in round 3 (#41), and these four tasks stay exactly as they
+are.** The knob is dropped on identifiability rather than on its counter: its
+lever is a clause of the prompt, and taking that clause out moves K1 as well,
+so the near/far pair the design note's section 23.5 asked for would vary two
+knobs — which, declared honestly, the pair lint refuses. The argument is
+written out there.
+Nothing here is deleted, because every counter in this experiment is derived
+from the checked-in artifacts on each run — the four tasks are the data the
+round-2 reading was taken from, and their construction blocks are what replay
+grades against. What makes the retirement effective is that no *new* task
+declares K11, so no future round can put it to a registered contrast and its
+counter stays where section 19 left it, at silent 1 of 2. That is the one
+thing this suite gained on retirement:
+`test_the_retired_knob_gains_no_further_tasks` holds the set of K11 tasks to
+these four, so a fifth would fail here rather than quietly reopening a knob
+the record says is closed.
 """
 
 import subprocess
@@ -461,6 +478,29 @@ def test_every_task_is_a_feature_dev_task_setting_the_distance_knob_alone() -> N
         # and a pair would need a control these tasks do not have.
         assert task.construction.family is None
         assert task.construction.pair is None
+
+
+def test_the_retired_knob_gains_no_further_tasks() -> None:
+    """What the round-3 retirement (#41) actually enforces.
+
+    A retirement cannot be spelled in `KNOB_LEVELS`, and deleting K11 from it
+    would be worse than saying nothing: the counters are derived, so a knob
+    missing from the registry leaves `reconcile-v1` unable to read the round
+    it already counted. What can be enforced is the authoring side. K11's
+    counter advances only through a registered contrast, a registered contrast
+    needs a task declaring the knob, and the four tasks that declare it have
+    been swept — a task × model cell is swept once, so nothing already here
+    can produce another reading. So holding the set to these four is what
+    keeps the knob closed, and a fifth K11 task fails here rather than
+    reopening it by accident.
+    """
+    declaring = {
+        task.id
+        for task in load_task_set(TASKS)
+        if task.construction is not None and "K11" in task.construction.levels
+    }
+
+    assert declaring == {entry.task_id for entry in K11_TASKS}
 
 
 def test_the_tasks_lint_clean() -> None:
