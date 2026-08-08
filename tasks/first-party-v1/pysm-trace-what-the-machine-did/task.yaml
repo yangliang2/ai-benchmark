@@ -12,14 +12,16 @@
 # thrown-away events four apiece; the remaining two places declare the
 # attribute and document it. The suite counts the hunks of the reference diff
 # and holds this member to the 8-15 band the ticket asks for and the control
-# to a handful. What makes the 12 irreducible is the shape of the library
-# rather than a rule the task invents: pysm/aio.py does not override the
-# core's entry walk, exit walk and dispatching step, it carries its own
-# copies of all three, and pysm/queued.py carries its own copy of the queue
-# draining. A decision about what those walks record therefore has to be
-# written out once per copy, and inheritance cannot collect them. The prompt
-# states the rule for every layer and states the consequence — one graph
-# driven the same way records the same trace whichever layer ran it — so
+# to a handful. What makes the 12 irreducible — the three-module spread of
+# them, that is, and not the count, because within any one module three of
+# these recordings do collect into one, as the paragraph below works out — is
+# the shape of the library rather than a rule the task invents: pysm/aio.py
+# does not override the core's entry walk, exit walk and dispatching step, it
+# carries its own copies of all three, and pysm/queued.py carries its own copy
+# of the queue draining. A decision about what those walks record therefore
+# has to be written out once per module, and inheritance cannot collect them.
+# The prompt states the rule for every layer and states the consequence — one
+# graph driven the same way records the same trace whichever layer ran it — so
 # nothing here is withheld; what is being asked for is that a stated rule be
 # carried to all of its sites.
 #

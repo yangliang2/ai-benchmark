@@ -1796,9 +1796,11 @@ the load-bearing one.
    name `_is_processing`, withheld deliberately and available only from
    `pysm/queued.py` or `pysm/aio.py`. So the ticket's "genuinely spanning ≥3
    modules" is met in the documented walk and in where the facts live, and
-   *not* in what a solver is compelled to do; and the sentence registered
-   below about "a genuine hunt through three modules with a wrong turn in it"
-   overstates the task. Nothing downstream may lean on that phrasing.
+   *not* in what a solver is compelled to do; and the ticket's own framing of
+   K4 as "a genuine hunt through three modules with a wrong turn in it" —
+   which this note carried into its first registration of the batch, and which
+   now survives below only inside the discount that retracts it — overstates
+   the task. Nothing downstream may lean on that phrasing.
 
    The repair is registration and not prompt surgery, which was considered and
    rejected. The brief has to say those things to stay honest: withholding
@@ -1970,23 +1972,33 @@ the load-bearing one.
    finished one. If either wide member comes back unsolved, that is the
    registered explanation and not a fresh one.
 
-   **One grading gap, found in review and closed rather than registered.**
-   The K10 prompt gives the trace to the root machine — "a nested machine's
-   own trace stays empty however often its states are entered and left" — and
-   every recording site but one is reached through a call made on the root, so
-   a solution writing `self.trace` in the initial-path walk instead of
-   `self.root_machine.trace` recorded into the right list everywhere the
-   held-out suite looked, and graded 1.0 with a stated rule broken.
-   `initialize` is the exception, because any machine in a graph can be
-   initialized. #42's fix pass added a held-out case that initializes a nested
-   machine and asserts the entries land on the root, plus a suite-side probe
-   asserting the slip now grades 0.0. Legal to do on the grading side because
-   the pair's byte-identity requirement is on `repo/` — the lint compares that
-   and nothing else, and each member's `grading/` is its own file — so the
-   control was not touched and the pair still holds. Recorded because a task
-   whose grading was widened after authoring and before the sweep is a fact
-   about the artifact, and because the same gap is worth looking for wherever
-   a prompt says "the root's" and every test drives from the root.]
+   **One grading gap, found in review and closed at every site — and the
+   first attempt at closing it shut one site of twelve.** The K10 prompt gives
+   the trace to the root machine — "a nested machine's own trace stays empty
+   however often its states are entered and left" — and a machine driven from
+   its root writes `self.trace` and `self.root_machine.trace` into the same
+   list. Every held-out case drove from the root, so a solution writing
+   `self.trace` throughout recorded into the right list everywhere the suite
+   looked and graded 1.0 with a stated rule broken. #42's fix pass added a
+   case that initializes a nested machine, which closed the initial-path walk
+   of `pysm/pysm.py`; measuring the other eleven recording places afterwards
+   showed the substitution still grading 1.0 at every one of them, because
+   `initialize` is not the only call that can be made below the root.
+   `dispatch` is another, and each of the three modules holds its own copy of
+   both — the same duplication the whole task is pitched on, arriving as a
+   grading hole rather than as a cost. The final pass added five more held-out
+   cases that dispatch to and initialize a nested machine in each layer, and
+   the suite-side probe became a probe per place: all twelve now grade 0.0,
+   while the reference and the ten-hunk collapse both pass the widened
+   twenty-three. Legal to do on the grading side because the pair's
+   byte-identity requirement is on `repo/` — the lint compares that and
+   nothing else, and each member's `grading/` is its own file — so the control
+   was not touched and the pair still holds. Recorded because a task whose
+   grading was widened after authoring and before the sweep is a fact about
+   the artifact, and because the general lesson is stronger than the first
+   registration of it made out: wherever a prompt says "the root's" and every
+   test drives from the root, the gap is not one site but every site, and
+   closing the one review happened to find leaves the class open.]
 
 ## Open questions (superseded list resolved 2026-08-05)
 

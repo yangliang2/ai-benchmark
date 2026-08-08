@@ -219,21 +219,92 @@ TRACE_MISSING_ONE_ASYNC_SITE = (
 )
 
 # And the slip that used to go unpunished: `self` where the prompt says the
-# root machine, in the one walk that can be started anywhere in the graph.
-# Every other recording site is reached through a call made on the root, so
-# there `self` and `self.root_machine` are the same object and the substitution
-# is invisible; `initialize` is the exception, because any machine can be
-# initialized. The held-out suite gained a case for it in the fix pass for #42,
-# and this asserts the case bites.
+# root machine. It is invisible from any test that drives the graph from its
+# root, because there `self` and `self.root_machine` are one object — and until
+# #42's final pass every held-out case did drive from the root but one, so the
+# substitution graded 1.0 at eleven of the reference's twelve recording places
+# with a stated rule broken. A call below the root is what separates them, and
+# both `initialize` and `dispatch` can be made on a nested machine, so the slip
+# has to be probed once per place rather than once per method. Each entry below
+# is the same substitution at one of the twelve, and every one of them must
+# grade 0.0.
 _APPEND_ENTER_TO_SELF = "            self.trace.append(('enter', state.name))\n"
+_APPEND_EXIT_TO_SELF = "            self.trace.append(('exit', state.name))\n"
+_APPEND_EVENT = "        self.root_machine.trace.append(('event', event.name))"
+_APPEND_EVENT_TO_SELF = "        self.trace.append(('event', event.name))"
+_APPEND_QUEUED = "            self.root_machine.trace.append(('queued', event.name))"
+_APPEND_QUEUED_TO_SELF = "            self.trace.append(('queued', event.name))"
 
-TRACE_RECORDED_ON_THE_MACHINE_INITIALIZED = (
-    (
-        CORE,
-        _APPEND_ENTER + _INITIAL_ENTER_EVENT,
-        _APPEND_ENTER_TO_SELF + _INITIAL_ENTER_EVENT,
-    ),
-)
+# The clearing is quoted whole, because a slip there is one an author makes in
+# both of its lines at once, and because both queued layers spell it the same.
+_CLEAR_QUEUES = """\
+        while self._internal_queue:
+            self.root_machine.trace.append(
+                ('dropped', self._internal_queue.popleft().name))
+        while self._external_queue:
+            self.root_machine.trace.append(
+                ('dropped', self._external_queue.popleft().name))
+"""
+_CLEAR_QUEUES_TO_SELF = _CLEAR_QUEUES.replace("self.root_machine.trace", "self.trace")
+
+
+def _walk_slips(module: str) -> dict[str, tuple[tuple[str, str, str], ...]]:
+    """The entry walk, the exit walk and the initial walk of one module.
+
+    Written once and asked of both large modules, because `pysm/aio.py` holds
+    its own copies of all three rather than inheriting them — which is the
+    library fact this whole task is pitched on, so the probes may as well be
+    built out of it.
+    """
+    return {
+        f"{module}:initial-walk": (
+            (
+                module,
+                _APPEND_ENTER + _INITIAL_ENTER_EVENT,
+                _APPEND_ENTER_TO_SELF + _INITIAL_ENTER_EVENT,
+            ),
+        ),
+        f"{module}:exit-walk": (
+            (module, _APPEND_EXIT + _EXIT_EVENT, _APPEND_EXIT_TO_SELF + _EXIT_EVENT),
+        ),
+        f"{module}:entry-walk": (
+            (
+                module,
+                _APPEND_ENTER + _TRANSITION_ENTER_EVENT,
+                _APPEND_ENTER_TO_SELF + _TRANSITION_ENTER_EVENT,
+            ),
+        ),
+        f"{module}:dispatching-step": (
+            (module, _APPEND_EVENT, _APPEND_EVENT_TO_SELF),
+        ),
+    }
+
+
+def _queue_slips(module: str) -> dict[str, tuple[tuple[str, str, str], ...]]:
+    """The deferral and the clearing of one queued layer, likewise duplicated."""
+    return {
+        f"{module}:deferral": ((module, _APPEND_QUEUED, _APPEND_QUEUED_TO_SELF),),
+        f"{module}:clearing": ((module, _CLEAR_QUEUES, _CLEAR_QUEUES_TO_SELF),),
+    }
+
+
+TRACE_ON_THE_WRONG_MACHINE = {
+    **_walk_slips(CORE),
+    **_queue_slips(QUEUED),
+    **_walk_slips(AIO),
+    **_queue_slips(AIO),
+}
+
+# The core has no queue of its own, so its four walks plus the two queued
+# layers' two apiece and the async layer's four come to the reference's twelve
+# recording places. Asserted rather than trusted to the arithmetic above,
+# because a probe silently dropped out of the table is a gap reopening.
+assert len(TRACE_ON_THE_WRONG_MACHINE) == 12
+
+WRONG_MACHINE = [
+    pytest.param(swaps, id=site)
+    for site, swaps in TRACE_ON_THE_WRONG_MACHINE.items()
+]
 
 
 # --- K10 control: the same two methods, built differently -----------------------
@@ -871,24 +942,30 @@ def test_a_careless_answer_does_not_resolve(
     assert record.quality_value == 0.0
 
 
-def test_the_k10_wide_member_refuses_a_trace_kept_on_the_wrong_machine() -> None:
-    """One probe of its own, for the one rule the held-out suite used to state
-    without checking.
+@pytest.mark.parametrize("swaps", WRONG_MACHINE)
+def test_the_k10_wide_member_refuses_a_trace_kept_on_the_wrong_machine(
+    swaps: tuple[tuple[str, str, str], ...],
+) -> None:
+    """A probe per recording place, for the one rule the held-out suite used to
+    state without checking.
 
     The prompt gives the trace to the root machine — "a nested machine's own
-    trace stays empty however often its states are entered and left" — and
-    every recording site but one is reached through a call made on the root, so
-    writing `self.trace` instead is a distinction without a difference
-    everywhere the rest of the suite drives the machine. `initialize` is the
-    exception, and until #42's fix pass added a held-out case that initializes
-    a nested machine, this answer graded 1.0 with a stated rule broken. This
-    asserts it no longer does, which is the only way that gap stays shut.
+    trace stays empty however often its states are entered and left" — and a
+    machine driven from its root writes `self.trace` and
+    `self.root_machine.trace` into the same list, so the substitution is a
+    distinction without a difference everywhere a test dispatches to the root.
+    #42's fix pass closed the initial walk of `pysm/pysm.py`, which is where
+    review found it; measuring the rest afterwards showed the same answer still
+    grading 1.0 at the other eleven places, because `dispatch` can be made on a
+    nested machine as readily as `initialize` can and each of the three modules
+    has its own copy of both. The held-out suite now drives a nested machine
+    directly in every layer, and this asserts the cases bite one place at a
+    time — a whole-file substitution would be caught by any one of them and
+    would tell us nothing about which sites are covered.
     """
     [k10] = [contrast for contrast in CONTRASTS if contrast.knob == "K10"]
     task = task_by_id(k10.wide_id)
-    diff = solution_diff(
-        task, mutate=rewriting(*TRACE_RECORDED_ON_THE_MACHINE_INITIALIZED)
-    )
+    diff = solution_diff(task, mutate=rewriting(*swaps))
 
     [record] = evaluate([task], [run_for(task, diff)], source="run-log")
 
@@ -1043,8 +1120,13 @@ def test_the_k10_wide_member_argues_why_its_sites_cannot_be_collected() -> None:
 
     Phrases from the argument rather than from the vocabulary. "Edit site",
     which this checked before, is the knob's own definition and arrives in any
-    comment that says what K10 is; "counted rather than described" is a claim
-    only a comment making the argument would make.
+    comment that says what K10 is. Nor does "counted rather than described"
+    discriminate, and saying so is #42's correction to this docstring: it is
+    the formula both members of the pair open with, so a comment can carry it
+    while arguing nothing — it is kept below to pin the house phrasing, not
+    because it is evidence. What does the work is the rest: "copies" and
+    "inheritance cannot collect them" are the mechanism, and "ten sites" is
+    the limit on how far that mechanism reaches.
     """
     [k10] = [contrast for contrast in CONTRASTS if contrast.knob == "K10"]
     comment = prose(k10.wide_id)
