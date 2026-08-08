@@ -1573,20 +1573,25 @@ the load-bearing one.
    `pysm-pushdown` is not: 328 against 255, a ratio of **1.29**, the widest of
    the seven pairs round 3 registers and carried by the member holding the
    claim, which is the direction that matters — a longer brief is a direct
-   alternative explanation for a cost hit. It is not unprecedented, which is
-   worth saying because the review that raised it took it for the corpus
-   maximum and it is not: round 2's `settleup` pair runs 1.39× with the crux
-   the longer member, and `pricelist`'s withheld pair 1.49× with `prose` the
-   longer, both wider and both in the same direction. It is registered in that
-   task's own
-   rationale with the arithmetic that defuses it, and the arithmetic is not
-   close: 73 more words is 504 more characters, on the order of 130 input
-   tokens added to what every turn re-sends, against the 42,900 input tokens
-   per turn round 1's pysm K7 cell measured on haiku and 48,000 on sonnet.
-   That is three tenths of one percent of a turn's input against a claim
-   needing twenty-five percent — roughly an eightieth of the gap. The
-   confound is registered because it is real, and dismissed because it is two
-   orders of magnitude too small to manufacture the effect.
+   alternative explanation for a cost hit. On that quantity — a registered
+   effort claim carried by the longer-prompted member of its pair — 1.29× is
+   the corpus maximum, and the whole ranking is short enough to print:
+   `pysm-pushdown` 1.29, `bookcase` 1.25, `roll` 1.24, `digest` 1.22, `remit`
+   1.20, `outage` 1.18, `dossier` 1.17, `nightbus`-withheld 1.11. Wider *raw*
+   gaps do exist — `pricelist`-withheld at 1.49, round 1's `settleup` at 1.39,
+   `album`-withheld at 1.30 — and not one of the three is precedent for a
+   claim carried across a wide gap: `settleup` registers no effort claim at
+   all, and the other two put their claim on the *shorter* member, where the
+   gap cuts against the claim rather than for it. So this is the widest gap of
+   its kind on record, and what retires it is not precedent but the
+   arithmetic, registered in that task's own rationale and not close: 73 more
+   words is 504 more characters, on the order of 130 input tokens added to
+   what every turn re-sends, against the 42,900 input tokens per turn round
+   1's pysm K7 cell measured on haiku and 48,000 on sonnet. That is three
+   tenths of one percent of a turn's input against a claim needing
+   twenty-five percent — roughly an eightieth of the gap. The confound is
+   registered because it is real, and dismissed because it is two orders of
+   magnitude too small to manufacture the effect.
 
    **The claims, and the argument that 1.25× is unfitted.** Each dense member
    registers `pair, cost, 1.25×` against the calm member beside it; the calm
@@ -1658,7 +1663,12 @@ the load-bearing one.
    something once the confound is removed; it does not say round 1's number
    survived, and nothing in a later round may cite it as though it did. What
    would be a real result is a multiple that stays large with size held: 2× or
-   better, on both models, or on haiku with sonnet within reach of it.
+   better on both models, or 2× on haiku with sonnet at **1.5× or better**.
+   The second branch carries a number now, before the sweep, so that "within
+   reach" cannot be settled afterwards against whatever sonnet happens to
+   return; 1.5× is set where round 2's K9 pairs already landed on sonnet at
+   this metric — 1.47×, 1.54×, 1.08× (§20) — so it is a bar the corpus has
+   been at rather than one invented to be clearable.
 
    **Two caveats recorded before the sweep, so they cannot be invented after
    it.** *One substrate, not two.* Both pairs sit on pysm, so this round
