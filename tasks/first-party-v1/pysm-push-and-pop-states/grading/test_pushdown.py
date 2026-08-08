@@ -88,8 +88,8 @@ def test_popping_an_empty_stack_returns_nothing_and_moves_nothing():
 
 
 def test_the_state_being_left_is_what_goes_onto_the_stack():
-    """Not the state being moved to, which is the slip a stack of two entries
-    never shows."""
+    """Not the state being moved to, which would make every pop come back to
+    where the machine already is."""
     root, states = build()
     into_b(root)
 

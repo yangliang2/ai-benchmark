@@ -12,10 +12,12 @@
 # string path by splitting it on '/'. Calm is not easy: the chain has to
 # refuse a colliding name before it has added anything, which means checking
 # every name up front rather than letting add_state raise halfway through, and
-# that is a real slip a reader can make. It is *local* — everything that
-# decides whether the answer is right is in the one file being edited, where
-# the crux beside it is decided four frames away in code the prompt never
-# mentions.
+# that is a real slip a reader can make. It is *local* rather than sealed off:
+# what the change reaches for outside the file is a few public attributes read
+# as plain data — a state's `name` and its `initial` flag, a machine's
+# `states` — and not one of them carries an unstated contract that could be
+# got wrong. The crux beside it turns on four such contracts, decided four
+# frames away in code the prompt never mentions.
 #
 # Matched with pysm-reset-to-initial-states on write volume, the axis #39
 # added to the pair design: the two reference solutions add 29 and 31 lines to
@@ -98,10 +100,10 @@ construction:
       order — so nothing is left open, and the module the change goes into is
       105 lines of self-contained bookkeeping that no other part of the
       package imports. The control's job is to be the same amount of code to
-      write as the crux beside it and none of the same amount to read: if this
-      one lands anywhere but the bottom rung, the pair is measuring how hard
-      the task was rather than how dense the terrain is, and the round's cost
-      reading should be discounted accordingly
+      write as the crux beside it over a read set a fraction of the size: if
+      this one lands anywhere but the bottom rung, the pair is measuring how
+      hard the task was rather than how dense the terrain is, and the round's
+      cost reading should be discounted accordingly
   substrate:
     origin: https://github.com/pgularski/pysm
     commit: 0c47a5067974951c75a498ee4ed025cf881f48fd

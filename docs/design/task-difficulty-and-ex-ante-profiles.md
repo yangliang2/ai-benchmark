@@ -1382,11 +1382,14 @@ the load-bearing one.
    deleted from the registry would leave the report unable to read its own
    past. What makes the retirement effective is the authoring side: nothing
    new declares K11, so no round can put it to a registered contrast, so its
-   counter cannot advance. That is exactly the shape §9's clause 6 calls
-   **stalled**, reached deliberately instead of by neglect — which is also why
-   the retirement has to live here in prose. A stalled counter cannot tell the
-   difference between a knob nobody has got to yet and a knob that was
-   argued out, and this one was argued out.
+   counter cannot advance. What it prints is **silent 1 of 2** for good — not
+   §9's clause 6 **stalled**, which is reserved for a knob with no counted
+   round at all, and K11 has one. The mechanism is clause 6's, the state is
+   not: a counter is frozen here by the same absence of contrasts that leaves
+   an unasked knob stalled, but it is frozen one round into a count rather
+   than at zero. Which is why the retirement has to live here in prose. A
+   frozen counter cannot tell the difference between a knob nobody has got
+   back to and a knob that was argued out, and this one was argued out.
 
    **Precedent, and how this differs from it.** K8's demotion (§13) is the
    other verdict in this document that the counter does not reproduce: under
@@ -1562,6 +1565,29 @@ the load-bearing one.
    measurement, which is the fault round 2's K9 result was rejected for
    (§18).
 
+   **Prompt length is the axis one of the two pairs does not hold, and both
+   ratios are on the record.** #39 made the brief's own length something a
+   pair registers rather than something a reader has to measure, and the two
+   readings here differ. `pysm-reset` is level at 310 words against 313, a
+   ratio of 0.99, with the dense member the shorter of the two.
+   `pysm-pushdown` is not: 328 against 255, a ratio of **1.29**, the widest of
+   the seven pairs round 3 registers and carried by the member holding the
+   claim, which is the direction that matters — a longer brief is a direct
+   alternative explanation for a cost hit. It is not unprecedented, which is
+   worth saying because the review that raised it took it for the corpus
+   maximum and it is not: round 2's `settleup` pair runs 1.39× with the crux
+   the longer member, and `pricelist`'s withheld pair 1.49× with `prose` the
+   longer, both wider and both in the same direction. It is registered in that
+   task's own
+   rationale with the arithmetic that defuses it, and the arithmetic is not
+   close: 73 more words is 504 more characters, on the order of 130 input
+   tokens added to what every turn re-sends, against the 42,900 input tokens
+   per turn round 1's pysm K7 cell measured on haiku and 48,000 on sonnet.
+   That is three tenths of one percent of a turn's input against a claim
+   needing twenty-five percent — roughly an eightieth of the gap. The
+   confound is registered because it is real, and dismissed because it is two
+   orders of magnitude too small to manufacture the effect.
+
    **The claims, and the argument that 1.25× is unfitted.** Each dense member
    registers `pair, cost, 1.25×` against the calm member beside it; the calm
    members register nothing, as §23.3's controls do. The numbers a fitted
@@ -1603,9 +1629,36 @@ the load-bearing one.
    went fourteen of sixteen; four more upward bets would have been the
    fifteenth through eighteenth placings of a bet that stands at nought for
    fourteen outside K1 (§21). So: a flat rung result returns what was predicted and
-   falsifies nothing, and four missed claims make K7 **silent 1 of 2** — the
-   first time in three rounds the knob has been able to lose anything at all,
-   which is the whole purpose of the ticket.
+   falsifies nothing, and all four claim readings missing makes K7 **silent 1
+   of 2** — the first time in three rounds the knob has been able to lose
+   anything at all, which is the whole purpose of the ticket.
+
+   **The base rate this lane is entered on.** 1.25× on cost has a record here
+   and the record is not neutral, so it is written down before the sweep
+   rather than reconstructed off whatever comes back. Round 2's three K9 pair
+   claims were registered on turns and went 3 of 3 on haiku (2.14×, 1.50×,
+   1.50×) and 0 of 3 on sonnet (1.12×, 1.00×, 1.00×). Read on cost at the same
+   1.25×, the same three pairs go 4 of 6 — digest 2.65× and 1.47×, dossier
+   1.63× and 1.54×, outage 1.17× and 1.08× (§20) — so the metric these two
+   pairs register on is the *easier* of the two at the identical factor, and
+   the clearest case is dossier on sonnet, which spent the same five turns as
+   its control and 54% more money. Three things then compound in the claim's
+   favour and are stated as such: clause 3 makes the round non-silent on one
+   hit on either model, so four readings are four chances at one thing rather
+   than one test; the factor is the house 1.25× rather than anything reached
+   for; and the four readings are not four independent shots, because both
+   dense sites are the same machinery, so the correlation that stops two hits
+   from being two results also makes one hit likelier than four coin flips
+   would suggest. Non-silence is therefore cheap here, and the honest reading
+   is pre-committed: **a bare hit at around 1.3× is a small result, not a
+   replication of round 1.** On the metric these claims register, round 1's
+   K7 cost multiple was 5.1× on haiku and 2.2× on sonnet, and §12's whole
+   objection is that most of that was repository size — which these pairs hold
+   byte-identical. A 1.3× that clears the bar says the terrain is worth
+   something once the confound is removed; it does not say round 1's number
+   survived, and nothing in a later round may cite it as though it did. What
+   would be a real result is a multiple that stays large with size held: 2× or
+   better, on both models, or on haiku with sonnet within reach of it.
 
    **Two caveats recorded before the sweep, so they cannot be invented after
    it.** *One substrate, not two.* Both pairs sit on pysm, so this round

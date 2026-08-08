@@ -10,9 +10,11 @@
 # edited — every path *through* the renamed state is a key that has to move
 # with it, and _normalize_path reads a string path by splitting it on '/', so
 # a name holding one could never be spelled back. Calm is not easy; it is
-# local. Nothing outside pysm/builder.py decides whether the answer is right,
-# where the crux beside it is decided by contracts four frames away in code
-# the prompt never mentions.
+# local rather than sealed off — what the change reaches for outside
+# pysm/builder.py is one public attribute written as plain data, a state's
+# `name`, which carries no unstated contract that could be got wrong. The crux
+# beside it turns on four such contracts, decided four frames away in code the
+# prompt never mentions.
 #
 # Matched with pysm-push-and-pop-states on write volume, the axis #39 added to
 # the pair design: the two reference solutions add 26 and 28 lines to the same
@@ -88,9 +90,9 @@ construction:
       refusal changes nothing, what order the paths come back in — so nothing
       is left open, and the module is 105 lines of self-contained bookkeeping
       that no other part of the package imports. The control's job is to be
-      the same amount of code to write as the crux beside it and none of the
-      same amount to read: if this one lands anywhere but the bottom rung, the
-      pair is measuring how hard the task was rather than how dense the
+      the same amount of code to write as the crux beside it over a read set a
+      fraction of the size: if this one lands anywhere but the bottom rung,
+      the pair is measuring how hard the task was rather than how dense the
       terrain is, and the round's cost reading should be discounted
       accordingly
   substrate:

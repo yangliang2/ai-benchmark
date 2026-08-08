@@ -7,23 +7,23 @@
 #
 # Dense means this: StateMachine's own docstring advertises pushdown-automaton
 # use and the class carries a `stack` for it, and nothing in the library ever
-# touches that stack. Filling the gap is a dozen lines, and every one of the
-# ways to get it wrong lives outside them. The transition has to be performed
-# by the same exit and enter walks a dispatch uses, which means finding out
-# that `_exit_states` returns the common ancestor `_enter_states` then needs
-# and that it also pushes the leaf-state and state stacks — history the prompt
-# says a push and a pop record like any other transition, so an answer that
-# walks the hierarchy itself has to reproduce it. The state that goes on the
-# stack is the one being left, which has to be read before the walk starts.
-# Entering a composite state descends through `.state`, which the exit walk
-# resets to `initial_state` on its way out. And `Stack.pop` raises IndexError
-# on an empty stack rather than returning None.
+# touches that stack. Filling the gap is a dozen lines, and the read set that
+# decides whether they are right lives outside them. The transition has to be
+# performed by the same exit and enter walks a dispatch uses, which means
+# finding out that `_exit_states` returns the common ancestor `_enter_states`
+# then needs, and that it also pushes the leaf-state and state stacks — the
+# history the prompt says a push and a pop record like any other transition,
+# so an answer that walks the hierarchy itself has to reproduce it. The state
+# that goes on the stack is the one being left, which has to be read before
+# the walk starts. Entering a composite state descends through `.state`, which
+# the exit walk resets to `initial_state` on its way out. And `Stack.pop`
+# raises IndexError on an empty stack rather than returning None.
 #
 # This pair is matched with pysm-rename-and-list-states on write volume, the
 # axis #39 added to the pair design: the two reference solutions add 28 and 26
-# lines to the same snapshot, a ratio of 1.08, and the suite asserts it. Without
-# "dense terrain costs more" and "the dense task was bigger" are the same
-# measurement.
+# lines to the same snapshot, a ratio of 1.08, and the suite asserts it.
+# Without it "dense terrain costs more" and "the dense task was bigger" are the
+# same measurement.
 #
 # The snapshot carries no knob-setting edit, so `modifications` is empty:
 # the density this pair is pitched on is the library's own, as round 1's two
@@ -101,14 +101,27 @@ construction:
       pysm-reset-to-initial-states registers it there: both round-1 K7 tasks
       were bet sonnet-only and both resolved on haiku, and upward bets outside
       K1 are nought for fourteen lifetime. The bet this task places is on
-      price, and the mechanism is a write of a dozen lines whose every failure
-      mode is decided elsewhere — the common ancestor _exit_states returns and
-      the history it pushes on the way, the `.state` the entry walk descends
-      after the exit walk has reset it, the IndexError an empty Stack raises —
-      against a control asking for the same amount of code in a module where
-      nothing outside the file being edited decides anything. A miss on the
-      cost claim with size and volume both held says the terrain is not what
-      is being paid for
+      price, and the mechanism is the read set rather than the write — a dozen
+      lines whose every failure mode is decided elsewhere, in the common
+      ancestor _exit_states returns and the history it pushes on the way, in
+      the `.state` the entry walk descends after the exit walk has reset it,
+      and in the IndexError an empty Stack raises — against a control asking
+      for the same amount of code in a module that reaches outside itself only
+      to write a state's `name`. The one axis this pair does not hold is
+      prompt length, and it is registered here rather than left for a reader
+      to find: this brief runs 328 words to the control's 255, a ratio of 1.29
+      and the widest of the seven pairs round 3 registers, so a longer brief
+      is the standing alternative explanation for any cost hit this task
+      records. The arithmetic that defuses it is not close. Seventy-three more
+      words is 504 more characters, on the order of 130 input tokens added to
+      the context every turn re-sends, against the 42,900 input tokens a turn
+      round 1's pysm K7 cell actually measured on haiku and the 48,000 it
+      measured on sonnet — three tenths of one percent of what a turn already
+      carries, where the claim below needs twenty-five percent, so the extra
+      words can account for something like an eightieth of the gap they would
+      have to manufacture. A miss on the cost claim, with repository size held
+      byte-identical and write volume matched to 1.08, says the terrain is not
+      what is being paid for
     effort:
       comparator: pair
       metric: cost

@@ -2,6 +2,11 @@
 
 Self-contained on purpose: grading runs with conftest loading disabled, so
 everything these tests need is built here.
+
+Every `paths()` result is read through `list()` because the prompt fixes the
+order the paths come back in and says nothing about the container they come
+back in. Grading the order is grading what was asked for; grading the type
+would be grading whether the agent guessed our diff.
 """
 
 import pytest
@@ -23,7 +28,7 @@ def test_a_renamed_state_answers_to_its_new_name():
 
     builder.rename('spare', 'reserve')
 
-    assert builder.paths() == [
+    assert list(builder.paths()) == [
         ('root',), ('root', 'outer'), ('root', 'outer', 'leaf'),
         ('root', 'reserve'),
     ]
@@ -36,12 +41,12 @@ def test_renaming_moves_the_states_underneath_it():
 
     builder.rename('outer', 'shell')
 
-    assert builder.paths() == [
+    assert list(builder.paths()) == [
         ('root',), ('root', 'shell'), ('root', 'shell', 'leaf'),
         ('root', 'spare'),
     ]
     builder.state('second', parent_path='shell')
-    assert ('root', 'shell', 'second') in builder.paths()
+    assert ('root', 'shell', 'second') in list(builder.paths())
 
 
 def test_the_machine_that_is_built_carries_the_new_name():
@@ -59,7 +64,7 @@ def test_the_root_can_be_renamed():
 
     builder.rename('root', 'top')
 
-    assert builder.paths() == [
+    assert list(builder.paths()) == [
         ('top',), ('top', 'outer'), ('top', 'outer', 'leaf'), ('top', 'spare'),
     ]
     assert builder.build().name == 'top'
@@ -67,22 +72,22 @@ def test_the_root_can_be_renamed():
 
 def test_a_name_a_sibling_already_uses_is_refused_and_changes_nothing():
     builder = nested()
-    before = builder.paths()
+    before = list(builder.paths())
 
     with pytest.raises(StateMachineException):
         builder.rename('outer', 'spare')
 
-    assert builder.paths() == before
+    assert list(builder.paths()) == before
     assert builder.build().state.name == 'outer'
 
 
 def test_renaming_a_state_to_the_name_it_has_is_allowed():
     builder = nested()
-    before = builder.paths()
+    before = list(builder.paths())
 
     builder.rename('outer', 'outer')
 
-    assert builder.paths() == before
+    assert list(builder.paths()) == before
 
 
 def test_a_name_that_could_not_be_written_as_a_path_is_refused():
@@ -95,7 +100,7 @@ def test_a_name_that_could_not_be_written_as_a_path_is_refused():
         with pytest.raises(StateMachineException):
             builder.rename('spare', name)
 
-    assert ('root', 'spare') in builder.paths()
+    assert ('root', 'spare') in list(builder.paths())
 
 
 def test_renaming_something_that_was_never_added_is_refused():
@@ -116,16 +121,18 @@ def test_the_paths_come_back_with_the_root_first_and_the_rest_in_order():
     builder.state('bravo', initial=True)
     builder.state('alpha')
 
-    assert builder.paths() == [('zulu',), ('zulu', 'alpha'), ('zulu', 'bravo')]
+    assert list(builder.paths()) == [
+        ('zulu',), ('zulu', 'alpha'), ('zulu', 'bravo'),
+    ]
 
 
 def test_asking_for_the_paths_builds_nothing():
     builder = nested()
-    before = builder.paths()
+    before = list(builder.paths())
 
     builder.paths()
 
-    assert builder.paths() == before
+    assert list(builder.paths()) == before
     machine = builder.build()
     machine.dispatch(Event('nothing-registered'))
     assert machine.leaf_state.name == 'leaf'

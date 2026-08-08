@@ -223,9 +223,9 @@ PUSHDOWN_THROUGH_A_SHARED_STEP = f"""\
         return to_state
 """
 
-# And the slip a stack of one entry never shows: the state being moved *to*
-# put on the stack instead of the state being left, so every pop comes back to
-# where the machine already is.
+# And the slip the prompt names outright: the state being moved *to* put on
+# the stack instead of the state being left, so every pop comes back to where
+# the machine already is rather than to where it came from.
 PUSH_THE_STATE_BEING_MOVED_TO = f"""\
         if event is not None:
             event.state_machine = self
@@ -772,13 +772,23 @@ def test_every_prediction_names_the_terrain_it_turns_on(
     task_id: str, probes: Probes
 ) -> None:
     """A rationale is what a missed prediction teaches, and for K7 what it has
-    to teach is which reading was expected to cost the money."""
+    to teach is which reading was expected to cost the money.
+
+    Both phrases, and phrases rather than words. The any-of-three over "read",
+    "terrain" and "module" this replaced was met by any one of them arriving
+    incidentally, and its loosest disjunct was met by accident: "read" matches
+    inside "already". What every member here has to say is which module the
+    change goes into and how big the read set around it is — the crux members
+    because that is the price they bet on, the controls because being cheap to
+    read is the whole of their job.
+    """
     task = task_by_id(task_id)
 
     assert task.construction is not None
     rationale = task.construction.prediction.rationale
     assert len(rationale.split()) >= 15
-    assert any(word in rationale for word in ("read", "terrain", "module"))
+    assert "read set" in rationale
+    assert "module" in rationale
 
 
 @pytest.mark.parametrize("contrast", BY_PAIR)
@@ -805,9 +815,14 @@ def test_each_dense_member_argues_why_its_terrain_is_the_dense_one(
     the task model can check it. What can be checked is that the claim was
     argued in the place a reader of the task alone would look: the dense
     member's own task.yaml has to name the contracts it is pitched on and say
-    that the prompt does not restate them."""
+    that the prompt does not restate them.
+
+    Both phrases required, not either: the disjunct this replaced fell back to
+    "read", which matches inside "already", so the specific half of it could
+    never fail on its own.
+    """
     comment = authoring_comment(contrast.dense_id)
 
-    assert "read set" in comment or "read" in comment
+    assert "read set" in comment
     assert "prompt" in comment
     assert len(comment.split()) >= 120
