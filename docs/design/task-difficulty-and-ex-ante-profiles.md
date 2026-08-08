@@ -1722,11 +1722,13 @@ the load-bearing one.
    one stated decision to **14 places in 3 modules**, 12 of them the same
    recording written again — ten a single appended line, the two that record
    thrown-away events four apiece — and the other two declaring the attribute
-   and documenting it. What makes the 12 irreducible is the library's own shape:
-   `pysm/aio.py` does not override the core's entry walk, exit walk and
-   dispatching step, it carries its own copies of all three, and
+   and documenting it. What makes the repetition irreducible is the library's
+   own shape: `pysm/aio.py` does not override the core's entry walk, exit walk
+   and dispatching step, it carries its own copies of all three, and
    `pysm/queued.py` carries its own copy of the queue draining, so no amount
-   of inheritance collects them. The narrow member is the same *kind* of
+   of inheritance collects them across the three. (Within one module they do
+   collect, and by rather more than the sentence above admits — see the
+   ten-site floor below.) The narrow member is the same *kind* of
    change — two small methods mirrored across the package's two queued
    layers — at **2 places in 2 modules**. `pysm-snapshot` is K4:
    `pysm-refuse-a-snapshot-in-flight` at `wide` against
@@ -1747,35 +1749,99 @@ the load-bearing one.
    requires the wide member's `task.yaml` to argue, where a reader of the task
    alone would look, why the library forces the repetition — because fourteen
    sites a competent author could have written as one would be a badly
-   factored solution rather than a wide task. The K4 crux's `task.yaml`
+   factored solution rather than a wide task. The K4 wide member's `task.yaml`
    carries the ≥3-module walk in the same way, and the suite pins the three
    substrate facts the walk depends on, so the claim fails loudly rather than
    going quietly stale if the library is ever re-snapshotted.
 
+   **Ten is the floor, and fourteen only the reference's count.** Registered
+   here because the first version of this entry got it wrong in the direction
+   that flatters the knob. The reference appends inline at every walk, but
+   both large modules funnel their entry and exit walks through an `_on` —
+   `State._on` in `pysm/pysm.py`, `AsyncQueuedStateMachine._on` in
+   `pysm/aio.py` — so a solution recording at those two choke points collects
+   three sites into one in each of them and comes to **10 hunks**. That
+   solution was written out and graded during #42's fix pass: it passes every
+   held-out test and leaves the repository's own 138 green, as it should. Ten
+   is inside the ticket's 8–15 band and inside the band the suite asserts, so
+   the level does not move; what moves is the *reason*. The irreducibility
+   holds **across** modules and fails **within** them — three recordings
+   inside one module collect, and the three-module spread does not, because
+   `pysm/aio.py` and `pysm/queued.py` hold their own copies of machinery
+   `pysm/pysm.py` also has. So what this pair carries is "one decision, ten to
+   fourteen places, three modules, and no spelling reaching two", not
+   "fourteen places, none of them collectible". The site-count assertion
+   measures the *reference* diff and so passes unchanged either way; the prose
+   around it, in the suite and in the wide member's `task.yaml`, is corrected
+   to the ten-site floor.
+
    **What the K4 walk is not, and it is registered rather than discovered.**
-   The walk is what a *confident* answer costs, not what a correct one
-   strictly requires. An author who read `pysm/queued.py` alone and then wrote
-   the defensive `getattr(machine, '_is_processing', False)` out of habit
-   would pass every grading test without opening `pysm/aio.py`, because duck
-   typing happens to cover the class they never saw. So the claim this task
-   makes is narrower than "three modules are unreachable otherwise": it is
-   that skipping the third costs you the ability to know you are right, and
-   that the idiomatic non-defensive answer — an `isinstance` against the one
-   class the short read turns up — is wrong, which is what the careless probe
-   grades 0.0. A resolved run therefore says little, since both roads reach
-   it; the cost claim is what carries the reading. This is K4's version of the
-   caveat §23.3 records for K9's any-resolution property and §18.1 for its
-   labelled cruxes, and it is written here for the same reason: a limit
-   admitted before the sweep is evidence, and one admitted after it is an
-   excuse.
+   Two things shorten it, and both are written down here because a limit
+   admitted before the sweep is evidence and one admitted after it is an
+   excuse. This is K4's version of the caveat §23.3 records for K9's
+   any-resolution property and §18.1 for its labelled cruxes — with a second
+   shortcut beside the first, found in #42's review.
+
+   *The prompt supplies two of the three steps.* Step 3 is in the brief
+   verbatim — "the classic core never has it" — so `pysm/pysm.py` need not be
+   opened to learn that the guard must tolerate the flag's absence. Step 2's
+   operative conclusion is in the brief too: "every layer that runs events
+   counts, and a graph that mixes plain core machines with ones that queue is
+   judged by the ones that queue" is precisely the sentence that refuses an
+   `isinstance` against `QueuedStateMachine`, so what `pysm/aio.py` supplies
+   is the *evidence* for a conclusion already stated rather than the
+   conclusion. The graph walk and the climb to the root are stated as well and
+   are visible inside `pysm/serialization.py`, which already does both. What
+   is left needing a read outside the edited module is **one identifier**: the
+   name `_is_processing`, withheld deliberately and available only from
+   `pysm/queued.py` or `pysm/aio.py`. So the ticket's "genuinely spanning ≥3
+   modules" is met in the documented walk and in where the facts live, and
+   *not* in what a solver is compelled to do; and the sentence registered
+   below about "a genuine hunt through three modules with a wrong turn in it"
+   overstates the task. Nothing downstream may lean on that phrasing.
+
+   The repair is registration and not prompt surgery, which was considered and
+   rejected. The brief has to say those things to stay honest: withholding
+   "the classic core never has it" would make the core's absence a planted
+   crux, which is K9's mechanism rather than K4's, and would move a rung bet
+   registered at the floor. A task whose honesty depends on saying what it
+   says is a task whose limits belong on the record, not in the prompt.
+
+   *And the defensive answer skips the third module entirely.* The walk is
+   what a *confident* answer costs, not what a correct one strictly requires.
+   An author who read `pysm/queued.py` alone and then wrote
+   `getattr(machine, '_is_processing', False)` out of habit would pass every
+   grading test without opening `pysm/aio.py`, because duck typing happens to
+   cover the class they never saw. So the claim is narrower than "three
+   modules are unreachable otherwise": it is that skipping the third costs you
+   the ability to know you are right, and that the idiomatic non-defensive
+   answer — an `isinstance` against the one class the short read turns up — is
+   wrong, which is what the careless probe grades 0.0.
+
+   Both shortcuts point where the claim was already pointed. A resolved run
+   says little, since several roads reach it; **the cost claim carries the
+   whole of the reading**, and it carries it a little less far than the
+   ticket's framing of K4 implies. What is still true and still worth
+   measuring is that the facts do live in three modules and the brief stands
+   in for two of them, so a solver who trusts the prose writes the same lines
+   off a much shorter read than one who checks it — and the price of checking
+   is what this pair is pitched on.
 
    **The two pairs hold each other's knob still, as far as two pairs can.**
    K10 and K4 are adjacent and the batch is built so the readings do not
-   collapse into one: the K10 pair moves the site count (14 against 2) while
+   collapse into one: the K10 pair moves the site count (14 against 2 as the
+   references are written, 10 against 2 at the floor above) while
    both prompts name the modules to edit, and the K4 pair holds the site count
    nearly still (3 against 2, in one and the same module) while moving the
    reading. Neither is a clean instrument for the other knob, and neither
-   claims to be.
+   claims to be. And the K10 pair does not hold K4's quantity still either:
+   its wide member has to survey the walk machinery of three modules to place
+   its recordings and its narrow member reads two methods, so read volume
+   moves there as well as site count. What the K10 pair holds still is the
+   *finding* — every module is named in both prompts, so nothing has to be
+   hunted for — and not the reading. A K10 hit is therefore a reading on
+   "carry one decision to many named places", which includes the cost of
+   visiting them.
 
    **Matched the way #39 and #41 match.** Each pair's two members start from
    the same pysm snapshot byte for byte, so repository size is identical
@@ -1808,6 +1874,24 @@ the load-bearing one.
    cross-substrate agreement §10 wants, and it gives it up for a second round
    running.
 
+   **And it gives up more than that, which §23.7 names within K7 and this
+   entry has to name across knobs.** §23.7 records that K7's two dense sites
+   are the same machinery — both the transition walks of `pysm/pysm.py` — so
+   its four claim readings are not four independent draws and two hits are
+   closer to one result than to two. The same argument runs one level up and
+   nobody has run it there. Round 3's four registered pysm cost claims — K7's
+   two from #41, K10's and K4's from #42 — are all readings on the *same
+   byte-identical snapshot*, so the independence assumption fails across knobs
+   and not only within one. A single pysm-specific effect, a model that is
+   expensive on this library's idiom or cheap on it, would push all four the
+   same way and would be attributable at reconcile time to three different
+   knobs separately. That is a live way to over-read the round: three knobs
+   speaking together on one substrate is one substrate speaking, until a
+   second substrate says the same thing. Reconciliation has no machinery for
+   this — the flag is per knob per round — so it is registered here, and the
+   reading it licenses is that agreement among round 3's pysm claims is weak
+   evidence about the knobs and strong evidence only about pysm.
+
    **What the round can say, registered rather than discovered at reconcile
    time.** Neither K10 nor K4 has an enumerated ladder in §9 or in
    `KNOB_LEVELS`, so under the amended clause 2 neither `wide` nor `narrow` is
@@ -1830,25 +1914,79 @@ the load-bearing one.
    size to replicate, so there is no number a hit can be said to have
    confirmed and none it can be said to have missed. **A bare hit at around
    1.3× is therefore a first reading and a small one**, and nothing in a later
-   round may cite it as more. What would be a real result is the same shape
-   §23.7 fixes for K7: 2× or better on both models, or 2× on haiku with sonnet
-   at 1.5× or better. And the asymmetry is worth stating before the sweep,
-   because the two knobs are not equally likely to speak — K10's wide member
-   is fourteen easy edits and a model that finds them all may simply do them,
-   where K4's wide member is a genuine hunt through three modules with a
-   wrong turn in it, so if only one of the two hits, K4 hitting is the less
-   surprising outcome and should not be read as the batch working.
+   round may cite it as more.
+
+   The ticket asks for predictions "expected to be beaten", and the reading
+   taken of that phrase is on the record rather than assumed: it is read as
+   the discipline of registering a bet you can lose and naming what would
+   defeat it, which every rationale here does. It is not read as a
+   requirement that some bet be aimed above where the corpus lands, because
+   the only axis with room above the floor is the rung, upward rung bets
+   outside K1 stand at nought for fourteen lifetime (§21), and buying a
+   literal reading with a fifteenth would spend the round's falsification
+   record on a bet that has never come in. The four rungs sit at the floor and
+   are expected to be met; the two cost claims are the ones that can be
+   beaten, and each rationale says what beating it would look like.
+
+   What would be a real result is the same shape §23.7 fixes for K7: 2× or
+   better on both models, or 2× on haiku with sonnet at 1.5× or better.
+
+   **And the discount on each knob hitting alone, registered symmetrically.**
+   Both are written against the corrected mechanisms above, which move the
+   premise in both directions at once: K10 is easier than "fourteen
+   irreducible sites" suggested, because a ten-site answer grades, and
+   K4 is shallower than "a genuine hunt through three modules with a wrong
+   turn in it" suggested, because the prompt supplies two of the three steps
+   and the outside read reduces to one identifier. So neither wide member is
+   the thing its first registration described, and neither hit is worth what
+   an undiscounted reading would make it.
+
+   *If K4 hits alone*, that is the less surprising of the two outcomes and is
+   not the batch working. Its wide member still asks for a read the narrow one
+   does not have at all, and — per §23.3's caveat, restated for K4 above —
+   the cost claim is the only thing carrying it, so a lone K4 hit is one
+   knob's first reading and nothing about K10.
+
+   *If K10 hits alone*, that is likewise not the batch working, and the reason
+   is the one the paragraph above on the two pairs records: the K10 pair moves
+   read volume alongside site count, so a lone hit is consistent with
+   "visiting three modules costs something" as much as with "carrying a
+   decision to many sites costs something", and those are K4's mechanism and
+   K10's respectively. A K10 hit read as coordination width specifically needs
+   the K4 pair's reading beside it, which is exactly what a lone hit does not
+   have.
+
+   Neither discount is a reason not to run the batch; both are reasons no
+   single hit may be cited later as more than a first reading of one knob.
 
    **And the failure this batch is most likely to record instead.** Every
    careless probe checked in for the two wide members omits the async layer —
-   the K10 one leaves out a single one of its fourteen sites, the K4 one asks
-   `isinstance` against the class `pysm/queued.py` defines — and both grade
-   0.0 while leaving the repository's own 138 tests green. That is the
-   mechanism each knob is named after, and it is also the reason a model could
-   fail these tasks on the *rung* despite four floor bets: nothing the agent
-   can run inside its workdir distinguishes a half-carried change from a
+   the K10 one leaves out a single one of the reference's fourteen sites, the
+   K4 one asks `isinstance` against the class `pysm/queued.py` defines — and
+   both grade 0.0 while leaving the repository's own 138 tests green. That is
+   the mechanism each knob is named after, and it is also the reason a model
+   could fail these tasks on the *rung* despite four floor bets: nothing the
+   agent can run inside its workdir distinguishes a half-carried change from a
    finished one. If either wide member comes back unsolved, that is the
-   registered explanation and not a fresh one.]
+   registered explanation and not a fresh one.
+
+   **One grading gap, found in review and closed rather than registered.**
+   The K10 prompt gives the trace to the root machine — "a nested machine's
+   own trace stays empty however often its states are entered and left" — and
+   every recording site but one is reached through a call made on the root, so
+   a solution writing `self.trace` in the initial-path walk instead of
+   `self.root_machine.trace` recorded into the right list everywhere the
+   held-out suite looked, and graded 1.0 with a stated rule broken.
+   `initialize` is the exception, because any machine in a graph can be
+   initialized. #42's fix pass added a held-out case that initializes a nested
+   machine and asserts the entries land on the root, plus a suite-side probe
+   asserting the slip now grades 0.0. Legal to do on the grading side because
+   the pair's byte-identity requirement is on `repo/` — the lint compares that
+   and nothing else, and each member's `grading/` is its own file — so the
+   control was not touched and the pair still holds. Recorded because a task
+   whose grading was widened after authoring and before the sweep is a fact
+   about the artifact, and because the same gap is worth looking for wherever
+   a prompt says "the root's" and every test drives from the root.]
 
 ## Open questions (superseded list resolved 2026-08-05)
 
