@@ -162,7 +162,8 @@ def _sum(tokens, index):
         right, index = _product(tokens, index + 1)
         if not same_dimension(value[1], right[1]):
             raise ValueError(
-                f"{_spell(value[1])} and {_spell(right[1])} are not the same kind of quantity")
+                f"{_spell(value[1])} and {_spell(right[1])} are not the "
+                "same kind of quantity")
         size = value[0] + right[0] if mark == "+" else value[0] - right[0]
         value = (size, value[1])
     return value, index

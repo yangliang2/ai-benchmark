@@ -406,7 +406,7 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
     # has to declare something and that is the level their specs are written
     # at. The mix is what stays even across the join, and it is the reading
     # this row cannot give: those six are alike in scope and substrate and
-    # nothing else, since four are five-to-fifteen-line changes bet at the
+    # nothing else, since four are 26-to-36-line changes bet at the
     # floor and two are wide contracts bet unsolved. The pooling is registered
     # in the design note's section 23.10 and in both anchors' own comments,
     # because the row key has no way to say it.

@@ -2015,18 +2015,50 @@ the load-bearing one.
     it.** The spec calls "intent-level spec × planted open decision ×
     substrate terrain" the only recipe that ever produced unsolved cells. It
     is not, and the correction matters because everything downstream would
-    otherwise inherit a claim the artifacts do not support. The three unsolved
-    cells this corpus has ever produced are `settings-l2`, `duration-l3` and
-    `inventory-l3` (§14): all three hand-authored, all three declaring K1 and
-    nothing else, two at `intent` and one at `description`. Neither K9 nor a
-    vendored substrate has ever produced an unsolved cell at any level. So the
-    ingredient with a record is **K1 at intent**, and what a composite does is
-    stack on it the two levers with the largest measured *effort* effects —
-    K7's 5.1× on haiku in round 1 (§12) and K9's 1.5–2.1× on the weaker model
-    in round 2 (§20). That is a mechanism-based bet and not a replication, it
-    is registered as such in both composites' `task.yaml` comments, and a
-    later round may not cite the composites as "the recipe rebuilt" without
-    this paragraph beside it.
+    otherwise inherit a claim the artifacts do not support. The census is
+    **four** cells and not three, and it is derivable from checked-in
+    artifacts alone — `reconcile-v1` replays every logged diff, and the four
+    tasks no model resolved are `settings-merge-layers-l2`,
+    `duration-parse-written-l3`, `inventory-consume-lots-l3` and
+    `calc-infix-evaluator`. [#43's first commits registered three, citing §14.
+    That was wrong twice over: §14 sorts round 1's *prediction misses*, and a
+    frozen zero-knob control registers no prediction, so calc-infix could
+    never have appeared in it however carefully that section were read. The
+    census belongs to `reconcile-v1`'s baseline rows, which report one
+    unsolved cell among the eleven feature-dev controls, and that cell is
+    calc-infix.]
+
+    Three of the four are constructed, and those three are the ones with a
+    shape in common: all hand-authored, all declaring K1 and nothing else, two
+    at `intent` and one at `description`. The fourth was planted by nobody —
+    `calc-infix-evaluator` is a control authored before the knob experiment
+    existed, and it is the archetype the anchors are named after. **The
+    corrected reading is stronger than the one it replaces, in the direction
+    of this batch's own bets**, because the fourth cell sits on the axis the
+    anchors bet: "How the thinking evolved" opens by reading the first sweep
+    off the D-axes and records "calc-infix = highest D1 → only both-model
+    failure". D1 is decision content — graded assertions on a stated /
+    derivable / invented ladder — which is the width of what an answer has to
+    get right, and width is exactly what an anchor is for. So the gap
+    paragraph below, which records that §9's list has no knob naming width,
+    now records something more useful with it: the width class already holds
+    an unsolved cell, arrived at without any knob, and the anchors' unsolved
+    bet inherits that record rather than standing on nothing. The
+    narrower claim survives untouched and is what the composites lean on:
+    neither K9 nor a vendored substrate has ever produced an unsolved cell at
+    any level.
+
+    So the constructed ingredient with a record is **K1 at intent**, and what
+    a composite does is stack on it the two levers with the largest measured
+    *effort* effects — K7's **5.1× cost** on haiku in round 1 (§12) and K9's
+    **1.17–2.65× cost** on haiku in round 2 (§20). Both figures are cost on
+    the weaker model, which is the comparison §20 settled on after finding
+    that turns discriminated none of the three K9 pairs; #43's first commits
+    put K7's cost multiple beside K9's *turns* multiple (1.5–2.1×) as though
+    they were one series, and they are two metrics. That is a mechanism-based
+    bet and not a replication, it is registered as such in both composites'
+    `task.yaml` comments, and a later round may not cite the composites as
+    "the recipe rebuilt" without this paragraph beside it.
 
     **The composites.** `pysm-work-out-a-way-there` gives `StateMachine` a
     `route(target)` that hands back the events which would put the machine on
@@ -2067,17 +2099,31 @@ the load-bearing one.
     dimensions the arithmetic has to carry through. Neither withholds
     anything. The difficulty bet on is the *width* of a closed contract, and
     §9's list has no knob that names width, which is recorded here as the gap
-    it is rather than papered over by declaring a knob that sounds close.
+    it is rather than papered over by declaring a knob that sounds close. What
+    the corrected census adds to that gap is the reason it is worth a lane:
+    the width class is not an untested idea, because the one unsolved cell no
+    knob accounts for is `calc-infix-evaluator`, which "How the thinking
+    evolved" puts down to the highest D1 in round 1's set. The unnamed axis is
+    the axis carrying the corpus's only knob-free ceiling reading, and these
+    two anchors are a second and third attempt at that reading rather than the
+    first.
 
     **What that costs the calibration table, registered rather than
     discovered.** `calibrate-v1` keys a row on category × sorted profile, so
     both anchors land in `feature-dev K1=acceptance` beside round 1's four
-    `-l1` variants, whose changes are a fraction of the size and which all
-    came back haiku-solvable. All six are single-file and hand-authored, so
-    #38's mix disclosure prints nothing, and if the rung bets land the row's
-    floor moves to `unsolved` with no way for the key to say which tasks put
-    it there. This is #40's pooling problem in a second place and it gets
-    #40's answer: recorded here and in both anchors' comments, and asserted by
+    `-l1` variants, whose changes are a fraction of the size — 26 to 36 added
+    lines, against 165 and 248 for the two anchors — and which all came back
+    haiku-solvable. All six are single-file and hand-authored, so #38's mix
+    disclosure prints `K1=acceptance: 6 single-file; 6 hand-authored`, under
+    the heading for rows whose mix differs from the baseline's, since the
+    controls this row is divided by are not all single-file. What the
+    disclosure cannot do is the thing wanted here: six tasks alike on both
+    disclosed axes come out as one line, so it separates the row from its
+    denominator and does nothing at all to separate an anchor from an `-l1`
+    variant. If the rung bets land, the row's floor moves to `unsolved` with
+    no way for the key or the disclosure to say which tasks put it there.
+    This is #40's pooling problem in a second place and it gets #40's answer:
+    recorded here and in both anchors' comments, and asserted by
     the suite so it cannot drift into being a surprise. The composites have
     the opposite property and it is asserted the same way:
     `K1=intent,K7=dense,K9=single` is a key nothing else in the corpus has, so

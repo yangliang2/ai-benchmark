@@ -23,21 +23,28 @@ would be a bet nothing could ever be attributed to.
 
 **What the composites are.** The round-3 spec calls "intent-level spec x
 planted open decision x substrate terrain" the only recipe that ever produced
-unsolved cells, and the record is narrower than that — the three unsolved
-cells this corpus has are `settings-l2`, `duration-l3` and `inventory-l3`,
-all hand-authored, all K1 alone (section 14). So the ingredient with a record
-is K1 at intent, and what these two do is stack on it the two levers with the
-largest measured *effort* effects, K7's terrain and K9's open decision. The
-correction is registered in both task comments and in section 23.10 rather
-than left for a reader to notice, and this suite asserts it is there.
+unsolved cells, and the record is narrower than that. `reconcile-v1` replays
+every logged diff and finds four unsolved cells: `settings-merge-layers-l2`,
+`duration-parse-written-l3`, `inventory-consume-lots-l3` — constructed,
+hand-authored, K1 alone — and `calc-infix-evaluator`, a frozen zero-knob
+control. (#43's first commits said three and cited section 14, which sorts
+round 1's *prediction misses*; a control registers no prediction, so that
+section could never have held the fourth.) So the constructed ingredient with
+a record is K1 at intent, and what these two do is stack on it the two levers
+with the largest measured *effort* effects, K7's terrain and K9's open
+decision. The correction is registered in both task comments and in section
+23.10 rather than left for a reader to notice, and this suite asserts it is
+there.
 
 **What the anchors are.** Calc-infix-class tasks whose whole spec is stated as
-acceptance criteria and whose difficulty is the width of that spec. They
-cannot follow `calc-infix-evaluator` all the way, because its zero-knob
-declaration is the *absence* of a construction block and `BASELINE_TASK_IDS`
-freezes that set at 22; so they declare `K1=acceptance`, which is honest and
-which pools them into a calibration row with round 1's four `-l1` variants.
-That pooling is asserted here so it cannot drift silently.
+acceptance criteria and whose difficulty is the width of that spec — and the
+fourth unsolved cell is `calc-infix-evaluator` itself, so the class they are
+named for is the one class with a knob-free ceiling reading already on it.
+They cannot follow it all the way, because its zero-knob declaration is the
+*absence* of a construction block and `BASELINE_TASK_IDS` freezes that set at
+22; so they declare `K1=acceptance`, which is honest and which pools them into
+a calibration row with round 1's four `-l1` variants. That pooling is asserted
+here so it cannot drift silently.
 
 Every rung here is registered `unsolved`, which is a bet this corpus's ledger
 says loses — upward rung bets outside K1 are nought for fourteen lifetime
@@ -63,10 +70,11 @@ from firstparty_v1_tasks import (
     visible_tests_pass,
 )
 from test_firstparty_v1_k7_round3_pairs import replacing
-from test_firstparty_v1_k9_round2_tasks import authoring_comment
+from test_firstparty_v1_k9_round2_tasks import answer_of, authoring_comment
 
 from ai_benchmark.firstparty_v1 import (
     BASELINE_TASK_IDS,
+    EffortClaim,
     Task,
     evaluate,
     lint_task_set,
@@ -106,12 +114,144 @@ ROUND_ONE_L1 = (
 
 # --- composite A: the route search, answered another way and answered badly ----
 
-# Breadth first, as the reference searches.
-_ROUTE_BREADTH = "            config, leaf, names = pending.popleft()"
-# Depth first. A different search returning, in general, a different and longer
-# route; every held-out test dispatches what came back rather than comparing it
-# with ours, so this has to grade 1.0.
-_ROUTE_DEPTH = "            config, leaf, names = pending.pop()"
+# The reference's search: breadth first over configurations, pruning any
+# configuration already seen, returning the first run of events that lands on
+# the target — which is therefore a shortest one.
+_ROUTE_SHORTEST = """\
+        seen = set([tuple([config[item] for item in machines] + [leaf])])
+        pending = deque([(config, leaf, [])])
+        while pending:
+            config, leaf, names = pending.popleft()
+            for name, from_state, to_state in root._certain_moves(config, leaf):
+                moved, moved_leaf = root._configuration_after(
+                    config, leaf, from_state, to_state)
+                key = tuple([moved[item] for item in machines] + [moved_leaf])
+                if key in seen:
+                    continue
+                seen.add(key)
+                if moved_leaf is target:
+                    return [Event(item) for item in names + [name]]
+                pending.append((moved, moved_leaf, names + [name]))
+        return None
+"""
+# A scenic route instead of a shortest one: the pruned search settles only
+# whether the target is reachable and how far off it is, and the answer is then
+# enumerated without pruning configurations at all and taken as the *longest*
+# run within three steps of the shortest. The brief says any run of events that
+# reaches the target is a correct answer and leaves the choice to the solver, so
+# this has to grade 1.0 — and unlike swapping `popleft` for `pop`, which the
+# seen-set makes return the reference's own routes on every graded call, it
+# demonstrably answers differently, which
+# `test_the_two_searches_really_do_hand_back_different_routes` shows before the
+# grading assertion is allowed to mean anything.
+_ROUTE_SCENIC = """\
+        seen = set([tuple([config[item] for item in machines] + [leaf])])
+        pending = deque([(config, leaf, [])])
+        shortest = None
+        while pending and shortest is None:
+            walk, at, names = pending.popleft()
+            for name, from_state, to_state in root._certain_moves(walk, at):
+                moved, moved_leaf = root._configuration_after(
+                    walk, at, from_state, to_state)
+                key = tuple([moved[item] for item in machines] + [moved_leaf])
+                if key in seen:
+                    continue
+                seen.add(key)
+                if moved_leaf is target:
+                    shortest = len(names) + 1
+                    break
+                pending.append((moved, moved_leaf, names + [name]))
+        if shortest is None:
+            return None
+        reaching = []
+        pending = deque([(config, leaf, [])])
+        while pending:
+            walk, at, names = pending.popleft()
+            if len(names) >= shortest + 3:
+                continue
+            for name, from_state, to_state in root._certain_moves(walk, at):
+                moved, moved_leaf = root._configuration_after(
+                    walk, at, from_state, to_state)
+                if moved_leaf is target:
+                    reaching.append(names + [name])
+                else:
+                    pending.append((moved, moved_leaf, names + [name]))
+        return [Event(item) for item in max(reaching, key=len)]
+"""
+
+# What the two searches are asked, run in a tree of each shape: every distinct
+# `route` call the held-out suite makes, on the graphs it makes them on, so the
+# difference the probe claims is measured over the graded surface rather than
+# over a case chosen to show one.
+_ROUTE_ANSWERS = '''\
+from pysm import Event, State, StateMachine
+
+
+def workshop():
+    machine = StateMachine("workshop")
+    idle, done = State("idle"), State("done")
+    work, cutting = StateMachine("work"), State("cutting")
+    sanding, rough, fine = StateMachine("sanding"), State("rough"), State("fine")
+    machine.add_state(idle, initial=True)
+    machine.add_state(work)
+    machine.add_state(done)
+    work.add_state(cutting, initial=True)
+    work.add_state(sanding)
+    sanding.add_state(rough, initial=True)
+    sanding.add_state(fine)
+    machine.add_transition(idle, work, events=["start"])
+    work.add_transition(cutting, sanding, events=["next"])
+    sanding.add_transition(rough, fine, events=["polish"])
+    machine.add_transition(work, work, events=["restart"])
+    machine.add_transition(work, done, events=["finish"])
+    machine.initialize()
+    return machine, {
+        "idle": idle, "work": work, "cutting": cutting, "sanding": sanding,
+        "rough": rough, "fine": fine, "done": done,
+    }
+
+
+def follow(machine, names):
+    for name in names:
+        machine.dispatch(Event(name))
+    return machine
+
+
+def route(target, walked=()):
+    machine, states = workshop()
+    follow(machine, walked)
+    answer = machine.route(states[target])
+    return None if answer is None else [event.name for event in answer]
+
+
+for target, walked in (
+    ("cutting", ()), ("fine", ()), ("idle", ()), ("done", ()),
+    ("cutting", ("start", "next", "polish")),
+    ("done", ("start", "next", "polish")),
+    ("idle", ("start", "finish")), ("cutting", ("start", "finish")),
+    ("done", ("start", "next")),
+):
+    print(target, walked, route(target, walked))
+
+machine, states = workshop()
+orphan = State("orphan")
+machine.add_state(orphan)
+print("orphan", machine.route(orphan))
+
+ring = StateMachine("ring")
+one, two, three, aside = (
+    State("one"), State("two"), State("three"), State("aside"))
+ring.add_state(one, initial=True)
+for state in (two, three, aside):
+    ring.add_state(state)
+ring.add_transition(one, two, events=["step"])
+ring.add_transition(two, three, events=["step"])
+ring.add_transition(three, one, events=["step"])
+ring.initialize()
+for target in (three, aside):
+    answer = ring.route(target)
+    print(target.name, None if answer is None else [e.name for e in answer])
+'''
 
 # The entry walk descends a `.state` the exit walk has already reset. This is
 # the same walk with the descent taken off the configuration as it stood
@@ -251,21 +391,20 @@ _GAUGE_IN_WRITTEN_UNITS = """\
 
 
 class Probes(NamedTuple):
-    """What a task is asked beyond resolving: one more correct answer, and one
-    careless one.
+    """The passage each task's alternative answer bends, and what it bends it
+    into.
 
     `another_way` has to grade 1.0, or the suite would be grading whether the
     agent guessed our diff — which matters twice over here, once because two of
     these trees are somebody else's library and once because the composites
     label a decision open and a suite pinning one resolution of it would be
-    taking the label back. `careless` has to grade 0.0, and each one below is
-    the idiomatic wrong move for its task rather than an invented mistake.
+    taking the label back. The careless answers are in `CARELESS` below, since
+    they bend a different passage and one of them bends two.
     """
 
     module: str
     reference: str
     another_way: str
-    careless: str
 
 
 class Ceiling(NamedTuple):
@@ -284,9 +423,8 @@ BATCH = (
         levels=COMPOSITE_PROFILE,
         probes=Probes(
             module=CORE,
-            reference=_ROUTE_BREADTH,
-            another_way=_ROUTE_DEPTH,
-            careless="",
+            reference=_ROUTE_SHORTEST,
+            another_way=_ROUTE_SCENIC,
         ),
     ),
     Ceiling(
@@ -297,7 +435,6 @@ BATCH = (
             module=SERIALIZATION,
             reference=_REBUILD_FIRST_IS_INITIAL,
             another_way=_REBUILD_LAST_IS_INITIAL,
-            careless="",
         ),
     ),
     Ceiling(
@@ -308,7 +445,6 @@ BATCH = (
             module=SIEVE,
             reference=_SIEVE_BY_MEMBERSHIP,
             another_way=_SIEVE_BY_LOOP,
-            careless="",
         ),
     ),
     Ceiling(
@@ -319,7 +455,6 @@ BATCH = (
             module=GAUGE,
             reference=_GAUGE_BY_SUBTRACTION,
             another_way=_GAUGE_BY_RECIPROCAL,
-            careless="",
         ),
     ),
 )
@@ -416,11 +551,9 @@ def test_none_of_these_tasks_scores_an_effort_claim_to_any_knob() -> None:
     break by accident.
 
     A registered effort claim is the second and last thing that advances a
-    counter. `claim_knobs` returns nothing for a task that registers none —
-    and, for a task activating several knobs, would return nothing even if one
-    were registered, which is clause 3. Both are asserted: the first is what is
-    true today, and the second is why registering one here was never worth
-    doing.
+    counter, and none of these four registers one, so `claim_knobs` returns
+    nothing for all four. What that does *not* show is clause 3, which is a
+    different question and is asked in the test below.
     """
     outcomes = [unswept(task) for task in load_task_set(TASKS)]
     contrasts = registered_contrasts(outcomes)
@@ -429,6 +562,62 @@ def test_none_of_these_tasks_scores_an_effort_claim_to_any_knob() -> None:
     assert len(mine) == len(TASK_IDS)
     for outcome in mine:
         assert claim_knobs(outcome, contrasts) == frozenset(), outcome.task.id
+
+
+def claiming(task: Task, factor: float = 1.25) -> Outcome:
+    """This task as it would be if its author had registered the baseline cost
+    claim they did not register. Synthetic on purpose: the claim exists in this
+    process and in no `task.yaml`, which is the only way to ask what clause 3
+    would do with one."""
+    construction = task.construction
+    assert construction is not None
+    claim = EffortClaim(
+        comparator="baseline", metric="cost", at_least_factor=factor)
+    return unswept(
+        task.model_copy(
+            update={
+                "construction": construction.model_copy(
+                    update={
+                        "prediction": construction.prediction.model_copy(
+                            update={"effort": claim})
+                    }
+                )
+            }
+        )
+    )
+
+
+def test_a_baseline_claim_would_score_to_k1_on_an_anchor_and_nowhere_on_a_composite(
+) -> None:
+    """Clause 3 itself, exercised rather than described.
+
+    The test above cannot reach it: `claim_knobs` returns early on a task whose
+    prediction carries no effort claim, so four tasks that register none say
+    nothing about how a claim *would* have been attributed. This registers one
+    synthetically and reads the answer off `reconcile_v1.claim_knobs` — nothing
+    for a composite, because one cost reading over K1, K7 and K9 names none of
+    them, and `{"K1"}` for an anchor, because an anchor activates exactly one
+    knob and a baseline claim on it is scored there.
+
+    That second answer is the whole reason no claim was registered on the
+    anchors: a claim would have handed K1 a counted round off a task built to
+    measure the ceiling, which is the artifact verdict round 3's amendment
+    exists to remove, arriving by the back door.
+    """
+    outcomes = [unswept(task) for task in load_task_set(TASKS)]
+    contrasts = registered_contrasts(outcomes)
+
+    scored = {
+        item.task_id: claim_knobs(claiming(task_by_id(item.task_id)), contrasts)
+        for item in BATCH
+    }
+
+    assert scored == {
+        "pysm-work-out-a-way-there": frozenset(),
+        "pysm-rebuild-a-graph-from-a-snapshot": frozenset(),
+        "sieve-select-what-matches": frozenset({"K1"}),
+        "gauge-evaluate-in-units": frozenset({"K1"}),
+    }
 
 
 @pytest.mark.parametrize("item", BY_TASK)
@@ -491,9 +680,10 @@ def test_the_task_declares_the_profile_this_batch_was_built_around(
 
 def test_the_composites_activate_the_three_levers_of_the_recipe() -> None:
     """K1 at intent is the ingredient with a record — two of the corpus's three
-    unsolved cells sit at that level — and K7 and K9 are the two levers with
-    the largest measured effort effects. Pinned as a set, because the
-    calibration view keys a row on exactly this."""
+    *constructed* unsolved cells sit at that level; the fourth unsolved cell
+    declares no knob at all — and K7 and K9 are the two levers with the largest
+    measured effort effects. Pinned as a set, because the calibration view keys
+    a row on exactly this."""
     composites = [item for item in BATCH if item.kind == "composite"]
 
     assert len(composites) == 2
@@ -516,13 +706,14 @@ def test_the_row_the_anchors_land_in_is_shared_with_round_ones_l1_variants(
     silently into being a surprise at reconcile time.
 
     `calibrate-v1` keys a row on category x sorted profile, so an anchor lands
-    beside round 1's four `-l1` variants — five-to-fifteen-line changes that
-    all came back haiku-solvable — and if the rung bet lands the row's floor
-    moves to `unsolved` with no way for the key to say which task put it there.
-    All six are single-file and hand-authored, so section 38's mix disclosure
-    prints nothing either. This is #40's pooling problem in a second place and
-    it gets #40's answer: recorded where the reader is, here and in both task
-    comments and in section 23.10.
+    beside round 1's four `-l1` variants — 26-to-36-line changes that all came
+    back haiku-solvable — and if the rung bet lands the row's floor moves to
+    `unsolved` with no way for the key to say which task put it there. All six
+    are single-file and hand-authored, so #38's mix disclosure prints one line
+    over all of them, `6 single-file; 6 hand-authored`, which separates the row
+    from its denominator and an anchor from nothing. This is #40's pooling
+    problem in a second place and it gets #40's answer: recorded where the
+    reader is, here and in both task comments and in section 23.10.
     """
     sharing = {
         task.id for task in load_task_set(TASKS)
@@ -597,14 +788,14 @@ def test_each_composite_argues_the_recipe_it_instantiates(item: Ceiling) -> None
     phrasing is wider than the record supports and a reader of the task alone
     would otherwise inherit the wider claim.
 
-    All three phrases, not any: the recipe named, the three unsolved cells the
-    record actually holds, and the word for what stacking two more levers onto
-    K1 is.
+    All three phrases, not any: the recipe named, the unsolved cells the record
+    actually holds, and the word for what stacking two more levers onto K1 is.
     """
     comment = authoring_comment(item.task_id)
 
     assert "recipe" in comment
     assert "unsolved cells" in comment
+    assert "mechanism-based bet" in comment
     assert len(comment.split()) >= 150
 
 
@@ -627,8 +818,12 @@ def test_the_composite_prompt_does_not_give_the_terrain_away(
 ) -> None:
     """K7 is terrain: the invariants the change turns on live in the library
     and not in the brief, and a prompt that restated them would be setting a
-    different knob. Two phrases per task, each naming the mechanism its
-    careless probe gets wrong.
+    different knob. Two phrases per task, each naming something the brief would
+    have given away by saying it. Route's two are exactly what its careless
+    probe gets wrong; rebuild's are two of the several invariants its
+    prediction rests on, and its careless probe turns on a different one — the
+    snapshot's own list of which paths are machines — which no phrase here
+    stands in for.
     """
     prompt = task_by_id(item.task_id).prompt.lower()
 
@@ -788,6 +983,41 @@ def test_an_alternative_correct_answer_still_resolves(item: Ceiling) -> None:
     assert record.quality_value == 1.0
 
 
+def test_the_two_searches_really_do_hand_back_different_routes() -> None:
+    """The guard on the probe above, for the one task where the probe could
+    have been vacuous — and, for one revision of this suite, was.
+
+    `route`'s open decision is *which* run of events comes back, so an
+    alternative that grades 1.0 proves nothing unless it hands back a different
+    run. The first version of this probe swapped the search's `popleft` for a
+    `pop`, breadth first for depth first, and the seen-set pruning collapsed the
+    two: every one of the graded suite's route calls came back byte-identical,
+    so the assertion above was passing on the reference's own answers. The
+    scenic search replaces it, and this runs both and compares, the way #39's
+    K9 probes prove their two resolutions are two.
+    """
+    task = task_by_id("pysm-work-out-a-way-there")
+
+    shortest = answer_of(task, _ROUTE_ANSWERS, None)
+    scenic = answer_of(
+        task,
+        _ROUTE_ANSWERS,
+        replacing(CORE, _ROUTE_SHORTEST, _ROUTE_SCENIC),
+    )
+
+    assert shortest.strip() and shortest != scenic
+    differing = sum(
+        1 for one, other in zip(shortest.splitlines(), scenic.splitlines())
+        if one != other
+    )
+    # Four of the twelve distinct calls the graded suite makes, which is the
+    # honest figure rather than a round one. Of the other eight, four have no
+    # route at all, and the four that do have only one, since both searches
+    # stop where they arrive and every way of reaching those targets goes
+    # through the same run of events.
+    assert differing == 4
+
+
 @pytest.mark.parametrize("item", BY_TASK)
 def test_a_careless_answer_does_not_resolve(item: Ceiling) -> None:
     """The other direction, and what keeps the tolerance above from being
@@ -818,15 +1048,32 @@ def test_a_careless_answer_still_leaves_the_visible_suite_green(
         task, solved_tree(task, mutate=rewriting(*CARELESS[item.task_id])))
 
 
-def test_every_counter_neutral_task_of_this_round_is_probed_here() -> None:
+# The two counter-neutral tasks that were already in the set when #43 arrived,
+# and the reason this guard names them instead of subtracting them. Both are
+# round 1's standalone K8 refactors predicted `unsolved` and observed
+# haiku-solvable — two of the misses §14 sorts under "model stronger than the
+# bet" — so both declare a knob, form no family and no pair, and register no
+# effort claim, which is the same predicate this batch satisfies. Each is
+# probed by the suite that owns it — the hand-authored one by
+# test_firstparty_v1_k8_tasks.py, the vendored one by
+# test_firstparty_v1_substrate_tasks.py.
+COUNTER_NEUTRAL_BEFORE_THIS_ROUND = (
+    "leaderboard-extract-rank-key",
+    "pysm-revert-through-one-step",
+)
+
+
+def test_every_counter_neutral_task_is_probed_by_the_suite_that_owns_it() -> None:
     """A task added to the set is a change to a directory rather than to any
     suite, so an unprobed one would sweep looking exactly like a probed one.
 
-    The registry this checks against is the round's own, not the whole set's:
-    thirteen older tasks also declare neither a family nor a pair — K8's seven
-    standalone refactors, K11's four, and round 1's two dense K7 tasks — and
-    they are probed by the suites that own them. What this asserts is that the
-    four tasks *this* ticket added are exactly the ones registered above.
+    Asserted as an exact equality against a named older set, which is the
+    convention #33's K9 guard set and is the only version that can fail:
+    `TASK_IDS` is derived from `BATCH`, so "`BATCH`'s ids equal `TASK_IDS`" is
+    a tautology, and "`TASK_IDS` is a subset of the counter-neutral tasks"
+    cannot notice a fifth. Naming the two older members is what costs
+    something — a fifth counter-neutral task, from this round or any later
+    one, fails here until somebody decides which suite probes it.
     """
     counter_neutral = {
         task.id for task in load_task_set(TASKS)
@@ -837,5 +1084,6 @@ def test_every_counter_neutral_task_of_this_round_is_probed_here() -> None:
         and task.construction.prediction.effort is None
     }
 
-    assert counter_neutral >= set(TASK_IDS)
-    assert {item.task_id for item in BATCH} == set(TASK_IDS)
+    assert not set(COUNTER_NEUTRAL_BEFORE_THIS_ROUND) & set(TASK_IDS)
+    assert counter_neutral == set(TASK_IDS) | set(
+        COUNTER_NEUTRAL_BEFORE_THIS_ROUND)

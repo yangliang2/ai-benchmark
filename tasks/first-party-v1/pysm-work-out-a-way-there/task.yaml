@@ -15,16 +15,27 @@
 # **What the recipe actually is, corrected against the record.** The round-3
 # spec calls "intent-level spec x planted open decision x substrate terrain"
 # the only recipe that ever produced unsolved cells. The record is narrower
-# and is written out here so nothing downstream leans on the wider claim: the
-# three unsolved cells this corpus has ever produced are settings-l2,
-# duration-l3 and inventory-l3 (section 14), all three hand-authored, all
-# three K1 alone, two of the three at intent and one at description. Neither
-# K9 nor a vendored substrate has ever produced an unsolved cell. So the
-# ingredient with a record is K1 at intent, and what these composites do is
-# stack on it the two levers that have produced the largest *effort* effects
-# measured here — K7's 5.1x on haiku in round 1 (section 12) and K9's 1.5-2.1x
-# on the weaker model in round 2 (section 20). That is a mechanism-based bet
-# and not a replication.
+# and is written out here so nothing downstream leans on the wider claim.
+# Run `ai-bench reconcile-v1` and the corpus has *four* unsolved cells, not
+# three: settings-merge-layers-l2, duration-parse-written-l3,
+# inventory-consume-lots-l3 and calc-infix-evaluator. Three of those are
+# constructed and share a shape — hand-authored, K1 alone, two at intent and
+# one at description. The fourth is a frozen zero-knob control nobody planted,
+# and it is the anchors' own archetype; section 14 sorts round 1's prediction
+# misses and a control registers no prediction, so citing section 14 for this
+# census (as this comment first did) misses calc-infix by construction.
+# So the constructed ingredient with a record is K1 at intent, and what these
+# composites do is stack on it the two levers that have produced the largest
+# measured *effort* effects — K7's 5.1x cost on haiku in round 1 (section 12)
+# and K9's 1.17-2.65x cost on haiku in round 2 (section 20). Both figures are
+# cost on the weaker model: section 20 found that turns discriminated none of
+# the three K9 pairs, so K9's turns multiples (1.5-2.1x, which this comment
+# first quoted) are not the series K7's 5.1x belongs to. That is a
+# mechanism-based bet and not a replication.
+#
+# What the fourth cell does for this task is nothing, and that is worth saying
+# once: calc-infix carries no construction block, so it recommends no knob and
+# refutes none. What it bears on is the anchors, whose comments take it up.
 #
 # **The K9 crux is the weak form of section 23.3's caveat, and says so.** What
 # is labelled open is which run of events comes back, and a named method --
@@ -124,8 +135,10 @@ construction:
       it just reset, so the state a transition lands on is not the one the
       configuration points at before the walk; and the answer is a search
       whose step function is that walk. The mechanism the bet rests on is
-      section 14's, which produced all three unsolved cells this corpus has:
-      the defect is invisible to the happy-path check an agent runs on itself,
+      section 14's, which produced all three of the corpus's constructed
+      unsolved cells. Its fourth, calc-infix-evaluator, is a zero-knob control
+      that section does not cover and this bet does not lean on. The defect
+      is invisible to the happy-path check an agent runs on itself,
       because the repository's own 138 tests are green either way and a route
       that is wrong only for a self-transition on a nested machine still
       reaches most targets. Registered against a ledger that says this loses —

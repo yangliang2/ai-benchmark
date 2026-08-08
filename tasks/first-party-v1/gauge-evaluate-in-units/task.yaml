@@ -37,10 +37,21 @@
 #
 # Section 14 is the reading this rests on: the rung is decided by the union
 # of the held-out assertions and one narrow hole sinks the cell, which is how
-# all three of this corpus's unsolved cells were produced. Every clause above
-# is invisible to a happy-path check — the module's own ten tests are green
-# whether or not `evaluate` exists, and an implementation that gets addition
-# and conversion right passes anything an author would try by hand.
+# all three of this corpus's *constructed* unsolved cells were produced. The
+# corpus has a fourth, and it is this task's namesake: `ai-bench reconcile-v1`
+# reports one unsolved cell among the eleven feature-dev zero-knob controls
+# and that cell is calc-infix-evaluator. Section 14 sorts round 1's prediction
+# misses and a frozen control registers no prediction, so it can never name
+# calc-infix — an earlier draft of this comment cited it for a census of three
+# and was wrong on both counts. What the fourth cell adds is the part that
+# matters to an anchor: the design note's "How the thinking evolved" reads the
+# first sweep off the D-axes and puts calc-infix's status down to the highest
+# D1 in the set — decision content, graded assertions — which is the width
+# axis this task is built on, so the bet below has a knob-free precedent
+# rather than none. Every clause above is invisible to a happy-path check — the
+# module's own eleven tests are green whether or not `evaluate` exists, and an
+# implementation that gets addition and conversion right passes anything an
+# author would try by hand.
 #
 # The brief is 491 words against calc-infix-evaluator's 109, for the
 # reason the other anchor's is long: K1 at acceptance over a wide contract
@@ -50,9 +61,11 @@
 #
 # The starting module is hand-authored, so there is no substrate block. The
 # unit table it ships is deliberately small and deliberately mixed: three
-# base units, nine that scale one of them, and four derived ones whose
-# dimensions have two and three terms, which is what makes the exponent
-# arithmetic do work rather than cancel.
+# base units, nine that scale one of them, and four derived ones — one with a
+# single term (Hz) and three with three (N, J, W) — which is what makes the
+# exponent arithmetic do work rather than cancel. `one`, the unit of a
+# quantity that is of nothing at all, carries the empty dimension and is
+# none of those four.
 #
 # Solvable by construction: the reference solution in
 # tasks/first-party-v1-solutions/ grades 1.0 through the same execution-
@@ -141,7 +154,10 @@ construction:
       grouping, whole-number powers, and six ways of not parsing. Section
       14's reading is the one this rests on — the rung is decided by the
       union and one narrow hole sinks the cell — and it is what produced all
-      three unsolved cells this corpus has. Registered against a ledger that
+      three of the corpus's constructed unsolved cells. Its fourth is
+      calc-infix-evaluator itself, a zero-knob control outside section 14's
+      scope, which is the class this task is named for and the one prior
+      reading the width axis has. Registered against a ledger that
       says it loses: upward rung bets outside K1 stand at nought for fourteen
       lifetime, this is one of that kind, and a beaten anchor is ceiling data
       rather than a failure. What would defeat it is either model coming back

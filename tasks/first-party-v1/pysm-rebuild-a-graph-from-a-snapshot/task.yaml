@@ -5,17 +5,26 @@
 # **The recipe, corrected against the record, because a reader of this task
 # alone is owed it and not a pointer to the other one.** The round-3 spec
 # calls "intent-level spec x planted open decision x substrate terrain" the
-# only recipe that ever produced unsolved cells. The record is narrower: the
-# three unsolved cells this corpus has ever produced are settings-l2,
-# duration-l3 and inventory-l3 (section 14), every one of them hand-authored
-# and declaring K1 and nothing else, two at intent and one at description.
-# Neither K9 nor a vendored substrate has ever produced one. So the
+# only recipe that ever produced unsolved cells. The record is narrower, and
+# also one cell longer than this comment first said. `ai-bench reconcile-v1`
+# replays every logged diff and finds four unsolved cells:
+# settings-merge-layers-l2, duration-parse-written-l3,
+# inventory-consume-lots-l3 and calc-infix-evaluator. The first three are
+# constructed, hand-authored, declaring K1 and nothing else, two at intent and
+# one at description. The fourth is a frozen zero-knob control, which is why
+# section 14 — round 1's *prediction misses* — cannot name it and why citing
+# section 14 for the census was a category error rather than a miscount.
+# Neither K9 nor a vendored substrate has ever produced one, and that is the
+# part of the claim these composites actually stand on. So the constructed
 # ingredient with a record is K1 at intent, and what a composite does is
 # stack on it the two levers with the largest measured *effort* effects —
-# K7's 5.1x on haiku in round 1 (section 12), K9's 1.5-2.1x on the weaker
-# model in round 2 (section 20). A mechanism-based bet, then, and not a
-# replication of anything. The longer form of the argument is in
-# pysm-work-out-a-way-there's comment; what is below is what differs.
+# K7's 5.1x cost on haiku in round 1 (section 12), K9's 1.17-2.65x cost on
+# haiku in round 2 (section 20); both cost, because section 20 found turns
+# discriminated none of the three K9 pairs, so the 1.5-2.1x this comment first
+# quoted is a turns figure and belongs to a different series. A
+# mechanism-based bet, then, and not a replication of anything. The longer
+# form of the argument is in pysm-work-out-a-way-there's comment; what is
+# below is what differs.
 #
 # It forms no family and no pair and registers no effort claim. Section 9's
 # amended clause 3 scores a baseline claim on a multi-knob task to no knob, so
@@ -123,8 +132,10 @@ construction:
       shape has to come out of path prefixes; two states may share a name in
       different branches; a machine wants exactly one initial child before it
       will initialize; and a machine with nothing under it is a legal leaf.
-      The failure mechanism is section 14's, which produced all three unsolved
-      cells this corpus has: every one of those holes is invisible to the
+      The failure mechanism is section 14's, which produced all three of the
+      corpus's constructed unsolved cells; its fourth, calc-infix-evaluator,
+      is a zero-knob control outside that section's scope and outside this
+      bet's. Every one of those holes is invisible to the
       happy-path check an agent runs on itself, since the repository's own 138
       tests are green whether or not `rebuild` exists and a round trip on one
       flat machine passes with most of them unmet. Registered against a ledger

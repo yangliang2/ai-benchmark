@@ -16,14 +16,33 @@
 # section 9's list describes where the difficulty actually comes from: the
 # difficulty is the *width* of a closed contract, and no knob names that.
 #
+# **The unnamed axis is not an untested one, which this comment first got
+# wrong by undercounting the record.** `ai-bench reconcile-v1` finds four
+# unsolved cells in this corpus, not three: settings-merge-layers-l2,
+# duration-parse-written-l3, inventory-consume-lots-l3 and — the one an
+# earlier draft of this comment left out — calc-infix-evaluator, which is a
+# frozen zero-knob control and so appears in no prediction reconciliation at
+# all. The design note's "How the thinking evolved" puts calc-infix's status
+# down to the highest D1 in round 1's set — decision content, graded
+# assertions — which is width. So the axis section 9 has no knob for is the
+# axis the corpus's only knob-free ceiling reading sits on, and this anchor is
+# a second attempt at that reading rather than a first attempt at something
+# untried.
+#
 # **What that costs the calibration table, registered rather than
 # discovered.** `calibrate-v1` keys a row on category x sorted profile, so
 # this task lands in `feature-dev K1=acceptance` beside the four `-l1`
-# variants of round 1's K1 families — small hand-authored changes that all
-# came back haiku-solvable. All six are single-file and hand-authored, so the
-# mix disclosure section 38 added prints nothing, and if the rung bet here
-# lands the row's floor moves to `unsolved` with no way for the key to say
-# which task put it there. This is #40's pooling problem in a second place
+# variants of round 1's K1 families — hand-authored changes of 26 to 36 added
+# lines that all came back haiku-solvable. All six are single-file and
+# hand-authored, so the mix disclosure #38 added prints
+# `K1=acceptance: 6 single-file; 6 hand-authored`, under the heading for rows
+# whose mix differs from the baseline's, since the controls this row is
+# divided by are not all single-file. What it does not do is the thing that
+# would help: six tasks alike on both disclosed axes come out as one line, so
+# the disclosure separates this row from its denominator and cannot separate
+# an anchor from an `-l1` variant. If the rung bet here lands the row's floor
+# moves to `unsolved` with no way for the key or the disclosure to say which
+# task put it there. This is #40's pooling problem in a second place
 # and it gets #40's answer: recorded here, in the other anchor, and in the
 # design note, so a reader of that row is not left to infer it. What the row
 # means and does mean honestly is "feature-dev tasks whose whole spec is
@@ -41,8 +60,8 @@
 # section 22.3 says the corpus has never had.
 #
 # **The mechanism the bet rests on.** Section 14's, which is what produced
-# all three unsolved cells this corpus has ever had: the rung is decided by
-# the union of the held-out assertions and one narrow hole sinks the cell.
+# all three of the corpus's *constructed* unsolved cells: the rung is decided
+# by the union of the held-out assertions and one narrow hole sinks the cell.
 # The clauses were chosen so that the idiomatic Python transcription of each
 # is wrong in a way a happy-path check does not show. Three-valued logic is
 # the whole of it: Python's `not None` is True where `NOT UNKNOWN` is
@@ -156,8 +175,11 @@ construction:
       here, a missing key is unknown to a comparison and true to IS NULL, and
       `x IN (1, NULL)` is unknown rather than false. Section 14's reading is
       the one this rests on — the rung is decided by the union and one narrow
-      hole sinks the cell — and it is the reading that produced all three
-      unsolved cells this corpus has. Registered knowing the ledger: upward
+      hole sinks the cell — and it is the reading that produced all three of
+      the corpus's constructed unsolved cells. The corpus's fourth is
+      calc-infix-evaluator, a zero-knob control section 14 does not cover, and
+      it is this task's archetype: the same reading on the same width axis,
+      reached with no knob at all. Registered knowing the ledger: upward
       rung bets outside K1 are nought for fourteen lifetime, this is a
       fifteenth of that kind, and a beaten anchor is ceiling data rather than
       a failure — an anchor either measures the ceiling or discovers the

@@ -320,3 +320,53 @@ def test_an_ordering_compare_refuses_goes_on_being_refused():
 
 def test_an_equality_across_two_kinds_is_false_and_not_a_refusal():
     assert picked("age = 'x'") == []
+
+
+# --- field names, and the module the language was added to ----------------------
+
+
+def test_a_field_name_may_start_with_an_underscore():
+    """Stated in the brief and reachable no other way: a leading underscore
+    starts a field name, so `_id` is a name and not a character belonging to
+    no token."""
+    records = [{"_id": 1, "name": "ada"}, {"_id": 2, "name": "bo"}]
+
+    kept = select(records, "_id > 1")
+
+    assert [record["name"] for record in kept] == ["bo"]
+
+
+def test_a_field_name_matches_exactly_as_written():
+    """The other half of the same clause: keywords may be written in any case
+    and a field name may not, so `Age` is a name no record carries however
+    many records carry `age`."""
+    assert picked("age > 1") == ["ada", "cy", "di"]
+    with pytest.raises(ValueError):
+        select(PEOPLE, "Age > 1")
+
+
+def test_the_existing_functions_go_on_behaving_as_they_did():
+    """Keeping the existing functions and their behaviour unchanged is a
+    clause of the brief like any other, and the one an answer breaks by
+    reimplementing comparison inside `select` and letting the module's own
+    four drift.
+
+    Each is checked where its behaviour is not Python's, since that is where a
+    rewritten version differs: `kind_of` and `compare` on the rule that a
+    boolean is not a number, `compare` on the unknown and on the ordering it
+    refuses, `field_names` on the order it promises, and `select_equal` on a
+    list where `x = 1` and `x = True` pick out different records — which
+    `record[field] == value` gets wrong and nothing else here would catch.
+    """
+    assert sieve.field_names(PEOPLE) == ["active", "age", "city", "name"]
+    assert sieve.kind_of(True) == "boolean"
+    assert sieve.kind_of(1) == "number"
+    assert sieve.compare(None, "=", 1) == sieve.UNKNOWN
+    assert sieve.compare(True, "=", 1) == sieve.FALSE
+    assert sieve.compare(2, ">", 1) == sieve.TRUE
+    with pytest.raises(ValueError):
+        sieve.compare(1, "<", "x")
+
+    counts = [{"x": True}, {"x": 1}, {"x": None}, {"y": 1}]
+    assert sieve.select_equal(counts, "x", 1) == [{"x": 1}]
+    assert sieve.select_equal(counts, "x", True) == [{"x": True}]
