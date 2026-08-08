@@ -1,5 +1,8 @@
-# A composite, and one of two rebuilding the only recipe that ever produced
-# unsolved cells (#43, design note section 23.10). Three knobs at once:
+# A composite, and one of two rebuilding what the round-3 spec calls the only
+# recipe that ever produced unsolved cells — the spec's phrase and not this
+# task's claim, since the record is narrower and is corrected below before
+# anything here leans on it (#43, design note section 23.10). Three knobs at
+# once:
 # K1 at intent, so the brief says what is wanted and states no acceptance
 # criteria; K9 at single, so exactly one decision is labelled open; and K7 at
 # dense, so the terrain the change lands in is the invariant-heavy transition

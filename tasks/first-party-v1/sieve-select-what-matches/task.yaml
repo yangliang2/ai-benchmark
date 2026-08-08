@@ -47,8 +47,8 @@
 # design note, so a reader of that row is not left to infer it. What the row
 # means and does mean honestly is "feature-dev tasks whose whole spec is
 # written as acceptance criteria", which is a population that spans a
-# five-line merge and a filter language; the row is right and the key is
-# coarse.
+# twenty-eight-line merge and a filter language; the row is right and the key
+# is coarse.
 #
 # **Why an anchor is expected to be beaten, and why it is still worth
 # building.** Upward rung bets outside K1 stand at nought for fourteen
@@ -183,8 +183,16 @@ construction:
       rung bets outside K1 are nought for fourteen lifetime, this is a
       fifteenth of that kind, and a beaten anchor is ceiling data rather than
       a failure — an anchor either measures the ceiling or discovers the
-      ceiling is above it, and both are the reason to build it. What would
-      defeat the bet is either model coming back resolved, and the reading
-      then fixed in advance is that this material has no headroom left at
-      single-file hand-authored scale and the next anchor has to be built
-      somewhere else
+      ceiling is above it, and both are the reason to build it. Registered
+      here because this is where the bet lives: the grading suite was
+      tightened after this prediction was written and before any sweep — a
+      preserved-behaviour test over `compare`, `kind_of`, `field_names` and
+      `select_equal`, and two field-name clauses the brief states and nothing
+      graded — which enforces criteria the brief already sets rather than
+      changing the contract, is legal only because the task is still unswept,
+      and raises what `unsolved` is a bet about, so it moves in the direction
+      that favours this prediction and is said here rather than left in a
+      commit message. What would defeat the bet is either model coming back
+      resolved, and the reading then fixed in advance is that this material
+      has no headroom left at single-file hand-authored scale and the next
+      anchor has to be built somewhere else

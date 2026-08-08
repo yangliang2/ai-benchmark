@@ -2106,7 +2106,15 @@ the load-bearing one.
     evolved" puts down to the highest D1 in round 1's set. The unnamed axis is
     the axis carrying the corpus's only knob-free ceiling reading, and these
     two anchors are a second and third attempt at that reading rather than the
-    first.
+    first. [Registered here because this is the paragraph the anchors' bets
+    hang off: `sieve-select-what-matches`'s grading was tightened after its
+    prediction was registered and before any sweep — a preserved-behaviour
+    test over the four existing functions, and two field-name clauses the
+    brief states and nothing graded — which enforces criteria the brief
+    already sets rather than changing the contract, is legal only while the
+    task is unswept, and raises what its `unsolved` is a bet about, which is
+    the direction favouring the prediction and so is recorded here rather than
+    left in a commit message.]
 
     **What that costs the calibration table, registered rather than
     discovered.** `calibrate-v1` keys a row on category × sorted profile, so
