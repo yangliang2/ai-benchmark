@@ -235,9 +235,12 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The command's reason to exist, run on real artifacts: every constructed
-    task the checked-in logs have a run for is reported as swept and scored
-    against an observed rung, and every one they do not is still on the page
-    saying so.
+    task the checked-in logs have a run for is reported as swept, every one
+    they do not is still on the page saying so, and the swept ones are told
+    apart by how much of the ladder reached them — a task the whole ladder ran
+    is scored against an observed rung, and a task only part of it ran reads
+    `incomplete`, because a rung names the weakest model that resolved a task
+    and no run log can name one until every rung has been tried.
 
     The numbers are derived from those artifacts rather than pinned, so a
     later round adds rows here instead of breaking the test. What is asserted
@@ -415,8 +418,8 @@ def test_reconcile_v1_recomputes_the_checked_in_counters_under_the_amended_rule(
 ) -> None:
     """The rule change applied to history rather than grandfathered onto it.
 
-    Counters are derived and never stored, so amending the rule re-reads two
-    rounds of checked-in artifacts by itself. What that recomputation comes to
+    Counters are derived and never stored, so amending the rule re-reads every
+    round of checked-in artifacts by itself. What that recomputation comes to
     is registered in the design note's section 9 amendment, and this is the
     test that the code and that table say the same thing — every expectation
     below is a row of it.

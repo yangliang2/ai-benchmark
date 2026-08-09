@@ -430,11 +430,11 @@ of history by itself. Where the recomputation and the recorded rulings of
 | knob | printed under the old rule | recomputed under the amended rule |
 | --- | --- | --- |
 | K1 | separated in both rounds; 0 silent | round 2 no longer counted at all — K12's families hold K1 constant, so K1 is nobody's varied knob there; round 1's four K1 families still separate upward. 0 silent, 1 counted round |
-| K7 | not assessable, round 1; 0 silent | **stalled** — no family, no pair, no registered claim, in any round. 0 counted rounds, exactly as §18 ruled and #35 recorded. [Round 3 gives it two pairs and two registered cost claims (#41, §23.7), so the next recomputation reads a counted round rather than a stall — the rung side stays not assessable while K7's ladder is empty] |
+| K7 | not assessable, round 1; 0 silent | **stalled** — no family, no pair, no registered claim, in any round. 0 counted rounds, exactly as §18 ruled and #35 recorded. [Round 3 gives it two pairs and two registered cost claims (#41, §23.7), so the next recomputation reads a counted round rather than a stall — the rung side stays not assessable while K7's ladder is empty] [And that is what round 3 printed: one counted round, non-silent on 2 of 4 effort readings, both pairs not assessable on the rung. 0 silent. §25, §26] |
 | K8 | no separation, round 1; 1 silent | **stalled** — the seven K8 tasks are standalone and register no claim. 0 silent. **§13's demotion stands** as a recorded human verdict over two sweeps and an effort reading that ran the wrong way; it was never a counter reading and the amended counter does not reproduce it |
 | K9 | no separation round 1, separated round 2; 1 silent | unchanged at 1 silent. Round 1's three pairs are flat; round 2's digest and dossier reach a rung above their controls, and outage's claim hit on haiku, so the round is non-silent twice over |
 | K11 | separated, round 2; 0 silent | **silent 1 of 2** — no rung contrast exists, but four registered baseline claims do, and all eight readings missed. This is exactly the reading §19 wrote into the record by hand, and the counter now agrees without being told to. [**Retired** by #41 at this count, on the identifiability argument of §23.5, not on the counter: no round after round 2 asks it, so 1 of 2 is where it stays. Its four tasks and their construction blocks stay in the set, because every counter here is derived from the artifacts and a knob deleted from the registry would leave the report unable to read its own past] |
-| K12 | no separation, round 2; 1 silent | unchanged at 1 silent — both families flat across all four levels and all eight claim readings missed |
+| K12 | no separation, round 2; 1 silent | unchanged at 1 silent — both families flat across all four levels and all eight claim readings missed. [Round 3's nightbus family is flat too, on all three contrasts and all four claim readings, so the counter reaches **silent 2 of 2 and demotes** — the first demotion clause 5 has ever computed. §25 records what kind of evidence produced it and §26 the ruling] |
 
 Two of those are the test that the amendment reads the evidence rather than
 leaning on it: §19 predicted in advance that a direction-aware criterion would
@@ -1512,6 +1512,16 @@ the load-bearing one.
    in all four authoring comments: a K12 cost multiplier read off that table
    is a mean over changes of 5, 9 and 32 added lines, and the table cannot be
    asked which.
+
+   [**Swept, and every reading registered above came due.** The family came
+   back flat at haiku-solvable×4 with 0 of 3 contrasts separating and 0 of 4
+   claim readings hitting, which is K12's second silent round and its
+   demotion (§25, §26). Both cost claims came back *below* parity in the
+   ladder's direction — `-c4` at 0.96×/0.90× and `-c2` at 0.61×/1.04× — so
+   the outcome this entry called the one that plainly keeps K12 non-silent
+   did not occur, and the pre-discount registered on `-c2` applies as
+   written. `prose` missed a third time; the reading fixed here for that is
+   in force at §28.]
 7. **K7: register claims or retire it.** New tasks, effort claims registered
    before the run, at least 3 graded tasks at the dense level, and the
    size-matched control §12 asked for in round 1. It is the largest effort
@@ -1693,6 +1703,15 @@ the load-bearing one.
    machinery well is likely to read it well twice, and two claims both hitting
    is closer to one result than to two. Read a hit as evidence about one
    terrain measured twice.]
+
+   [**Swept: 2 of 4, and both hits are the one pair.** K7's stall ends and the
+   round is non-silent. `pysm-reset` hit on both models at 1.75×/1.67× — the
+   "small result, not a replication of round 1" this entry pre-committed to,
+   since it clears 1.25× and neither branch of the real-result bar.
+   `pysm-pushdown` missed both at 0.47×/1.07× and its calm control landed a
+   rung *above* its dense member, which is weaker than the correlated-draws
+   caveat above anticipated and is read at §25 under the discount that
+   control's own rationale registered.]
 8. **Make effort the primary registered outcome.** §22.3: the rung has
    saturated on this material and effort has separated in every round. The
    kill discipline should read separation on either axis, as §16.1 proposed
@@ -1999,6 +2018,16 @@ the load-bearing one.
    registration of it made out: wherever a prompt says "the root's" and every
    test drives from the root, the gap is not one site but every site, and
    closing the one review happened to find leaves the class open.]
+
+   [**Swept: both knobs hit 2 of 2, and only K10 cleared the bar this entry
+   set.** K10's `pysm-trace` returned 2.04× on haiku and 5.47× on sonnet, the
+   corpus's widest effort separation and the first reading to reach "2× or
+   better on both models". K4's `pysm-snapshot` returned 1.31× and 1.49×,
+   which is the "bare hit at around 1.3×" this entry pre-committed to reading
+   as a first reading and a small one that no later round may cite as more.
+   Neither lone-hit discount applies, since both hit. The cross-knob qualifier
+   this entry registered does apply, to K10's number above all, and it is
+   carried beside the multiples at §25 and §27.]
 10. **Not a round-2 candidate: the ceiling, commissioned by the round-3 spec.**
     Everything above this entry was recovered from round 2's evidence. This one
     was not — it is #36's US-13 and US-14, which ask for the top of the ladder
@@ -2218,6 +2247,425 @@ the load-bearing one.
     by the suite, because that is why these rungs are bet where they are:
     nothing the agent can run inside its workdir distinguishes a half-right
     answer from a finished one.]
+
+    [**Swept: the ceiling was not reached, and all three scored bets lost.**
+    `gauge` came back haiku-solvable, `sieve` and `pysm-rebuild` sonnet-only;
+    `pysm-work-out-a-way-there` has no sonnet cell and scores nothing. The
+    framing fixed here — a beaten anchor is ceiling data and not a
+    failure — is the one the record takes, and the flat-result reading this
+    entry registered is earned on the three cells that exist and left open on
+    the fourth. §28 records it.]
+
+## Round 3 verdicts — 2026-08-08
+
+Round 3 (#36) is built and swept: instrument amendments (#37, #38), 22 new
+tasks (#39–#43), one sweep (#44, sweep id `round-3`, 43 of 44 cells, one agent
+version 2.1.226, $12.1969). Everything below is recomputable by
+`uv run ai-bench reconcile-v1` over the checked-in artifacts, except the
+per-cell turns and cost multiples, which are computed from the same run logs'
+`turns` and `cost_usd` fields and are quoted here because the report groups by
+neither. Nothing above is superseded; §9's knob list and its amended kill
+discipline stand, with the readings below attached to them.
+
+**What these sections are.** #44's sweep commit recorded the numbers and left
+interpretation to whoever read the round. This is the other half of that, and
+it is deliberately the narrow half: the round's outcomes, and beside each one
+the reading §23 pre-committed to for the outcome that occurred, cited rather
+than re-derived. Where §23 fixed a reading in advance and the case it named
+came up, that reading is in force as something pre-committed to, not as a
+fresh inference invented to explain the round. Where §23 fixed nothing, the
+outcome is recorded and no verdict is written. Candidates for round 4 are not
+in scope here, and nothing below changes a rule in §9.
+
+### 24. What the round measured
+
+Hit-rate 40/66 scored (60.6%) over the corpus; round 3's own 21 scored tasks
+went **16/5 (76.2%)**, against round 2's 14/4 (77.8%) and round 1's 10/27
+(37.0%). The twenty-second task, `pysm-work-out-a-way-there`, reads
+`incomplete` rather than scored — haiku ran it, sonnet did not — and is
+counted in neither figure.
+
+The ladder stayed saturated. Eighteen of the twenty-one scored tasks landed
+haiku-solvable, three landed sonnet-only (`pysm-rename-and-list-states`,
+`sieve-select-what-matches`, `pysm-rebuild-a-graph-from-a-snapshot`), and
+**none landed unsolved** — so after a round that bet four tasks at the top of
+the ladder, the corpus's unsolved census is still the four round-1 cells §23.10
+counted.
+
+Per-cell effort. All nine of round 3's registered claims are pair claims on
+cost at the house 1.25×, so the frozen feature-dev zero-knob baseline (haiku
+9.82 turns / $0.0711, sonnet 6.45 / $0.1846, n=11) is comparator to none of
+them and is repeated only for continuity with §17.
+
+```
+claim holder ÷ pair partner       knob  turns h  turns s  cost h  cost s  rung
+pysm-trace-what-the-machine-did   K10     2.19x    3.00x   2.04x   5.47x  flat
+pysm-reset-to-initial-states      K7      1.76x    0.88x   1.75x   1.67x  flat
+pysm-refuse-a-snapshot-in-flight  K4      1.38x    1.33x   1.31x   1.49x  flat
+pysm-push-and-pop-states          K7      0.28x    0.67x   0.47x   1.07x  control +1
+bookcase-shelve-the-run           K9      2.80x    1.00x   2.66x   1.06x  flat
+remit-pay-what-fits               K9      0.46x    1.60x   0.75x   2.04x  flat
+roll-pick-from-bursts             K9      0.57x    1.00x   0.69x   1.05x  flat
+nightbus-print-the-sheet-c4       K12     1.00x    0.83x   0.96x   0.90x  flat
+nightbus-print-the-sheet-c2       K12     0.67x    1.00x   0.61x   1.04x  flat
+```
+
+"control +1" on the `pysm-pushdown` row is not a rung delta the report claims:
+K7's ladder is unenumerated, so the report names neither member the crux and
+reads no direction. The label is this section's, and what it records is that
+the calm control landed a rung *above* the dense member it was built to sit
+beneath. §25 reads that row.
+
+### 25. Per-knob outcomes, beside the reading registered for each
+
+**K10 (coordination width) — non-silent on its first counted round, 2 of 2
+effort readings hit, and the only round-3 claim that cleared the bar §23.9 set
+for a real result.** `pysm-trace-what-the-machine-did` against
+`pysm-list-the-waiting-events`: **2.04× cost on haiku and 5.47× on sonnet**,
+the widest effort separation the experiment has recorded. §23.9 fixed the bar
+before the sweep — "2× or better on both models, or 2× on haiku with sonnet at
+1.5× or better" — and this is the first reading in three rounds to reach the
+first branch. Both rungs came back haiku-solvable, as both were bet.
+
+Three things registered in advance travel with the number and none of them is
+retracted by it. §23.9's ten-site correction stands: a solution recording at
+the two `_on` choke points collects to 10 hunks rather than the reference's 14,
+so what the pair carries is "one decision, ten to fourteen places, three
+modules, and no spelling reaching two". §23.9's own account of what the pair
+does *not* hold still stands too — the wide member surveys the walk machinery
+of three modules while the narrow one reads two methods, so read volume moves
+alongside site count and the hit is a reading on "carry one decision to many
+named places, including the cost of visiting them" rather than on site count
+alone. And §23.9's cross-knob qualifier applies to this number first of all,
+because it is the number a later round will want to cite: all four of round 3's
+registered cost claims read one byte-identical pysm snapshot, so agreement
+among them is weak evidence about the knobs and strong evidence only about
+pysm. 5.47× is one library measured once.
+
+The pair of discounts §23.9 registered for a *lone* hit — K4 alone, K10
+alone — is not the case that occurred: both knobs hit, so neither discount is
+the one to apply, and the reason both were written is that the batch was built
+so the readings would not collapse into one.
+
+**K4 (read-set/write-set ratio) — non-silent on its first counted round, 2 of
+2 effort readings hit, and the reading pre-committed for this size of hit is
+that it is small.** `pysm-refuse-a-snapshot-in-flight` against
+`pysm-keep-snapshot-metadata-plain`: **1.31× cost on haiku and 1.49× on
+sonnet**. That clears the registered 1.25× on both models and clears neither
+branch of §23.9's real-result bar. The reading §23.9 fixed for exactly this
+outcome is quoted rather than re-argued: "a bare hit at around 1.3× is
+therefore a first reading and a small one, and nothing in a later round may
+cite it as more." Both rungs came back haiku-solvable, as both were bet, and
+§23.9's two registered shortcuts — the brief supplies two of the walk's three
+steps, and a defensive `getattr` answer skips the third module entirely — are
+untouched by the result, so the cost claim carries the whole of the reading and
+carries it less far than the ticket's framing of K4 implied.
+
+**K7 (invariant density) — non-silent on its first counted round in three,
+2 of 4 effort readings hit, and the two hits are one pair.** This is the entry
+§23.7's caveat anticipated in shape and under-anticipated in degree, so both go
+on the record together.
+
+`pysm-reset-to-initial-states` against `pysm-chain-and-outline-states` hit on
+both models: **1.75× cost on haiku, 1.67× on sonnet**. Like K4's, it clears
+1.25× and clears neither branch of the real-result bar, so §23.7's
+pre-committed reading is the one in force: "a bare hit at around 1.3× is a
+small result, not a replication of round 1", against round 1's 5.1× on haiku
+and 2.2× on sonnet, most of which §12 attributes to repository size that these
+pairs hold byte-identical.
+
+`pysm-push-and-pop-states` against `pysm-rename-and-list-states` missed on both
+models, and missed in a way the caveat did not reach. The dense member came in
+at **0.47× cost on haiku** — it ran less than half as expensive as the calm
+control built to sit beneath it — and at 1.07× on sonnet. Its rungs went the
+same way: the *control* landed sonnet-only while the dense member landed
+haiku-solvable, so on this pair the calm terrain outranked the dense terrain on
+both axes the round reads.
+
+What §23.7 registered was that two hits would be closer to one result than to
+two, both dense sites being the transition walks of `pysm/pysm.py`. The actual
+is weaker than that: one pair hit and one pair failed in the opposite
+direction, so the round's K7 evidence is a single pair reading 1.7×, with its
+sibling reading below parity on the same machinery. The control's own
+registered rationale pre-committed the discount for precisely this, and it is
+quoted here because it was written before the sweep — "if this one lands
+anywhere but the bottom rung, the pair is measuring how hard the task was
+rather than how dense the terrain is, and the round's cost reading should be
+discounted accordingly." It landed above the bottom rung. The discount is owed.
+
+One confound is retired by the result rather than argued away. `pysm-pushdown`
+carried the corpus's widest prompt-length gap on a claim held by the *longer*
+member — 1.29, the ranking §23.7 prints — and it is the pair that missed, so
+the confound cannot have manufactured anything here. §23.7's arithmetic for
+dismissing it is untested by round 3 and remains as registered.
+
+**K9 (crux depth) — non-silent, 2 of 6 effort readings hit, no registered
+contrast separated, and the counter stays at silent 1.** The three round-3
+pairs — `bookcase`, `remit`, `roll` — all came back flat on the rung, so round
+2's digest and dossier separation did not replicate on new pairs. On cost at
+1.25×: `bookcase-shelve-the-run` hit on haiku at **2.66×** and missed on sonnet
+at 1.06×; `remit-pay-what-fits` missed on haiku at 0.75× and hit on sonnet at
+**2.04×**; `roll-pick-from-bursts` missed both at 0.69× and 1.05×. No pair hit
+on both models, and the two hits are on different models of different pairs.
+
+What round 3 bought here is the condition §18 attached to K9 and §23.2/§23.3
+shipped: the volume confound is broken (added lines matched within a pair at
+1.00×, 1.05× and 1.08×) and the cost claims were registered in advance rather
+than swapped in post hoc. With volume matched and the metric pre-registered, no
+rung moved and two of six readings hit. §18's caveat said no recommendation may
+inherit K9's round-2 result until this was done; it is done, and what it
+returned is recorded here for whoever rules on the knob.
+
+**K12 (decision conveyance) — silent 2 of 2, demoted.** §26 carries the ruling.
+The outcome: all four `nightbus` rungs landed haiku-solvable, 0 of 3 registered
+contrasts separated, and 0 of 4 registered effort readings hit.
+
+§23.6's caveats travel with the demotion, because they say what kind of
+evidence produced it and the note pre-committed to recording them.
+
+*The rung axis could never have falsified here, and §23.6 said so before the
+sweep.* Three of the family's four rungs were registered at the floor, so a
+flat return at haiku-solvable×4 "has returned exactly what was predicted for
+three of its four members, and the rung cannot falsify the ladder off that".
+§18's objection — a ladder cannot show an ordering when every rung is the
+floor — was live going in and is live coming out.
+
+*The cost claims carried the round and lost, and in the ladder's own direction
+they came back inverted.* §23.6 named `-c4`'s claim as "the one carrying the
+contrast": prose against unmentioned returned **0.96× on haiku and 0.90× on
+sonnet** against a claim needing 1.25×, which is prose costing *less* than
+unmentioned on both models. `-c2`'s stated-pair claim, pre-discounted two
+paragraphs earlier in §23.6 as a bet against all four of round 2's readings,
+returned 0.61× and 1.04× — and §23.6 fixed the reading that "if that claim
+misses it is not news", so the record takes it as no news. Three of the four
+readings landed below parity.
+
+The demotion is what §9 clause 5 computes off a second silent round and it
+stands as computed. What this entry adds is only the shape of the evidence
+behind it: a family whose ladder the rung axis could not test, and whose
+carrying claims came back on the wrong side of 1.0.
+
+**K1 (decision openness) — no counted round, informational only, and that is
+clause 1 working.** Round 3 varied no K1 family, so the report prints round 3's
+K1 row as informational and not assessable — acceptance {haiku-solvable,
+sonnet-only} against intent {sonnet-only}, with intent holding 1 graded task
+against acceptance's 2 distinct rungs. The counter stays where §9's
+recomputation left it, at 0 silent over 1 counted round. This is the artifact
+§22.1 named and §23.1 amended away: tasks declaring K1 ran in round 3 and K1
+was not tested by them. §23.10's counter-neutrality construction is the other
+half — the two anchors each activate exactly one knob, and registering a
+baseline claim on either would have handed K1 a counted round off a task built
+to measure the ceiling. None was registered, and no such round appears.
+
+**K8 and K11 — untouched.** Round 3 asked neither. K8 stays stalled under the
+amended counter with §13's human demotion standing beside it; K11 stays retired
+by #41 at silent 1 of 2.
+
+### 26. Kill-discipline ruling
+
+Registered rule (§9, amended by #37): a knob silent for two counted rounds is
+demoted, and the demotion names the rounds it counted with their dates.
+
+- **K12: silent 2 of 2 — demoted.** The report prints it as
+  `demote K12: silent in sweep round-2 (2026-08-06), sweep round-3
+  (2026-08-08) — 2 round(s) against the 2 the kill discipline allows`. It is
+  the first demotion this report has ever computed; §13's K8 demotion was a
+  human verdict the amended counter does not reproduce. §19 conditioned the
+  second round in advance — "flat again under those conditions and K12 is
+  demoted with a real negative behind it" — and §23.6 set the conditions:
+  raise the change's floor, close the docstring channel, register the effort
+  claims in the ladder's direction on cost. #40 met all three, with the
+  qualification §23.6 attached to the first of them — what was raised is the
+  *change's* floor and not the ladder's — and the round came back flat anyway.
+  The negative behind the demotion is the one §23.6 described in advance, and
+  it is a negative on the cost claims rather than on the rung ladder, which
+  three floor registrations left untestable.
+- **K4, K7 and K10: first counted round each, all three non-silent, all three
+  on effort.** K4 2 of 2, K10 2 of 2, K7 2 of 4; no registered contrast in any
+  of the three was readable, because none of the three ladders is enumerated in
+  §9 or in `KNOB_LEVELS`. Counters at 0 silent. K7's stall — recorded in §18,
+  in §9's recomputation table and in #35 — ends here, and the note's own
+  forecast in that table ("the next recomputation reads a counted round rather
+  than a stall — the rung side stays not assessable while K7's ladder is
+  empty") is what the report now prints.
+- **K9: non-silent, counter stays at silent 1.** Two of six effort readings
+  hit; no contrast separated.
+- **K1: no counted round in round 3.** Counter unchanged.
+- **K8: stalled, 0 silent. K11: retired at silent 1 of 2.**
+
+One property of the ruling is worth stating plainly because it is new: three
+knobs took their first counted round this round and every one of them was
+counted on the *effort* axis, with the rung axis unreadable in all three. Under
+the unamended rule none of the three could have been counted at all. §23.8's
+candidate — make effort the primary registered outcome — is what clause 3
+already does for the counter, and round 3 is the first round where it was the
+only thing keeping three knobs out of a stall.
+
+### 27. The effort instrument's second reading
+
+Forty readings of twenty registered claims across the corpus, **0 not
+assessable**; lifetime hit-rate 11/40 (27.5%). Round 3's own nine claims went
+**8 of 18 (44.4%)**, against round 2's 3 of 22 (13.6%).
+
+Every round-3 claim is a pair claim on cost, and every round-3 hit is
+therefore a pair reading. The corpus's baseline-comparator claims still stand
+at 0 for 8, all of them K11's from round 2. Round 3 registered no baseline
+claim at all, so §22.4's observation — pair comparators are the ones that
+produce signal — is neither tested nor contradicted by this round.
+
+**What the pre-registered metric swap actually bought.** §23.2 registered the
+claims on cost rather than turns because §20 found turns quantized against
+cheap comparators. Re-reading round 3's eighteen readings on turns at the same
+1.25× changes **exactly one of them**: `pysm-reset-to-initial-states` on sonnet
+reads 0.88× on turns and 1.67× on cost. Every other reading returns the same
+verdict on either metric. That one reading is the difference between K7's
+surviving pair hitting on one model and hitting on both, so the swap was not
+decorative — but the honest size of the effect on this round is one reading in
+eighteen, and §20's mechanism (cost accumulates work that happens inside a
+turn) is confirmed once rather than replicated broadly.
+
+**The cross-knob qualifier, carried beside the numbers.** §23.9 registered it
+and it is repeated here because this is where a later reader will find the
+multiples: round 3's four registered cost claims — K7's two, K10's one, K4's
+one — all read the same byte-identical pysm snapshot, six of their eight
+readings hit, and a single pysm-specific effect would push all of them the same
+way while being attributed at reconcile time to three knobs separately. The
+licensed reading is §23.9's: agreement among round 3's pysm claims is weak
+evidence about the knobs and strong evidence only about pysm. Nothing here is a
+cross-substrate replication, and §10 still wants one.
+
+### 28. The prediction instrument
+
+40/66 lifetime (60.6%), round 3's own 21 scored going 16/5. The five misses,
+with their direction:
+
+- `gauge-evaluate-in-units`: bet unsolved, landed **haiku-solvable** — two
+  rungs down, the largest over-prediction in the round.
+- `sieve-select-what-matches`: bet unsolved, landed **sonnet-only**.
+- `pysm-rebuild-a-graph-from-a-snapshot`: bet unsolved, landed **sonnet-only**.
+- `nightbus-print-the-sheet-c4`: bet sonnet-only, landed **haiku-solvable**.
+- `pysm-rename-and-list-states`: bet haiku-solvable, landed **sonnet-only** —
+  the round's only under-prediction, and it is a control nobody was measuring
+  (§25 reads what it does to K7).
+
+**The third `prose` miss, and the reading §23.6 fixed for it.** `nightbus-c4`
+is the third time a K12 `prose` variant has been bet `sonnet-only` and come
+back `haiku-solvable`; album's and pricelist's were the first two. §23.6 wrote
+the reading down before the sweep and it is now the one in force, quoted so it
+cannot be mistaken for hindsight: a third prose miss "would leave that ledger
+still at zero after a round built specifically to give an upward bet room, and
+at that point it stops being a fact about K12: it is the instrument reporting
+that authors of this material cannot pick in advance which of their own tasks a
+model will fail. The reading to take then, fixed now, is §21's — keep the rung
+prediction as the falsification record it is and stop asking it to carry
+selection." §21's conclusion is therefore carried forward as a pre-committed
+one: the rung prediction stays mandatory because it is cheap and it is the
+falsification record, and the effort claim is the load-bearing outcome.
+
+**The upward-bet ledger outside K1: 0/18.** Round 3 made five upward rung bets
+outside K1 — `nightbus-c4` at sonnet-only, and the four `unsolved` bets §23.10
+counted as the fifteenth through eighteenth. Four were scored and all four
+lost; the fifth, `pysm-work-out-a-way-there`, is `incomplete` and scores
+nothing. So the ledger §21 recorded at 0 for 14 now stands at **0 for 18**,
+with one bet unmeasured. No author has yet correctly predicted an upward rung
+movement outside K1 in three rounds.
+
+**The ceiling did not hold, and §23.10 said in advance what that means.** All
+three scored ceiling bets lost. The pre-committed framing is §23.10's — "a
+beaten anchor is ceiling data and not a failure" — and it is taken as written:
+an anchor either marks where the ceiling is or discovers the ceiling is above
+it, and round 3 discovered the second, three times.
+
+The flat-result reading §23.10 fixed is the one that now largely applies, with
+one honest gap. It was registered for "if all four come back resolved": that
+this material "has no headroom left at single-file scale, on a hand-authored
+module or on a vendored one, and the next anchor needs an axis other than width
+and a substrate other than a small library". Three of the four came back
+resolved, and the fourth is unmeasured on sonnet rather than unsolved — so the
+condition is met on the three cells that exist and cannot be completed until
+`pysm-work-out-a-way-there` has a sonnet cell. What the three do establish is
+that neither of the two constructed routes to a ceiling reached one: the width
+anchors on hand-authored modules (`gauge` at haiku-solvable, `sieve` at
+sonnet-only) and the composite on the vendored library (`pysm-rebuild` at
+sonnet-only) all resolved, and the round added no unsolved cell to a census
+that still holds only round 1's four. §22.3 counted 7 of 45 constructed tasks
+ever landing above haiku-solvable across two rounds; three rounds in, it is
+**10 of 66 scored**, and the three round 3 added are `sieve`, `pysm-rebuild`
+and `pysm-rename` — two of them ceiling bets that fell a rung short of their
+own prediction, and the third a control nobody aimed there.
+
+§23.10's narrower transfer of the substrate warning applies to what the
+composites did produce. Two unsolved rungs on one library would have been one
+library's ceiling, and the same holds for the one rung they actually
+moved: `pysm-rebuild` at sonnet-only is a reading about pysm until a second
+substrate says the same, and the composite's three knobs are not separable
+within it by construction, which is the price §23.10 named for building one.
+
+### 29. Anomalies and process, read
+
+1. **The cross-round version boundary.** Round 3 ran entirely on
+   `claude` CLI 2.1.226, verified before and after each of the four
+   invocations, so no contrast *within* round 3 crosses a version. Round 2 ran
+   2.1.223 and round 1 spanned 2.1.221–2.1.223, so every reading that compares
+   round 3 against an earlier round crosses a boundary — including the two the
+   sections above make: K9's round-2 rung separation against round 3's three
+   flat pairs, and round 1's K7 multiples against `pysm-reset`'s. #44's commit
+   body records the caveat; it is repeated here because this is where those
+   comparisons are written down.
+2. **One substrate under three knobs, one snapshot under four claims.** §23.9's
+   qualifier, in force — see §27. Ten of round 3's twenty-two tasks sit on the
+   same pysm snapshot, and every one of the round's registered cost claims is
+   read on it.
+3. **K9's informational round-3 row is set arithmetic over the composites.**
+   The report prints an informational `separated — none {haiku-solvable},
+   single {haiku-solvable, sonnet-only}` for K9 in round 3 while the counted
+   row reads 0 of 3 contrasts separated. The sonnet-only in that set is
+   `pysm-rebuild-a-graph-from-a-snapshot`, a composite that declares
+   `K9=single` alongside K1 and K7 and registers no contrast at all. This is
+   §22.1's fault class in an informational row, which is exactly where §23.1's
+   amendment put it: it advances no counter, and no reading may be taken off
+   it.
+4. **The per-run timeout was never calibrated, and round 3 is the first round
+   to reach it.** `RUN_TIMEOUT_S = 600` entered the runner in #7 as one line of
+   a generic "subprocess calls get timeouts" review fix, not as a measurement
+   decision, and nothing has re-set it since. It is about six times round 3's
+   own mean run (104.1 s), ten times the corpus's mean (56.7 s over 177 runs),
+   and roughly twice the longest run ever logged — 311.2 s, which is the haiku
+   cell of `pysm-work-out-a-way-there`, whose sonnet cell then became the first
+   in the corpus's history to hit the ceiling and cost the round its only
+   missing cell.
+
+   The lesson for the next sweep is recorded in
+   `docs/agents/sweep-protocol.md`, and it is not "pick a bigger number". The
+   limits are set deliberately before the first paid run and **may be tiered by
+   task class** — a ceiling task and a four-turn control are not the same
+   measurement problem, and per-task limits are ordinary practice elsewhere —
+   under two hard rules: every member of one contrast shares one limit, and the
+   limits are registered per class up front rather than adjusted per cell
+   mid-sweep. A limit that changes between rounds is a cross-round caveat,
+   recorded the way a CLI version change is.
+
+   Round 3's missing cell is accepted as it stands. The round is 43 of 44,
+   `pysm-work-out-a-way-there` stays unswept on sonnet and reads `incomplete`
+   throughout this record, and it may be swept in a later round under a tier
+   limit set deliberately in advance. Such a cell would be measured under
+   conditions its forty-three round-3 neighbours did not have, so it would
+   arrive carrying the cross-round caveat rather than repairing this round's
+   record.
+5. **Process, recorded from #44.** The sweep itself held the round-2 protocol —
+   detached worktree, guard backups, byte-for-byte blob comparison, normally
+   named logs including the dry check, `--data` scratched throughout. Two
+   pieces of residue from the session are recorded because near-misses belong
+   on the record as much as incidents do. A `git reset` ran in the *shared*
+   working tree after the sweep commit, which is the tree-snapshot class the
+   protocol bans outright; the committed run-log blobs were re-verified against
+   the guard backups afterwards and are intact, and no artifact was lost. And
+   `data/unified.jsonl` was rewritten by a replay invoked without `--data`; the
+   file is untracked, holds only round-1 records, and carries no round-3
+   leakage, but scratching `--data` is exactly what the sweep itself did for
+   all four of its invocations and the replay should have done the same.
+   Neither cost anything this time, which is the only reason they are anomalies
+   rather than incidents.
 
 ## Open questions (superseded list resolved 2026-08-05)
 

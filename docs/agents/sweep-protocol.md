@@ -22,6 +22,37 @@ the unit this document is about.
 3. **Name the sweep.** Pick the id now and write it down: `--sweep` has no
    default, and every invocation of this sweep — each model, each resume —
    must be given the same one. A new sweep gets a new id.
+4. **Set the per-run limits on purpose before the first paid run, and let them
+   differ by task class.** The default `RUN_TIMEOUT_S = 600` is a convention
+   nobody calibrated: it entered the runner in #7 as one line of a generic
+   "subprocess calls get timeouts" review fix and has never been re-set. For
+   two rounds nothing came near it, and then round 3's ceiling tasks outgrew
+   it — `pysm-work-out-a-way-there` on sonnet is the first cell in the
+   corpus's history to hit it, against a round mean of 104 seconds and a
+   longest-ever logged run of 311 seconds, which is the haiku cell of that
+   same task. One number for every task in a round is not the answer, because
+   a ceiling task and a four-turn control are not the same measurement
+   problem; per-task limits are ordinary practice elsewhere, and
+   Terminal-Bench carries `max_agent_timeout_sec` in each task's own config,
+   defaulting to 180 seconds and raised task by task where the work warrants
+   it.
+
+   Tiering by task class is allowed here under two rules, and both are hard.
+
+   - **Every member of one contrast shares one limit.** A pair or a family is
+     read by comparing its members against each other, so a limit that differs
+     inside one is a condition the contrast never controlled for. Tier by
+     class, never by task.
+   - **The limits are registered per class before the sweep and never adjusted
+     per cell during it.** Raising the limit for the one cell about to hit it
+     is the same fault as re-running a cell: a task × agent × model cell is
+     only ever swept once, and spending it under conditions nobody chose in
+     advance is spending it badly.
+
+   A limit that changes between rounds is a cross-round caveat, recorded the
+   way a CLI version change is (see "One agent version per sweep"): contrasts
+   drawn inside the round are unaffected, and comparisons across the boundary
+   carry it.
 
 ## Isolation: an isolated worktree
 
