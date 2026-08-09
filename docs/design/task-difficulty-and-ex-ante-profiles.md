@@ -432,7 +432,7 @@ of history by itself. Where the recomputation and the recorded rulings of
 | K1 | separated in both rounds; 0 silent | round 2 no longer counted at all — K12's families hold K1 constant, so K1 is nobody's varied knob there; round 1's four K1 families still separate upward. 0 silent, 1 counted round |
 | K7 | not assessable, round 1; 0 silent | **stalled** — no family, no pair, no registered claim, in any round. 0 counted rounds, exactly as §18 ruled and #35 recorded. [Round 3 gives it two pairs and two registered cost claims (#41, §23.7), so the next recomputation reads a counted round rather than a stall — the rung side stays not assessable while K7's ladder is empty] [And that is what round 3 printed: one counted round, non-silent on 2 of 4 effort readings, both pairs not assessable on the rung. 0 silent. §25, §26] |
 | K8 | no separation, round 1; 1 silent | **stalled** — the seven K8 tasks are standalone and register no claim. 0 silent. **§13's demotion stands** as a recorded human verdict over two sweeps and an effort reading that ran the wrong way; it was never a counter reading and the amended counter does not reproduce it |
-| K9 | no separation round 1, separated round 2; 1 silent | unchanged at 1 silent. Round 1's three pairs are flat; round 2's digest and dossier reach a rung above their controls, and outage's claim hit on haiku, so the round is non-silent twice over |
+| K9 | no separation round 1, separated round 2; 1 silent | unchanged at 1 silent. Round 1's three pairs are flat; round 2's digest and dossier reach a rung above their controls, and outage's claim hit on haiku, so the round is non-silent twice over [Round 3 adds a third counted round, non-silent on 2 of 6 effort readings with 0 of 3 contrasts separating, so the counter stays at 1 silent of 3. What the flat rungs mean now that the volume confound is broken is ruled at §30] |
 | K11 | separated, round 2; 0 silent | **silent 1 of 2** — no rung contrast exists, but four registered baseline claims do, and all eight readings missed. This is exactly the reading §19 wrote into the record by hand, and the counter now agrees without being told to. [**Retired** by #41 at this count, on the identifiability argument of §23.5, not on the counter: no round after round 2 asks it, so 1 of 2 is where it stays. Its four tasks and their construction blocks stay in the set, because every counter here is derived from the artifacts and a knob deleted from the registry would leave the report unable to read its own past] |
 | K12 | no separation, round 2; 1 silent | unchanged at 1 silent — both families flat across all four levels and all eight claim readings missed. [Round 3's nightbus family is flat too, on all three contrasts and all four claim readings, so the counter reaches **silent 2 of 2 and demotes** — the first demotion clause 5 has ever computed. §25 records what kind of evidence produced it and §26 the ruling] |
 
@@ -959,6 +959,12 @@ Verdict: K9 stays, promoted to *candidate* ex-ante profile dimension
 alongside K1, but **not usable for selection until the volume confound is
 broken** — round 3 must match added lines within a pair (or vary volume
 orthogonally) before any recommendation inherits this.
+[Round 3 matched them, and the condition discharges into a negative. Three new
+pairs at 1.00×, 1.05× and 1.08× added lines, with the effort claims registered
+on cost in advance, came back flat on all three contrasts — so "the crux is
+harder" and "the crux is bigger" have been separated once and the rung signal
+went with size. §30 rules accordingly: the promotion above stands as a
+description of round 2's two pairs, and no recommendation inherits it.]
 
 **K11 (detection distance) — NEGATIVE first reading, and the design is why.**
 All four tasks resolved on both models (8/8), every rung bet hit, and the
@@ -1232,6 +1238,12 @@ claims that hit on haiku. Authors know what they built; they cannot price it
 against a model. That argues for keeping the rung prediction mandatory (it is
 cheap and it is the falsification record) while treating the effort claim as
 the load-bearing one.
+
+[**Ruled at §32**, on the condition §23.6 attached to a third `prose` miss and
+after round 3 took the upward-bet ledger outside K1 from 0/14 to **0 for 18**.
+The paragraph above is no longer an argument: the rung prediction stays
+mandatory as the falsification record and is retired from selection, and
+nothing may cite an author's rung bet as evidence that a task is hard.]
 
 ### 22. Anomalies, read
 
@@ -1718,7 +1730,9 @@ the load-bearing one.
    `pysm-pushdown` missed both at 0.47×/1.07× and its calm control landed a
    rung *above* its dense member, which is weaker than the correlated-draws
    caveat above anticipated and is read at §25 under the discount that
-   control's own rationale registered.]
+   control's own rationale registered. §30 rules the knob on it: the stall
+   ends, K7 survives the first round it could lose, and round 1's 5.1× is not
+   replicated.]
 8. **Make effort the primary registered outcome.** §22.3: the rung has
    saturated on this material and effort has separated in every round. The
    kill discipline should read separation on either axis, as §16.1 proposed
@@ -2421,7 +2435,9 @@ shipped: the volume confound is broken (added lines matched within a pair at
 than swapped in post hoc. With volume matched and the metric pre-registered, no
 rung moved and two of six readings hit. §18's caveat said no recommendation may
 inherit K9's round-2 result until this was done; it is done, and what it
-returned is recorded here for whoever rules on the knob.
+returned is recorded here for whoever rules on the knob. [Ruled at §30: the
+condition discharges into a negative, and K9's rung lever is not usable for
+selection.]
 
 **K12 (decision conveyance) — silent 2 of 2, demoted.** §26 carries the ruling.
 The outcome: all four `nightbus` rungs landed haiku-solvable, 0 of 3 registered
@@ -2675,6 +2691,449 @@ within it by construction, which is the price §23.10 named for building one.
    did for all four of its invocations and the replay should have done the
    same. Neither cost anything this time, which is the only reason they are
    anomalies rather than incidents.
+
+## Round 3 rulings — 2026-08-09
+
+§§24–29 recorded round 3's outcomes beside the readings §23 pre-committed to,
+and stopped there on purpose: §25 says of K9 that what the round returned is
+"recorded here for whoever rules on the knob". This is that ruling, for K9 and
+for every other knob the round activated, together with the first published
+reading of `calibrate-v1`'s table and the instrument-level conclusion the
+prediction ledger has now earned.
+
+**Where the numbers come from.** Counters, contrasts, claim readings and rung
+predictions are printed by `uv run ai-bench reconcile-v1`; the calibration
+table and its mix disclosures by `uv run ai-bench calibrate-v1`; both read the
+checked-in task set and run logs and nothing else. Per-task and per-pair
+multiples are the same run logs' `cost_usd` and `turns` fields, quoted the way
+§24 quotes them because neither report groups by them. Nothing below is
+re-derived from the artifacts that §§24–29 already read: where a fact was
+recorded there it is cited, and where §23 fixed a reading in advance for the
+outcome that occurred, the verdict takes that reading as pre-committed rather
+than arguing it again. Nothing here amends §9.
+
+### 30. Per-knob verdicts
+
+A verdict here says what the knob is now good for, what may cite it, and what
+it would take to move it — over and above the counter, which `reconcile-v1`
+computes and no verdict may contradict. Two of this round's rulings were made
+before this section: K12's demotion is computed by clause 5 and K11's
+retirement was argued at §23.5. Both are read here, neither is re-litigated.
+
+**K10 (coordination width) — the round's one positive result, and the only
+reading in three rounds to clear a bar set in advance. Promoted to candidate
+*effort* lever; not promoted to a profile dimension, and one library wide.**
+`pysm-trace-what-the-machine-did` returned 2.04× cost on haiku and 5.47× on
+sonnet against its narrow partner (§24), which is the first branch of §23.9's
+real-result bar — "2× or better on both models" — met on the first try by a
+knob nobody had ever built. That is worth stating without hedging, because
+three rounds of this experiment have produced nothing else like it.
+
+The hedges are the ones §23.9 registered, and they bound what the result may
+be cited for rather than shading it. The pair does not hold read volume
+still — the wide member surveys the walk machinery of three modules where the
+narrow one reads two methods — so the licensed reading is §23.9's "carry one
+decision to many named places, including the cost of visiting them", not site
+count alone. The width it carries is the corrected one, ten to fourteen
+places in three modules with no spelling reaching two, not the fourteen
+irreducible sites of the batch's first registration. And it is n=1 pair, one
+sweep, one byte-identical pysm snapshot shared with every other cost claim the
+round registered, so §23.9's cross-knob qualifier lands on this number first:
+5.47× is one library measured once.
+
+So the verdict is a promotion of status and not of authority. K10 may be cited
+as the largest effort effect the corpus has measured under a matched pair, and
+as the reason the width axis is worth a second round. It may not be cited as a
+priced dimension of an ex-ante profile, because a single pair on a single
+substrate prices nothing. What would change that is one thing and it is §33's
+third and seventh candidates: the same contrast built again somewhere that is
+not pysm. Counter: 0 silent, 1 counted round.
+
+**K4 (read-set/write-set ratio) — survives its first counted round on a hit
+its own pre-registration calls small, and the pre-registration governs.**
+1.31× on haiku and 1.49× on sonnet clears the registered 1.25× on both models
+and clears neither branch of the real-result bar, which is exactly the case
+§23.9 wrote a reading for: "a bare hit at around 1.3× is therefore a first
+reading and a small one, and nothing in a later round may cite it as more."
+That sentence is the verdict. K4 is kept, non-silent, and is not a profile
+dimension.
+
+Two registered discounts stay attached wherever the number is quoted, because
+both narrow what was measured. The brief supplies two of the three steps of
+the walk the task is pitched on, and a defensive `getattr` answer skips the
+third module entirely, so what the 1.31×/1.49× prices is the cost of
+*checking* a conclusion the prose already states — not the hunt through three
+modules the round-3 spec's framing described, which §23.9 retracted before the
+sweep. Counter: 0 silent, 1 counted round.
+
+**K7 (invariant density) — the stall ends, the knob survives the first round
+in which it could lose anything, and the result is half of one pair.** Two
+facts carry this and they point in opposite directions. K7 has been
+unfalsifiable since round 1 — §18 ruled it stalled rather than silent, #35
+recorded it, and §9's recomputation table forecast that round 3 would turn it
+into a counted round. It did: one counted round, non-silent, 0 silent. That is
+an instrument outcome and it is the ticket's, not the knob's.
+
+The knob's own outcome is smaller than the count makes it look. Of four claim
+readings two hit, and both are `pysm-reset` (1.75× haiku, 1.67× sonnet), which
+clears 1.25× and neither branch of the bar — so §23.7's pre-committed reading
+is in force verbatim: "a bare hit at around 1.3× is a small result, not a
+replication of round 1." Its sibling `pysm-pushdown` missed on both models at
+0.47× and 1.07×, and its calm control landed a rung *above* the dense member
+it was built to sit beneath. That control's own rationale pre-committed the
+consequence — "if this one lands anywhere but the bottom rung, the pair is
+measuring how hard the task was rather than how dense the terrain is, and the
+round's cost reading should be discounted accordingly" — it landed above the
+bottom rung, and the discount is applied here rather than merely noted: round
+3's K7 evidence is **one pair reading 1.7× on one site of one library**, with
+its sibling below parity on the same machinery, and §23.7's own warning that
+two hits would be "closer to one result than to two" turns out to have been
+generous to a round that produced one.
+
+What that settles and what it does not. §12's confound — round 1's 5.1× cost
+on haiku conflating invariant density with plain repository size — is
+answered, and answered against the knob: with `repo/` held byte-identical the
+multiple falls from 5.1× to 1.75×. §31 says where a plausible share of the
+rest sits, without decomposing round 1's number, which nothing can: the calm
+side of these pairs, carrying no density at all, prices at **2.18× the
+hand-authored baseline** on the calibration table, and 2.18 × 1.75 lands at
+3.8 in the neighbourhood of 5.1 across different tasks and a different CLI
+version. Dense terrain is worth something once size is held; round 1's number
+did not survive, and nothing may cite it as though it had. K7 is kept, at 0
+silent and 1 counted, with its rung axis still unreadable and no enumerated
+ladder — the first of §33's candidates.
+
+**K9 (crux depth) — the condition §18 attached to round 2's result is
+discharged, and it discharges into a negative. K9's rung lever is not usable
+for selection, and no recommendation may inherit round 2's separation.** This
+is the ruling §25 deferred, and the reason it can be made now is that the
+round bought exactly what §18 demanded: added lines matched within each pair
+at 1.00×, 1.05× and 1.08×, and the effort claims registered on cost in advance
+rather than swapped in afterwards. §18's clause was "not usable for selection
+until the volume confound is broken — round 3 must match added lines within a
+pair (or vary volume orthogonally) before any recommendation inherits this."
+Under those conditions three new pairs built to §18's surviving formulation
+came back **flat on every rung**, 0 of 3 registered contrasts separating.
+
+Round 2's +1 rungs came with cruxes writing 1.61× and 1.41× their controls'
+added lines, and the pair that wrote *fewer* lines than its control was the
+pair that stayed flat. That is the ordering §18.2 recorded and could not
+break. Round 3 broke it, and with volume matched no rung moved. The
+conservative reading — the one this verdict takes — is that "the crux is
+harder" and "the crux is bigger" have now been separated once, and the rung
+signal went with size. §18's "SURVIVES as a rung lever" is therefore narrowed
+to a description of two pairs in round 2 that no later round may generalize:
+the selection tool gets nothing from K9's rung.
+
+The effort side is non-silent and is not more than that. Two of six readings
+hit — `bookcase` at 2.66× on haiku (1.06× on sonnet) and `remit` at 2.04× on
+sonnet (0.75× on haiku) — on different models of different pairs, with no pair
+hitting both and `roll` missing both. Under clause 3 one hit on either model
+makes the round non-silent and two do so twice over; under any reading aimed
+at pricing a task, a scatter across opposite models is not a signal. The
+counter stays at silent 1 of 3 counted rounds and K9 remains subject to the
+discipline.
+
+One reading runs the other way and is recorded as a hypothesis rather than
+folded into the verdict, because it is n=1 and because §23.3 registered the
+distinction before the sweep. Of round 3's three pairs only `bookcase` is the
+strong form of the any-resolution caveat — next fit, first fit and the
+fewest-shelves optimum all fail its stated width rule — while `remit` and
+`roll` concede outright that a textbook method passes their grading suites
+63/63 and 48/48. On §18's own surviving formulation, "a planted open decision
+that no named method resolves", round 3 built one instance and two
+near-misses. The one instance is also the pair with the round's largest K9
+haiku multiple. That is one pair on one model and it is written here so that
+round 4 can aim at it, not so that anything can be read off it.
+
+**K12 (decision conveyance) — demoted, and the demotion is narrower than the
+knob's obituary would be. What died is the effort claim; the ladder was never
+tested.** The counter is computed, not ruled: `reconcile-v1` prints `demote
+K12: silent in sweep round-2 (2026-08-06), sweep round-3 (2026-08-08)`, the
+first demotion clause 5 has ever produced, and §26 carries it. This verdict
+only says what a later round may do with it.
+
+What the two rounds falsified is a registered bet about cost, twice, in both
+available directions. Round 2 registered effort peaking at `unmentioned` — the
+reading-burden order — and all eight readings missed, six of them leaning the
+*ladder's* way. Round 3 took the lesson and registered the claims along the
+ladder on cost, and all four readings missed with three of them below parity,
+`-c4`'s carrying claim at 0.96× and 0.90× against a claim needing 1.25×. A
+knob whose effort signal has been bet on in both directions and lost both
+times has been measured, and demoting it is what the discipline is for.
+
+What neither round tested is the rung ladder, and the record must say so
+plainly or a later round will revive K12 by pointing at the gap. Round 2 came
+back flat at haiku-solvable×4 with the crux stated in module docstrings at
+every level; round 3 closed the docstring channel and raised the change's
+floor, and three of its four rungs were still *registered* at the floor, so
+§18's objection — a ladder cannot show an ordering when every rung is the
+floor — was live going in and is live coming out. So the demotion rests on the
+cost axis and on nothing else, and the ruling that goes with it is: **K12
+returns only behind a new instrument, not behind new tasks.** A round that
+wants the conveyance ladder back must first build a change whose *rungs* have
+room — an underlying change that already resists haiku before K12 touches it,
+which on this corpus is rare enough to be the harder half of the work: ten of
+sixty-six scored cells have ever landed above the floor and four have ever
+landed unsolved, none of them constructed for this purpose. Until then the
+prose-over-unmentioned claim of §9 stands as registered, unfalsified on rungs,
+and demoted on the only axis anyone has been able to read.
+
+**K1 (decision openness) — no counted round, and the silence is clause 1
+working as designed.** Round 3 varied no K1 family; the report prints an
+informational, not-assessable row and advances nothing, and §23.10's
+counter-neutrality construction kept the two anchors from handing K1 a counted
+round off tasks built to measure the ceiling. The counter stays at 0 silent
+over 1 counted round — round 1's four families, the only rung separations any
+knob has ever produced. Recorded as a fact about the record rather than a
+verdict: the one knob with a validated rung lever has not been asked a
+question in two rounds.
+
+**K8 — stalled at 0 silent, with §13's human demotion standing beside it.
+K11 — retired at silent 1 of 2 by #41, on identifiability.** Round 3 asked
+neither and this section changes neither.
+
+**And the property of the round that outranks any single knob.** Three knobs
+took their first counted round — K4, K7, K10 — and all three were counted on
+the *effort* axis, with the rung axis unreadable in all three because none of
+their ladders is enumerated. Under the unamended rule none of the three could
+have been counted at all, so #37's amendment is what kept them out of a stall;
+under the amended rule they now sit in a state nobody chose, half-instrumented
+by default. That is either the amendment working or three knobs permanently
+unable to speak on the axis the framework was built around, and which of the
+two it is depends on a decision no round can make for itself. It is the first
+of §33's candidates and it is already an open question on #36.
+
+### 31. The first calibration table, read
+
+`uv run ai-bench calibrate-v1` publishes for the first time over the full
+corpus: 89 tasks, 177 runs, **20 cells over two categories**, keyed
+category × sorted knob-activation profile, and — for the first time — no empty
+cell. Eighteen of the cells are feature-dev, one of which is the eleven-task
+zero-knob denominator the other seventeen divide by; the two refactor cells
+run on the same pattern over another eleven controls.
+
+**The headline is that the biggest numbers in the table are not knobs.** The
+four largest feature-dev multipliers on haiku are `K1=intent,K7=dense,K9=single`
+at 6.84× (n=2), `K10=wide` at 6.40× (n=1), `K7=dense` at 3.80× (n=4) and
+`K10=narrow` at 3.14× (n=1) — and every one of those rows is vendored, priced
+against eleven hand-authored controls, because the corpus has no vendored
+control anywhere. #38's disclosure prints the substrate mix under every such
+row and its preamble says why there can be no better denominator: substrate
+provenance is declared inside a construction block, and a zero-knob control
+declares no construction block at all. The check
+that turns that caveat into a measurement is already in the table: the
+*deliberately easy* sides of the vendored pairs read 2.18× (`K7=calm`), 2.37×
+(`K4=narrow`) and 3.14× (`K10=narrow`). A calm 105-line fluent builder in a
+vendored library, authored as the control that must not be hard, prices at
+2.18× the hand-authored baseline. **On this corpus the substrate step is worth
+roughly 2–3× before any knob moves**, and every knob effect measured inside
+those rows is a within-pair ratio of 1.3–2.0× sitting on top of it. That is
+§12's confound with a number on it, and it is the quantitative reason §30's
+K7 verdict reads the way it does.
+
+**The vendored rows are readable as pairs, which is how they should be read.**
+Two members of one pair share a denominator, so dividing their cells returns
+the pair multiple exactly: K10 is 6.40 ÷ 3.14 = 2.04× on haiku and
+7.93 ÷ 1.45 = 5.47× on sonnet, K4 is 3.10 ÷ 2.37 = 1.31× and
+2.28 ÷ 1.54 = 1.48× — §24's four numbers back, the last of them 1.49× before
+the printed cells were rounded. Neither pair's reading is what its absolute
+multipliers say. The one place this does not work is K7: its `dense`
+row pools round 1's two cells with round 3's two, across two libraries and a
+CLI version boundary, so 3.80 ÷ 2.18 is not `pysm-reset`'s 1.75× and must not
+be quoted as it.
+
+**Four pooling facts a reader of this table has to carry, three of them
+registered before it existed.**
+
+- *`K1=acceptance` at 2.06× describes none of its six tasks.* The row holds
+  round 1's four `-l1` variants and #43's two anchors, and the split is not
+  subtle: on haiku the four variants cost $0.0446–$0.0772 against a $0.0711
+  baseline mean, pooling to 0.92×, while `gauge` and `sieve` cost $0.2622 and
+  $0.3541, pooling to 4.33×. The printed 2.06× is a mean over two populations
+  and sits near neither. §23.10 registered this in advance and #38's
+  disclosure cannot fix it, because all six tasks are single-file and
+  hand-authored and so come out as one mix line.
+- *The same row's rung floor hides its hardest member.* It prints
+  `haiku-solvable (n=6)` although `sieve` came back sonnet-only, because a
+  floor is the *weakest* rung any graded member landed on — the claim that
+  this profile has been solved that cheaply at least once, which is what a
+  selection query can act on. §23.10 expected a landed bet to move the floor
+  to `unsolved`; the more exact statement, now that the table exists, is that
+  a floor only moves when *every* graded member moves, so a pooled row can
+  keep a harder task invisible. That is the row-key question already on #36's
+  thread arriving from a second direction.
+- *K12's four rows each pool changes of 5, 9 and 32 added lines*, exactly as
+  #40 registered. What survives the pooling is worth one line: all four sit
+  *below* the baseline on sonnet (0.67×, 0.68×, 0.70×, 0.71×), and on haiku
+  the spread runs 0.81×–1.19× with `criterion`, the easiest level, the most
+  expensive of the four. Neither ordering is the registered one — the
+  demotion in a third view.
+- *K9's rows pool three rounds and both sides of the volume confound.*
+  `K9=none` reads 0.74×/0.91× and `K9=single` 1.10×/1.29×, which divides to a
+  tidy 1.49×/1.42× that means nothing: nine pairs across three rounds and more
+  than one CLI version, round 2's cruxes writing 1.4–1.6× their controls'
+  lines and round 3's matched to 10%. §30's K9 verdict turns on that
+  distinction and the table cannot make it.
+
+**The one rung the table has.** Nineteen of twenty cells floor at
+`haiku-solvable`. The single exception is the composite row
+`K1=intent,K7=dense,K9=single`, at `sonnet-only (n=1)` — one graded task,
+`pysm-rebuild-a-graph-from-a-snapshot`, its sibling being the round's
+incomplete cell, and its 6.84×/3.73× computed over n=2 on haiku and n=1 on
+sonnet for the same reason. So the rung column of the corpus's first
+calibration table is one value wide with a single n=1 exception, while the
+cost columns run from 0.67× to 7.93×. **This corpus prices difficulty in
+dollars and cannot price it in rungs**, which is §22.3's saturation finding
+arriving as a property of the published product rather than as a complaint
+about a sweep.
+
+**The refactor category is one row.** `K8=misleading` at 1.11×/1.19× (n=7),
+the only row in the table whose own mix is split on both disclosed axes
+(4 single-file + 3 cross-file, 4 hand-authored + 3 vendored). Consistent with
+§13's demotion and adding nothing to it.
+
+**What the table refuses, and the two questions that are above it.** v1 prints
+no number it did not measure: no interpolation between levels, no backoff to a
+coarser key, no pooling across categories, and `-` plus a named reason
+wherever a cell is empty — there are none today. The two known weaknesses are
+disclosed by the tool and are decisions for a human, both already recorded on
+#36 from #38's spec review: the row key is category × profile where the
+actuarial-loop design of §4 fixes category × scope, and the feature-dev
+denominator is 6 single-file + 5 cross-file while nearly every constructed
+cell is 100% single-file, which biases those multipliers downward; and no
+vendored control exists, so every vendored row prices somebody else's
+repository along with the knobs. Nothing in this section leans on a multiplier
+in a way those two would overturn — every reading above is either a
+within-pair ratio, a cell-against-cell comparison sharing one denominator, or
+an explicit statement that a pooled number describes nothing.
+
+### 32. The prediction instrument, ruled
+
+The facts are §28's: 40/66 lifetime (60.6%), round 3's own 21 scored going
+16/5, five misses, and the upward-bet ledger outside K1 moving from 0/14 to
+**0 for 18** with one bet unmeasured. §21 pre-committed the conclusion to draw
+if a third `prose` bet missed, and §23.6 quoted it forward before the sweep.
+It missed. The conclusion is therefore in force as something pre-committed:
+**the rung prediction stays mandatory because it is cheap and because it is
+the falsification record, and it is retired from selection.** No ticket, spec,
+recommendation or profile may cite an author's rung bet as evidence that a
+task is hard.
+
+What makes this an instrument-level ruling rather than another calibration
+note is that round 3's authors knew the ledger's state and could not beat it.
+§23.9 declined to place a fifteenth upward bet precisely because the ledger
+said it would lose; §23.10 placed four anyway, deliberately, with the
+pre-registered framing that a beaten anchor is ceiling data and not a failure,
+and three were scored and all three lost. Round 1's authors over-predicted,
+round 2's were told so and under-predicted the two hardest things they built,
+and round 3's — writing with both lessons in front of them — went 0 for 4 on
+the only axis with room above the floor. An instrument whose users know its
+bias and still cannot correct it is not miscalibrated; it is answering a
+different question from the one being asked of it. The rationales stay good
+mechanism descriptions, which is what §21 said and what round 3's five misses
+confirm one by one: `gauge` bet unsolved on contract width and landed
+haiku-solvable two rungs down, `sieve` and `pysm-rebuild` fell one rung short
+of the same bet, `nightbus-c4` is the third `prose` miss, and the round's only
+under-prediction is `pysm-rename-and-list-states`, a control nobody was
+measuring, which is also the task whose surprise did the most damage (§30's
+K7 verdict).
+
+**The effort instrument, by contrast, is where the round's information is.**
+Forty readings of twenty claims, **0 not assessable** across three rounds — it
+has never once failed to return a readable verdict, which is the half of §20's
+validation that keeps being confirmed. Lifetime 11/40 (27.5%); round 3's own
+nine claims went 8 of 18 (44.4%) against round 2's 3 of 22. Read against the
+registered rationales, the misses sort cleanly and none of them is a surprise
+the record has to absorb after the fact:
+
+- The four K12 readings lost as §23.6 said they might, with `-c2`'s
+  pre-discounted as "not news" before the sweep and `-c4`'s the real loss.
+- The four K9 misses run from 0.69× to 1.06×, so on every one the crux came in
+  *cheaper* than its control or within a few percent of it, and for two of the
+  three pairs §23.3 registered the reason in advance — a textbook method
+  resolves `remit` and `roll`, and a task a named method solves is a task
+  whose cost the crux does not raise.
+- `pysm-pushdown`'s two are covered by its control's own registered discount,
+  applied in §30.
+- The eight baseline-comparator readings, all K11's, remain 0 for 8. Every
+  claim that has ever hit in this corpus is a **pair** claim: 11 of 32 pair
+  readings against 0 of 8 baseline readings. §22.4 observed it after round 2
+  and round 3, which registered no baseline claim at all, neither tested nor
+  contradicted it. The standing rule this ruling adds: a baseline claim is
+  admissible only where its task activates exactly one knob and no pair is
+  authorable, and the record so far is that it will lose.
+
+One honest measurement of what the pre-registered metric swap bought, carried
+from §27 because it belongs in an instrument ruling: re-reading round 3's
+eighteen readings on turns changes exactly one verdict. The swap was not
+decorative — that one reading is the difference between K7's surviving pair
+hitting on one model and on both — and it is one in eighteen, so §20's
+mechanism is confirmed once and not replicated broadly.
+
+### 33. What round 4 should change (candidates, not tickets)
+
+Listed, not started. Each of these needs `/grill-with-docs` or `/to-spec`
+before it is work, and nothing below authors a task, a spec or a ticket.
+
+1. **Set the per-tier run-time limits deliberately.** The project owner's
+   direction, recorded on #36 on 2026-08-09 and anticipated by §29.4:
+   `RUN_TIMEOUT_S = 600` is an uncalibrated convention from #7 and round 3 is
+   the first round to reach it. Task tiers should carry different,
+   deliberately-set limits, the way per-task timeouts are ordinary practice
+   elsewhere. The two hard constraints this round's methodology imposes on any
+   such design: every member of one contrast shares one limit, and limits are
+   registered per task class before the first paid run rather than adjusted
+   per cell mid-sweep. A limit that changes between rounds is a cross-round
+   caveat recorded the way a CLI version change is.
+2. **Enumerate the ladders for K4, K7 and K10 — or record that effort is their
+   only channel.** The question #37's spec review put on #36 and nothing has
+   answered. Under clause 2 an unenumerated ladder makes every contrast on
+   these three knobs not assessable on the rung, which is why round 3 counted
+   all three on effort alone (§30). Both answers are defensible and the cost
+   of not choosing is that three knobs stay half-instrumented by accident
+   rather than by decision.
+3. **A second substrate, and a replication rather than a new lane.** Ten of
+   round 3's twenty-two tasks and *every* registered cost claim in the round
+   read one byte-identical pysm snapshot. §10 has wanted cross-substrate
+   agreement since before round 1 and three rounds have not bought it. The
+   candidate is specifically to rebuild an existing pair's shape on a second
+   vendored library rather than to open a new knob there — the point is
+   whether the reading transfers, and RBQL having been weighed and declined by
+   all three of round 3's substrate tickets (§15.5's unseeded visible suite,
+   and #43's weaker authoring-risk ground) means the substrate choice is part
+   of the work.
+4. **Name the width axis or rule it out of scope.** §23.10 records that §9's
+   knob list has nothing naming the width of a closed contract, that the
+   corpus's only knob-free unsolved cell (`calc-infix-evaluator`) sits on it
+   as round 1's highest D1, and that both round-3 anchors bet on it and were
+   beaten. Either it becomes a knob with an enumerated ladder or the note
+   records that the ceiling is not being pursued along it.
+5. **Calibration table v2: the row key and the missing control.** Both
+   questions are on #36 from #38's spec review, and §31 is the reason they are
+   now live rather than hypothetical — the table is published and its
+   multipliers are being read. The cheaper half is a vendored zero-knob
+   control, which would give every pysm row a same-substrate denominator and
+   collapse most of §31's headline caveat; the larger half is whether v2 keys
+   on category × scope as §4's actuarial loop specifies.
+6. **K9's third round, or none.** Three counted rounds have produced one rung
+   separation that did not replicate under matched volume and a 2-of-6 effort
+   scatter across opposite models. §23.4's notice-the-crux variant — a planted
+   decision that is *not* labelled — is the only K9 design that asks a
+   question this corpus has not already answered, and §18.1 has wanted it
+   since round 2. A fourth round of labelled-crux pairs is a candidate for
+   deliberately *not* running.
+7. **Replicate K10.** The one result that cleared a bar set in advance, at
+   n=1 pair on one library, with read volume moving alongside site count by
+   construction. A second K10 pair — ideally under candidate 3, and ideally
+   one that holds read volume closer to still — is what would turn the
+   corpus's widest effort separation into a reading about coordination width.
+8. **Sweep the incomplete cell.** `pysm-work-out-a-way-there` × sonnet is the
+   corpus's only unswept cell and the only run ever to hit the timeout. Under
+   candidate 1's tier limit it can be swept legitimately, and §29.4 already
+   fixes how it must be read: measured under conditions its forty-three
+   round-3 neighbours did not have, so it arrives carrying the cross-round
+   caveat rather than repairing round 3's record.
 
 ## Open questions (superseded list resolved 2026-08-05)
 
