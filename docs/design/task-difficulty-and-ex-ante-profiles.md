@@ -1730,8 +1730,10 @@ nothing may cite an author's rung bet as evidence that a task is hard.]
    `pysm-pushdown` missed both at 0.47×/1.07× and its calm control landed a
    rung *above* its dense member, which is weaker than the correlated-draws
    caveat above anticipated and is read at §25 under the discount that
-   control's own rationale registered. §30 rules the knob on it: the stall
-   ends, K7 survives the first round it could lose, and round 1's 5.1× is not
+   control's own rationale registered.]
+
+   [**Ruled at §30**, on the reading above: the stall ends, K7 survives the
+   first round in which it could lose anything, and round 1's 5.1× is not
    replicated.]
 8. **Make effort the primary registered outcome.** §22.3: the rung has
    saturated on this material and effort has separated in every round. The
@@ -2639,6 +2641,12 @@ within it by construction, which is the price §23.10 named for building one.
    qualifier, in force — see §27. Ten of round 3's twenty-two tasks sit on the
    same pysm snapshot, and every one of the round's registered cost claims is
    read on it.
+   [Read that last clause as this entry's own heading scopes it and as §27
+   writes it out, not as it stands alone: the four claims on the snapshot are
+   the round's *terrain-knob* cost claims — K7's two, K10's and K4's. The
+   round registered nine claims in all, and the other five, K9's three and
+   K12's two, are hand-authored and read no pysm file. Corrected in the same
+   form at §30 and §33 by #45.]
 3. **K9's informational round-3 row is set arithmetic over the composites.**
    The report prints an informational `separated — none {haiku-solvable},
    single {haiku-solvable, sonnet-only}` for K9 in round 3 while the counted
@@ -2737,9 +2745,9 @@ decision to many named places, including the cost of visiting them", not site
 count alone. The width it carries is the corrected one, ten to fourteen
 places in three modules with no spelling reaching two, not the fourteen
 irreducible sites of the batch's first registration. And it is n=1 pair, one
-sweep, one byte-identical pysm snapshot shared with every other cost claim the
-round registered, so §23.9's cross-knob qualifier lands on this number first:
-5.47× is one library measured once.
+sweep, one byte-identical pysm snapshot shared with the round's three other
+terrain-knob cost claims — K7's two and K4's — so §23.9's cross-knob qualifier
+lands on this number first: 5.47× is one library measured once.
 
 So the verdict is a promotion of status and not of authority. K10 may be cited
 as the largest effort effect the corpus has measured under a matched pair, and
@@ -2794,14 +2802,21 @@ What that settles and what it does not. §12's confound — round 1's 5.1× cost
 on haiku conflating invariant density with plain repository size — is
 answered, and answered against the knob: with `repo/` held byte-identical the
 multiple falls from 5.1× to 1.75×. §31 says where a plausible share of the
-rest sits, without decomposing round 1's number, which nothing can: the calm
-side of these pairs, carrying no density at all, prices at **2.18× the
-hand-authored baseline** on the calibration table, and 2.18 × 1.75 lands at
-3.8 in the neighbourhood of 5.1 across different tasks and a different CLI
-version. Dense terrain is worth something once size is held; round 1's number
-did not survive, and nothing may cite it as though it had. K7 is kept, at 0
-silent and 1 counted, with its rung axis still unreadable and no enumerated
-ladder — the first of §33's candidates.
+rest sits, without decomposing round 1's number, which nothing can: the task
+the 1.75× was read on costs $0.2873 on haiku against the feature-dev
+baseline's $0.0711 mean, so `pysm-reset` prices at **4.04× a hand-authored
+control** in absolute terms — most of that being the vendored library it sits
+in rather than the density inside it, and 4.04× is within sight of 5.1× across
+different tasks and a different CLI version. (Composing the pooled figures
+instead — the calm side's 2.18× times the pair's 1.75× — returns 3.8, which
+lands on the `K7=dense` row's printed 3.80×. That is the division §31 forbids
+run backwards, and the agreement is a coincidence of pooling rather than a
+confirmation: the dense row holds round 1's two cells as well as round 3's, so
+it cannot corroborate a pair it only half contains.) Dense terrain is worth
+something once size is held; round 1's number did not survive, and nothing may
+cite it as though it had. K7 is kept, at 0 silent and 1 counted, with its rung
+axis still unreadable and no enumerated ladder — the second of §33's
+candidates.
 
 **K9 (crux depth) — the condition §18 attached to round 2's result is
 discharged, and it discharges into a negative. K9's rung lever is not usable
@@ -2855,12 +2870,21 @@ only says what a later round may do with it.
 
 What the two rounds falsified is a registered bet about cost, twice, in both
 available directions. Round 2 registered effort peaking at `unmentioned` — the
-reading-burden order — and all eight readings missed, six of them leaning the
-*ladder's* way. Round 3 took the lesson and registered the claims along the
-ladder on cost, and all four readings missed with three of them below parity,
-`-c4`'s carrying claim at 0.96× and 0.90× against a claim needing 1.25×. A
-knob whose effort signal has been bet on in both directions and lost both
-times has been measured, and demoting it is what the discipline is for.
+reading-burden order — and §18 records two facts about how that went which
+this verdict must quote separately rather than compress into one. First, all
+eight of the registered readings missed: four claims across two models, and
+nothing hit. Second, on different measurements entirely, §18 took the withheld
+pair itself — `unmentioned` against `prose`, both metrics and both models,
+eight measurements — and found prose the costlier variant in six of them and
+level in the other two, none leaning the registered way. The first fact is the
+claim losing; the second is the direction it lost in, and of the registered
+readings only the four on `-c3`, the `unmentioned` level the claim peaked at,
+bear on that direction at all. Round 3 took the lesson and registered the
+claims along the ladder on cost, and all four readings missed with three of
+them below parity, `-c4`'s carrying claim at 0.96× and 0.90× against a claim
+needing 1.25×. A knob whose effort signal has been bet on in both directions
+and lost both times has been measured, and demoting it is what the discipline
+is for.
 
 What neither round tested is the rung ladder, and the record must say so
 plainly or a later round will revive K12 by pointing at the gap. Round 2 came
@@ -2870,24 +2894,34 @@ floor, and three of its four rungs were still *registered* at the floor, so
 §18's objection — a ladder cannot show an ordering when every rung is the
 floor — was live going in and is live coming out. So the demotion rests on the
 cost axis and on nothing else, and the ruling that goes with it is: **K12
-returns only behind a new instrument, not behind new tasks.** A round that
-wants the conveyance ladder back must first build a change whose *rungs* have
-room — an underlying change that already resists haiku before K12 touches it,
-which on this corpus is rare enough to be the harder half of the work: ten of
-sixty-six scored cells have ever landed above the floor and four have ever
-landed unsolved, none of them constructed for this purpose. Until then the
-prose-over-unmentioned claim of §9 stands as registered, unfalsified on rungs,
-and demoted on the only axis anyone has been able to read.
+returns only behind an underlying change whose rungs have room** — a change
+that already resists haiku before K12 touches it at all, which on this corpus
+is rare enough to be the harder half of the work: ten of sixty-six scored
+tasks have ever landed above the floor and three have ever landed unsolved,
+none of them constructed for this purpose. (The corpus's unsolved census holds
+a fourth cell, `calc-infix-evaluator`, which sits outside that population as a
+zero-knob control authored before the experiment — the distinction §23.10
+draws.) What the ruling does not license is the inference in the other
+direction: the ladder's being untested is a reason to demand such a change
+before rebuilding the ladder, not a reason to call the demotion premature,
+because what was demoted is a claim about cost and that claim was bet twice
+and measured twice. Until then the prose-over-unmentioned claim of §9 stands
+as registered, unfalsified on rungs, and demoted on the only axis anyone has
+been able to read.
 
 **K1 (decision openness) — no counted round, and the silence is clause 1
 working as designed.** Round 3 varied no K1 family; the report prints an
 informational, not-assessable row and advances nothing, and §23.10's
 counter-neutrality construction kept the two anchors from handing K1 a counted
 round off tasks built to measure the ceiling. The counter stays at 0 silent
-over 1 counted round — round 1's four families, the only rung separations any
-knob has ever produced. Recorded as a fact about the record rather than a
-verdict: the one knob with a validated rung lever has not been asked a
-question in two rounds.
+over 1 counted round — round 1's four families, which remain the only
+*validated* rung lever the record holds. They are not the only rung
+separations it holds, and the counter prints the others: K9's `digest` and
+`dossier` separated in round 2, which is part of why `reconcile-v1` reads that
+round non-silent for K9, and the K9 paragraph above rules the two of them a
+description of two pairs that no later round may generalize. Recorded as a
+fact about the record rather than a verdict: the one knob whose rung lever
+anything may be built on has not been asked a question in two rounds.
 
 **K8 — stalled at 0 silent, with §13's human demotion standing beside it.
 K11 — retired at silent 1 of 2 by #41, on identifiability.** Round 3 asked
@@ -2901,7 +2935,7 @@ have been counted at all, so #37's amendment is what kept them out of a stall;
 under the amended rule they now sit in a state nobody chose, half-instrumented
 by default. That is either the amendment working or three knobs permanently
 unable to speak on the axis the framework was built around, and which of the
-two it is depends on a decision no round can make for itself. It is the first
+two it is depends on a decision no round can make for itself. It is the second
 of §33's candidates and it is already an open question on #36.
 
 ### 31. The first calibration table, read
@@ -2921,16 +2955,19 @@ against eleven hand-authored controls, because the corpus has no vendored
 control anywhere. #38's disclosure prints the substrate mix under every such
 row and its preamble says why there can be no better denominator: substrate
 provenance is declared inside a construction block, and a zero-knob control
-declares no construction block at all. The check
-that turns that caveat into a measurement is already in the table: the
-*deliberately easy* sides of the vendored pairs read 2.18× (`K7=calm`), 2.37×
-(`K4=narrow`) and 3.14× (`K10=narrow`). A calm 105-line fluent builder in a
-vendored library, authored as the control that must not be hard, prices at
-2.18× the hand-authored baseline. **On this corpus the substrate step is worth
-roughly 2–3× before any knob moves**, and every knob effect measured inside
-those rows is a within-pair ratio of 1.3–2.0× sitting on top of it. That is
-§12's confound with a number on it, and it is the quantitative reason §30's
-K7 verdict reads the way it does.
+declares no construction block at all. The check that turns that caveat into a
+measurement is already in the table: the *deliberately easy* sides of the
+vendored pairs read 2.18× (`K7=calm`), 2.37× (`K4=narrow`) and 3.14×
+(`K10=narrow`) on haiku, and 1.95×, 1.54× and 1.45× on sonnet. A calm 105-line
+fluent builder in a vendored library, authored as the control that must not be
+hard, prices at 2.18× the hand-authored baseline on haiku. **On this corpus
+the substrate step is worth roughly 2–3× on haiku before any knob moves**, and
+roughly 1.5–2× on sonnet. The knob effects measured inside those rows sit on
+top of that step and are within-pair ratios: 1.31×/1.48× for K4 and
+1.75×/1.67× for `pysm-reset`, with `pysm-pushdown` at or below parity on
+0.47×/1.07× and K10 the outlier at 2.04×/5.47×. That is §12's confound with a
+number on it, and it is the quantitative reason §30's K7 verdict reads the way
+it does.
 
 **The vendored rows are readable as pairs, which is how they should be read.**
 Two members of one pair share a denominator, so dividing their cells returns
@@ -3040,12 +3077,14 @@ measuring, which is also the task whose surprise did the most damage (§30's
 K7 verdict).
 
 **The effort instrument, by contrast, is where the round's information is.**
-Forty readings of twenty claims, **0 not assessable** across three rounds — it
-has never once failed to return a readable verdict, which is the half of §20's
-validation that keeps being confirmed. Lifetime 11/40 (27.5%); round 3's own
-nine claims went 8 of 18 (44.4%) against round 2's 3 of 22. Read against the
-registered rationales, the misses sort cleanly and none of them is a surprise
-the record has to absorb after the fact:
+Forty readings of twenty claims, **0 not assessable** across the two rounds
+that have ever registered one — the instrument shipped in #30 for round 2 and
+round 1 registered no effort claim at all — so it has never once failed to
+return a readable verdict, which is the half of §20's validation that keeps
+being confirmed. Lifetime 11/40 (27.5%); round 3's own nine claims went 8 of
+18 (44.4%) against round 2's 3 of 22. Read against the registered rationales,
+the misses sort cleanly and none of them is a surprise the record has to
+absorb after the fact:
 
 - The four K12 readings lost as §23.6 said they might, with `-c2`'s
   pre-discounted as "not news" before the sweep and `-c4`'s the real loss.
@@ -3060,9 +3099,10 @@ the record has to absorb after the fact:
   claim that has ever hit in this corpus is a **pair** claim: 11 of 32 pair
   readings against 0 of 8 baseline readings. §22.4 observed it after round 2
   and round 3, which registered no baseline claim at all, neither tested nor
-  contradicted it. The standing rule this ruling adds: a baseline claim is
-  admissible only where its task activates exactly one knob and no pair is
-  authorable, and the record so far is that it will lose.
+  contradicted it. Whether that record should harden into a rule about which
+  baseline claims are admissible, or whether clause 3's existing scoring is
+  already enough, is a question about §9 and nothing here answers it — it is
+  §33's ninth candidate.
 
 One honest measurement of what the pre-registered metric swap bought, carried
 from §27 because it belongs in an instrument ruling: re-reading round 3's
@@ -3094,15 +3134,15 @@ before it is work, and nothing below authors a task, a spec or a ticket.
    of not choosing is that three knobs stay half-instrumented by accident
    rather than by decision.
 3. **A second substrate, and a replication rather than a new lane.** Ten of
-   round 3's twenty-two tasks and *every* registered cost claim in the round
-   read one byte-identical pysm snapshot. §10 has wanted cross-substrate
-   agreement since before round 1 and three rounds have not bought it. The
-   candidate is specifically to rebuild an existing pair's shape on a second
-   vendored library rather than to open a new knob there — the point is
-   whether the reading transfers, and RBQL having been weighed and declined by
-   all three of round 3's substrate tickets (§15.5's unseeded visible suite,
-   and #43's weaker authoring-risk ground) means the substrate choice is part
-   of the work.
+   round 3's twenty-two tasks read one byte-identical pysm snapshot, and so do
+   all four of the round's terrain-knob cost claims — K7's two, K10's and
+   K4's. §10 has wanted cross-substrate agreement since before round 1 and
+   three rounds have not bought it. The candidate is specifically to rebuild
+   an existing pair's shape on a second vendored library rather than to open a
+   new knob there — the point is whether the reading transfers, and RBQL
+   having been weighed and declined by all three of round 3's substrate
+   tickets (§15.5's unseeded visible suite, and #43's weaker authoring-risk
+   ground) means the substrate choice is part of the work.
 4. **Name the width axis or rule it out of scope.** §23.10 records that §9's
    knob list has nothing naming the width of a closed contract, that the
    corpus's only knob-free unsolved cell (`calc-infix-evaluator`) sits on it
@@ -3134,6 +3174,18 @@ before it is work, and nothing below authors a task, a spec or a ticket.
    fixes how it must be read: measured under conditions its forty-three
    round-3 neighbours did not have, so it arrives carrying the cross-round
    caveat rather than repairing round 3's record.
+9. **Rule on baseline-claim admissibility, or record that clause 3 already
+   settles it.** §32's standing fact is that every effort claim which has ever
+   hit is a pair claim: 11 of 32 pair readings against 0 of 8 baseline
+   readings, all eight of the latter K11's. One available answer is a rule
+   that a baseline claim is admissible only where its task activates exactly
+   one knob and no pair is authorable; the other is that clause 3 already
+   scopes baseline claims narrowly enough and the 0-for-8 record is advice to
+   an author rather than a rule on the instrument. Nothing in the corpus
+   forces the choice, because the only baseline claims ever registered are
+   K11's and §23.5 rules that knob's pair unauthorable — which is why this
+   belongs on the candidate list under the same `/grill-with-docs` or
+   `/to-spec` gate as the rest of it, and not in a verdict.
 
 ## Open questions (superseded list resolved 2026-08-05)
 
