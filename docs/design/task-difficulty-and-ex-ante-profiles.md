@@ -1092,6 +1092,13 @@ are honest for the first time.
   raise the floor, handle the docstring channel, register the effort claims
   in the ladder's direction. Flat again under those conditions and K12 is
   demoted with a real negative behind it.
+
+  [**Flat again, and demoted — the condition fired.** #40 built round 3's K12
+  tasks to the conditions §23.6 set, and the round came back flat anyway, so
+  the counter reads silent 2 of 2 and `reconcile-v1` computes the demotion
+  itself rather than a human ruling it. §26 records it, together with the
+  qualification #40 carried on the floor and the fact that the negative lands
+  on the cost claims and not on the rung ladder: sweep round-3, 2026-08-08.]
 - **K11: the counter says 0 silent rounds. The research record counts this as
   silent 1 of 2.** This is an interpretation ruling and it is written here
   rather than into `reconcile-v1`, whose code is unchanged.
@@ -2656,16 +2663,18 @@ within it by construction, which is the price §23.10 named for building one.
    detached worktree, guard backups, byte-for-byte blob comparison, normally
    named logs including the dry check, `--data` scratched throughout. Two
    pieces of residue from the session are recorded because near-misses belong
-   on the record as much as incidents do. A `git reset` ran in the *shared*
-   working tree after the sweep commit, which is the tree-snapshot class the
-   protocol bans outright; the committed run-log blobs were re-verified against
-   the guard backups afterwards and are intact, and no artifact was lost. And
-   `data/unified.jsonl` was rewritten by a replay invoked without `--data`; the
-   file is untracked, holds only round-1 records, and carries no round-3
-   leakage, but scratching `--data` is exactly what the sweep itself did for
-   all four of its invocations and the replay should have done the same.
-   Neither cost anything this time, which is the only reason they are anomalies
-   rather than incidents.
+   on the record as much as incidents do. A `git stash -u` ran in the *shared*
+   working tree during the review lane after both commits — the tree-snapshot
+   class the protocol bans outright, and one whose reflog signature is
+   `reset: moving to HEAD`. It was popped immediately and both untracked paths
+   were restored; the committed run-log blobs were re-verified byte-for-byte
+   against the guard backups afterwards and are intact, and no artifact was
+   lost. And `data/unified.jsonl` was rewritten by a replay invoked without
+   `--data`; the file is untracked, holds only round-1 records, and carries no
+   round-3 leakage, but scratching `--data` is exactly what the sweep itself
+   did for all four of its invocations and the replay should have done the
+   same. Neither cost anything this time, which is the only reason they are
+   anomalies rather than incidents.
 
 ## Open questions (superseded list resolved 2026-08-05)
 
