@@ -3187,6 +3187,151 @@ before it is work, and nothing below authors a task, a spec or a ticket.
    belongs on the candidate list under the same `/grill-with-docs` or
    `/to-spec` gate as the rest of it, and not in a verdict.
 
+## Round 4 shape — decided 2026-08-12
+
+§33 listed nine candidates and authored nothing. This section is the owner's
+ruling on them, taken in a `/grill-with-docs` session on 2026-08-12. It settles
+what round 4 *is* and turns most of §33's list into either adopted work,
+superseded work, or work explicitly deferred. It authors no task, spec or
+ticket: `/to-spec` and `/to-tickets` are still owed before any of this is work.
+
+### 34. What round 4 is
+
+**The round's subject changed, and that is the ruling §33 did not anticipate.**
+§33's nine candidates all assume round 4 continues the knob experiment. It does
+not. Round 4's subject is **which engineering actions the first-party corpus
+covers, and how the ones it cannot currently grade get graded** — the knob line
+continues only as instrument hygiene (34.6).
+
+**34.1 The rung axis is conceded to the meta-aggregation layer.** §31's finding
+that nineteen of twenty cells floor at `haiku-solvable`, and §32's 0-for-18
+upward prediction record, are not treated as a corpus defect to be engineered
+away. The three-layer split in `AGENTS.md` already assigns per-instance
+quality separation to ingested public benchmarks — `swebench.py` reads
+SWE-bench Verified's per-instance resolved/unresolved — and assigns to the
+first-party corpus what second-hand data cannot give: cost, latency,
+harness-versus-model attribution, and scenarios no public benchmark contains.
+So the first-party corpus stops trying to separate models on solvability. Two
+consequences, both recorded as rulings rather than deferrals: **§33 candidate 4
+(name the width axis) and candidate 6 (K9's third round) are dropped** — both
+exist only to push tasks up a ladder this corpus no longer needs to climb.
+
+**34.2 The category vocabulary is wrong and is rebuilt first.** Round 4's first
+work is not authoring tasks. Three defects, all in `CONTEXT.md`'s taxonomy v0
+and `schema.py`'s `TaskCategory`:
+
+- **Categories will name engineering *actions*, not ticket types.** A real
+  ticket chains several actions — investigate, then edit, then test — and the
+  present rule ("exactly one category, decided by the primary deliverable")
+  discards every action but the last. Ruling: one benchmark task measures
+  **exactly one action** (it needs one gradeable deliverable); a real ticket is
+  a sequence of actions, and that relation is documented rather than keyed on.
+  The per-task rule is therefore unchanged in force and changed in meaning.
+- **`frontend-ui` and `infra-config` are not actions and leave the list.** They
+  name *where* work happens, not what is done — one can fix a bug, add a
+  feature or refactor in each. Keeping them beside actions forces a
+  frontend bug fix to pick one of two boxes and pollutes the calibration row it
+  lands in. They become an orthogonal annotation beside `scale` and `language`.
+- **The action list is ten**: fix a defect, add a feature, refactor, author
+  tests, comprehend code, locate a fault, review a diff, investigate and
+  propose, decompose a requirement, optimise performance. The last five are all
+  additions; four of them (`locate a fault`, `review a diff`, `investigate and
+  propose`, `decompose a requirement`) have never existed here, and
+  `codebase-comprehension` has existed since taxonomy v0 without ever holding a
+  task — for the reason 34.3 gives.
+
+**The sunk cost of this change is near zero today and grows monotonically.**
+`data/classification-cache.json` holds four classified public instances (all
+`bug-fix`); the 89 first-party tasks use two categories (71 `feature-dev`, 18
+`refactor`). Nothing in the corpus needs reclassifying. That is an argument for
+doing it now rather than an argument that it is free: `TaskCategory` is a hard
+`Literal` in the record schema (ADR-0001), read by the classifier and by
+`llm.py`'s prompt, so this is a code change, not a documentation edit.
+
+**34.3 Actions divide into four grading heaps, and round 4 eats the first two.**
+The division is by *deliverable*, and it explains the corpus's shape better
+than any difficulty argument does:
+
+| Heap | Actions | Grading |
+|---|---|---|
+| 1 | fix a defect, add a feature, refactor, author tests | **Exists** — held-out tests over the workdir diff |
+| 2 | locate a fault, review a diff, locate-style comprehension | **New mechanism, same principle** — plant the ground truth, then check against it |
+| 3 | investigate and propose, decompose a requirement, explain-style comprehension | **None** — no ground truth; needs a subjective grader, itself uncalibrated |
+| 4 | optimise performance | **None** — needs a stable performance baseline, a third mechanism |
+
+Heap 1's only gap is `bug-fix`, and round 4 fills it. Heap 2 is the round's new
+capability. **Heaps 3 and 4 are deferred, not dropped**, and the reason is
+recorded so a later round does not rediscover it: their deliverable has no
+ground truth, so grading them means building a subjective grader *and* a
+calibration experiment proving that grader is worth trusting — two new
+instruments, where round 4 already carries one.
+
+**34.4 A text deliverable becomes evidence by landing in the workdir.** Heap 2's
+deliverable is prose, and the v1 stance is that a run's final message is
+metadata and the workdir diff is the evidence. Grading the final message would
+reinstate exactly the pattern-verified weakness v1 was built to replace.
+Ruling: the task asks the agent to write a **structured answer file** in the
+workdir (a located fault as file and symbol; a review as findings with
+locations), and the held-out tests read that file and compare it to the planted
+truth. Nothing in the provenance boundary moves — the diff is still the
+evidence, replay is still exact, the verdict is still execution-verified.
+**The free-text answer is archived alongside and excluded from the verdict**:
+the run log already stores the final message, so this costs nothing but a
+change of name — from metadata to an archived artifact the verdict does not
+read — and it is the corpus a heap-3 grader would later be calibrated against.
+
+**34.5 Scale: one action proves the mechanism.** Round 4's most expensive
+assumption is not whether the tasks are good but whether plant-and-check grades
+a text deliverable correctly at all — an agent can locate a fault correctly and
+describe it at a different level of the tree than the planted answer, and be
+marked wrong. §6's method is to kill the most expensive assumption cheapest and
+first. So the new mechanism ships against **one** action, `locate a fault`
+(the hardest ground truth in heap 2), alongside the `bug-fix` fill: roughly
+twelve tasks, in the $6–10 band against round 3's $12.20. `review a diff` and
+locate-style comprehension follow once real runs have exercised the mechanism.
+
+**34.6 The knob line does hygiene only.** No new knob contrast is authored in
+round 4. Three items from §33 are adopted, and they are adopted because the
+round's own work makes them load-bearing rather than because the list contained
+them:
+
+- **§33 candidate 5's cheaper half — a same-substrate control.** The table is
+  published and being read, and round 4 adds rows built on real libraries;
+  without a vendored zero-knob control every such row keeps dividing by
+  hand-authored controls and carrying §31's 2–3× substrate step inside the
+  number.
+- **§33 candidate 1 — per-tier run-time limits.** Now a requirement rather than
+  a candidate: fault-location tasks on real repositories read widely before
+  answering, and `RUN_TIMEOUT_S = 600` has already been reached once (§29.4).
+  Its two constraints stand: one limit per contrast, registered per class
+  before the first paid run.
+- **§33 candidates 2 and 9 — the two rulings that cost nothing.** Whether
+  K4/K7/K10's ladders are enumerated or effort is recorded as their only
+  channel, and whether a baseline effort claim is admissible.
+
+§33 candidates 3, 7 and 8 (a second substrate, replicating K10, sweeping
+`pysm-work-out-a-way-there` × sonnet) are **not dropped and not scheduled**:
+they remain the knob line's next work whenever it resumes, and candidate 8
+still depends on candidate 1's tier limit.
+
+### 35. What round 4's spec must settle
+
+Decided above is the shape, not the design. Four questions were surfaced in the
+same session and deliberately left to `/to-spec`, so that nothing below is read
+as already answered:
+
+1. **What the timeout tiers are keyed on** — the action, the substrate's size,
+   or something else.
+2. **Whether the `category` field is renamed.** Its meaning changes from ticket
+   type to action; the field name is a separate call, and it is a schema field.
+3. **Whether the `surface` annotation lands now or when a frontend or infra
+   task first exists.** It is where `frontend-ui` and `infra-config` go, which
+   argues for now; nothing would populate it beyond one value, which argues for
+   later.
+4. **The resolution of a planted fault's ground truth** — file, symbol, or
+   line. This is 34.5's expensive assumption in one question: too fine a
+   resolution marks correct answers wrong, too coarse grades nothing.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
