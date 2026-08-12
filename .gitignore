@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 .venv/
 report.html
+data/unified.jsonl
