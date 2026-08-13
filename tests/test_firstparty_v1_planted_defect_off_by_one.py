@@ -27,14 +27,16 @@ Four things this suite checks that no other one can:
 - **What the key accepts and refuses on this task's own terrain**: both
   description levels the author wrote down resolve, and the other arithmetic
   in the defective file does not.
-- **The terrain leaves the locating to be done.** Three properties the lint
+- **The terrain leaves the locating to be done.** Four properties the lint
   cannot see and #52–#56 copy the shape of: the defective module defines more
-  than the defective class, so the accepted class-level answer says strictly
-  less than the filename it would otherwise restate (36.6); the defect's
+  than the defective class *and more than one class*, so the accepted
+  class-level answer says strictly less than the filename it would otherwise
+  restate and is a choice rather than a restatement (36.6); the defect's
   arithmetic shape appears elsewhere in the repository *correctly*, so it
-  cannot be found by pattern alone; and the contract the defect breaks is
-  written a file's length away from the line that breaks it rather than three
-  lines above it.
+  cannot be found by pattern alone; the contract the defect breaks is written
+  a file's length away from the line that breaks it rather than three lines
+  above it; and no distinctive word of either prompt narrows to the defective
+  module, so the prompts cannot be grepped into an answer.
 
 The rest is what every checked-in task has to prove — lints clean, reference
 solution grades resolved, the empty diff grades unresolved — all through the
@@ -43,6 +45,7 @@ same execution-verified pipeline real runs go through.
 
 import ast
 import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -73,12 +76,17 @@ MEMBERS = (BUG_FIX, FAULT_LOCATION)
 # The file the defect lives in, and the one the fix touches. One name, asserted
 # from both sides below.
 DEFECTIVE_FILE = "paging.py"
+DEFECTIVE_SYMBOL = "Paginator.page_count"
 
 ANSWER_PATH = "ANSWER.json"
 
 # The line the defect is on, and the same arithmetic where it is right.
 DEFECTIVE_LINE = "return len(self.items) // self.per_page"
 CORRECT_TWIN = ("noticeboard.py", "return len(self.posted) // self.per_board")
+
+# The contract the defect breaks, in the repository's own words — which are
+# deliberately not the prompts' words. See the vocabulary test below.
+CONTRACT = "the final one takes\nthe remainder"
 
 
 def repo_source(file: str) -> str:
@@ -96,6 +104,32 @@ def top_level_symbols(source: str) -> set[str]:
                 target.id for target in node.targets if isinstance(target, ast.Name)
             )
     return defined
+
+
+def classes(source: str) -> set[str]:
+    """The classes a module defines at its top level — the level an accepted
+    answer naming a class is answering at."""
+    return {
+        node.name for node in ast.parse(source).body if isinstance(node, ast.ClassDef)
+    }
+
+
+def symbol_lines(source: str, symbol: str) -> range:
+    """The line numbers `Class.method` occupies, its `def` line included."""
+    enclosing, _, name = symbol.rpartition(".")
+    [holder] = [
+        node
+        for node in ast.parse(source).body
+        if isinstance(node, ast.ClassDef) and node.name == enclosing
+    ]
+    [method] = [
+        node
+        for node in holder.body
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+        and node.name == name
+    ]
+    assert method.end_lineno is not None
+    return range(method.lineno, method.end_lineno + 1)
 
 
 def answers(payload: str, *, at: str = ANSWER_PATH) -> Callable[[Path], None]:
@@ -243,12 +277,142 @@ def test_the_defective_module_holds_more_than_the_defective_class() -> None:
     the class level *is* the file level, and an agent that grepped its way into
     the file and named the class without reading the method would resolve. So
     the page arithmetic lives beside `Paginator` at the top level of the same
-    module, and naming the class rules out three siblings.
+    module, and naming the class rules out four siblings.
     """
     top_level = top_level_symbols(repo_source(DEFECTIVE_FILE))
 
-    assert top_level == {"FIRST_PAGE", "page_of", "bounds", "Paginator"}
+    assert top_level == {"FIRST_PAGE", "page_of", "bounds", "PageSpan", "Paginator"}
     assert len(top_level) > 1
+
+
+def test_an_accepted_class_is_chosen_from_several_and_not_the_only_one() -> None:
+    """The same back door, one gap narrower — and the gap the top-level count
+    above does not close.
+
+    Counting *symbols* is satisfied by a module holding one class beside some
+    functions, which is what `paging.py` was. But an agent electing to answer
+    at class level answers with the class, and if the module defines exactly
+    one, that answer is determined by the filename alone: one grep to the file,
+    the only class there, resolved, with the defective method never read. So
+    wherever the key accepts a class, that class is one of at least two the
+    file defines — `PageSpan`, which cuts the stretch a page covers, is as
+    plausible a home for notices going missing as `Paginator` is, and telling
+    them apart takes reading the arithmetic in both.
+    """
+    key = answer_key(task_by_id(FAULT_LOCATION))
+
+    named_at_class_level = [
+        answer for answer in key.accepted
+        if answer.symbol in classes(repo_source(answer.file))
+    ]
+
+    assert named_at_class_level, "the key is expected to accept the enclosing class"
+    for answer in named_at_class_level:
+        defined = classes(repo_source(answer.file))
+        assert len(defined) > 1, f"{answer.file} defines only {answer.symbol}"
+    assert classes(repo_source(DEFECTIVE_FILE)) == {"PageSpan", "Paginator"}
+
+
+# The words a prompt cannot be blamed for sharing with the repository: the
+# closed-class words English sentences are built out of, and the domain nouns
+# a prompt about a noticeboard and a repository about a noticeboard have no
+# way not to both use. Everything else either prompt says is distinctive — and
+# distinctive vocabulary is grep bait.
+FUNCTION_WORDS = frozenset("""
+    a about after all also an and any are as at be been being both but by can
+    could did do does each either few for from get given goes had has have he
+    her his how i if in into is it its just like made make many may me might
+    more most much must my no nor not now of off on once one only or other our
+    out over own per same she should since so some such than that the their
+    them then there these they this those through to too under until up us
+    very was we well were what when where whether which while who whom why
+    will with within would you your s t
+""".split())
+DOMAIN_NOUNS = frozenset(
+    "notice notices noticeboard board boards page pages".split()
+)
+UNREVEALING = FUNCTION_WORDS | DOMAIN_NOUNS
+
+
+def prompt_terms() -> set[str]:
+    """The distinctive vocabulary of the two prompts.
+
+    Every content word, and every adjacent pair of words at least one of which
+    is a content word — a pair as well as a word because "at most" and "left
+    over" narrow as hard as any single word does and neither half of either
+    narrows on its own.
+    """
+    terms: set[str] = set()
+    for task_id in MEMBERS:
+        words = re.findall(r"[a-z]+", task_by_id(task_id).prompt.lower())
+        terms |= {word for word in words if word not in UNREVEALING}
+        terms |= {
+            f"{first} {second}"
+            for first, second in zip(words, words[1:], strict=False)
+            if not (first in UNREVEALING and second in UNREVEALING)
+        }
+    return terms
+
+
+def repo_lines() -> list[tuple[str, str, int, str]]:
+    """Every line of the repository's code, as (module, file, number, text).
+
+    A test file counts as part of the module it tests, because `test_paging.py`
+    points at `paging.py` as surely as `paging.py` does. `README.md` counts as
+    no module at all: it is the index that names every module, so a word found
+    only there has selected the whole repository rather than one file — which
+    is why the README cannot rescue a word that otherwise narrows.
+    """
+    lines = []
+    for path in sorted(task_by_id(FAULT_LOCATION).repo_dir.glob("*.py")):
+        module = path.stem.removeprefix("test_")
+        for number, text in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            lines.append((module, path.name, number, text.lower()))
+    return lines
+
+
+def test_no_distinctive_prompt_word_narrows_to_the_defective_code() -> None:
+    """The prompts must not be greppable into the answer.
+
+    The `//` decoy makes the defect's *arithmetic* name two sites, and this is
+    the other half of the same job: the repository's own prose must not name
+    one. It is written by paraphrasing the contract the prompt states, so the
+    two say the same thing, and left alone they say it in the same words —
+    which is a one-step path from reading the prompt to the defective symbol,
+    reopened by four English words after the decoy closed it. The repository
+    documents the contract honestly and in different words, and the same
+    distinctive word appears in more than one module wherever it appears at
+    all.
+
+    Two ways a word can narrow, and both are refused: selecting the defective
+    module and no other, and — inside that module — selecting the defective
+    symbol and nothing else. Reintroduce "fill" to `page_count`'s docstring and
+    this fails on both counts.
+    """
+    lines = repo_lines()
+    defect = symbol_lines(repo_source(DEFECTIVE_FILE), DEFECTIVE_SYMBOL)
+
+    to_the_module: dict[str, list[str]] = {}
+    to_the_symbol: dict[str, list[str]] = {}
+    for term in sorted(prompt_terms()):
+        found = [line for line in lines if term in line[3]]
+        if not found:
+            continue
+        where = [f"{file}:{number}" for _, file, number, _ in found]
+        if {module for module, *_ in found} == {DEFECTIVE_FILE.removesuffix(".py")}:
+            to_the_module[term] = where
+        in_module = [line for line in found if line[1] == DEFECTIVE_FILE]
+        if in_module and all(number in defect for *_, number, _ in in_module):
+            to_the_symbol[term] = where
+
+    assert to_the_module == {}, (
+        f"prompt words selecting {DEFECTIVE_FILE} alone: {to_the_module}"
+    )
+    assert to_the_symbol == {}, (
+        f"prompt words selecting {DEFECTIVE_SYMBOL} alone: {to_the_symbol}"
+    )
 
 
 def test_the_defect_is_not_the_only_arithmetic_of_its_shape() -> None:
@@ -286,13 +450,22 @@ def test_the_contract_is_not_written_on_top_of_the_defect() -> None:
     top of the file, and the defect is at the bottom: a reader has to carry it
     there. The defective method's own docstring says how many pages there are,
     which is honest about what the method is for and silent about the boundary.
+
+    It is stated in the repository's words rather than the prompt's — see the
+    vocabulary test above, which is why the phrase this looks for is
+    "the final one takes the remainder" and not the prompts' "left over".
     """
     source = repo_source(DEFECTIVE_FILE)
     lines = source.splitlines()
     defect = next(at for at, line in enumerate(lines) if DEFECTIVE_LINE in line.strip())
+    docstring = " ".join((ast.get_docstring(ast.parse(source)) or "").split())
 
-    assert "left over" in (ast.get_docstring(ast.parse(source)) or "")
-    assert not any("left over" in line for line in lines[max(0, defect - 12):defect])
+    assert " ".join(CONTRACT.split()) in docstring
+    assert not any(
+        word in line
+        for line in lines[max(0, defect - 12):defect]
+        for word in ("remainder", "packed solid", "left over")
+    )
     assert defect > 30
 
 
@@ -375,16 +548,22 @@ def test_every_description_level_the_author_wrote_down_resolves(
 
 
 @pytest.mark.parametrize(
-    "symbol", ["Paginator.page", "page_of", "bounds", "FIRST_PAGE"]
+    "symbol",
+    [
+        "Paginator.page", "page_of", "bounds", "FIRST_PAGE",
+        "PageSpan", "PageSpan.cut", "cut",
+    ],
 )
 def test_the_other_arithmetic_in_the_defective_file_is_unresolved(
     symbol: str,
 ) -> None:
     """Every other site in the defective module, each of which an agent has to
     read and rule out: `Paginator.page` slices the page the count decides on,
-    `page_of` and `bounds` are the page arithmetic it is cut with, and
-    `FIRST_PAGE` is where the numbering starts. All four are correct, so an
-    answer naming one has read the right file and not found the defect."""
+    `page_of` and `bounds` are the page arithmetic it is cut with, `FIRST_PAGE`
+    is where the numbering starts, and `PageSpan` — the second class, the one
+    that makes naming `Paginator` a choice — is what a page is cut with, at
+    both its spellings and bare. All of them are correct, so an answer naming
+    one has read the right file and not found the defect."""
     locate = task_by_id(FAULT_LOCATION)
 
     assert verdict(locate, answers(naming(DEFECTIVE_FILE, symbol))) == 0.0

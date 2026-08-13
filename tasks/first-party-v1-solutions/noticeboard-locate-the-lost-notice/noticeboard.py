@@ -7,7 +7,8 @@ NOTICES_PER_BOARD = 4
 
 
 class Noticeboard:
-    """Every posted notice, newest first, spread over boards."""
+    """Every posted notice, newest first, spread over boards that hold
+    `per_board` notices each."""
 
     def __init__(self, notices, per_board=NOTICES_PER_BOARD):
         self.per_board = per_board

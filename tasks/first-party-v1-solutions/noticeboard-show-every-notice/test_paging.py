@@ -16,6 +16,10 @@ def test_a_page_is_cut_where_the_page_before_it_stopped():
     assert bounds(2, 3) == (3, 6)
 
 
+def test_a_span_cuts_the_stretch_it_covers():
+    assert bounds(2, 3).cut(list("abcdef")) == ["d", "e", "f"]
+
+
 def test_a_run_of_items_splits_into_full_pages():
     assert Paginator("abcdef", 3).page_count() == 2
 
