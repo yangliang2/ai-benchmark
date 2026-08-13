@@ -3418,11 +3418,18 @@ mechanism rather than by hope.
 hook and the lint, and left the comparison — the half that discriminates — as
 a string constant in a test file that six authors would each hand-copy. Ruling:
 ship `grading/_answer.py`, identical in every fault-location task, and have the
-lint read the copies **byte for byte**. This is not a new pattern: the task-set
-lint already holds a family's starting repositories and grading suites
-byte-identical, for the stated reason that self-containedness beats
-deduplication and copies drift silently. The held-out test becomes a one-line
-assertion over it.
+lint read the copies **byte for byte**. Read against bytes this project itself
+owns (`ai_benchmark._answer`, via `answer_module_source()`) rather than against
+each other — a *stronger* check than the family lint's, which compares each
+member's tree against the alphabetically-first member's because that is the
+only source a family lint has: a lone fault-location task has no sibling to
+compare against. The two mechanisms differ for that reason; what they share is
+only the motivation, self-containedness beating deduplication because copies
+drift silently. The held-out test becomes a one-line assertion over it — and
+#58 closed the gap this left unstated: the held-out test itself is shipped and
+read back the same way (`grading/test_answer.py`, `answer_test_source()`,
+`_answer_test_problems`), because shipping `_answer.py` byte-identical proves
+nothing about whether a task's grading test actually calls it.
 
 Rejected: generating the grading test from the key. It is the stronger
 guarantee and it is new authoring machinery, which is precisely what 34.4 was
@@ -3442,6 +3449,12 @@ grading side would make a verdict depend on the grader's filesystem — the same
 defect that made a wrong-case *answer path* resolve on macOS and replay
 unresolved on Linux.
 
+A known consequence, inherent in the last-dotted-component rule this section
+adopts and not caught by #58's lint either: in a file where two classes define
+a same-named method, a bare answer meant for the wrong class still resolves,
+because the rule reads only the last component and `_near_miss` has no way to
+flag a symbol that already matches something accepted.
+
 **36.6 What can be named.** `_defined_symbols` saw only `def` and `class`, so
 a fault in a module-level constant, a dispatch table or a compiled pattern was
 unkeyable — which would have quietly steered #56, whose defect is a wrong key
@@ -3452,6 +3465,14 @@ And the other direction stays shut: #46's prose allows an author to write down
 no symbol is refused. On repositories as small as this round's, a bare filename
 is barely a location — it would resolve for an agent that located nothing,
 which is 35's "too coarse grades nothing" arriving by the back door.
+
+What is not bound at module level, and so cannot be keyed at all: a walrus
+target, a `for` target, a `with … as` or `except … as` name, and an imported
+name — a wrong import is a plausible planted defect, and none of these five
+can name it. And a non-Python accepted file cannot be keyed at any level,
+since `_defined_symbols` reports no definitions for a file it cannot parse as
+Python — fine for round 4's stdlib-Python repositories, and worth knowing
+before heap 2's substrates stop being that.
 
 **36.7 Held out of the workdir is not held out of the machine.** The key is
 verified absent from the agent's workdir — the run-time copy takes `repo/`

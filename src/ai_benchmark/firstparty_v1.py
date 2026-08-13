@@ -152,6 +152,17 @@ ANSWER_KEY_FILE = "accepted-answer.json"
 # the half of the verdict that discriminates is the half worth not miscopying.
 ANSWER_MODULE = "_answer.py"
 
+# The held-out grading test that reads the answer comparison, shipped the same
+# way and for the same reason: byte for byte into every fault-location task,
+# so that nothing binds a task's *grading test* to `_answer.py` except that it
+# is the very test this project owns, rather than a hand-written assertion
+# that quietly stops calling `answer_problem()` while still shipping an
+# unedited copy of the module beside it. A task may ship *additional* grading
+# tests alongside this one — resolution requires every grading test to pass,
+# so an extra test can only make a task harder to resolve, never let a wrong
+# answer through, and nothing here should be tightened into a ban on that.
+ANSWER_TEST_FILE = "test_answer.py"
+
 # The workdir's ignore file belongs to the live runner (which writes and owns
 # it), so the loader refuses tasks that ship one of their own.
 _IGNORE_FILE = ".gitignore"
@@ -691,13 +702,18 @@ class Answer(BaseModel):
                     "answers land on different ones, so a key keyed on one would "
                     "grade a correct location wrong"
                 )
-            if "symbol" not in data:
-                raise ValueError(
-                    f"answer {dict(data)} names a file with no symbol — on a "
-                    "repository this small a bare filename is barely a location, "
-                    "and a key accepting one would resolve for an agent that "
-                    "located nothing"
-                )
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def a_location_names_a_symbol_and_never_a_file_alone(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "symbol" not in data:
+            raise ValueError(
+                f"answer {dict(data)} names a file with no symbol — on a "
+                "repository this small a bare filename is barely a location, "
+                "and a key accepting one would resolve for an agent that "
+                "located nothing"
+            )
         return data
 
 
@@ -792,6 +808,40 @@ def answer_module_source() -> bytes:
     tests exercise, and an author has one file to copy.
     """
     return Path(__file__).with_name(ANSWER_MODULE).read_bytes()
+
+
+# The held-out grading test itself, canonical: a one-line assertion over
+# `answer_problem()`, shipped byte for byte as `answer_test_source()` below
+# ships `answer_module_source()`. A plain string constant rather than a
+# second file on disk — unlike the comparison, there is no logic here worth
+# having mypy check or a test exercise directly, only the one assertion the
+# held-out test is required to make.
+_ANSWER_TEST_SOURCE = '''\
+"""Held out: whether the agent's answer file names an accepted location.
+
+Canonical — this project's own file, shipped byte for byte into every
+fault-location task's grading directory and read back that way by the
+task-set lint (`_answer_test_problems` in firstparty_v1.py), so that nothing
+in a task's grading directory can stop consulting `_answer.py` while still
+shipping an unedited copy of it. A task may ship additional grading tests
+beside this one: resolution requires every grading test to pass, so an extra
+test can only make the task harder to resolve, never let a wrong answer
+through.
+"""
+
+from _answer import answer_problem
+
+
+def test_the_answer_names_an_accepted_location():
+    assert (problem := answer_problem()) is None, problem
+'''
+
+
+def answer_test_source() -> bytes:
+    """The held-out grading test, as every fault-location task's
+    `grading/test_answer.py` has to be byte for byte — see `ANSWER_TEST_FILE`
+    and `_ANSWER_TEST_SOURCE`."""
+    return _ANSWER_TEST_SOURCE.encode("utf-8")
 
 
 def _defined_symbols(source: str) -> set[str]:
@@ -1266,6 +1316,13 @@ def lint_task_set(
         problems.extend(construction_problems(task))
         key_problems = _answer_key_problems(task)
         problems.extend(key_problems)
+        # Independent of key_problems and never used to gate
+        # _discrimination_problems: an edited or missing held-out test is
+        # caught here by its bytes, cheaply, but a task may legitimately ship
+        # additional grading tests beside the canonical one, and a task whose
+        # canonical test is untouched can still carry a key that does not
+        # discriminate — which only running the real pipeline below can show.
+        problems.extend(_answer_test_problems(task))
         if task.category == "fault-location" and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
@@ -1346,11 +1403,16 @@ def _answer_key_problems(task: Task) -> list[str]:
 
     What the set can be checked against is the starting repository the agent is
     given: the accepted set says something at all, and so does the rejected
-    one; every file either names is in that repository, matched exactly rather
-    than case-insensitively; every symbol either names is defined in the file
-    it names, so a rename or a typo cannot leave a key no correct answer
-    matches — nor a near-miss that grades unresolved for a reason that says
-    nothing about the grading test; the answer comparison shipped in
+    one — and the rejected one says the one thing only the author can supply,
+    a file the accepted set does not already name, rather than merely being
+    non-empty; every file either names is in that repository, matched exactly
+    rather than case-insensitively; every symbol either names is defined in
+    the file it names, so a rename or a typo cannot leave a key no correct
+    answer matches — nor a near-miss that grades unresolved for a reason that
+    says nothing about the grading test; a bare symbol in either half is
+    refused wherever a qualified spelling of it exists, because `matches()` is
+    one-directional and a key spelled bare would refuse the qualified spelling
+    an agent would most naturally give; the answer comparison shipped in
     `grading/` is this project's own, byte for byte; the declared answer path
     lands inside the workdir a run is graded from and does not collide with a
     file grading overlays over it; and the prompt names that path as a whole
@@ -1378,6 +1440,38 @@ def _answer_key_problems(task: Task) -> list[str]:
             "plausible wrong file, the caller of the defective function or the "
             "module that looks responsible"
         )
+    else:
+        # `rejected` being non-empty is not the same as it saying anything:
+        # §36.3 names the one negative the lint cannot invent as the
+        # plausible wrong *file*, so a rejected set confined to files the
+        # accepted set already names never supplies it, however many entries
+        # it carries. And a rejected answer that happens to equal the
+        # near-miss the lint synthesises for itself spends the author's
+        # judgement on a symbol the lint already checks for nothing, rather
+        # than on the one thing only the author can supply.
+        accepted_files = {answer.file for answer in key.accepted}
+        if all(answer.file in accepted_files for answer in key.rejected):
+            rejected_files = sorted({answer.file for answer in key.rejected})
+            problems.append(
+                f"{task.id}: every rejected answer names a file already in "
+                f"the accepted set ({rejected_files}) — the rejected set "
+                "exists for the near-miss the lint cannot invent, the "
+                "plausible wrong *file* (the caller of the defective "
+                "function, the module that looks responsible), and a "
+                "rejected answer confined to a file the accepted set "
+                "already names never supplies it"
+            )
+        near_miss = _near_miss(task, key)
+        if near_miss is not None and near_miss in {
+            (answer.file, answer.symbol) for answer in key.rejected
+        }:
+            problems.append(
+                f"{task.id}: the rejected answer {near_miss!r} is exactly the "
+                "near-miss the lint already synthesises from the accepted set "
+                "— the author's judgement belongs on the one negative the "
+                "lint cannot invent, the plausible wrong file, not on a wrong "
+                "symbol the lint already checks for nothing"
+            )
     problems.extend(_answer_module_problems(task))
     if _escapes_workdir(key.answer_path):
         problems.append(
@@ -1429,6 +1523,29 @@ def _answer_key_problems(task: Task) -> list[str]:
                     f"define — it defines {sorted(defined)}, and a method is "
                     "written 'Class.method'"
                 )
+            elif "." not in answer.symbol:
+                # matches() is deliberately one-directional: an *answer*
+                # spelled bare matches a key spelled qualified, never the
+                # reverse — a key spelled bare would let `Other.method`
+                # answer it too, which is a false positive rather than a
+                # forgiven spelling. So where a qualified spelling of this
+                # symbol exists, the key has to use it.
+                qualified = sorted(
+                    candidate
+                    for candidate in defined
+                    if candidate != answer.symbol
+                    and candidate.endswith(f".{answer.symbol}")
+                )
+                if qualified:
+                    problems.append(
+                        f"{task.id}: the accepted-answer key's {half} answers "
+                        f"name bare symbol {answer.symbol!r} in {answer.file!r}, "
+                        f"which is also defined as {qualified[0]!r} — a bare "
+                        "answer matches a qualified key, never the reverse, "
+                        "so a key spelled bare refuses the qualified spelling "
+                        f"an agent would most naturally give. Write the key as "
+                        f"{qualified[0]!r}"
+                    )
     return problems
 
 
@@ -1437,12 +1554,19 @@ def _answer_module_problems(task: Task) -> list[str]:
 
     The comparison is the half of the verdict that discriminates, so it is one
     owned module copied identically into every fault-location task rather than
-    six hand-written ones — and the copies are read byte for byte, exactly as
-    the family lint reads a family's starting repositories and grading suites,
-    for the same stated reason: self-containedness beats deduplication, and
-    copies drift silently. A copy that forgave case, or stopped reading the
-    symbol, would grade every task shipping it differently from every task
-    that did not, with nothing else in the corpus objecting.
+    six hand-written ones — and the copies are read byte for byte against the
+    bytes this package itself owns (`answer_module_source()`). This is a
+    *stronger* check than the one the family lint runs on a family's starting
+    repositories and grading suites: the family lint compares each member's
+    tree against the alphabetically-first member's, peer to peer, because
+    that is the only source a family lint has — a lone fault-location task has
+    no sibling to compare against. Here there is a privileged source instead,
+    the package's own file, so drift is caught even on a task authored alone.
+    A copy that forgave case, or stopped reading the symbol, would grade every
+    task shipping it differently from every task that did not, with nothing
+    else in the corpus objecting. See `_answer_test_problems` for the sibling
+    check on the held-out grading test itself, which nothing bound to this
+    module before it existed.
     """
     shipped = task.grading_dir / ANSWER_MODULE
     try:
@@ -1460,6 +1584,59 @@ def _answer_module_problems(task: Task) -> list[str]:
             "comparison this project ships — it is one owned module copied "
             "identically into every fault-location task, and a copy that has "
             "drifted grades this task by rules no other task is graded by"
+        )]
+    return []
+
+
+def _answer_test_problems(task: Task) -> list[str]:
+    """Whether this task ships the held-out grading test, unedited.
+
+    Named and treated the way `_answer_module_problems` treats the answer
+    comparison, because it closes the same hole from the other side: shipping
+    `_answer.py` byte for byte proves nothing about what a task's grading
+    test actually *does* with it. A grading test that ships `_answer.py`
+    untouched and then does its own case-insensitive match, or checks the
+    file and not the symbol, or never imports the module at all, lints clean
+    under `_answer_module_problems` alone — three fixtures demonstrated
+    exactly that. So the held-out test is itself canonical: one owned file,
+    `grading/test_answer.py`, shipped byte for byte and read back that way
+    against the bytes this package owns (`answer_test_source()`).
+
+    A task may ship *additional* grading tests beside this one. Resolution
+    requires every grading test to pass, so an extra test can only make a
+    task harder to resolve, never let a wrong answer through — this is not a
+    ban on other grading tests, only a requirement that this one is among
+    them, unedited.
+
+    Applies only to fault-location tasks, and is not gated on
+    `_answer_key_problems`: unlike a broken key, a drifted copy of this file
+    says nothing about whether the *key* is sound, so it does not stop
+    `_discrimination_problems` from running (see `lint_task_set`).
+    """
+    if task.category != "fault-location":
+        return []
+    shipped = task.grading_dir / ANSWER_TEST_FILE
+    try:
+        copy = shipped.read_bytes()
+    except OSError as error:
+        return [(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_TEST_FILE} is missing or "
+            f"unreadable ({error}) — this is the held-out grading test that "
+            "asserts over the answer comparison; without it nothing binds "
+            "this task's grading to `_answer.py`, and a hand-written grading "
+            "test that never calls answer_problem() would lint clean"
+        )]
+    if copy != answer_test_source():
+        return [(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_TEST_FILE} is not the held-out "
+            "grading test this project ships — it is one owned file copied "
+            "identically into every fault-location task, so that its grading "
+            "test is always the one-line assertion over `answer_problem()` "
+            "that binds the verdict to `_answer.py`, and never a hand-written "
+            "test that quietly stops consulting it. A task may ship "
+            "*additional* grading tests beside it — resolution requires "
+            "every one of them to pass, so an extra test can only make the "
+            "task harder to resolve, never let a wrong answer through"
         )]
     return []
 
@@ -1548,10 +1725,30 @@ def _empty_accepted_set_message(task: Task) -> str:
     )
 
 
-# What a run that located nothing leaves behind, for the negative that proves
-# the grading test is not satisfied by any old change to the workdir. Distinct
-# from the pristine run, which is a workdir nobody touched.
+# The base name for what a run that located nothing leaves behind, for the
+# negative that proves the grading test is not satisfied by any old change to
+# the workdir. Distinct from the pristine run, which is a workdir nobody
+# touched. `_missing_answer_edit_target` below turns this into a name that is
+# also distinct from the task's own declared answer_path — a task that
+# happened to declare NOTES.md would otherwise have this negative write to
+# its answer file, silently collapsing it into a second copy of the
+# "malformed answer file" negative below.
 _NOTES_FILE = "NOTES.md"
+
+
+def _missing_answer_edit_target(key: AnswerKey) -> str:
+    """Where the "wrote no answer file at all" negative leaves its note.
+
+    Has to differ from the task's own declared answer_path: writing there
+    would turn a run that located nothing into a run that wrote a malformed
+    answer, which is a different negative this lint already runs separately,
+    and the four negatives would silently collapse into three with nothing
+    reporting it.
+    """
+    candidate = _NOTES_FILE
+    while candidate == key.answer_path:
+        candidate = f"_{candidate}"
+    return candidate
 
 
 def _discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
@@ -1591,7 +1788,10 @@ def _discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
     negatives: list[tuple[str, Callable[[Path], None]]] = [
         (
             "a run that wrote no answer file at all",
-            _writing(_NOTES_FILE, "read the repository, wrote no answer\n"),
+            _writing(
+                _missing_answer_edit_target(key),
+                "read the repository, wrote no answer\n",
+            ),
         ),
         ("an empty answer file", _writing(key.answer_path, "")),
         (

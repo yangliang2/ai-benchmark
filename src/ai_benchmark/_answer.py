@@ -3,12 +3,20 @@ an answer.
 
 This module is the one implementation of that comparison, and it ships
 byte-for-byte identical into every fault-location task's held-out grading
-directory as `grading/_answer.py`, where the held-out grading test is a
-one-line assertion over `answer_problem()`. The task-set lint reads those
-copies against this one, exactly as it already reads a task family's starting
-repositories and grading suites: self-containedness beats deduplication, and
-copies drift silently. It is owned rather than hand-written per task because
-the half of the verdict that discriminates is the half worth not miscopying.
+directory as `grading/_answer.py`. The held-out grading test that reads it is
+itself shipped the same way, as `grading/test_answer.py` (see
+`ANSWER_TEST_FILE` and `_answer_test_problems` in `firstparty_v1.py`): a
+one-line assertion over `answer_problem()`, so a task's grading test cannot
+quietly stop consulting this module while still shipping an unedited copy of
+it. The task-set lint reads both shipped copies — this module and the test —
+byte for byte against the copies this package owns (`answer_module_source()`
+and `answer_test_source()`), which is a *stronger* check than the one the
+family lint runs: a family compares its members' repositories and grading
+suites peer-to-peer, each against the alphabetically-first member, because a
+lone fault-location task has no sibling to compare against — this module and
+its test compare against bytes the package itself owns instead. It is owned
+rather than hand-written per task because the half of the verdict that
+discriminates is the half worth not miscopying.
 
 Standard library only, and everything it reads is resolved against the
 directory grading runs pytest in — the workdir the overlay copied both this
@@ -17,20 +25,27 @@ disabled and its config pinned outside the workdir, so a grading file that
 imported anything of this project's would not work at grade time.
 
 What the comparison forgives is spelling, not identity. Surrounding
-whitespace, a leading "./" on the file and a trailing "()" on the symbol are
-stripped, and a bare symbol matches the last dotted component of an accepted
-one, so `total_with_tax` answers `Basket.total_with_tax`. File and symbol stay
-case-exact: Python is case-sensitive, and a case-insensitive match here would
-make a verdict depend on the filesystem the grader ran on — the same defect
-that made a wrong-case answer *path* resolve on macOS and replay unresolved on
-Linux.
+whitespace, one or more leading "./" segments on the file (forgiving a doubled
+slash after the last one, so ".//pricing.py" and "././pricing.py" both answer
+"pricing.py") and a trailing parenthesised argument list on the symbol (so
+"Basket.total_with_tax(self)" and even "Basket.total_with_tax()()" both answer
+"Basket.total_with_tax") are stripped, and a bare symbol matches the last
+dotted component of an accepted one, so `total_with_tax` answers
+`Basket.total_with_tax`. File and symbol stay case-exact: Python is
+case-sensitive, and a case-insensitive match here would make a verdict depend
+on the filesystem the grader ran on — the same defect that made a wrong-case
+answer *path* resolve on macOS and replay unresolved on Linux.
 
 And an answer names exactly one (file, symbol) pair, never a list: a task
 measures whether the agent located the fault, and a shotgun of every plausible
-location would be breadth rewarded as accuracy.
+location would be breadth rewarded as accuracy. A flat extra field alongside
+the pair — an agent's `"reason"` — is tolerated and ungraded, so a hedge
+carries no second guess; only a list or a nested object anywhere in the answer
+smuggles one in.
 """
 
 import json
+import re
 from pathlib import Path
 
 # The accepted-answer key, beside this module in the workdir: both get there
@@ -57,8 +72,10 @@ def answer_problem(workdir: Path | None = None) -> str | None:
     if path is None:
         return f"no answer file at {declared}"
     try:
-        answer = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        answer = json.loads(
+            path.read_text(encoding="utf-8"), object_pairs_hook=_no_duplicate_keys
+        )
+    except (OSError, UnicodeDecodeError, ValueError) as error:
         return f"{declared} is not readable JSON: {error}"
     located = one_location(answer)
     if located is None:
@@ -107,7 +124,7 @@ def matches(located: tuple[str, str], accepted: tuple[str, str]) -> bool:
         return False
     if symbol == accepted_symbol:
         return True
-    return "." not in symbol and symbol == accepted_symbol.rsplit(".", 1)[-1]
+    return symbol == accepted_symbol.rsplit(".", 1)[-1]
 
 
 def resolve(root: Path, name: str) -> Path | None:
@@ -134,11 +151,47 @@ def resolve(root: Path, name: str) -> Path | None:
     return current if current.is_file() else None
 
 
+def _no_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """A `json.loads(object_pairs_hook=...)` that refuses a JSON object naming
+    the same key twice.
+
+    Plain `json.loads` keeps the *last* value for a duplicate key, so
+    `{"file": "pricing.py", "symbol": "line_total", "symbol": "Basket"}`
+    would resolve as "Basket" while the same document with the two values
+    swapped would resolve as "line_total" — a verdict that depends on which
+    guess happened to load last rather than on the document smuggling in a
+    second one, which is exactly what a single (file, symbol) pair exists to
+    rule out.
+    """
+    seen: set[str] = set()
+    for key, _ in pairs:
+        if key in seen:
+            raise ValueError(f"duplicate key {key!r}")
+        seen.add(key)
+    return dict(pairs)
+
+
+# One or more leading "./" segments, forgiving one doubled slash after the
+# last of them — so ".//pricing.py" and "././pricing.py" both strip down to
+# "pricing.py". Anchored at the start and requiring a literal "./" to lead,
+# so a genuinely absolute path ("/etc/passwd") is left alone rather than
+# forgiven into a relative one it was never a spelling of.
+_LEADING_DOT_SLASH = re.compile(r"^(\./)+/?")
+
+# A trailing parenthesised argument list with no nested parentheses, so a
+# symbol can be stripped of a call — repeatedly, since an agent might answer
+# "Basket.total_with_tax(self)" (writing the signature) or even
+# "Basket.total_with_tax()()".
+_TRAILING_CALL = re.compile(r"\([^()]*\)$")
+
+
 def _normalised_file(value: str) -> str:
     file = value.strip()
-    return file[2:].strip() if file.startswith("./") else file
+    return _LEADING_DOT_SLASH.sub("", file, count=1)
 
 
 def _normalised_symbol(value: str) -> str:
     symbol = value.strip()
-    return symbol[:-2].strip() if symbol.endswith("()") else symbol
+    while _TRAILING_CALL.search(symbol):
+        symbol = _TRAILING_CALL.sub("", symbol).strip()
+    return symbol
