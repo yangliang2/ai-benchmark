@@ -116,6 +116,7 @@ from ai_benchmark.schema import (
     RecordValidationError,
     Scale,
     Surface,
+    TaskCategory,
     TaskCategoryField,
     validate_record,
 )
@@ -1786,6 +1787,37 @@ _COMMIT_IDENTITY = {
     "GIT_COMMITTER_EMAIL": "eval@ai-bench.invalid",
 }
 
+# How long one live run of each task class gets, in seconds — the tier table,
+# and the only place a live run-time limit is set.
+#
+# Keyed on the task's category, which is what makes tiering safe rather than
+# merely convenient: the task-set lint already holds every member of a family
+# or a pair to one category, so "every member of one contrast shares one
+# limit" holds by construction instead of by an author's discipline.
+#
+# Registered here, in code committed before the sweep that reads it, rather
+# than passed at the invocation: a limit a caller can pass is a limit adjusted
+# per cell, and a cell granted a longer run once its neighbours have already
+# run is measured under conditions nobody chose in advance. A ceiling task and
+# a four-turn control are not the same measurement problem, which is why the
+# flat 600 seconds this falls back to — an uncalibrated convention from a
+# generic subprocess-timeout review fix, first reached in round 3 — is a
+# default and no longer the rule (design note §29.4,
+# `docs/agents/sweep-protocol.md`).
+#
+# Nothing is registered yet, so every category takes the flat default and the
+# table arrives moving no cell. When a tier is set, the change travels as a
+# cross-round caveat, recorded beside its round the way a CLI version change
+# is: contrasts drawn inside one round are unaffected, comparisons across the
+# boundary carry it.
+LIVE_RUN_LIMITS_S: dict[TaskCategory, int] = {}
+
+
+def live_run_limit_s(task: Task) -> int:
+    """How long this task's live run gets: its class's registered limit, or
+    the flat default where its class has none set deliberately."""
+    return LIVE_RUN_LIMITS_S.get(task.category, RUN_TIMEOUT_S)
+
 
 def run_live(
     tasks: list[Task],
@@ -1793,7 +1825,6 @@ def run_live(
     log_path: Path,
     *,
     sweep: str,
-    timeout_s: int = RUN_TIMEOUT_S,
 ) -> list[Run]:
     """Run every task through tools-enabled claude-code headless per model.
 
@@ -1812,6 +1843,11 @@ def run_live(
     invocations that ran its models or resumed it. Which invocations make up
     one sweep is the caller's knowledge, and the round key is a bad place to
     guess — so the caller says, and a paid run costs one more argument.
+
+    How long each run gets is the one thing the caller may *not* say: the
+    limit comes from `LIVE_RUN_LIMITS_S`, keyed on the task's class, so that
+    it is a property of the task rather than of the invocation that happened
+    to run it.
     """
     if problem := _sweep_id_problem(sweep):
         raise IngestError(f"{problem} — {_SWEEP_ID_RULE}")
@@ -1827,8 +1863,7 @@ def run_live(
         for model in models:
             for task in tasks:
                 run = _run_task_live(
-                    task, model, agent_version=version, as_of=today,
-                    sweep=sweep, timeout_s=timeout_s,
+                    task, model, agent_version=version, as_of=today, sweep=sweep,
                 )
                 log.write(json.dumps(run.model_dump(mode="json"), sort_keys=True) + "\n")
                 log.flush()
@@ -1838,14 +1873,15 @@ def run_live(
 
 def _run_task_live(
     task: Task, model: str, *,
-    agent_version: str, as_of: date, sweep: str, timeout_s: int,
+    agent_version: str, as_of: date, sweep: str,
 ) -> Run:
     with tempfile.TemporaryDirectory(prefix="ai-bench-live-") as name:
         workdir = Path(name) / "workdir"
         shutil.copytree(task.repo_dir, workdir)
         initial = _commit_pristine(task, workdir)
         payload = claude_headless_json(
-            task.id, task.prompt, model, workdir, tools=True, timeout_s=timeout_s
+            task.id, task.prompt, model, workdir,
+            tools=True, timeout_s=live_run_limit_s(task),
         )
         diff = _capture_workdir_diff(task, workdir, initial)
     base = run_from_claude_json(

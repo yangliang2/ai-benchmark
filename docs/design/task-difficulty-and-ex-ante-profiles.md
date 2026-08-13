@@ -2683,6 +2683,19 @@ within it by construction, which is the price §23.10 named for building one.
    conditions its forty-three round-3 neighbours did not have, so it would
    arrive carrying the cross-round caveat rather than repairing this round's
    record.
+
+   [Shipped by #50, and what shipped is a table rather than a number. The live
+   runner takes each task's limit from one per-class table registered in code
+   (`firstparty_v1.LIVE_RUN_LIMITS_S`), and `eval-v1` no longer has a
+   `--timeout`: a limit an invocation can pass is a limit adjusted per cell,
+   which is the second rule above. The key is the task's category, because the
+   task-set lint already holds a family's and a pair's category constant, so
+   the first rule holds by construction rather than by discipline. The table
+   registers nothing yet — every category falls back to the flat 600, so no
+   cell of the corpus moves, and the first tier set deliberately is a commit
+   made before the sweep that reads it. When one is set, the change travels
+   exactly as this entry rules: a cross-round caveat recorded beside its round
+   the way §29.1 records the CLI version boundary.]
 5. **Process, recorded from #44.** The sweep itself held the round-2 protocol —
    detached worktree, guard backups, byte-for-byte blob comparison, normally
    named logs including the dry check, `--data` scratched throughout. Two

@@ -174,7 +174,7 @@ def test_eval_v1_live_end_to_end(
     log = tmp_path / "runs.jsonl"
 
     main(["eval-v1", "--tasks", str(tasks), "--live", "--model", "claude-sonnet-5",
-          "--log", str(log), "--timeout", "120", "--sweep", "round-2-track-a",
+          "--log", str(log), "--sweep", "round-2-track-a",
           "--data", str(data)])
 
     out = capsys.readouterr().out
@@ -189,14 +189,19 @@ def test_eval_v1_live_end_to_end(
     assert "first-party-v1" in capsys.readouterr().out
 
 
-def test_eval_v1_rejects_a_non_positive_timeout(tmp_path: Path) -> None:
-    """Validated before anything runs: a zero timeout would otherwise kill
-    every run after billing had already started."""
+def test_eval_v1_takes_no_timeout_from_the_operator(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A live run's limit is a function of the task's class, registered in
+    code before the sweep — so the invocation has no say in it, and asking
+    for one is refused rather than quietly ignored."""
     tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
 
-    with pytest.raises(SystemExit, match="timeout"):
-        main(["eval-v1", "--tasks", str(tasks), "--live", "--timeout", "0",
-              "--data", str(tmp_path / "unified.jsonl")])
+    with pytest.raises(SystemExit):
+        main(["eval-v1", "--tasks", str(tasks), "--live", "--timeout", "1200",
+              "--sweep", "round-4", "--data", str(tmp_path / "unified.jsonl")])
+
+    assert "--timeout" in capsys.readouterr().err
 
 
 def test_eval_v1_live_without_a_sweep_id_is_refused_before_it_bills(

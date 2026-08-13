@@ -15,6 +15,7 @@ import textwrap
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
+from typing import get_args
 
 import firstparty_v1_tasks
 import pytest
@@ -31,20 +32,24 @@ from firstparty_v1_tasks import (
 from pydantic import ValidationError
 
 from ai_benchmark.dataset import IngestError
+from ai_benchmark.firstparty import RUN_TIMEOUT_S
 from ai_benchmark.firstparty import load_runs as load_v0_runs
 from ai_benchmark.firstparty import local_today
 from ai_benchmark.firstparty_v1 import (
     BASELINE_TASK_IDS,
     BENCHMARK,
     KNOB_LEVELS,
+    LIVE_RUN_LIMITS_S,
     KnobActivation,
     Task,
     evaluate,
     lint_task_set,
+    live_run_limit_s,
     load_runs,
     load_task_set,
     run_live,
 )
+from ai_benchmark.schema import TaskCategory
 
 FEATURE_SEED = "wordcount-top-words"
 REFACTOR_SEED = "ledger-split-formatting"
@@ -2092,15 +2097,71 @@ def test_run_live_refuses_to_overwrite_an_existing_log(tmp_path: Path) -> None:
         run_live([task_by_id(FEATURE_SEED)], ["claude-sonnet-5"], log, sweep=SWEEP)
 
 
-def test_a_live_run_that_exceeds_the_timeout_fails_loudly(
-    fake_claude: FakeClaude, tmp_path: Path,
+def test_a_live_run_that_exceeds_its_class_limit_fails_loudly(
+    fake_claude: FakeClaude, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
+    """The limit a slow run is killed against is the one registered for the
+    task's class: the runner reads the table and there is nowhere else the
+    number could have come from."""
     fake_claude("time.sleep(30)\n")
+    task = task_by_id(FEATURE_SEED)
+    monkeypatch.setitem(LIVE_RUN_LIMITS_S, task.category, 1)
 
     with pytest.raises(IngestError, match="timed out after 1s"):
+        run_live([task], ["claude-sonnet-5"], tmp_path / "runs.jsonl", sweep=SWEEP)
+
+
+# --- the live run-time limit: one table, keyed on the task's class ------------
+
+
+def test_every_class_keeps_the_flat_default_until_a_tier_is_registered() -> None:
+    """The table registers nothing yet, so every category — and therefore
+    every task in the checked-in corpus — still runs under the flat limit the
+    runner has always used. Registering the mechanism moves no cell."""
+    seed = task_by_id(FEATURE_SEED)
+    categories = [
+        category
+        for category in get_args(TaskCategory)
+        # No task carries it: v1 tasks are classified up front.
+        if category != "unclassified"
+    ]
+
+    by_category = {
+        category: live_run_limit_s(seed.model_copy(update={"category": category}))
+        for category in categories
+    }
+
+    assert LIVE_RUN_LIMITS_S == {}
+    assert by_category == dict.fromkeys(categories, RUN_TIMEOUT_S)
+    assert {live_run_limit_s(task) for task in load_task_set(TASKS)} == {RUN_TIMEOUT_S}
+
+
+def test_a_registered_tier_is_the_limit_of_its_class_and_of_no_other(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A limit is a function of the task's class: registering one for a
+    category sets it for every task of that category and leaves the rest on
+    the default. Keying on category is what makes that safe — the lint holds
+    every member of a family or a pair to one, so one contrast cannot span
+    two limits."""
+    monkeypatch.setitem(LIVE_RUN_LIMITS_S, "fault-location", 1800)
+    seed = task_by_id(FEATURE_SEED)
+    located = seed.model_copy(update={"category": "fault-location"})
+    other = seed.model_copy(update={"category": "bug-fix"})
+
+    assert live_run_limit_s(located) == 1800
+    assert live_run_limit_s(seed) == RUN_TIMEOUT_S
+    assert live_run_limit_s(other) == RUN_TIMEOUT_S
+
+
+def test_a_caller_cannot_pass_a_per_cell_run_limit(tmp_path: Path) -> None:
+    """No per-invocation override, because that is a limit adjusted per cell:
+    a cell granted a longer run once its neighbours have already run is
+    measured under conditions nobody chose before the sweep."""
+    with pytest.raises(TypeError, match="timeout_s"):
         run_live(
             [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"],
-            tmp_path / "runs.jsonl", sweep=SWEEP, timeout_s=1,
+            tmp_path / "runs.jsonl", sweep=SWEEP, timeout_s=1,  # type: ignore[call-arg]
         )
 
 

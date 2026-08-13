@@ -49,6 +49,14 @@ the unit this document is about.
      only ever swept once, and spending it under conditions nobody chose in
      advance is spending it badly.
 
+   Both rules are held by where the limits live. `LIVE_RUN_LIMITS_S` in
+   `firstparty_v1.py` maps a task's category to its limit in seconds, the
+   runner takes every run's limit from it, and `eval-v1` has no `--timeout`
+   for anyone to pass one by hand. Registering a tier is therefore a commit
+   made before the sweep reads it; a category with none set keeps the flat
+   default, and category is the key because the lint already holds every
+   member of a family or a pair to one.
+
    A limit that changes between rounds is a cross-round caveat, recorded the
    way a CLI version change is (see "One agent version per sweep"): contrasts
    drawn inside the round are unaffected, and comparisons across the boundary

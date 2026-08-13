@@ -19,7 +19,6 @@ from ai_benchmark.classify import (
 from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
-    RUN_TIMEOUT_S,
     evaluate,
     load_runs,
     load_tasks,
@@ -112,10 +111,6 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
     """Run the v1 eval: live (tools-enabled claude-code in a fresh workdir per
     run, workdir diffs captured into the raw run log) or replay of such a log.
     Grading is the same pipeline either way — each logged diff, by execution."""
-    if args.timeout is not None and args.timeout <= 0:
-        # Checked before anything runs: a non-positive timeout would kill
-        # every run after billing had already started.
-        raise SystemExit("error: --timeout must be a positive number of seconds")
     if args.live and not args.sweep:
         # Also checked before anything runs, and required rather than
         # defaulted: reconciliation counts its rounds by sweep id, and the two
@@ -129,18 +124,17 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
     tasks = firstparty_v1.load_task_set(args.tasks)
     if args.live:
         log = args.log or DEFAULT_V1_RUNS / f"{local_today().isoformat()}.jsonl"
-        # The default timeout lives on run_live alone; None means "not given".
-        timeout = {} if args.timeout is None else {"timeout_s": args.timeout}
+        # No timeout to pass: each run's limit is its task class's registered
+        # one (firstparty_v1.LIVE_RUN_LIMITS_S), so that it cannot be raised
+        # for the one cell about to hit it once its neighbours have run.
         runs = firstparty_v1.run_live(
-            tasks, args.model or DEFAULT_MODELS, log, sweep=args.sweep, **timeout
+            tasks, args.model or DEFAULT_MODELS, log, sweep=args.sweep
         )
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
     else:
-        if args.model or args.log or args.timeout is not None or args.sweep:
-            raise SystemExit(
-                "--model, --log, --timeout and --sweep apply only to --live runs"
-            )
+        if args.model or args.log or args.sweep:
+            raise SystemExit("--model, --log and --sweep apply only to --live runs")
         runs = firstparty_v1.load_runs(args.replay)
         source = str(args.replay)
     records = firstparty_v1.evaluate(tasks, runs, source=source)
@@ -345,11 +339,6 @@ def main(argv: list[str] | None = None) -> None:
     )
     evaluate_v1.add_argument(
         "--log", type=Path, help="where a live run writes its raw log"
-    )
-    evaluate_v1.add_argument(
-        "--timeout",
-        type=int,
-        help=f"per-run live timeout in seconds (default: {RUN_TIMEOUT_S})",
     )
     evaluate_v1.add_argument(
         "--sweep",
