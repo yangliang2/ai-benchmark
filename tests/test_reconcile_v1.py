@@ -41,8 +41,12 @@ def write_task(
     *,
     category: str = "feature-dev",
     construction: dict[str, Any] | None = None,
+    control: bool = False,
 ) -> None:
-    """One fixture task directory, with or without a construction block."""
+    """One fixture task directory, with or without a construction block.
+
+    `control` writes a declared control — outside the frozen 22, the other
+    way a fixture task can be a control the report divides by."""
     directory = root / task_id
     (directory / "repo").mkdir(parents=True)
     (directory / "grading").mkdir()
@@ -60,6 +64,8 @@ def write_task(
         spec["grading"] = {"behaviour_tests": ["test_behaviour.py"]}
     if construction is not None:
         spec["construction"] = construction
+    if control:
+        spec["control"] = True
     (directory / "task.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
 
 
@@ -249,7 +255,7 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     missing from section 1, is what this is watching for."""
     tasks, swept_models = checked_in_tasks_and_models()
     constructed = [task for task in tasks if task.construction is not None]
-    controls = [task for task in tasks if task.construction is None]
+    controls = [task for task in tasks if firstparty_v1.is_control(task)]
     swept = [task for task in constructed if task.id in swept_models]
     unswept = [task for task in constructed if task.id not in swept_models]
     # A rung names the weakest model that resolved a task, so only a task the
@@ -305,15 +311,15 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     hits, scored = int(rate[1]), int(rate[2])
     assert hits <= scored <= len(fully_swept)
 
-    # The baseline is on the page as every knob's comparison row, and round 1
-    # swept all of it: no baseline row has a task it did not sweep.
+    # The control row is on the page as every knob's comparison row, and round
+    # 1 swept all of it: no control row has a task it did not sweep.
     grouping = out.split("2. knob grouping")[1].split("3. family ladders")[0]
-    rows = [line for line in grouping.splitlines() if "(baseline)" in line]
+    rows = [line for line in grouping.splitlines() if "(control)" in line]
     assert rows
     for row in rows:
         _, category, tasks_in_row, swept_in_row, *_ = row.split()
         assert tasks_in_row == swept_in_row, (
-            f"{category} baseline not fully swept: {row}"
+            f"{category} control row not fully swept: {row}"
         )
 
     # Effort claims, derived the same way. Round 1 registered none — effort
@@ -651,6 +657,40 @@ def test_reconcile_v1_compares_a_knob_only_against_its_own_category(
     assert "feature-dev" not in k8_block
 
 
+def test_reconcile_v1_groups_a_knob_against_a_declared_control(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The comparison row a knob is grouped against is drawn from every
+    declared control, not just the frozen 22: a category the frozen set never
+    reached still gets a comparison row once one of its own tasks declares
+    itself a control. The mutation this guards against is `control_group`
+    narrowed back to frozen ids only, under which bug-fix's row below would
+    carry 0 tasks instead of the 1 it actually holds."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "bug-control", category="bug-fix", control=True)
+    write_task(tasks, "bug-l1", category="bug-fix", construction=constructed(
+        "K1", "acceptance", "haiku-solvable", family="bug-open"))
+    write_task(tasks, "bug-l2", category="bug-fix", construction=constructed(
+        "K1", "description", "sonnet-only", family="bug-open"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {
+        "bug-control": [_HAIKU, _SONNET],
+        "bug-l1": [_HAIKU, _SONNET],
+        "bug-l2": [_SONNET],
+    })
+
+    out = reconcile(tasks, log, capsys)
+
+    grouping = out.split("2. knob grouping")[1].split("3. family ladders")[0]
+    [row] = [
+        line for line in grouping.splitlines()
+        if "(control)" in line and "bug-fix" in line
+    ]
+    _, category, tasks_in_row, swept_in_row, *_ = row.split()
+    assert (category, tasks_in_row, swept_in_row) == ("bug-fix", "1", "1")
+
+
 # --- section 3: family ladders -------------------------------------------------
 
 
@@ -967,6 +1007,44 @@ def test_reconcile_v1_prints_a_frozen_baseline_comparison_as_informational(
     assert "separated" not in counted_block(out)
     assert "silent round(s): 0" in flags_block(out)
     assert "stalled: no round put K8 to a registered contrast" in flags_block(out)
+
+
+def write_single_level_knob_against_a_declared_control(tmp_path: Path) -> Path:
+    """The same shape as the frozen-baseline helper above, in a category the
+    frozen 22 never reached: a declared control is what makes a comparison
+    row possible there at all."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "bug-control", category="bug-fix", control=True)
+    write_task(tasks, "bug-misleading", category="bug-fix",
+               construction=constructed("K8", "misleading", "unsolved"))
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "round-1.jsonl",
+              [task for task in loaded if task.id == "bug-control"],
+              {"bug-control": [_HAIKU, _SONNET]}, as_of=date(2026, 8, 4))
+    write_log(logs / "round-2.jsonl",
+              [task for task in loaded if task.id == "bug-misleading"], {},
+              as_of=date(2026, 9, 1))
+    return logs
+
+
+def test_reconcile_v1_reads_a_single_level_against_a_declared_control(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The single-level separation reading is drawn from every declared
+    control, not just the frozen 22: a category the frozen set never reached
+    still gets an informational comparison once one of its own tasks declares
+    itself a control. The mutation this guards against is `control_group`
+    narrowed back to frozen ids only, under which bug-fix would hold no
+    control and this row would read not assessable instead."""
+    logs = write_single_level_knob_against_a_declared_control(tmp_path)
+
+    main(["reconcile-v1", "--tasks", str(tmp_path / "tasks"), "--replay", str(logs)])
+
+    out = capsys.readouterr().out
+    informational = informational_block(out)
+    assert "2026-09-01  separated —" in informational
+    assert "misleading {unsolved} vs baseline {haiku-solvable}" in informational
 
 
 def test_reconcile_v1_will_not_demote_a_knob_off_frozen_baseline_silence(
@@ -1411,7 +1489,7 @@ def test_reconcile_v1_will_not_read_separation_off_a_level_too_small_to_match(
     ]
     assert "not assessable" in verdict
     assert "dense {haiku-solvable} vs baseline " in verdict
-    assert "dense has 1 graded task(s) against (baseline)'s 3 distinct rung(s)" in verdict
+    assert "dense has 1 graded task(s) against (control)'s 3 distinct rung(s)" in verdict
     assert "silent round(s): 0" in flags_block(out)
 
 
@@ -1863,6 +1941,38 @@ def test_reconcile_v1_reads_a_baseline_effort_claim_against_its_own_category(
     assert "the refactor baseline (mean of 2)" in " ".join(effort.split())
 
 
+def test_reconcile_v1_reads_a_baseline_effort_claim_against_a_declared_control(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The baseline comparator is drawn from `is_control`, not from
+    `BASELINE_TASK_IDS` alone: a category the frozen 22 never reached is
+    still primed once one of its own tasks declares itself a control. The
+    mutation this guards against is `control_group` narrowed back to frozen
+    ids only, under which bug-fix would hold no control and the claim below
+    would read not assessable instead of scored."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "bug-control", category="bug-fix", control=True)
+    write_task(tasks, "bug-task", category="bug-fix", construction=constructed(
+        "K9", "single", "haiku-solvable",
+        effort=claim("baseline", "cost", 2.0),
+    ))
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {task.id: [_HAIKU, _SONNET] for task in loaded}, effort={
+        "bug-control": {_HAIKU: (7, 0.10), _SONNET: (7, 0.10)},
+        "bug-task": {_HAIKU: (7, 0.25), _SONNET: (7, 0.25)},
+    })
+
+    effort = effort_block(reconcile(tasks, log, capsys))
+
+    [row] = [line for line in effort.splitlines()
+             if line.split()[:2] == ["bug-task", _HAIKU]]
+    assert " ".join(row.split()) == (
+        f"bug-task {_HAIKU} cost >= 2.0x baseline "
+        "the bug-fix baseline (mean of 1) $0.1000 $0.2500 2.50x hit"
+    )
+
+
 def test_reconcile_v1_scores_an_effort_claim_separately_per_model(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -1975,7 +2085,7 @@ def test_reconcile_v1_will_not_assess_a_baseline_claim_with_no_such_control(
     effort = effort_block(reconcile(tasks, log, capsys))
 
     assert "2 not assessable" in effort
-    assert f"no bug-fix zero-knob baseline control has a {_HAIKU} run" in effort
+    assert f"no bug-fix zero-knob control has a {_HAIKU} run" in effort
 
 
 def test_reconcile_v1_will_not_assess_a_claim_against_a_comparator_of_zero(

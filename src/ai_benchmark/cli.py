@@ -370,7 +370,7 @@ def main(argv: list[str] | None = None) -> None:
         "reconcile-v1",
         help="report the v1 task set's pre-registered difficulty predictions "
         "against what the sweeps did: hit-rate, per-knob/per-level grouping "
-        "against the zero-knob baseline, family ladders, crux/control pairs "
+        "against the zero-knob controls, family ladders, crux/control pairs "
         "and no-separation flags",
         description=(
             "Read the raw run logs and the task set, and report predictions "
@@ -397,7 +397,7 @@ def main(argv: list[str] | None = None) -> None:
         "calibrate-v1",
         help="print the calibration table over the v1 corpus: task category x "
         "knob-activation profile, with a cost multiplier per model against "
-        "the category's zero-knob baseline, the cell's observed rung floor, "
+        "the category's zero-knob controls, the cell's observed rung floor, "
         "and the n behind each",
         description=(
             "Read the raw run logs and the task set, and print what each "
@@ -406,7 +406,7 @@ def main(argv: list[str] | None = None) -> None:
             "category crossed with the sorted set of knob activations a task "
             "declares; per model, the cost multiplier is this cell's mean run "
             "cost over the mean cost of the same category's zero-knob "
-            "baseline controls, counting every logged run, resolved or not; "
+            "controls, counting every logged run, resolved or not; "
             "the rung floor is the weakest rung any graded task in the cell "
             "landed on. Every reading prints the n it was taken over. "
             f"{calibrate_v1.DISCLOSURES} "

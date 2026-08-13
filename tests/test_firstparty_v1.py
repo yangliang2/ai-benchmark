@@ -535,20 +535,27 @@ def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
     assert [m.knob for m in task.construction.substrate.modifications] == ["K8"]
 
 
-def test_the_baseline_tasks_declare_no_construction() -> None:
+def test_the_baseline_tasks_declare_no_construction(tmp_path: Path) -> None:
     """Absence of the block is what makes the 22 pre-experiment tasks
     zero-knob baseline controls; reconciliation reads them that way, so
     nothing may quietly give one of them a knob.
 
-    Nor does one of them say it a second way: a declared control is how a task
+    Nor may one of them say it a second way: a declared control is how a task
     *outside* the frozen set says it makes no difficulty claim, and a frozen
     task that also carried the flag would be declaring in one place what the
-    frozen set declares in another."""
+    frozen set declares in another. Checked as a rule the lint enforces
+    rather than as a fact that happens to be true of today's corpus — the
+    corpus passing is not evidence the rule exists."""
     baseline = [t for t in load_task_set(TASKS) if t.id in BASELINE_TASK_IDS]
 
     assert len(baseline) == len(BASELINE_TASK_IDS)
     assert all(task.construction is None for task in baseline)
-    assert not any(task.control for task in baseline)
+
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, control=True)
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+    assert FEATURE_SEED in problem and "also declares itself a control" in problem
 
 
 def test_a_task_can_declare_itself_a_control(tmp_path: Path) -> None:
@@ -578,8 +585,78 @@ def test_a_declared_control_that_also_sets_a_knob_fails_loudly(
     task_dir = clone_constructed(tmp_path, "confused-task", a_construction_block())
     retitle(task_dir, control=True)
 
-    with pytest.raises(IngestError, match="declares itself a control"):
+    with pytest.raises(IngestError, match="declares itself a control") as excinfo:
         load_task_set(tmp_path)
+    assert "confused-task" in str(excinfo.value)
+
+
+def test_declaring_control_a_non_boolean_string_fails_loudly(tmp_path: Path) -> None:
+    """`control` is strict: every denominator in the project is keyed off it,
+    so a lax `control: "yes"` quietly coercing to True the way pydantic's
+    default bool parsing would is the wrong kind of surprise for a flag this
+    load-bearing."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, "coverage-task")
+    retitle(task_dir, id="coverage-task", control="yes")
+
+    with pytest.raises(IngestError, match="control"):
+        load_task_set(tmp_path)
+
+
+def test_a_baseline_effort_claim_needs_a_control_in_its_own_category(
+    tmp_path: Path,
+) -> None:
+    """The set-wide half of an effort claim's shape: a claim read against the
+    zero-knob baseline of the task's own category needs the set to actually
+    hold a control there, or no sweep could ever settle it. A category the
+    frozen 22 never reached holds none unless one of its own tasks declares
+    itself a control — checked here with no such declaration in the set."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, "fault-location-claimer")
+    retitle(
+        task_dir,
+        id="fault-location-claimer",
+        category="fault-location",
+        construction=a_construction_block(
+            prediction=a_prediction(effort={
+                "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
+            }),
+        ),
+    )
+
+    [problem] = lint_task_set(load_task_set(tmp_path))
+
+    assert "fault-location-claimer" in problem
+    assert "holds no fault-location baseline control" in problem
+
+
+def test_a_declared_control_stocks_a_baseline_effort_claim_in_its_category(
+    tmp_path: Path,
+) -> None:
+    """The positive case of the rule above, and the seam a narrowed
+    `is_control` would break silently: `_effort_claim_problems` reads
+    `is_control`, exactly as `control_group` does, so a category the frozen 22
+    never reached still stocks a baseline comparator once one of its own
+    tasks declares itself a control, and the claim below lints clean. The
+    mutation this guards against is `is_control` narrowed back to `task.id in
+    BASELINE_TASK_IDS`, under which this category would stock nothing and the
+    claim would be refused."""
+    control_dir = clone_seed(tmp_path, FEATURE_SEED, "fault-location-control")
+    retitle(
+        control_dir, id="fault-location-control", category="fault-location",
+        control=True,
+    )
+    claimer_dir = clone_seed(tmp_path, FEATURE_SEED, "fault-location-claimer")
+    retitle(
+        claimer_dir,
+        id="fault-location-claimer",
+        category="fault-location",
+        construction=a_construction_block(
+            prediction=a_prediction(effort={
+                "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
+            }),
+        ),
+    )
+
+    assert lint_task_set(load_task_set(tmp_path)) == []
 
 
 def test_an_unknown_knob_id_fails_loudly(tmp_path: Path) -> None:

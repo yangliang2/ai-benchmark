@@ -76,7 +76,14 @@ from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    ValidationError,
+    model_validator,
+)
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
@@ -490,7 +497,9 @@ class Task(BaseModel):
     # 22 controls and that meaning is not available to a task outside the set:
     # a control created by omission is indistinguishable from an author who
     # forgot to declare one, and the sweep would price both as controls.
-    control: bool = False
+    # Strict: this flag is load-bearing enough that a lax `control: "yes"`
+    # coercing quietly to True would be the wrong kind of surprise.
+    control: StrictBool = False
     directory: Path
 
     @property
@@ -1001,25 +1010,26 @@ def lint_task_set(
 def construction_problems(task: Task) -> list[str]:
     """What is wrong with this task's declaration of what it is.
 
-    Every task says exactly one of two things: how it was built, or that it is
-    a control. The rule runs both ways for the frozen baseline, because there
-    the two are expressed by the presence and the absence of the same block —
-    a task outside the frozen set must declare something, and a baseline task
-    must not declare a construction, or reconciliation can read it as neither
-    control nor knob-experiment task.
+    Every task declares exactly one of three things: how it was built, that it
+    is a control, or membership in the frozen baseline — and the last of those
+    is itself declared by the *absence* of the first two, so the rule runs
+    both ways for it: a task outside the frozen set must declare something,
+    and a baseline task must declare nothing, or reconciliation can read it as
+    more than one of the three.
 
-    What is deliberately not a third state is silence. A task saying nothing
+    What is deliberately not a fourth state is silence. A task saying nothing
     would be a control by omission, which is the one thing the frozen set was
     frozen to prevent: nothing distinguishes it from a task whose author had
     not finished declaring it, and the sweep prices both as controls.
 
     Public because reconciliation checks it too, before reading a task set as
     controls and predictions. One invariant, one implementation: two copies of
-    this rule could disagree about which tasks are controls.
+    this rule could disagree about which tasks are controls — which is also
+    why this reads `is_control` rather than re-deriving its negation.
     """
     declared = task.construction is not None
     baseline = task.id in BASELINE_TASK_IDS
-    if not declared and not baseline and not task.control:
+    if not is_control(task) and not declared:
         return [(
             f"{task.id}: declares neither a construction block nor itself a "
             "control — a control is declared and never inferred from an "
@@ -1034,6 +1044,14 @@ def construction_problems(task: Task) -> list[str]:
             "block — the absence of the block is the whole of what makes these "
             "22 tasks controls, so one that declares knobs is a control "
             "reconciliation would read against itself"
+        )]
+    if task.control and baseline:
+        return [(
+            f"{task.id}: a zero-knob baseline control also declares itself a "
+            "control — the absence of a construction block already makes "
+            "these 22 tasks controls, so the declaration says the same thing "
+            "twice and makes it ambiguous which of the two ways of being a "
+            "control this task means"
         )]
     return []
 

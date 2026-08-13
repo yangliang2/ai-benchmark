@@ -309,7 +309,7 @@ def denominator(controls: Sequence[Outcome], category: str, model: str) -> Denom
         # unreadable rather than infinite — the reading reconciliation gives
         # an effort claim whose comparator measured zero.
         return Denominator(None, len(ran), (
-            f"the {category} zero-knob baseline measured {money(mean)} on {model} "
+            f"the {category} zero-knob controls measured {money(mean)} on {model} "
             f"over {len(ran)} control(s), and no multiple of zero is anything"
         ))
     return Denominator(mean, len(ran), None)

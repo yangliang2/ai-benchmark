@@ -440,36 +440,84 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
 # A round that adds feature-dev or refactor tasks moves them and updates this
 # table in the same commit; anything else that moves them is the defect this
 # watches for.
+# Each row: tasks, the two multiplier columns, rung floor. A declared
+# feature-dev or refactor control would move every one of these — the tasks
+# column by joining the row it lands in, a multiplier by entering the mean it
+# divides by or is divided by, and a rung floor by adding a graded task to a
+# cell's population — so all four are pinned together rather than just the
+# two multipliers.
 _PUBLISHED = {
     "feature-dev": {
-        "(zero-knob)": ("1.00x (n=11)", "1.00x (n=11)"),
-        "K1=acceptance": ("2.06x (n=6)", "1.79x (n=6)"),
-        "K1=description": ("0.85x (n=4)", "0.96x (n=4)"),
-        "K1=intent": ("0.94x (n=4)", "1.02x (n=4)"),
-        "K4=narrow": ("2.37x (n=1)", "1.54x (n=1)"),
-        "K4=wide": ("3.10x (n=1)", "2.28x (n=1)"),
-        "K7=calm": ("2.18x (n=2)", "1.95x (n=2)"),
-        "K7=dense": ("3.80x (n=4)", "2.42x (n=4)"),
-        "K9=none": ("0.74x (n=9)", "0.91x (n=9)"),
-        "K9=single": ("1.10x (n=9)", "1.29x (n=9)"),
-        "K10=narrow": ("3.14x (n=1)", "1.45x (n=1)"),
-        "K10=wide": ("6.40x (n=1)", "7.93x (n=1)"),
-        "K11=far": ("0.88x (n=4)", "0.75x (n=4)"),
-        "K1=acceptance,K12=criterion": ("1.19x (n=3)", "0.67x (n=3)"),
-        "K1=acceptance,K12=repo-primitive": ("0.81x (n=3)", "0.68x (n=3)"),
-        "K1=acceptance,K12=unmentioned": ("0.94x (n=3)", "0.70x (n=3)"),
-        "K1=acceptance,K12=prose": ("0.99x (n=3)", "0.71x (n=3)"),
-        "K1=intent,K7=dense,K9=single": ("6.84x (n=2)", "3.73x (n=1)"),
+        "(zero-knob)": ("11", "1.00x (n=11)", "1.00x (n=11)", "haiku-solvable (n=11)"),
+        "K1=acceptance": ("6", "2.06x (n=6)", "1.79x (n=6)", "haiku-solvable (n=6)"),
+        "K1=description": ("4", "0.85x (n=4)", "0.96x (n=4)", "haiku-solvable (n=4)"),
+        "K1=intent": ("4", "0.94x (n=4)", "1.02x (n=4)", "haiku-solvable (n=4)"),
+        "K4=narrow": ("1", "2.37x (n=1)", "1.54x (n=1)", "haiku-solvable (n=1)"),
+        "K4=wide": ("1", "3.10x (n=1)", "2.28x (n=1)", "haiku-solvable (n=1)"),
+        "K7=calm": ("2", "2.18x (n=2)", "1.95x (n=2)", "haiku-solvable (n=2)"),
+        "K7=dense": ("4", "3.80x (n=4)", "2.42x (n=4)", "haiku-solvable (n=4)"),
+        "K9=none": ("9", "0.74x (n=9)", "0.91x (n=9)", "haiku-solvable (n=9)"),
+        "K9=single": ("9", "1.10x (n=9)", "1.29x (n=9)", "haiku-solvable (n=9)"),
+        "K10=narrow": ("1", "3.14x (n=1)", "1.45x (n=1)", "haiku-solvable (n=1)"),
+        "K10=wide": ("1", "6.40x (n=1)", "7.93x (n=1)", "haiku-solvable (n=1)"),
+        "K11=far": ("4", "0.88x (n=4)", "0.75x (n=4)", "haiku-solvable (n=4)"),
+        "K1=acceptance,K12=criterion": (
+            "3", "1.19x (n=3)", "0.67x (n=3)", "haiku-solvable (n=3)"
+        ),
+        "K1=acceptance,K12=repo-primitive": (
+            "3", "0.81x (n=3)", "0.68x (n=3)", "haiku-solvable (n=3)"
+        ),
+        "K1=acceptance,K12=unmentioned": (
+            "3", "0.94x (n=3)", "0.70x (n=3)", "haiku-solvable (n=3)"
+        ),
+        "K1=acceptance,K12=prose": (
+            "3", "0.99x (n=3)", "0.71x (n=3)", "haiku-solvable (n=3)"
+        ),
+        "K1=intent,K7=dense,K9=single": (
+            "2", "6.84x (n=2)", "3.73x (n=1)", "sonnet-only (n=1)"
+        ),
     },
     "refactor": {
-        "(zero-knob)": ("1.00x (n=11)", "1.00x (n=11)"),
-        "K8=misleading": ("1.11x (n=7)", "1.19x (n=7)"),
+        "(zero-knob)": ("11", "1.00x (n=11)", "1.00x (n=11)", "haiku-solvable (n=11)"),
+        "K8=misleading": ("7", "1.11x (n=7)", "1.19x (n=7)", "haiku-solvable (n=7)"),
     },
 }
 
 _PUBLISHED_DENOMINATORS = {
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
+}
+
+# The baseline's own mix, and every row whose mix differs from it — the other
+# two axes a declared control would move, on top of the row's own numbers.
+_PUBLISHED_MIX = {
+    "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
+    "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
+}
+
+_PUBLISHED_ROW_MIX = {
+    "feature-dev": {
+        "K1=acceptance": "6 single-file; 6 hand-authored",
+        "K1=description": "4 single-file; 4 hand-authored",
+        "K1=intent": "4 single-file; 4 hand-authored",
+        "K4=narrow": "1 single-file; 1 vendored",
+        "K4=wide": "1 single-file; 1 vendored",
+        "K7=calm": "2 single-file; 2 vendored",
+        "K7=dense": "4 single-file; 4 vendored",
+        "K9=none": "9 single-file; 9 hand-authored",
+        "K9=single": "9 single-file; 9 hand-authored",
+        "K10=narrow": "1 cross-file; 1 vendored",
+        "K10=wide": "1 cross-file; 1 vendored",
+        "K11=far": "4 single-file; 4 hand-authored",
+        "K1=acceptance,K12=criterion": "3 single-file; 3 hand-authored",
+        "K1=acceptance,K12=repo-primitive": "3 single-file; 3 hand-authored",
+        "K1=acceptance,K12=unmentioned": "3 single-file; 3 hand-authored",
+        "K1=acceptance,K12=prose": "3 single-file; 3 hand-authored",
+        "K1=intent,K7=dense,K9=single": "2 single-file; 2 vendored",
+    },
+    "refactor": {
+        "K8=misleading": "4 single-file + 3 cross-file; 4 hand-authored + 3 vendored",
+    },
 }
 
 
@@ -483,7 +531,10 @@ def test_calibrate_v1_publishes_the_multipliers_round_3_published(
     category's column — quietly, because the arithmetic stays consistent with
     itself. The two categories the corpus holds are the two whose numbers are
     already published and being read, so this is where a change in the notion
-    of a control would have to show up first.
+    of a control would have to show up first. Pinned in full: tasks, both
+    multipliers and the rung floor per row, the baseline's own mix, and every
+    row's disclosed mix — a declared control moves all of them, not just the
+    two multiplier columns.
     """
     main(checked_in_argv())
     out = capsys.readouterr().out
@@ -492,11 +543,19 @@ def test_calibrate_v1_publishes_the_multipliers_round_3_published(
         assert baseline_line(out, category, "baseline mean cost") == (
             _PUBLISHED_DENOMINATORS[category]
         )
+        assert baseline_line(out, category, "baseline mix") == (
+            _PUBLISHED_MIX[category]
+        )
         assert profiles(out, category) == list(published), f"{category}: rows"
-        for profile, (haiku, sonnet) in published.items():
+        assert mixes(out, category) == _PUBLISHED_ROW_MIX[category], (
+            f"{category}: row mixes"
+        )
+        for profile, (tasks, haiku, sonnet, rung_floor) in published.items():
             row = cells(out, category, profile)
-            assert (row[_HAIKU], row[_SONNET]) == (haiku, sonnet), (
-                f"{category} {profile}: multipliers"
+            assert (
+                row["tasks"], row[_HAIKU], row[_SONNET], row["rung floor"]
+            ) == (tasks, haiku, sonnet, rung_floor), (
+                f"{category} {profile}: row"
             )
 
 

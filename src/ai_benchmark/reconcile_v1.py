@@ -92,7 +92,7 @@ _ROUND_KEYING_NOTE = (
     "there is and both miscounts remain."
 )
 
-_BASELINE_LABEL = "(baseline)"
+_BASELINE_LABEL = "(control)"
 
 
 @dataclass(frozen=True)
@@ -303,10 +303,10 @@ def observed_rung(resolved: Mapping[str, bool]) -> Observed:
 
 
 def _check_declarations(tasks: list[Task]) -> None:
-    """Every task is either a frozen baseline control or declares how it was
-    built. The lint already refuses anything else before a paid run; checked
-    again here because the alternative is reconciliation quietly deciding for
-    itself which of the two an undeclared task is."""
+    """Every task is a frozen baseline control, declares itself a control, or
+    declares how it was built. The lint already refuses anything else before a
+    paid run; checked again here because the alternative is reconciliation
+    quietly deciding for itself which of the three an undeclared task is."""
     if problems := [problem for task in tasks for problem in construction_problems(task)]:
         raise IngestError(
             "the task set does not declare itself well enough to reconcile:\n"
@@ -794,7 +794,7 @@ def _comparator(
     against = f"the {category} baseline"
     if not ran:
         return None, against, (
-            f"no {category} zero-knob baseline control has a {model} run"
+            f"no {category} zero-knob control has a {model} run"
         )
     # The mean, not the median. A factor claim is a claim about the size of a
     # cost, and at the handful of tasks per cell this experiment runs at a
@@ -1047,7 +1047,7 @@ def wrap(text: str, *, indent: str = "", width: int = 74) -> list[str]:
 
 def _knob_grouping(outcomes: Sequence[Outcome]) -> list[str]:
     groups = by_knob_level(outcomes)
-    lines = ["2. knob grouping, against the zero-knob baseline of the same category"]
+    lines = ["2. knob grouping, against the zero-knob controls of the same category"]
     if not groups:
         return [*lines, "   (no constructed task in the task set)"]
 
@@ -1542,7 +1542,7 @@ def _separation(knob: str, outcomes: Sequence[Outcome], round: Round) -> str:
         if not controls:
             return (
                 f"not assessable — one level swept ({described}) and no zero-knob "
-                f"baseline of the same category ({', '.join(sorted(categories))}) "
+                f"control of the same category ({', '.join(sorted(categories))}) "
                 "has a rung in any round"
             )
         return _compare(
