@@ -78,6 +78,7 @@ import importlib.util
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -614,8 +615,19 @@ def is_control(task: Task) -> bool:
 
 # The fields an author reaches for when writing down a line number instead of
 # a symbol. Named so the refusal can say why rather than leaving pydantic to
-# report an unexpected field.
-_LINE_FIELDS = ("line", "lineno", "line_number", "lines", "line_numbers")
+# report an unexpected field. Matched case-insensitively against whatever the
+# key actually names — "Line" is as much a line number as "line" is — which
+# is also why "at_line" and "line_at" are spelled out rather than assuming an
+# author always puts the noun first.
+_LINE_FIELDS = (
+    "line",
+    "lineno",
+    "line_number",
+    "lines",
+    "line_numbers",
+    "at_line",
+    "line_at",
+)
 
 
 class AcceptedAnswer(BaseModel):
@@ -637,7 +649,11 @@ class AcceptedAnswer(BaseModel):
     @classmethod
     def a_location_is_a_symbol_and_never_a_line(cls, data: Any) -> Any:
         if isinstance(data, dict):
-            named = sorted(field for field in _LINE_FIELDS if field in data)
+            named = sorted(
+                field
+                for field in data
+                if isinstance(field, str) and field.lower() in _LINE_FIELDS
+            )
             if named:
                 raise ValueError(
                     f"accepted answer {dict(data)} names a line number "
@@ -670,6 +686,23 @@ class AnswerKey(BaseModel):
 
     answer_path: NonEmptyStr
     accepted: tuple[AcceptedAnswer, ...] = ()
+
+    @model_validator(mode="after")
+    def accepted_is_a_set_and_names_no_pair_twice(self) -> Self:
+        repeated = sorted(
+            pair
+            for pair, count in Counter(
+                (answer.file, answer.symbol) for answer in self.accepted
+            ).items()
+            if count > 1
+        )
+        if repeated:
+            raise ValueError(
+                f"accepted names the same (file, symbol) pair more than once: "
+                f"{repeated} — accepted is a set of locations, and a pair "
+                "repeated in it claims nothing an unrepeated one would not"
+            )
+        return self
 
 
 def answer_key(task: Task) -> AnswerKey:
@@ -705,11 +738,15 @@ def answer_key(task: Task) -> AnswerKey:
 
 
 def _defined_symbols(source: str) -> set[str]:
-    """Every function and class a module defines, qualified by nesting.
+    """Every function and class a module defines, both qualified by nesting
+    and bare.
 
-    A method is `Class.method`, which is how an author writes down the two
-    levels a defect in one is legitimately described at — the method, and the
-    class enclosing it.
+    A method is accepted either way: `Class.method`, which is how an author
+    writes down the two levels a defect in one is legitimately described at —
+    the method, and the class enclosing it — and the bare `method`, which is
+    how a locating agent actually phrases an answer about something nested.
+    Only nested definitions get the bare form; a module-level definition has
+    no qualified form to be an alternative to.
     """
     symbols: set[str] = set()
     definitions = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
@@ -718,6 +755,8 @@ def _defined_symbols(source: str) -> set[str]:
         for child in ast.iter_child_nodes(node):
             if isinstance(child, definitions):
                 symbols.add(prefix + child.name)
+                if prefix:
+                    symbols.add(child.name)
                 walk(child, f"{prefix}{child.name}.")
             else:
                 # Anything else keeps the prefix: a definition guarded by an
@@ -879,8 +918,13 @@ def _check_task_layout(task: Task) -> None:
     if task.category == "fault-location":
         # The ground truth of a task whose deliverable is prose. Read here so
         # that a key which is missing, unparseable, or written in line numbers
-        # fails at load rather than at the first paid run.
-        answer_key(task)
+        # fails at load rather than at the first paid run. The empty-accepted-
+        # set check is read here too, and not left to the lint alone: `ai-bench
+        # run-live` loads a task set but never lints it, so an unsolvable key
+        # would otherwise reach a paid run.
+        key = answer_key(task)
+        if not key.accepted:
+            raise IngestError(_empty_accepted_set_message(task))
 
 
 def _stdlib_collisions(repo_dir: Path) -> list[str]:
@@ -1211,24 +1255,39 @@ def _answer_key_problems(task: Task) -> list[str]:
 
     What the set can be checked against is the starting repository the agent is
     given: the accepted set says something at all; every file it names is in
-    that repository; every symbol it names is defined in the file it names, so
-    a rename or a typo cannot leave a key no correct answer matches; and the
-    prompt names the answer file, so a task cannot be unsolvable because the
-    agent was never told where to write. What no check can reach is whether the
-    author wrote down every description level a correct answer might use —
-    that is the judgement this grading rests on.
+    that repository, matched exactly rather than case-insensitively; every
+    symbol it names is defined in the file it names, so a rename or a typo
+    cannot leave a key no correct answer matches; the declared answer path
+    lands inside the workdir a run is graded from and does not collide with a
+    file grading overlays over it; and the prompt names that path as a whole
+    token, so a task cannot be unsolvable because the agent was never told
+    where to write. What no check can reach is whether the author wrote down
+    every description level a correct answer might use — that is the
+    judgement this grading rests on.
     """
     if task.category != "fault-location":
         return []
     key = answer_key(task)
     problems = []
     if not key.accepted:
+        problems.append(_empty_accepted_set_message(task))
+    if _escapes_workdir(key.answer_path):
         problems.append(
-            f"{task.id}: the accepted-answer key accepts no (file, symbol) pair "
-            "— every answer would be graded wrong, and the task would be "
-            "indistinguishable from one no agent happens to solve"
+            f"{task.id}: the accepted-answer key's answer_path "
+            f"{key.answer_path!r} is absolute or climbs out of the workdir with "
+            "'..' — the workdir diff a run is graded from can only ever hold "
+            "paths inside the workdir, so the agent's answer would never reach "
+            "the diff however correctly it located the fault"
         )
-    if key.answer_path not in task.prompt:
+    elif key.answer_path in (ANSWER_KEY_FILE, *task.grading_test_paths):
+        problems.append(
+            f"{task.id}: the accepted-answer key's answer_path "
+            f"{key.answer_path!r} collides with a file grading overlays over "
+            "the workdir — the agent's answer file would be silently "
+            "overwritten by the held-out grading files before the verdict ever "
+            "reads it"
+        )
+    if not _prompt_names_path(task.prompt, key.answer_path):
         problems.append(
             f"{task.id}: the prompt never names the answer file "
             f"{key.answer_path!r} — the answer file is the whole deliverable, so "
@@ -1263,14 +1322,88 @@ def _answer_key_problems(task: Task) -> list[str]:
     return problems
 
 
+def _escapes_workdir(name: str) -> bool:
+    """Whether this path cannot land inside a task's workdir: absolute, or
+    carrying a '..' component that climbs out of it. Shared by every check
+    that reads a task-authored path against the workdir a run is graded
+    from — the starting repository (`_repo_file`) and the accepted-answer
+    key's declared answer_path alike — because both are the same question:
+    a path outside the workdir is never reachable through the diff a run
+    logs, whether it is a file the agent was supposed to find or one it was
+    supposed to write."""
+    return Path(name).is_absolute() or ".." in Path(name).parts
+
+
 def _repo_file(task: Task, name: str) -> Path | None:
     """The named file inside the starting repository, or None if it is not
-    there — including a name that climbs out of the repository, which is a file
-    the agent was not given as surely as one that does not exist."""
-    if Path(name).is_absolute() or ".." in Path(name).parts:
+    there — including a name that climbs out of the repository, which is a
+    file the agent was not given as surely as one that does not exist, and a
+    name matching only by case, which is a file the agent was not given
+    either.
+
+    Checked component-by-component against the actual directory listing
+    rather than `Path.is_file()`: that call is case-insensitive on macOS —
+    the platform the sweeps run on — so a key naming `pricing.PY` would
+    otherwise resolve to `pricing.py` and lint clean, while the grading test
+    that later checks the agent's answer compares exact strings and never
+    matches. Listing the directory rather than lower-casing both sides keeps
+    the check case-exact on every platform, including one where the two
+    spellings really are different files.
+    """
+    if _escapes_workdir(name):
         return None
-    candidate = task.repo_dir / name
-    return candidate if candidate.is_file() else None
+    current = task.repo_dir
+    for part in Path(name).parts:
+        try:
+            entries = {entry.name for entry in current.iterdir()}
+        except OSError:
+            return None
+        if part not in entries:
+            return None
+        current = current / part
+    return current if current.is_file() else None
+
+
+# Characters that continue a bare word or filename rather than closing it —
+# deliberately excluding "." and "/", which are structural (an extension
+# separator, a path separator) rather than word-continuing, so a path is
+# still recognized when it is followed by ordinary sentence punctuation (a
+# trailing ".") or is itself an absolute path or one climbing out of the
+# workdir (leading "/" or "..", refused on other grounds but still checked
+# here for whether the prompt names it).
+_PATH_TOKEN_BOUNDARY = re.compile(r"[A-Za-z0-9_-]")
+
+
+def _prompt_names_path(prompt: str, path: str) -> bool:
+    """Whether prompt names path as a standalone token, not merely as a
+    substring buried inside some other word: "ANSWER.json" must not match
+    inside "MYANSWER.jsonx", where a plain substring test would.
+
+    Checked against the characters actually adjacent to each occurrence in
+    the prompt, not against path's own leading/trailing character — a \\b
+    (word-boundary) regex would wrongly refuse a path that starts with "/" or
+    ".." even when the prompt names it plainly, because neither side of that
+    boundary is a word character to begin with.
+    """
+    for match in re.finditer(re.escape(path), prompt):
+        before = prompt[match.start() - 1] if match.start() > 0 else ""
+        after = prompt[match.end()] if match.end() < len(prompt) else ""
+        if not _PATH_TOKEN_BOUNDARY.match(before) and not _PATH_TOKEN_BOUNDARY.match(after):
+            return True
+    return False
+
+
+def _empty_accepted_set_message(task: Task) -> str:
+    """What is wrong with a fault-location task whose accepted-answer key
+    accepts nothing, worded once so the loader and the lint say the same
+    thing: the loader has to refuse this too, because `ai-bench run-live`
+    loads a task set but never lints it, so an unsolvable key would otherwise
+    reach a paid run."""
+    return (
+        f"{task.id}: the accepted-answer key accepts no (file, symbol) pair "
+        "— every answer would be graded wrong, and the task would be "
+        "indistinguishable from one no agent happens to solve"
+    )
 
 
 def _family_problems(tasks: list[Task]) -> list[str]:
