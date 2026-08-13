@@ -89,7 +89,8 @@ from ai_benchmark.schema import (
     Record,
     RecordValidationError,
     Scale,
-    TaskCategory,
+    Surface,
+    TaskCategoryField,
     validate_record,
 )
 
@@ -470,8 +471,9 @@ class Task(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: NonEmptyStr
-    category: TaskCategory
+    category: TaskCategoryField
     scale: Scale
+    surface: Surface = "unknown"
     language: LanguageStr | None = None
     prompt: NonEmptyStr
     grading: Grading = Grading()
@@ -1304,6 +1306,7 @@ def evaluate(
                     {
                         "category": task.category,
                         "scale": task.scale,
+                        "surface": task.surface,
                         "language": task.language,
                         "agent": run.agent,
                         "agent_version": run.agent_version,

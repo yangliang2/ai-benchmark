@@ -1,7 +1,34 @@
 """build_prompt is pure: the instance evidence must actually land in the prompt."""
 
+import re
+from typing import get_args
+
 from ai_benchmark.instances import InstanceContext
 from ai_benchmark.llm import _PROBLEM_STATEMENT_LIMIT, build_prompt
+from ai_benchmark.schema import RETIRED_CATEGORIES, TaskCategory
+
+
+def offered_categories(prompt: str) -> list[str]:
+    """The categories the prompt actually offers the classifier, read off the
+    rendered prompt rather than restated here — the point of the test below is
+    that nobody maintains a second copy of the vocabulary."""
+    listing = prompt.split("Categories (pick exactly one")[1].split("Also give:")[0]
+    return re.findall(r"^- ([a-z-]+):", listing, flags=re.MULTILINE)
+
+
+def test_prompt_offers_exactly_the_schema_vocabulary_in_its_order() -> None:
+    """The taxonomy is defined once, in the record schema: adding a category
+    must not mean editing a second list inside the prompt."""
+    prompt = build_prompt("swe-bench-verified", "x__x-1", None)
+
+    assert offered_categories(prompt) == list(get_args(TaskCategory))
+
+
+def test_prompt_does_not_offer_a_category_that_left_the_vocabulary() -> None:
+    prompt = build_prompt("swe-bench-verified", "x__x-1", None)
+
+    for retired in RETIRED_CATEGORIES:
+        assert retired not in prompt
 
 
 def test_prompt_includes_problem_statement_and_patch_files() -> None:

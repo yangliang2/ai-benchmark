@@ -9,18 +9,63 @@ from collections.abc import Mapping
 from datetime import date
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+)
 
+# The one definition of the taxonomy: ten engineering *actions* plus the
+# escape hatch. A category says what is done, never what kind of ticket the
+# work arrived as; one task measures exactly one action, while a real ticket
+# is a sequence of them (CONTEXT.md). Everything that needs the list — the v0
+# and v1 task models, the classifier's prompt — reads it from here.
 TaskCategory = Literal[
     "bug-fix",
     "feature-dev",
     "refactor",
     "test-authoring",
-    "frontend-ui",
-    "infra-config",
     "codebase-comprehension",
+    "fault-location",
+    "code-review",
+    "investigation",
+    "requirement-decomposition",
+    "performance-optimisation",
     "unclassified",
 ]
+
+Surface = Literal["application", "frontend", "infrastructure", "unknown"]
+
+# The categories that named *where* work happens rather than what is done: one
+# can fix a bug, add a feature or refactor in each, so beside actions they
+# forced a frontend bug fix to pick one of two boxes. They are the `surface`
+# annotation now, and each maps to the value it became.
+RETIRED_CATEGORIES: Mapping[str, Surface] = {
+    "frontend-ui": "frontend",
+    "infra-config": "infrastructure",
+}
+
+
+def _reject_retired_category(value: Any) -> Any:
+    """Refuse a retired category by name, before the Literal turns it into an
+    anonymous "not one of these eleven" — a stale row is a vocabulary change
+    to follow, not a typo to correct."""
+    if isinstance(value, str) and value in RETIRED_CATEGORIES:
+        raise ValueError(
+            f"{value!r} is no longer a task category: categories name "
+            "engineering actions, and where the work happens is now the "
+            f"'surface' annotation (surface: {RETIRED_CATEGORIES[value]})"
+        )
+    return value
+
+
+# What models annotate `category` with: the vocabulary, plus the retirement
+# notice. `TaskCategory` itself stays a bare Literal, so get_args() over it
+# still yields exactly the vocabulary.
+TaskCategoryField = Annotated[TaskCategory, BeforeValidator(_reject_retired_category)]
 
 Scale = Literal["single-file", "cross-file", "unknown"]
 
@@ -41,8 +86,9 @@ class RecordValidationError(ValueError):
 class Record(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    category: TaskCategory
+    category: TaskCategoryField
     scale: Scale
+    surface: Surface = "unknown"
     language: LanguageStr | None = None
 
     agent: NonEmptyStr

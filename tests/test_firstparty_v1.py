@@ -352,6 +352,32 @@ def test_malformed_task_yaml_fails_loudly(tmp_path: Path) -> None:
         load_task_set(tmp_path)
 
 
+def test_task_naming_a_retired_category_fails_loudly(tmp_path: Path) -> None:
+    """`frontend-ui` and `infra-config` named where work happens rather than
+    what is done; the loader has to name the annotation they became."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, category="infra-config")
+
+    with pytest.raises(IngestError, match="surface"):
+        load_task_set(tmp_path)
+
+
+def test_task_surface_defaults_to_unknown_and_reaches_the_record(
+    tmp_path: Path,
+) -> None:
+    """No migration: every checked-in task loads without declaring a surface,
+    and a task that declares one hands it to the records it produces."""
+    assert {task.surface for task in load_task_set(TASKS)} == {"unknown"}
+
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, surface="frontend")
+    [task] = load_task_set(tmp_path)
+
+    [record] = evaluate([task], [run_for(task, "")], source="run-log")
+
+    assert record.surface == "frontend"
+
+
 def test_unclassified_task_fails_loudly(tmp_path: Path) -> None:
     task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
     retitle(task_dir, category="unclassified")

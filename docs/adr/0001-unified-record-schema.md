@@ -13,7 +13,7 @@ One flat record shape for every result, defined once in `ai_benchmark.schema.Rec
 
 Field groups:
 
-- **Task**: `category` (taxonomy v0, `unclassified` allowed), `scale`, `language?`
+- **Task**: `category` (one engineering action, `unclassified` allowed), `scale`, `surface?`, `language?`
 - **Combination**: `agent`, `agent_version?`, `model`
 - **Task identity**: `benchmark`, `instance_id?`
 - **Quality**: `quality_metric` (named, e.g. `resolved`, `resolution-rate`), `quality_value`
@@ -22,7 +22,7 @@ Field groups:
 
 Cross-field rules: `instance_id` is required unless `source_type` is `aggregate`; `first-party` records must have `confidence: high` (enforced at the seam, not by convention).
 
-`category` additionally admits `unclassified` — an escape hatch beyond taxonomy v0's seven categories so ingestion never force-fits and unclassified counts stay visible (spec #1 story 13; ticket #3 ingests before classification exists).
+`category` additionally admits `unclassified` — an escape hatch beyond the taxonomy's engineering actions so ingestion never force-fits and unclassified counts stay visible (spec #1 story 13; ticket #3 ingests before classification exists). The action vocabulary itself lives in `CONTEXT.md`; `surface` (optional, defaulting to `unknown`) annotates where the work happens, which two of the original categories used to name.
 
 For non-Python consumers, the schema is exported as JSON Schema to `record.schema.json` at the repo root; a test keeps the export in sync with the pydantic model.
 

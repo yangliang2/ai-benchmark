@@ -13,38 +13,50 @@ The vocabulary this project uses. Skills and contributors should use these terms
 - **Quality metric** — the named measure a record's quality value is expressed in (e.g. `resolved`, `resolution-rate`, `pass-rate`). Values under different quality metrics are never directly comparable (not: score).
 - **Pareto frontier** — within one task category, the set of combinations not dominated on both quality and cost.
 
-## Task taxonomy v0
+## Task taxonomy
 
-Every benchmark instance and first-party eval task is classified into exactly one category. When two categories seem to apply, the **primary deliverable** of the task decides.
+A **category** is one **engineering action** — what is done, never what kind of ticket the work arrived as, and never where it happens (that is the **surface** annotation). Every benchmark instance and first-party eval task is classified into exactly one category: a benchmark task measures **exactly one action**, because it needs one gradeable deliverable. A *real* ticket is a **sequence** of actions — investigate, then edit, then test — and that relation is documented here rather than keyed on: there is no multi-label category and no category tuple, and when several actions apply the **primary deliverable** of the task decides which one it is filed under.
 
 - **bug-fix** — correct existing behaviour that is wrong.
   Includes: SWE-bench-style issue→patch tasks; regression fixes.
   Excludes: adding a missing capability someone filed as a "bug" (feature-dev); making newly written tests pass (test-authoring or feature-dev).
 - **feature-dev** — add new user-visible capability.
   Includes: new endpoints, commands, options; extending behaviour to new cases.
-  Excludes: pure restructuring (refactor); UI-only work (frontend-ui).
+  Excludes: pure restructuring (refactor).
 - **refactor** — behaviour-preserving restructuring.
   Includes: renames, module splits, interface reshaping with unchanged behaviour.
   Excludes: any change with intended behaviour difference (bug-fix or feature-dev).
 - **test-authoring** — tests are the primary deliverable.
   Includes: writing missing tests for existing behaviour; hardening flaky tests.
   Excludes: tests written incidentally while implementing a feature (feature-dev).
-- **frontend-ui** — visual interface implementation.
-  Includes: components, layout, styling, implementing a mockup.
-  Excludes: backend API work supporting the UI (feature-dev).
-- **infra-config** — build, CI/CD, deployment, dependencies, configuration.
-  Includes: pipeline fixes, dependency upgrades, Dockerfiles, lint/tooling setup.
-  Excludes: application-code changes those upgrades force (usually refactor).
 - **codebase-comprehension** — answer questions about code without changing it.
-  Includes: explain-this-module, locate-where-X-happens, review-style analysis.
-  Excludes: any task whose deliverable is an edit.
+  Includes: explain-this-module, how-does-X-work.
+  Excludes: any task whose deliverable is an edit; saying where a defect lives (fault-location).
+- **fault-location** — say where a defect lives, without fixing it.
+  Includes: naming the file and symbol a reported failure comes from.
+  Excludes: producing the fix as well (bug-fix).
+- **code-review** — judge a diff someone else wrote.
+  Includes: finding the defects in a change, with their locations.
+  Excludes: applying the corrections (bug-fix or refactor).
+- **investigation** — investigate an open question and propose an answer.
+  Includes: options with trade-offs, a recommendation.
+  Excludes: questions answerable by reading one module (codebase-comprehension).
+- **requirement-decomposition** — break a requirement into workable pieces.
+  Includes: turning an ask into ordered, independently deliverable steps.
+  Excludes: delivering any of the pieces (whatever action that piece is).
+- **performance-optimisation** — make existing behaviour faster or cheaper.
+  Includes: hot-path rewrites, algorithmic replacement, measured against a baseline.
+  Excludes: restructuring with no performance target (refactor).
 - **unclassified** — not yet classified, or genuinely unclassifiable. Never force-fit; count of unclassified instances must stay visible.
+
+Machine-readable, and the one definition the record schema, both task models and the classifier's prompt all read: `ai_benchmark.schema.TaskCategory`. `frontend-ui` and `infra-config` were categories until round 4 and are no longer: they named *where* work happens, so a frontend bug fix had to pick one of two boxes. They are `surface` values now, and a record or task still naming one is refused with the value it became.
 
 ## Task annotations
 
 Orthogonal to category:
 
 - **scale** — `single-file` (edits confined to one file), `cross-file` (edits span files), `unknown`.
+- **surface** — where the work happens, as against what is done: `application`, `frontend`, `infrastructure` (build, CI/CD, deployment, dependencies, configuration), `unknown`. Optional everywhere, defaulting to `unknown`, so no stored record or task needed migrating when it arrived. Not part of any row key: the calibration view keys on category, and a surface is disclosed rather than grouped by.
 - **language** — primary language of the task's repo (lowercase, e.g. `python`, `typescript`), absent when not meaningful.
 
 ## Classification vocabulary

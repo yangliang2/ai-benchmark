@@ -2,11 +2,16 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 
-from ai_benchmark.schema import Record, RecordValidationError, validate_record
+from ai_benchmark.schema import (
+    Record,
+    RecordValidationError,
+    TaskCategory,
+    validate_record,
+)
 
 
 def valid_record_data() -> dict[str, Any]:
@@ -68,6 +73,69 @@ def test_aggregate_record_needs_no_instance_id() -> None:
     record = validate_record(data)
 
     assert record.instance_id is None
+
+
+def test_the_category_vocabulary_is_the_ten_engineering_actions() -> None:
+    """A category names what is done, not what kind of ticket it came from —
+    one task measures exactly one action (CONTEXT.md, design note 34.2)."""
+    assert get_args(TaskCategory) == (
+        "bug-fix",
+        "feature-dev",
+        "refactor",
+        "test-authoring",
+        "codebase-comprehension",
+        "fault-location",
+        "code-review",
+        "investigation",
+        "requirement-decomposition",
+        "performance-optimisation",
+        "unclassified",
+    )
+
+
+def test_every_action_in_the_vocabulary_validates() -> None:
+    for category in get_args(TaskCategory):
+        data = valid_record_data()
+        data["category"] = category
+
+        assert validate_record(data).category == category
+
+
+@pytest.mark.parametrize(
+    ("retired", "surface"),
+    [("frontend-ui", "frontend"), ("infra-config", "infrastructure")],
+)
+def test_retired_category_is_refused_naming_the_annotation_it_moved_to(
+    retired: str, surface: str
+) -> None:
+    """The two members that named *where* work happens left the vocabulary;
+    the error has to say where they went, or a stale row looks like a typo."""
+    data = valid_record_data()
+    data["category"] = retired
+
+    with pytest.raises(RecordValidationError, match=f"surface.*{surface}"):
+        validate_record(data)
+
+
+def test_record_without_surface_reads_unknown() -> None:
+    """No migration: every record written before the annotation existed stays
+    valid and answers `unknown`."""
+    assert validate_record(valid_record_data()).surface == "unknown"
+
+
+def test_surface_annotates_where_the_work_happened() -> None:
+    data = valid_record_data()
+    data["surface"] = "infrastructure"
+
+    assert validate_record(data).surface == "infrastructure"
+
+
+def test_unknown_surface_is_rejected() -> None:
+    data = valid_record_data()
+    data["surface"] = "backend"
+
+    with pytest.raises(RecordValidationError, match="surface"):
+        validate_record(data)
 
 
 def test_unknown_category_is_rejected_with_clear_error() -> None:

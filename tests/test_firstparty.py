@@ -13,6 +13,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+import yaml
 from conftest import FakeClaude
 
 from ai_benchmark.dataset import IngestError
@@ -36,6 +37,18 @@ def test_task_set_is_classified_and_big_enough() -> None:
     assert all(task.category != "unclassified" for task in tasks)
     # More than one taxonomy category is actually exercised.
     assert len({task.category for task in tasks}) >= 3
+
+
+def test_a_task_naming_a_retired_category_fails_loudly(tmp_path: Path) -> None:
+    """The categories that named a surface rather than an action are gone, and
+    the loader has to say where they went."""
+    spec = yaml.safe_load(TASKS.read_text())
+    spec[0]["category"] = "frontend-ui"
+    path = tmp_path / "tasks.yaml"
+    path.write_text(yaml.safe_dump(spec, sort_keys=False))
+
+    with pytest.raises(IngestError, match="surface"):
+        load_tasks(path)
 
 
 def test_replay_produces_first_party_records(firstparty_fixture: Path) -> None:
@@ -79,7 +92,8 @@ def test_task_metadata_lands_on_the_record(firstparty_fixture: Path) -> None:
         r for r in records
         if r.instance_id == "pytest-ci-workflow" and r.model == "claude-sonnet-5"
     ]
-    assert record.category == "infra-config"
+    assert record.category == "feature-dev"
+    assert record.surface == "infrastructure"
     assert record.scale == "single-file"
     assert record.language == "yaml"
     assert record.agent == "claude-code"

@@ -70,7 +70,8 @@
     What does f(4) return? Reply with only the number.
   check: '\A\s*12\s*\Z'
 - id: pytest-ci-workflow
-  category: infra-config
+  category: feature-dev
+  surface: infrastructure
   scale: single-file
   language: yaml
   prompt: |

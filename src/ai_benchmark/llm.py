@@ -26,21 +26,39 @@ LABEL_SCHEMA = {
     "additionalProperties": False,
 }
 
-PROMPT = """Classify this software-engineering benchmark instance into the task taxonomy.
+# One gloss per category, keyed by the vocabulary rather than repeating it:
+# the listing below is built by walking CATEGORIES, so a category added to the
+# schema and left unglossed here fails loudly at import rather than quietly
+# going unoffered to the classifier.
+GLOSSES: dict[TaskCategory, str] = {
+    "bug-fix": "correct existing behaviour that is wrong (SWE-bench-style issue->patch)",
+    "feature-dev": "add new user-visible capability",
+    "refactor": "behaviour-preserving restructuring",
+    "test-authoring": "tests are the primary deliverable",
+    "codebase-comprehension": "answer questions about code without changing it",
+    "fault-location": "say where a defect lives, without fixing it",
+    "code-review": "judge a diff someone else wrote",
+    "investigation": "investigate an open question and propose an answer",
+    "requirement-decomposition": "break a requirement into workable pieces",
+    "performance-optimisation": "make existing behaviour faster or cheaper",
+    "unclassified": (
+        "use this whenever you cannot determine the category with reasonable "
+        "confidence from the information given — never force-fit"
+    ),
+}
 
-Benchmark: {benchmark}
-Instance id: {instance_id}
-{context}
-Categories (pick exactly one, by the primary deliverable of the task):
-- bug-fix: correct existing behaviour that is wrong (SWE-bench-style issue->patch)
-- feature-dev: add new user-visible capability
-- refactor: behaviour-preserving restructuring
-- test-authoring: tests are the primary deliverable
-- frontend-ui: visual interface implementation
-- infra-config: build, CI/CD, deployment, dependencies, configuration
-- codebase-comprehension: answer questions about code without changing it
-- unclassified: use this whenever you cannot determine the category with
-  reasonable confidence from the information given — never force-fit
+CATEGORY_LISTING = "\n".join(
+    f"- {category}: {GLOSSES[category]}" for category in CATEGORIES
+)
+
+PROMPT = f"""Classify this software-engineering benchmark instance into the task taxonomy.
+
+Benchmark: {{benchmark}}
+Instance id: {{instance_id}}
+{{context}}
+Categories (pick exactly one — the engineering action the task asks for; where
+a task chains several actions, its primary deliverable decides):
+{CATEGORY_LISTING}
 
 Also give:
 - scale: "single-file" if edits are confined to one file, "cross-file" if they

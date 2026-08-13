@@ -7,9 +7,12 @@
         "feature-dev",
         "refactor",
         "test-authoring",
-        "frontend-ui",
-        "infra-config",
         "codebase-comprehension",
+        "fault-location",
+        "code-review",
+        "investigation",
+        "requirement-decomposition",
+        "performance-optimisation",
         "unclassified"
       ],
       "title": "Category",
@@ -22,6 +25,17 @@
         "unknown"
       ],
       "title": "Scale",
+      "type": "string"
+    },
+    "surface": {
+      "default": "unknown",
+      "enum": [
+        "application",
+        "frontend",
+        "infrastructure",
+        "unknown"
+      ],
+      "title": "Surface",
       "type": "string"
     },
     "language": {
