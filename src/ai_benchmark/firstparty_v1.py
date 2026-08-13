@@ -47,6 +47,20 @@ underlying change with one knob moving across it. What no task may do is
 declare nothing: a control is declared and never inferred from an absence,
 which is what the frozen set was frozen to protect.
 
+A task whose deliverable is prose rather than a code change is graded through
+that same pipeline and adds no seam to it. A fault-location task asks the agent
+to write a structured answer file into the workdir; it lands in the workdir
+diff like anything else the agent wrote, and a held-out grading test reads it
+back and compares it against the accepted-answer key shipped beside that test
+in `grading/`. So the verdict stays execution-verified rather than
+pattern-verified — the run log still stores the agent's final message and the
+verdict still never reads it — and the ground truth is a set of accepted (file,
+symbol) pairs, never a line number, because lines shift under any edit and two
+equally correct answers land on different ones. The must-fail-on-pristine
+invariant needs no special case for it either: the pristine repository carries
+no answer file, so the grading test fails there exactly as the lint demands of
+every task.
+
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
 so those defences stop an honest-but-messy agent, not a deliberately
@@ -59,6 +73,7 @@ SWE-bench-style eval. Starting repositories are stdlib-only, so grading needs
 no network and no installs.
 """
 
+import ast
 import importlib.util
 import json
 import math
@@ -71,7 +86,7 @@ from collections import Counter
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
-from typing import Literal, Self
+from typing import Any, Literal, Self
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -109,6 +124,12 @@ BENCHMARK = "first-party-v1"
 TASK_SPEC = "task.yaml"
 REPO_DIR = "repo"
 GRADING_DIR = "grading"
+
+# The accepted-answer key of a fault-location task, inside GRADING_DIR: held
+# out with the grading tests, reaching the workdir by the overlay that copies
+# that directory wholesale, and never collected, because collection globs test
+# files only.
+ANSWER_KEY_FILE = "accepted-answer.json"
 
 # The workdir's ignore file belongs to the live runner (which writes and owns
 # it), so the loader refuses tasks that ship one of their own.
@@ -589,6 +610,124 @@ def is_control(task: Task) -> bool:
     return task.control or task.id in BASELINE_TASK_IDS
 
 
+# --- fault-location: the answer file and the accepted-answer key ---------------
+
+# The fields an author reaches for when writing down a line number instead of
+# a symbol. Named so the refusal can say why rather than leaving pydantic to
+# report an unexpected field.
+_LINE_FIELDS = ("line", "lineno", "line_number", "lines", "line_numbers")
+
+
+class AcceptedAnswer(BaseModel):
+    """One location the author accepts as a correct answer: a file, and a
+    symbol that file defines.
+
+    A pair and never a line number. Lines shift under any edit — including the
+    agent's own reading notes — and the several description levels that are
+    legitimately correct start on different ones anyway, so a key written in
+    line numbers grades a correct answer wrong and does it silently.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    file: NonEmptyStr
+    symbol: NonEmptyStr
+
+    @model_validator(mode="before")
+    @classmethod
+    def a_location_is_a_symbol_and_never_a_line(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            named = sorted(field for field in _LINE_FIELDS if field in data)
+            if named:
+                raise ValueError(
+                    f"accepted answer {dict(data)} names a line number "
+                    f"({named}) — an accepted answer is a (file, symbol) pair, "
+                    "because lines shift under any edit and two equally correct "
+                    "answers land on different ones, so a key keyed on one would "
+                    "grade a correct location wrong"
+                )
+        return data
+
+
+class AnswerKey(BaseModel):
+    """A fault-location task's ground truth: where the agent writes its answer,
+    and every location that answer may name.
+
+    The set is the mitigation for this grading's one expensive assumption —
+    that an agent which correctly locates a fault describes it at a level of
+    the tree the author anticipated. The author writes down every level that is
+    legitimately correct (typically the defective function and the class
+    enclosing it) and the grading test accepts any member. That is the author's
+    judgement rather than a mechanism, and it is stated here so it can fail
+    visibly.
+
+    The accepted set may be empty as far as this model is concerned: the lint
+    is where an empty one is refused, because a task that cannot load cannot be
+    linted, and this is exactly the defect the lint exists to name.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    answer_path: NonEmptyStr
+    accepted: tuple[AcceptedAnswer, ...] = ()
+
+
+def answer_key(task: Task) -> AnswerKey:
+    """The accepted-answer key shipped inside this task's grading directory.
+
+    One file read two ways, which is the point: the lint reads it from the task
+    directory, and the grading test reads the very same bytes out of the
+    workdir the overlay copied them into. The declared answer path lives here
+    rather than in the grading test, so nothing can hardcode a path the prompt
+    does not name.
+    """
+    path = task.grading_dir / ANSWER_KEY_FILE
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_KEY_FILE} is missing or unreadable "
+            f"({error}) — a {task.category} task is graded by comparing the answer "
+            "file the agent writes against the accepted-answer key, which ships "
+            "with the held-out grading tests"
+        ) from error
+    except json.JSONDecodeError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_KEY_FILE} is not JSON ({error}) — "
+            "the grading test reads it with the standard library alone"
+        ) from error
+    try:
+        return AnswerKey.model_validate(raw)
+    except ValidationError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_KEY_FILE}: {error}"
+        ) from error
+
+
+def _defined_symbols(source: str) -> set[str]:
+    """Every function and class a module defines, qualified by nesting.
+
+    A method is `Class.method`, which is how an author writes down the two
+    levels a defect in one is legitimately described at — the method, and the
+    class enclosing it.
+    """
+    symbols: set[str] = set()
+    definitions = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+
+    def walk(node: ast.AST, prefix: str) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, definitions):
+                symbols.add(prefix + child.name)
+                walk(child, f"{prefix}{child.name}.")
+            else:
+                # Anything else keeps the prefix: a definition guarded by an
+                # `if` or a `try` at module level is still defined there.
+                walk(child, prefix)
+
+    walk(ast.parse(source), "")
+    return symbols
+
+
 # What a sweep id has to be to work as a round key, said once for the two
 # places that enforce it: the run model, which sees ids read back out of a
 # log, and the live runner, which sees the one its caller passed in.
@@ -737,6 +876,11 @@ def _check_task_layout(task: Task) -> None:
             f"{task.id}: every grading test is a behaviour test, so nothing "
             "asserts that the restructuring happened"
         )
+    if task.category == "fault-location":
+        # The ground truth of a task whose deliverable is prose. Read here so
+        # that a key which is missing, unparseable, or written in line numbers
+        # fails at load rather than at the first paid run.
+        answer_key(task)
 
 
 def _stdlib_collisions(repo_dir: Path) -> list[str]:
@@ -992,6 +1136,7 @@ def lint_task_set(
     )
     for task in tasks:
         problems.extend(construction_problems(task))
+        problems.extend(_answer_key_problems(task))
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
             problems.append(
                 f"{task.id}: the grading tests already pass on the pristine repo — "
@@ -1054,6 +1199,78 @@ def construction_problems(task: Task) -> list[str]:
             "control this task means"
         )]
     return []
+
+
+def _answer_key_problems(task: Task) -> list[str]:
+    """What is wrong with a fault-location task's accepted-answer key.
+
+    Read rather than run, and for the reason every other read invariant is
+    here: none of it is repairable once the sweep is paid for, and each defect
+    makes a task that grades every agent unresolved while looking exactly like
+    a hard one.
+
+    What the set can be checked against is the starting repository the agent is
+    given: the accepted set says something at all; every file it names is in
+    that repository; every symbol it names is defined in the file it names, so
+    a rename or a typo cannot leave a key no correct answer matches; and the
+    prompt names the answer file, so a task cannot be unsolvable because the
+    agent was never told where to write. What no check can reach is whether the
+    author wrote down every description level a correct answer might use —
+    that is the judgement this grading rests on.
+    """
+    if task.category != "fault-location":
+        return []
+    key = answer_key(task)
+    problems = []
+    if not key.accepted:
+        problems.append(
+            f"{task.id}: the accepted-answer key accepts no (file, symbol) pair "
+            "— every answer would be graded wrong, and the task would be "
+            "indistinguishable from one no agent happens to solve"
+        )
+    if key.answer_path not in task.prompt:
+        problems.append(
+            f"{task.id}: the prompt never names the answer file "
+            f"{key.answer_path!r} — the answer file is the whole deliverable, so "
+            "an agent that is not told where to write it cannot solve the task "
+            "however well it locates the fault"
+        )
+    for accepted in key.accepted:
+        source = _repo_file(task, accepted.file)
+        if source is None:
+            problems.append(
+                f"{task.id}: the accepted-answer key names {accepted.file!r}, "
+                "which is not in the starting repository — no agent can answer "
+                "with a file it was never given"
+            )
+            continue
+        try:
+            defined = _defined_symbols(source.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeDecodeError) as error:
+            problems.append(
+                f"{task.id}: the accepted-answer key names {accepted.file!r}, "
+                f"whose definitions cannot be read ({error}) — the key is checked "
+                "against what the file actually defines"
+            )
+            continue
+        if accepted.symbol not in defined:
+            problems.append(
+                f"{task.id}: the accepted-answer key names symbol "
+                f"{accepted.symbol!r}, which {accepted.file} does not define — it "
+                f"defines {sorted(defined)}, and a method is written "
+                "'Class.method'"
+            )
+    return problems
+
+
+def _repo_file(task: Task, name: str) -> Path | None:
+    """The named file inside the starting repository, or None if it is not
+    there — including a name that climbs out of the repository, which is a file
+    the agent was not given as surely as one that does not exist."""
+    if Path(name).is_absolute() or ".." in Path(name).parts:
+        return None
+    candidate = task.repo_dir / name
+    return candidate if candidate.is_file() else None
 
 
 def _family_problems(tasks: list[Task]) -> list[str]:

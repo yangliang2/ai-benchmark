@@ -609,12 +609,17 @@ def test_a_baseline_effort_claim_needs_a_control_in_its_own_category(
     zero-knob baseline of the task's own category needs the set to actually
     hold a control there, or no sweep could ever settle it. A category the
     frozen 22 never reached holds none unless one of its own tasks declares
-    itself a control — checked here with no such declaration in the set."""
-    task_dir = clone_seed(tmp_path, FEATURE_SEED, "fault-location-claimer")
+    itself a control — checked here with no such declaration in the set.
+
+    The category is `code-review` because this fixture is a feature-dev seed
+    with another category written on it: an action with authoring rules of its
+    own — a refactor's behaviour tests, a fault-location's accepted-answer key
+    — would fail to load for a reason that is not the rule under test."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, "code-review-claimer")
     retitle(
         task_dir,
-        id="fault-location-claimer",
-        category="fault-location",
+        id="code-review-claimer",
+        category="code-review",
         construction=a_construction_block(
             prediction=a_prediction(effort={
                 "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
@@ -624,8 +629,8 @@ def test_a_baseline_effort_claim_needs_a_control_in_its_own_category(
 
     [problem] = lint_task_set(load_task_set(tmp_path))
 
-    assert "fault-location-claimer" in problem
-    assert "holds no fault-location baseline control" in problem
+    assert "code-review-claimer" in problem
+    assert "holds no code-review baseline control" in problem
 
 
 def test_a_declared_control_stocks_a_baseline_effort_claim_in_its_category(
@@ -639,16 +644,16 @@ def test_a_declared_control_stocks_a_baseline_effort_claim_in_its_category(
     mutation this guards against is `is_control` narrowed back to `task.id in
     BASELINE_TASK_IDS`, under which this category would stock nothing and the
     claim would be refused."""
-    control_dir = clone_seed(tmp_path, FEATURE_SEED, "fault-location-control")
+    control_dir = clone_seed(tmp_path, FEATURE_SEED, "code-review-control")
     retitle(
-        control_dir, id="fault-location-control", category="fault-location",
+        control_dir, id="code-review-control", category="code-review",
         control=True,
     )
-    claimer_dir = clone_seed(tmp_path, FEATURE_SEED, "fault-location-claimer")
+    claimer_dir = clone_seed(tmp_path, FEATURE_SEED, "code-review-claimer")
     retitle(
         claimer_dir,
-        id="fault-location-claimer",
-        category="fault-location",
+        id="code-review-claimer",
+        category="code-review",
         construction=a_construction_block(
             prediction=a_prediction(effort={
                 "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
