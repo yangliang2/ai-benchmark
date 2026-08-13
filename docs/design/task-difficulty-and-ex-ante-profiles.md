@@ -3350,6 +3350,161 @@ as already answered:
    line. This is 34.5's expensive assumption in one question: too fine a
    resolution marks correct answers wrong, too coarse grades nothing.
 
+## Round 4 grading surface — ruled 2026-08-13
+
+#47 through #50 shipped and are closed. The adversarial review of #49 found
+the mechanism's plumbing sound and its *authoring surface* not, and #50's
+found the limit key's guarantee written wider than it holds. Both findings
+outran what #46 specified, so they came back here. This section is the
+owner's ruling on them, taken in a `/grill-with-docs` session on 2026-08-13.
+It authors no task: one ticket is owed, and it blocks #51–#56.
+
+### 36. What a fault-location verdict has to earn
+
+**36.1 The gate that protects a code task does not protect this one.** #46
+said the must-fail-on-pristine invariant "needs no special case", and that is
+true in the way that matters least: a pristine repository never carries an
+answer file, so the check is unconditionally satisfied and therefore proves
+nothing. Two fixtures demonstrated the cost, both linting clean and passing
+every gate the corpus has. A grading test that never reads the key — `assert
+ANSWER.json.is_file()` — graded a *wrong* answer resolved, and an *empty*
+answer file too. And a task whose repository **contained no defect at all**,
+keyed to a perfectly correct method, passed both must-fail-on-pristine and the
+reference-solution gate. For a code task those two together prove the task is
+real and solvable; for `fault-location` neither does.
+
+Ruling: both holes close, by different means, because they are different
+holes. *Does the grading test discriminate* is answered by **negatives the
+lint runs through the real pipeline**. *Is there a fault here at all* is
+answered by the **paired `bug-fix` member**, whose held-out tests must already
+fail on the shared pristine repository under #51's own acceptance criteria —
+a proof this round gets for nothing.
+
+Rejected: deriving the key's ground truth from the fix's diff. It would tie
+the claimed location to the demonstrated fault mechanically, which is
+attractive, but it makes a fault-location task unlintable on its own, and the
+two members are deliberately not a family or a pair.
+
+**36.2 The pairing is a convention, and says so.** Nothing in the model
+records that the two members belong together — #51 declares them neither a
+family nor a pair, so the lint cannot see the relationship. Round 4 is safe
+by ticket construction: each of #51–#56 authors both members from one
+repository, so the `bug-fix` pristine gate always runs over the shared
+terrain. Ruling: leave it conventional and **write the limit down** — a
+fault-location task authored *alone* has no proof a defect exists in it. The
+first such task is the trigger to revisit, and heap 2's remaining actions
+(`code-review`, locate-style comprehension) are where it will arrive, since
+neither has a paired member to borrow a proof from.
+
+**36.3 The lint invents the negatives it can.** Given the accepted set and
+the file it names, the lint can construct a near-miss with no help from the
+author: take an accepted file, pick any symbol defined there that is *not*
+accepted, write it as the answer, require unresolved. That single check kills
+the blind grading test and the sloppier one that reads the file but not the
+symbol. Ruling: the lint synthesises and requires unresolved for a **missing**
+answer file, an **empty** one, a **malformed** one, and an **accepted file
+with a non-accepted symbol**. The author supplies a `rejected:` set, required
+non-empty, for the near-miss the lint cannot invent — the plausible wrong
+*file*: the caller of the defective function, the module that looks
+responsible. Judgement is spent only where judgement is required.
+
+A consequence worth naming: the synthesised near-miss also forces the accepted
+set to be honest about the file it names. If the synthesised answer is in fact
+a legitimate description of the fault, the lint fails and the author adds it to
+`accepted` — which is the expensive assumption of 34.5 being paid down by a
+mechanism rather than by hope.
+
+**36.4 The comparison is owned, and copied.** #49 shipped the key, the loader
+hook and the lint, and left the comparison — the half that discriminates — as
+a string constant in a test file that six authors would each hand-copy. Ruling:
+ship `grading/_answer.py`, identical in every fault-location task, and have the
+lint read the copies **byte for byte**. This is not a new pattern: the task-set
+lint already holds a family's starting repositories and grading suites
+byte-identical, for the stated reason that self-containedness beats
+deduplication and copies drift silently. The held-out test becomes a one-line
+assertion over it.
+
+Rejected: generating the grading test from the key. It is the stronger
+guarantee and it is new authoring machinery, which is precisely what 34.4 was
+pleased to have avoided.
+
+**36.5 What counts as the same answer.** Measured on #49's fixture, every one
+of `total_with_tax` (the bare method name), `./pricing.py`, `"Basket "` and
+`"Basket.total_with_tax()"` graded unresolved. Over six tasks that is a
+false-negative floor, and it would read as models being bad at locating faults.
+Ruling, now that 36.4 gives it one home: the answer is **exactly one (file,
+symbol) pair and never a list** — breadth must not be rewarded. Surrounding
+whitespace, a leading `./` and a trailing `()` are stripped, and a **bare
+symbol matches the last dotted component** of an accepted one, so
+`total_with_tax` answers `Basket.total_with_tax`. File and symbol stay
+**case-exact**: Python is case-sensitive, and a case-insensitive match on the
+grading side would make a verdict depend on the grader's filesystem — the same
+defect that made a wrong-case *answer path* resolve on macOS and replay
+unresolved on Linux.
+
+**36.6 What can be named.** `_defined_symbols` saw only `def` and `class`, so
+a fault in a module-level constant, a dispatch table or a compiled pattern was
+unkeyable — which would have quietly steered #56, whose defect is a wrong key
+in a lookup. Ruling: **module-level assignment targets count as symbols.**
+
+And the other direction stays shut: #46's prose allows an author to write down
+"the enclosing class **or module**", but an accepted answer naming a file with
+no symbol is refused. On repositories as small as this round's, a bare filename
+is barely a location — it would resolve for an agent that located nothing,
+which is 35's "too coarse grades nothing" arriving by the back door.
+
+**36.7 Held out of the workdir is not held out of the machine.** The key is
+verified absent from the agent's workdir — the run-time copy takes `repo/`
+only and the overlay lands at grade time. It is also a plaintext file on the
+same filesystem, and this project runs its agents under
+`--permission-mode bypassPermissions`; §29 already records a sweep aborted
+because a model read outside its workdir. The exposure is not new — every v1
+task's held-out tests are equally readable — but the payoff is: for a code task
+reading the tests still leaves the work, and here the key *is* the entire
+deliverable, obtainable for nothing and leaving no trace, since the log stores
+only the final message and the diff.
+
+Ruling: **accept and disclose.** Hashing the accepted pairs was considered and
+rejected as theatre — the (file, symbol) space of a small hand-authored
+repository is enumerable, and the salt would ship with the key, so an agent
+that reads the file can hash its way back to the answer. The only real fix is
+running the agent where the checkout is unreachable, which belongs to the
+runner and to every v1 task rather than to this round. So the glossary and this
+section record what the word "held out" covers, and a fault-location verdict
+carries the stated assumption that the agent did not read the key off disk.
+
+**36.8 Round 4 registers no run-time limit tier.** §34.6 promoted per-tier
+limits to a requirement on the grounds that "fault-location tasks *on real
+repositories* read widely before answering". #46 then built this round on
+hand-authored stdlib-only repositories — and deferred the same-substrate
+control for exactly that premise failure, without noticing it applies here too.
+It does. The stated case for tiering `fault-location` is about terrain this
+round does not use.
+
+The second reason is stronger. #50's key is the task's category, justified by
+the lint holding category constant across a family and a pair — which it does,
+and which does not cover the contrast this round exists to read: #51 declares
+the locate and fix members neither a family nor a pair, precisely because they
+vary no knob and *differ in category*. Tiering `fault-location` apart from
+`bug-fix` would run the two sides of the round's headline comparison under
+different ceilings. The obvious "free" move — register `fault-location` now,
+since no such task exists yet, so no cell moves — is the one move that
+confounds the reading the round is being swept to produce.
+
+Ruling: `LIVE_RUN_LIMITS_S` stays **empty for round 4, by decision and not by
+omission**, and the sweep protocol's step reads met rather than unmet. Round
+4's own runs are the evidence for whether a tier is ever needed.
+
+**36.9 The limit is narrated, not stamped, and that is enough for now.** A CLI
+version change is recorded twice — stamped on every run row and narrated here.
+The limit in force is narrated only: `Run` carries no limit field, so the log
+cannot say which ceiling a row ran under. Every row in every round so far ran
+at the flat 600 and round 4 will too, so this section determines it for any row
+in the log. Ruling: **defer, with the trigger written down** — when the first
+tier is registered, one sweep's rows will run under different ceilings and the
+narration stops determining anything. Stamp the limit on the row at that point,
+the way the sweep id was added.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
