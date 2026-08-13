@@ -339,6 +339,12 @@ def test_calibrate_v1_tabulates_the_checked_in_corpus(
         assert "baseline mean cost" in line
         for model in reconcile_v1.LADDER_MODELS:
             ran = [task for task in members if model in costs.get(task.id, {})]
+            if not ran:
+                # A category whose controls no sweep has reached yet: there is
+                # no mean to divide by, and the line says so with the n it was
+                # taken over rather than printing a number nothing measured.
+                assert f"{model} - (n=0)" in line, f"{category}: {model} unswept"
+                continue
             mean = sum(costs[task.id][model] for task in ran) / len(ran)
             assert f"{model} ${mean:.4f} (n={len(ran)})" in line
 

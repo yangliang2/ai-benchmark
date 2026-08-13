@@ -1,0 +1,45 @@
+# fault-location, and the "say where it is" half of round 4's first planted
+# defect. Same starting repository as noticeboard-show-every-notice, byte for
+# byte, and the same one defect: Paginator.page_count in paging.py floors
+# where it should round up, so a partial last page is not a page at all. Same
+# symptom in the prompt, too — both members do the same detective work and
+# only the deliverable differs, which is what makes "what does locating cost,
+# as against fixing?" a reading of two actions rather than of two
+# repositories.
+#
+# The accepted-answer key writes down both description levels that are
+# legitimately correct for this defect: the method the arithmetic is in, and
+# the class enclosing it. Naming the module alone is not one of them — on a
+# repository this small a bare filename is barely a location. The rejected
+# near-misses are the ones no lint can invent: noticeboard.py is where the
+# wrong count is displayed and where the board size is set, so it is the
+# module that looks responsible while being correct.
+#
+# What proves there is a defect here at all is the paired bug-fix member's
+# held-out tests failing on this same pristine repository (design note 36.2).
+# That pairing is a convention rather than a checked relation, which is why
+# the two are authored together.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: noticeboard-locate-the-lost-notice
+category: fault-location
+scale: single-file
+language: python
+control: true
+prompt: |
+  The village noticeboard is losing notices. With nine notices posted and four
+  to a board, it shows two boards of four: the oldest notice is on neither of
+  them, and asking for a third board raises IndexError instead of showing it.
+  With eight notices posted the same board shows all eight, so it only goes
+  wrong for some numbers of notices.
+
+  Say where that defect lives. Do not fix it and do not change any behaviour:
+  the deliverable is the location, not a repair.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the defect is in
+  relative to the repository root, and "symbol", the function, class or method
+  it lives in (a method written as Class.method).

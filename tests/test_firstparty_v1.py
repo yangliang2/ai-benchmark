@@ -315,9 +315,15 @@ def test_bytecode_left_in_a_solution_tree_never_reaches_the_diff(
 
 
 def test_task_set_loads_one_classified_task_per_seed_category() -> None:
+    """Pinned as an exact set rather than a subset: which actions the corpus
+    covers is the thing round 4 is moving, and a category arriving by accident
+    — a typo that happens to name a real one — would be a task filed in a
+    capability-matrix cell nobody built it for."""
     tasks = load_task_set(TASKS)
 
-    assert {task.category for task in tasks} == {"feature-dev", "refactor"}
+    assert {task.category for task in tasks} == {
+        "feature-dev", "refactor", "bug-fix", "fault-location",
+    }
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:
         assert task.category != "unclassified"
