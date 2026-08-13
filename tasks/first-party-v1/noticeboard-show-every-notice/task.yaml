@@ -9,6 +9,13 @@
 # stays invisible, and a visible test reproducing the symptom would hand the
 # agent the answer and delete the action being measured.
 #
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that: the same floor division, spelled the same way, is correct in
+# Noticeboard.full_boards, and the contract a partial last board is owed is
+# stated in paging.py's module docstring and in the README rather than beside
+# the line that breaks it.
+#
 # The held-out tests fail on the pristine repository, as the lint requires,
 # and that failure is also what proves there is a defect for the
 # fault-location member built on this same repository to find: that pairing is

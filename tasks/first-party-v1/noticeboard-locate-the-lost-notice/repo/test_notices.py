@@ -21,5 +21,9 @@ def test_ordering_leaves_the_notices_it_was_given_alone():
     assert given == [JUMBLE, CHOIR]
 
 
+def test_the_same_notice_posted_twice_is_one_notice():
+    assert {JUMBLE, CHOIR, Notice("jumble sale", date(2026, 5, 2))} == {JUMBLE, CHOIR}
+
+
 def test_a_notice_says_what_it_is():
     assert repr(JUMBLE) == "Notice('jumble sale', datetime.date(2026, 5, 2))"

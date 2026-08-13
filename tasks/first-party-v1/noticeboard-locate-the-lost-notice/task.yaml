@@ -10,10 +10,22 @@
 # The accepted-answer key writes down both description levels that are
 # legitimately correct for this defect: the method the arithmetic is in, and
 # the class enclosing it. Naming the module alone is not one of them — on a
-# repository this small a bare filename is barely a location. The rejected
-# near-misses are the ones no lint can invent: noticeboard.py is where the
-# wrong count is displayed and where the board size is set, so it is the
-# module that looks responsible while being correct.
+# repository this small a bare filename is barely a location — and the class
+# level says strictly less than the module here, because paging.py holds the
+# page arithmetic (FIRST_PAGE, page_of, bounds) beside Paginator rather than
+# Paginator alone.
+#
+# The terrain is what makes locating this work rather than a grep. The same
+# floor division, spelled the same way, is correct in Noticeboard.full_boards,
+# so the defect's shape names two sites and not one; the contract a partial
+# last board is owed is stated in paging.py's module docstring and in the
+# README, both a file's length away from the line that breaks it; and the
+# prompt's own "the oldest notice is on neither of them" points first at the
+# order the notices are read in. The rejected near-misses are the ones no lint
+# can invent: notices.py/newest_first is where that ordering lives, and
+# noticeboard.py is where the wrong count is displayed and where the same
+# arithmetic is correct — the two modules that look responsible while being
+# right.
 #
 # What proves there is a defect here at all is the paired bug-fix member's
 # held-out tests failing on this same pristine repository (design note 36.2).
@@ -35,6 +47,13 @@ prompt: |
   them, and asking for a third board raises IndexError instead of showing it.
   With eight notices posted the same board shows all eight, so it only goes
   wrong for some numbers of notices.
+
+  What the boards are meant to do is show every notice that was posted: they
+  fill up in order with at most as many notices as the board is set to hold,
+  and the last board carries however few are left over. Nothing else about
+  them is meant to be any different — the order the notices are shown in, the
+  notices on a board that is full, and the refusal of a board number nobody
+  posted enough notices to fill.
 
   Say where that defect lives. Do not fix it and do not change any behaviour:
   the deliverable is the location, not a repair.

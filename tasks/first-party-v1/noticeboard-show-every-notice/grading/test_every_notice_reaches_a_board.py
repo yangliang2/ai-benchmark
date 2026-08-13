@@ -55,3 +55,16 @@ def test_the_oldest_notice_reaches_a_board():
 
 def test_a_board_says_which_of_how_many_it_is():
     assert Noticeboard(POSTED).display(3) == ["- notice 1", "Board 3 of 3"]
+
+
+def test_a_board_is_only_full_when_it_is_pinned_to_the_top():
+    """The neighbouring arithmetic, which is the same floor division spelled
+    the same way and is right: nine notices four to a board fill two boards
+    and start a third, so two of them are full."""
+    assert Noticeboard(POSTED).full_boards() == 2
+
+
+def test_the_place_a_notice_holds_still_says_which_board_it_is_on():
+    """Also already right, and it stays right: the oldest of nine notices is
+    the ninth in display order, which is on the third board."""
+    assert Noticeboard(POSTED).board_of(9) == 3

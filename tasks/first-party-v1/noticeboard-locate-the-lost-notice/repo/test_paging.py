@@ -1,5 +1,19 @@
 import pytest
-from paging import Paginator
+from paging import FIRST_PAGE, Paginator, bounds, page_of
+
+
+def test_the_first_items_share_the_first_page():
+    assert page_of(0, 3) == FIRST_PAGE
+    assert page_of(2, 3) == FIRST_PAGE
+
+
+def test_the_item_after_a_full_page_starts_the_next_one():
+    assert page_of(3, 3) == 2
+
+
+def test_a_page_is_cut_where_the_page_before_it_stopped():
+    assert bounds(1, 3) == (0, 3)
+    assert bounds(2, 3) == (3, 6)
 
 
 def test_a_run_of_items_splits_into_full_pages():

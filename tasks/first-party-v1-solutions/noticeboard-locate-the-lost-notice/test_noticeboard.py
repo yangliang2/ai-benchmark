@@ -1,5 +1,6 @@
 from datetime import date
 
+import pytest
 from noticeboard import Noticeboard
 from notices import Notice
 
@@ -48,3 +49,20 @@ def test_a_displayed_board_ends_with_where_it_stands():
 
 def test_a_smaller_board_takes_fewer_notices():
     assert Noticeboard(POSTED, per_board=2).board_count() == 4
+
+
+def test_the_boards_pinned_right_up_to_the_top_are_counted():
+    assert Noticeboard(POSTED).full_boards() == 2
+    assert Noticeboard(POSTED, per_board=2).full_boards() == 4
+
+
+def test_a_notice_knows_which_board_it_is_pinned_to():
+    board = Noticeboard(POSTED)
+    assert board.board_of(1) == 1
+    assert board.board_of(4) == 1
+    assert board.board_of(5) == 2
+
+
+def test_asking_after_a_notice_nobody_posted_raises():
+    with pytest.raises(IndexError):
+        Noticeboard(POSTED).board_of(9)

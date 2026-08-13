@@ -5,7 +5,8 @@
     {"file": "paging.py", "symbol": "Paginator"}
   ],
   "rejected": [
+    {"file": "notices.py", "symbol": "newest_first"},
     {"file": "noticeboard.py", "symbol": "Noticeboard.board_count"},
-    {"file": "noticeboard.py", "symbol": "NOTICES_PER_BOARD"}
+    {"file": "noticeboard.py", "symbol": "Noticeboard.full_boards"}
   ]
 }
