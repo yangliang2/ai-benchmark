@@ -34,7 +34,6 @@ from typing import Literal
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty_v1 import (
-    BASELINE_TASK_IDS,
     BENCHMARK,
     GRADE_TIMEOUT_S,
     KNOB_LEVELS,
@@ -46,6 +45,7 @@ from ai_benchmark.firstparty_v1 import (
     Task,
     construction_problems,
     evaluate,
+    is_control,
     load_runs,
 )
 
@@ -355,8 +355,16 @@ def constructed(outcomes: Iterable[Outcome]) -> list[Outcome]:
     return [outcome for outcome in outcomes if outcome.construction is not None]
 
 
-def baseline(outcomes: Iterable[Outcome]) -> list[Outcome]:
-    return [outcome for outcome in outcomes if outcome.task.id in BASELINE_TASK_IDS]
+def control_group(outcomes: Iterable[Outcome]) -> list[Outcome]:
+    """Every outcome of a task that claims nothing about difficulty: the
+    frozen zero-knob baseline, and every task declaring itself a control.
+
+    The population every denominator here is drawn from, and never read whole:
+    a control prices its own category and no other, so both readings that take
+    it — the baseline effort comparator and the calibration view's cost
+    baseline — filter this by the category they are pricing.
+    """
+    return [outcome for outcome in outcomes if is_control(outcome.task)]
 
 
 def by_knob_level(outcomes: Iterable[Outcome]) -> dict[tuple[str, str], list[Outcome]]:
@@ -679,7 +687,7 @@ def effort_assessments(outcomes: Sequence[Outcome]) -> list[Assessment]:
     Tasks in id order and models in ladder order, so the section this feeds
     is byte-identical run to run however the outcomes were collected.
     """
-    controls = baseline(outcomes)
+    controls = control_group(outcomes)
     partners = _pair_partners(outcomes)
     assessments: list[Assessment] = []
     for outcome in sorted(outcomes, key=lambda outcome: outcome.task.id):
@@ -912,7 +920,7 @@ def corpus_header(
         f"{reading}: {BENCHMARK}",
         (
             f"  task set   {tasks_root} — {len(outcomes)} task(s): "
-            f"{len(baseline(outcomes))} zero-knob baseline, "
+            f"{len(control_group(outcomes))} control(s), "
             f"{len(constructed(outcomes))} constructed"
         ),
     ]
@@ -1043,7 +1051,7 @@ def _knob_grouping(outcomes: Sequence[Outcome]) -> list[str]:
     if not groups:
         return [*lines, "   (no constructed task in the task set)"]
 
-    controls = baseline(outcomes)
+    controls = control_group(outcomes)
     header = ("level", "category", "tasks", "swept", *LADDER_MODELS, "observed rungs")
     for knob in sorted({knob for knob, _ in groups}, key=knob_order):
         levels = sorted(
@@ -1528,7 +1536,7 @@ def _separation(knob: str, outcomes: Sequence[Outcome], round: Round) -> str:
     if len(levels) == 1:
         categories = {member.task.category for member in groups[levels[0]]}
         controls = [
-            control for control in baseline(outcomes)
+            control for control in control_group(outcomes)
             if control.task.category in categories and control.determined
         ]
         if not controls:

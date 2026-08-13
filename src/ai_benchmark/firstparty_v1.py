@@ -41,8 +41,11 @@ the sweep is paid for — a prediction registered after the outcome is not a
 prediction, and a task family whose variants differ in more than the one knob
 they vary explains nothing. So the loader validates each task's block, and the
 lint checks what only the set as a whole can show: that every task outside the
-frozen baseline declares one, that no baseline control quietly acquires one,
-and that each family is one underlying change with one knob moving across it.
+frozen baseline declares either a construction or itself a control, that no
+baseline control quietly acquires a construction, and that each family is one
+underlying change with one knob moving across it. What no task may do is
+declare nothing: a control is declared and never inferred from an absence,
+which is what the frozen set was frozen to protect.
 
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
@@ -361,7 +364,8 @@ class Construction(BaseModel):
     belongs to, which task it is paired with, what its author predicted, and —
     for a vendored starting repository — where that repository came from.
 
-    A task with no construction block at all is a zero-knob baseline control.
+    A task with no construction block at all is a control: one of the frozen
+    22, or a task declaring itself one.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -385,9 +389,10 @@ class Construction(BaseModel):
     def each_knob_set_once_and_at_least_one(self) -> Self:
         if not self.knobs:
             raise ValueError(
-                "a construction block sets at least one knob — a task that sets "
-                "none is a zero-knob baseline control, which is expressed by "
-                "carrying no construction block at all"
+                "a construction block sets at least one knob — a task that "
+                "sets none claims nothing about difficulty, which is what a "
+                "control is, and a control is declared by `control: true` and "
+                "no construction block rather than by an empty one"
             )
         repeated = sorted(
             knob_id
@@ -478,6 +483,14 @@ class Task(BaseModel):
     prompt: NonEmptyStr
     grading: Grading = Grading()
     construction: Construction | None = None
+    # Whether this task declares itself a control: authored to fill a
+    # category, claiming nothing about difficulty, so it sets no knob and
+    # registers no prediction. Said outright rather than by leaving the
+    # construction block out, because an absent block is what makes the frozen
+    # 22 controls and that meaning is not available to a task outside the set:
+    # a control created by omission is indistinguishable from an author who
+    # forgot to declare one, and the sweep would price both as controls.
+    control: bool = False
     directory: Path
 
     @property
@@ -524,6 +537,47 @@ class Task(BaseModel):
                 "them from the must-fail-on-pristine invariant"
             )
         return self
+
+    @model_validator(mode="after")
+    def a_control_is_the_absence_of_a_difficulty_claim(self) -> Self:
+        """A task declares exactly one of the two, and this is the half one
+        task.yaml can show on its own: a control that also sets knobs.
+
+        The two declarations are opposites. Knob activations and the
+        prediction they hang on are a claim that this task's difficulty comes
+        from named causes; a control claims nothing at all. A task making both
+        is read as a control by the denominator and as a knob-experiment task
+        by everything that groups by level, so it would be counted on both
+        sides of its own comparison.
+        """
+        if self.control and self.construction is not None:
+            raise ValueError(
+                "declares itself a control and sets knob(s) "
+                f"{sorted(self.construction.levels)} — a control claims nothing "
+                "about difficulty and knob activations are exactly that claim, "
+                "so a task declares one or the other. Drop the construction "
+                "block, or drop the control declaration"
+            )
+        return self
+
+
+def is_control(task: Task) -> bool:
+    """Whether this task makes no claim about difficulty and is read as a
+    control: one of the frozen 22, or a task that declares itself one.
+
+    The two say it differently and mean the same thing, and the difference is
+    which of them the corpus can still add to. The frozen set says it by
+    carrying no construction block, which is why it has to be frozen — that
+    meaning is one an unfinished task.yaml would acquire by accident. Every
+    task outside it says it outright.
+
+    One implementation for the whole project, because a control is what every
+    denominator is drawn from: the calibration view's per-category cost
+    baseline and reconciliation's baseline effort comparator both read this,
+    and two copies of it could disagree about which tasks are controls while
+    each stayed consistent with itself.
+    """
+    return task.control or task.id in BASELINE_TASK_IDS
 
 
 # What a sweep id has to be to work as a round key, said once for the two
@@ -945,13 +999,19 @@ def lint_task_set(
 
 
 def construction_problems(task: Task) -> list[str]:
-    """What is wrong with this task's declaration of how it was built.
+    """What is wrong with this task's declaration of what it is.
 
-    The rule runs both ways, because the two states mean opposite things and
-    each is expressed by the presence or absence of the same block: a task
-    outside the frozen baseline must declare its construction, and a baseline
-    task must not, or reconciliation can read it as neither control nor
-    knob-experiment task.
+    Every task says exactly one of two things: how it was built, or that it is
+    a control. The rule runs both ways for the frozen baseline, because there
+    the two are expressed by the presence and the absence of the same block —
+    a task outside the frozen set must declare something, and a baseline task
+    must not declare a construction, or reconciliation can read it as neither
+    control nor knob-experiment task.
+
+    What is deliberately not a third state is silence. A task saying nothing
+    would be a control by omission, which is the one thing the frozen set was
+    frozen to prevent: nothing distinguishes it from a task whose author had
+    not finished declaring it, and the sweep prices both as controls.
 
     Public because reconciliation checks it too, before reading a task set as
     controls and predictions. One invariant, one implementation: two copies of
@@ -959,12 +1019,14 @@ def construction_problems(task: Task) -> list[str]:
     """
     declared = task.construction is not None
     baseline = task.id in BASELINE_TASK_IDS
-    if not declared and not baseline:
+    if not declared and not baseline and not task.control:
         return [(
-            f"{task.id}: no construction block — a task authored after the "
-            "zero-knob baseline declares which difficulty knob(s) it sets and "
-            "its pre-registered difficulty prediction, because absence of the "
-            "block already means baseline control"
+            f"{task.id}: declares neither a construction block nor itself a "
+            "control — a control is declared and never inferred from an "
+            "absence, because a task that declares nothing is indistinguishable "
+            "from one whose author has not said yet what it sets, and a sweep "
+            "would read both as controls. Declare the difficulty knob(s) it "
+            "sets and its pre-registered prediction, or declare it a control"
         )]
     if declared and baseline:
         return [(
@@ -1062,7 +1124,7 @@ def _effort_claim_problems(tasks: list[Task]) -> list[str]:
     thing pre-registration is supposed to rule out, and it costs nothing to
     catch before the sweep is paid for.
     """
-    stocked = {task.category for task in tasks if task.id in BASELINE_TASK_IDS}
+    stocked = {task.category for task in tasks if is_control(task)}
     problems = []
     for task in tasks:
         if task.construction is None:

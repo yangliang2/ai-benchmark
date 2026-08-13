@@ -61,6 +61,7 @@ def write_task(
     category: str = "feature-dev",
     scale: str = "single-file",
     substrate: bool = False,
+    control: bool = False,
     knobs: dict[str, str] | None = None,
 ) -> None:
     """One fixture task directory: a zero-knob control when `knobs` is None, a
@@ -69,6 +70,10 @@ def write_task(
     `scale` and `substrate` are what the mix disclosure is read off, and they
     are the two annotations the row key does not carry — so a fixture sets
     them to build a cell whose composition differs from its denominator's.
+
+    `control` is the other way to be a control: written under an id of the
+    fixture's own choosing rather than borrowed from the frozen set, which is
+    what a task authored to fill a category does.
     """
     directory = root / task_id
     (directory / "repo").mkdir(parents=True)
@@ -82,6 +87,8 @@ def write_task(
         "language": "python",
         "prompt": f"make answer() return 42 ({task_id})",
     }
+    if control:
+        spec["control"] = True
     if knobs is not None:
         spec["construction"] = {
             "knobs": [{"id": knob, "level": level} for knob, level in knobs.items()],
@@ -422,6 +429,75 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
     # this table goes on dividing both cells by the hand-authored eleven.
     assert disclosed["K7=dense"] == "4 single-file; 4 vendored"
     assert disclosed["K7=calm"] == "2 single-file; 2 vendored"
+
+
+# What the table published over the checked-in corpus after round 3, per
+# category and profile: the two multiplier columns and the denominator each
+# was divided by. Pinned rather than derived, which is the opposite of what
+# the demo tests above do and is the point of this one — a derived expectation
+# follows the corpus wherever it goes, and these numbers are quoted in the
+# design note's section 31 and read by whoever is deciding what a round cost.
+# A round that adds feature-dev or refactor tasks moves them and updates this
+# table in the same commit; anything else that moves them is the defect this
+# watches for.
+_PUBLISHED = {
+    "feature-dev": {
+        "(zero-knob)": ("1.00x (n=11)", "1.00x (n=11)"),
+        "K1=acceptance": ("2.06x (n=6)", "1.79x (n=6)"),
+        "K1=description": ("0.85x (n=4)", "0.96x (n=4)"),
+        "K1=intent": ("0.94x (n=4)", "1.02x (n=4)"),
+        "K4=narrow": ("2.37x (n=1)", "1.54x (n=1)"),
+        "K4=wide": ("3.10x (n=1)", "2.28x (n=1)"),
+        "K7=calm": ("2.18x (n=2)", "1.95x (n=2)"),
+        "K7=dense": ("3.80x (n=4)", "2.42x (n=4)"),
+        "K9=none": ("0.74x (n=9)", "0.91x (n=9)"),
+        "K9=single": ("1.10x (n=9)", "1.29x (n=9)"),
+        "K10=narrow": ("3.14x (n=1)", "1.45x (n=1)"),
+        "K10=wide": ("6.40x (n=1)", "7.93x (n=1)"),
+        "K11=far": ("0.88x (n=4)", "0.75x (n=4)"),
+        "K1=acceptance,K12=criterion": ("1.19x (n=3)", "0.67x (n=3)"),
+        "K1=acceptance,K12=repo-primitive": ("0.81x (n=3)", "0.68x (n=3)"),
+        "K1=acceptance,K12=unmentioned": ("0.94x (n=3)", "0.70x (n=3)"),
+        "K1=acceptance,K12=prose": ("0.99x (n=3)", "0.71x (n=3)"),
+        "K1=intent,K7=dense,K9=single": ("6.84x (n=2)", "3.73x (n=1)"),
+    },
+    "refactor": {
+        "(zero-knob)": ("1.00x (n=11)", "1.00x (n=11)"),
+        "K8=misleading": ("1.11x (n=7)", "1.19x (n=7)"),
+    },
+}
+
+_PUBLISHED_DENOMINATORS = {
+    "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
+    "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
+}
+
+
+def test_calibrate_v1_publishes_the_multipliers_round_3_published(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The published table, pinned.
+
+    A multiplier is divided by its own category's controls, so anything that
+    changes which tasks are read as controls changes every number in that
+    category's column — quietly, because the arithmetic stays consistent with
+    itself. The two categories the corpus holds are the two whose numbers are
+    already published and being read, so this is where a change in the notion
+    of a control would have to show up first.
+    """
+    main(checked_in_argv())
+    out = capsys.readouterr().out
+
+    for category, published in _PUBLISHED.items():
+        assert baseline_line(out, category, "baseline mean cost") == (
+            _PUBLISHED_DENOMINATORS[category]
+        )
+        assert profiles(out, category) == list(published), f"{category}: rows"
+        for profile, (haiku, sonnet) in published.items():
+            row = cells(out, category, profile)
+            assert (row[_HAIKU], row[_SONNET]) == (haiku, sonnet), (
+                f"{category} {profile}: multipliers"
+            )
 
 
 def test_calibrate_v1_defaults_to_the_checked_in_task_set_and_run_logs(
@@ -905,9 +981,49 @@ def test_calibrate_v1_will_not_pool_a_denominator_across_categories(
     assert (unpriced[_HAIKU], unpriced[_SONNET]) == ("-", "-")
     assert unpriced["rung floor"] == "unsolved (n=1)"
     assert (
-        f"feature-dev has no zero-knob baseline control with a {_HAIKU} run"
+        f"feature-dev has no zero-knob control with a {_HAIKU} run"
     ) in empty_cells(out)
     assert cells(out, "bug-fix", "(zero-knob)")[_HAIKU] == "1.00x (n=1)"
+
+
+def test_calibrate_v1_prices_a_category_off_the_controls_it_declares(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A declared control is a control of its own category and of no other.
+
+    It is what a category the frozen baseline never reached is priced off:
+    without it such a category has no denominator at all and every cell in it
+    prints empty. And the pooling refusal is the same rule read the other way
+    — each category divides by its own controls whatever the corpus grows
+    beside it, which is why both K9=single rows read 3.00x, where a
+    denominator pooling the two categories' controls would have printed 1.50x
+    for feature-dev and 4.50x for fault-location.
+    """
+    tasks = tmp_path / "tasks"
+    write_task(tasks, _CONTROL)
+    write_task(tasks, "feature-crux", knobs={"K9": "single"})
+    write_task(tasks, "located-control", category="fault-location", control=True)
+    write_task(tasks, "located-crux", category="fault-location", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "runs.jsonl"
+    write_log(log, loaded, {}, cost={
+        _CONTROL: {_HAIKU: 0.10},
+        "feature-crux": {_HAIKU: 0.30},
+        "located-control": {_HAIKU: 0.30},
+        "located-crux": {_HAIKU: 0.90},
+    })
+
+    out = calibrate(tasks, log, capsys)
+
+    assert baseline_line(out, "fault-location", "baseline mean cost").startswith(
+        f"{_HAIKU} $0.3000 (n=1)"
+    )
+    assert cells(out, "fault-location", "(zero-knob)")[_HAIKU] == "1.00x (n=1)"
+    assert cells(out, "fault-location", "K9=single")[_HAIKU] == "3.00x (n=1)"
+    assert baseline_line(out, "feature-dev", "baseline mean cost").startswith(
+        f"{_HAIKU} $0.1000 (n=1)"
+    )
+    assert cells(out, "feature-dev", "K9=single")[_HAIKU] == "3.00x (n=1)"
 
 
 def test_calibrate_v1_will_not_divide_by_a_baseline_that_measured_zero(

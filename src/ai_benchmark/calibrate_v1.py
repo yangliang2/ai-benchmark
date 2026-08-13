@@ -12,8 +12,9 @@ of the project the selection tool can consume.
 knob-activation profile: the set of knobs a task declares and the levels it
 sets them to, sorted by knob number so that two tasks activating the same
 knobs are one cell however their task.yaml happened to order them. The tasks
-carrying no construction block at all are the zero-knob profile, and that row
-is the denominator every other row in its category is divided by.
+carrying no construction block at all are the zero-knob profile — the frozen
+zero-knob baseline, and every task that declares itself a control — and that
+row is the denominator every other row in its category is divided by.
 
 **What a cell says.** Per model on the ladder, a cost multiplier: the mean
 cost of this cell's tasks that ran the model, over the mean cost of the same
@@ -81,7 +82,7 @@ from ai_benchmark.reconcile_v1 import (
     RUNGS,
     Observed,
     Outcome,
-    baseline,
+    control_group,
     corpus_header,
     knob_order,
     level_order,
@@ -300,7 +301,7 @@ def denominator(controls: Sequence[Outcome], category: str, model: str) -> Denom
     ]
     if not ran:
         return Denominator(None, 0, (
-            f"{category} has no zero-knob baseline control with a {model} run"
+            f"{category} has no zero-knob control with a {model} run"
         ))
     mean = sum(control.effort[model].cost_usd for control in ran) / len(ran)
     if not mean:
@@ -316,7 +317,7 @@ def denominator(controls: Sequence[Outcome], category: str, model: str) -> Denom
 
 def denominators(outcomes: Sequence[Outcome]) -> dict[tuple[str, str], Denominator]:
     """One denominator per category per model, over the zero-knob controls."""
-    controls = baseline(outcomes)
+    controls = control_group(outcomes)
     return {
         (category, model): denominator(controls, category, model)
         for category in sorted({outcome.task.category for outcome in outcomes})
@@ -450,7 +451,7 @@ def control_mixes(outcomes: Sequence[Outcome]) -> dict[str, Composition]:
     different statements on the page.
     """
     grouped: dict[str, list[Outcome]] = {}
-    for control in baseline(outcomes):
+    for control in control_group(outcomes):
         grouped.setdefault(control.task.category, []).append(control)
     return {category: composition(members) for category, members in grouped.items()}
 
@@ -492,10 +493,10 @@ REFUSALS = (
 
 _READINGS = (
     "cost multiplier, per model: the mean cost of this cell's tasks that ran "
-    "the model, over the mean cost of the same category's zero-knob baseline "
-    "controls that ran it. Every logged run counts, resolved or not — a run "
-    "that failed still spent its dollars — and n is the tasks the numerator "
-    "was meant over. The zero-knob row is the denominator, so it reads 1.00x "
+    "the model, over the mean cost of the same category's zero-knob controls "
+    "that ran it. Every logged run counts, resolved or not — a run that "
+    "failed still spent its dollars — and n is the tasks the numerator was "
+    "meant over. The zero-knob row is the denominator, so it reads 1.00x "
     "by construction and carries the n every multiplier in its table was "
     "divided by."
 )

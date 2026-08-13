@@ -249,7 +249,7 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
     missing from section 1, is what this is watching for."""
     tasks, swept_models = checked_in_tasks_and_models()
     constructed = [task for task in tasks if task.construction is not None]
-    baseline = [task for task in tasks if task.construction is None]
+    controls = [task for task in tasks if task.construction is None]
     swept = [task for task in constructed if task.id in swept_models]
     unswept = [task for task in constructed if task.id not in swept_models]
     # A rung names the weakest model that resolved a task, so only a task the
@@ -269,7 +269,7 @@ def test_reconcile_v1_reports_the_checked_in_sweeps(
 
     # The header's census and section 1's agree, and both agree with the disk.
     assert (
-        f"{len(tasks)} task(s): {len(baseline)} zero-knob baseline, "
+        f"{len(tasks)} task(s): {len(controls)} control(s), "
         f"{len(constructed)} constructed"
     ) in out
     assert (

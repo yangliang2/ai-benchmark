@@ -538,11 +538,48 @@ def test_a_task_records_the_knobs_it_sets_and_its_difficulty_prediction(
 def test_the_baseline_tasks_declare_no_construction() -> None:
     """Absence of the block is what makes the 22 pre-experiment tasks
     zero-knob baseline controls; reconciliation reads them that way, so
-    nothing may quietly give one of them a knob."""
+    nothing may quietly give one of them a knob.
+
+    Nor does one of them say it a second way: a declared control is how a task
+    *outside* the frozen set says it makes no difficulty claim, and a frozen
+    task that also carried the flag would be declaring in one place what the
+    frozen set declares in another."""
     baseline = [t for t in load_task_set(TASKS) if t.id in BASELINE_TASK_IDS]
 
     assert len(baseline) == len(BASELINE_TASK_IDS)
     assert all(task.construction is None for task in baseline)
+    assert not any(task.control for task in baseline)
+
+
+def test_a_task_can_declare_itself_a_control(tmp_path: Path) -> None:
+    """A coverage task: authored to fill a category, betting nothing.
+
+    It sets no knob and registers no prediction, which the construction rule
+    on its own can only express by leaving the block out — and an absent block
+    is what makes the frozen 22 controls, so a task outside that set cannot
+    borrow it. The declaration is what such a task says instead.
+    """
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, "coverage-task")
+    retitle(task_dir, id="coverage-task", control=True)
+
+    [task] = load_task_set(tmp_path)
+
+    assert task.control
+    assert task.construction is None
+
+
+def test_a_declared_control_that_also_sets_a_knob_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """The two declarations are opposites, so a task making both says
+    neither: knob activations are a difficulty claim and a control is the
+    absence of one, and nothing downstream could decide which of the two such
+    a task is."""
+    task_dir = clone_constructed(tmp_path, "confused-task", a_construction_block())
+    retitle(task_dir, control=True)
+
+    with pytest.raises(IngestError, match="declares itself a control"):
+        load_task_set(tmp_path)
 
 
 def test_an_unknown_knob_id_fails_loudly(tmp_path: Path) -> None:
@@ -1316,14 +1353,31 @@ def clone_k1_family(root: Path, family: str, levels: Sequence[str]) -> None:
 def test_lint_requires_construction_metadata_outside_the_baseline(
     tmp_path: Path,
 ) -> None:
-    """A knob-experiment task that declares nothing would silently join the
-    baseline controls, and its sweep result would explain nothing."""
+    """A task that declares nothing would silently join the baseline controls,
+    and nothing about it would say whether that is what its author meant.
+
+    Which is why the control declaration did not relax this rule: a control is
+    declared and never inferred from an absence, so the message says both what
+    is missing and that omitting it is not the third option."""
     task_dir = clone_seed(tmp_path, FEATURE_SEED, "undeclared-task")
     retitle(task_dir, id="undeclared-task")
 
     [problem] = lint_task_set(load_task_set(tmp_path))
 
     assert "undeclared-task" in problem and "construction" in problem
+    assert "declared and never inferred" in problem
+
+
+def test_lint_accepts_a_task_that_declares_itself_a_control(
+    tmp_path: Path,
+) -> None:
+    """The other way out of that rule: a task claiming nothing about
+    difficulty says so, and the lint is satisfied by the declaration rather
+    than by knob activations invented to get past it."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, "coverage-task")
+    retitle(task_dir, id="coverage-task", control=True)
+
+    assert lint_task_set(load_task_set(tmp_path)) == []
 
 
 def test_lint_rejects_a_baseline_task_that_declares_construction(
