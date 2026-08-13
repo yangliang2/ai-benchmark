@@ -56,10 +56,22 @@ in `grading/`. So the verdict stays execution-verified rather than
 pattern-verified — the run log still stores the agent's final message and the
 verdict still never reads it — and the ground truth is a set of accepted (file,
 symbol) pairs, never a line number, because lines shift under any edit and two
-equally correct answers land on different ones. The must-fail-on-pristine
-invariant needs no special case for it either: the pristine repository carries
-no answer file, so the grading test fails there exactly as the lint demands of
-every task.
+equally correct answers land on different ones.
+
+What that action does *not* inherit is the gate that protects a code task. A
+pristine repository carries no answer file, so the must-fail-on-pristine
+invariant is unconditionally satisfied here and proves nothing: a grading test
+that reads no key at all passes it, and so does a task with no defect in it.
+Both holes close, by different means, because they are different holes.
+Whether the grading test discriminates is answered by negatives the lint runs
+through the real pipeline — four it constructs itself, plus the plausible
+wrong file the author writes into the key's rejected set — and the comparison
+those negatives are run against is one owned module, `grading/_answer.py`,
+copied identically into every such task and read back byte for byte. Whether
+there is a defect to find at all is answered by the paired `bug-fix` member,
+whose held-out tests must fail on the same pristine repository; that pairing
+is a convention rather than a checked relation, so a fault-location task
+authored alone has no proof there is anything in it to find.
 
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
@@ -84,7 +96,7 @@ import subprocess
 import sys
 import tempfile
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import date
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -101,6 +113,7 @@ from pydantic import (
     model_validator,
 )
 
+from ai_benchmark import _answer
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
     RUN_TIMEOUT_S,
@@ -132,6 +145,12 @@ GRADING_DIR = "grading"
 # that directory wholesale, and never collected, because collection globs test
 # files only.
 ANSWER_KEY_FILE = "accepted-answer.json"
+
+# The answer comparison, inside GRADING_DIR beside the key and reaching the
+# workdir the same way: `ai_benchmark._answer`, shipped byte for byte into
+# every fault-location task. Owned rather than hand-written per task because
+# the half of the verdict that discriminates is the half worth not miscopying.
+ANSWER_MODULE = "_answer.py"
 
 # The workdir's ignore file belongs to the live runner (which writes and owns
 # it), so the loader refuses tasks that ship one of their own.
@@ -631,14 +650,23 @@ _LINE_FIELDS = (
 )
 
 
-class AcceptedAnswer(BaseModel):
-    """One location the author accepts as a correct answer: a file, and a
-    symbol that file defines.
+class Answer(BaseModel):
+    """One location a key names: a file, and a symbol that file defines.
+
+    The shape of both halves of a key — the accepted answers and the rejected
+    near-misses — because they are the same claim read in two directions, and
+    the lint runs a rejected one through the very comparison an accepted one
+    has to survive.
 
     A pair and never a line number. Lines shift under any edit — including the
     agent's own reading notes — and the several description levels that are
     legitimately correct start on different ones anyway, so a key written in
     line numbers grades a correct answer wrong and does it silently.
+
+    And never a file alone. An author may legitimately write down the
+    enclosing class as well as the defective function, but on repositories as
+    small as these a bare filename is barely a location: it would resolve for
+    an agent that located nothing.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -657,52 +685,69 @@ class AcceptedAnswer(BaseModel):
             )
             if named:
                 raise ValueError(
-                    f"accepted answer {dict(data)} names a line number "
-                    f"({named}) — an accepted answer is a (file, symbol) pair, "
+                    f"answer {dict(data)} names a line number "
+                    f"({named}) — an answer is a (file, symbol) pair, "
                     "because lines shift under any edit and two equally correct "
                     "answers land on different ones, so a key keyed on one would "
                     "grade a correct location wrong"
+                )
+            if "symbol" not in data:
+                raise ValueError(
+                    f"answer {dict(data)} names a file with no symbol — on a "
+                    "repository this small a bare filename is barely a location, "
+                    "and a key accepting one would resolve for an agent that "
+                    "located nothing"
                 )
         return data
 
 
 class AnswerKey(BaseModel):
     """A fault-location task's ground truth: where the agent writes its answer,
-    and every location that answer may name.
+    every location that answer may name, and the near-misses it may not.
 
-    The set is the mitigation for this grading's one expensive assumption —
-    that an agent which correctly locates a fault describes it at a level of
-    the tree the author anticipated. The author writes down every level that is
-    legitimately correct (typically the defective function and the class
-    enclosing it) and the grading test accepts any member. That is the author's
-    judgement rather than a mechanism, and it is stated here so it can fail
-    visibly.
+    The accepted set is the mitigation for this grading's one expensive
+    assumption — that an agent which correctly locates a fault describes it at
+    a level of the tree the author anticipated. The author writes down every
+    level that is legitimately correct (typically the defective function and
+    the class enclosing it) and the grading test accepts any member. That is
+    the author's judgement rather than a mechanism, and it is stated here so it
+    can fail visibly.
 
-    The accepted set may be empty as far as this model is concerned: the lint
-    is where an empty one is refused, because a task that cannot load cannot be
-    linted, and this is exactly the defect the lint exists to name.
+    The rejected set is the negative half, and what makes the verdict mean
+    something: must-fail-on-pristine cannot, because a pristine repository
+    carries no answer file, so that invariant is satisfied by a grading test
+    which reads no key at all. The lint constructs four negatives itself and
+    requires each to grade unresolved; what it cannot invent is the plausible
+    wrong *file* — the caller of the defective function, the module that looks
+    responsible — and that is what the author writes here.
+
+    Either set may be empty as far as this model is concerned: the lint is
+    where an empty one is refused, because a task that cannot load cannot be
+    linted, and these are exactly the defects the lint exists to name.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     answer_path: NonEmptyStr
-    accepted: tuple[AcceptedAnswer, ...] = ()
+    accepted: tuple[Answer, ...] = ()
+    rejected: tuple[Answer, ...] = ()
 
     @model_validator(mode="after")
-    def accepted_is_a_set_and_names_no_pair_twice(self) -> Self:
-        repeated = sorted(
-            pair
-            for pair, count in Counter(
-                (answer.file, answer.symbol) for answer in self.accepted
-            ).items()
-            if count > 1
-        )
-        if repeated:
-            raise ValueError(
-                f"accepted names the same (file, symbol) pair more than once: "
-                f"{repeated} — accepted is a set of locations, and a pair "
-                "repeated in it claims nothing an unrepeated one would not"
+    def each_half_is_a_set_and_names_no_pair_twice(self) -> Self:
+        for half, answers in (("accepted", self.accepted), ("rejected", self.rejected)):
+            repeated = sorted(
+                pair
+                for pair, count in Counter(
+                    (answer.file, answer.symbol) for answer in answers
+                ).items()
+                if count > 1
             )
+            if repeated:
+                raise ValueError(
+                    f"{half} names the same (file, symbol) pair more than once: "
+                    f"{repeated} — {half} is a set of locations, and a pair "
+                    "repeated in it claims nothing an unrepeated one would not"
+                )
         return self
 
 
@@ -738,9 +783,20 @@ def answer_key(task: Task) -> AnswerKey:
         ) from error
 
 
+def answer_module_source() -> bytes:
+    """The answer comparison, as every fault-location task's
+    `grading/_answer.py` has to be byte for byte.
+
+    The project's own module read off disk rather than a string constant, so
+    that the shipped copies are compared against code mypy type-checks and the
+    tests exercise, and an author has one file to copy.
+    """
+    return Path(__file__).with_name(ANSWER_MODULE).read_bytes()
+
+
 def _defined_symbols(source: str) -> set[str]:
-    """Every function and class a module defines, both qualified by nesting
-    and bare.
+    """Every symbol a module defines: its functions and classes, both
+    qualified by nesting and bare, and its module-level assignment targets.
 
     A method is accepted either way: `Class.method`, which is how an author
     writes down the two levels a defect in one is legitimately described at —
@@ -748,9 +804,25 @@ def _defined_symbols(source: str) -> set[str]:
     how a locating agent actually phrases an answer about something nested.
     Only nested definitions get the bare form; a module-level definition has
     no qualified form to be an alternative to.
+
+    An assignment counts only at module level, and that is the ruling's own
+    boundary: a fault can live in a constant, a dispatch table or a compiled
+    pattern, and a key that saw only `def` and `class` could not name one. An
+    assignment inside a class body or a function is not keyable, because it is
+    a state change inside something already keyable, and accepting it would
+    key a location at a level no author wrote down.
     """
     symbols: set[str] = set()
     definitions = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+
+    def bind(target: ast.expr) -> None:
+        if isinstance(target, ast.Name):
+            symbols.add(target.id)
+        elif isinstance(target, ast.Starred):
+            bind(target.value)
+        elif isinstance(target, ast.Tuple | ast.List):
+            for element in target.elts:
+                bind(element)
 
     def walk(node: ast.AST, prefix: str) -> None:
         for child in ast.iter_child_nodes(node):
@@ -760,8 +832,15 @@ def _defined_symbols(source: str) -> set[str]:
                     symbols.add(child.name)
                 walk(child, f"{prefix}{child.name}.")
             else:
+                if not prefix:
+                    if isinstance(child, ast.Assign):
+                        for target in child.targets:
+                            bind(target)
+                    elif isinstance(child, ast.AnnAssign):
+                        bind(child.target)
                 # Anything else keeps the prefix: a definition guarded by an
-                # `if` or a `try` at module level is still defined there.
+                # `if` or a `try` at module level is still defined there, and
+                # so is an assignment.
                 walk(child, prefix)
 
     walk(ast.parse(source), "")
@@ -1169,6 +1248,10 @@ def lint_task_set(
     already fail can never be solved. Both are cheap to catch here and
     expensive to discover in the middle of a paid sweep.
 
+    A fault-location task is run against more than the pristine repository,
+    because for that action the pristine run proves nothing — see
+    `_discrimination_problems`.
+
     The construction invariants are read rather than run, but belong here for
     the same reason: an undeclared knob, an unregistered prediction, a family
     whose variants differ in more than the knob they vary, or an effort claim
@@ -1181,7 +1264,14 @@ def lint_task_set(
     )
     for task in tasks:
         problems.extend(construction_problems(task))
-        problems.extend(_answer_key_problems(task))
+        key_problems = _answer_key_problems(task)
+        problems.extend(key_problems)
+        if task.category == "fault-location" and not key_problems:
+            # Only once the key reads clean: the negatives are graded through
+            # the real pipeline, which is the expensive half of this lint, and
+            # a key that names a file the repository does not hold has nothing
+            # to say about whether the grading test discriminates.
+            problems.extend(_discrimination_problems(task, timeout_s=timeout_s))
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
             problems.append(
                 f"{task.id}: the grading tests already pass on the pristine repo — "
@@ -1255,16 +1345,22 @@ def _answer_key_problems(task: Task) -> list[str]:
     a hard one.
 
     What the set can be checked against is the starting repository the agent is
-    given: the accepted set says something at all; every file it names is in
-    that repository, matched exactly rather than case-insensitively; every
-    symbol it names is defined in the file it names, so a rename or a typo
-    cannot leave a key no correct answer matches; the declared answer path
+    given: the accepted set says something at all, and so does the rejected
+    one; every file either names is in that repository, matched exactly rather
+    than case-insensitively; every symbol either names is defined in the file
+    it names, so a rename or a typo cannot leave a key no correct answer
+    matches — nor a near-miss that grades unresolved for a reason that says
+    nothing about the grading test; the answer comparison shipped in
+    `grading/` is this project's own, byte for byte; the declared answer path
     lands inside the workdir a run is graded from and does not collide with a
     file grading overlays over it; and the prompt names that path as a whole
     token, so a task cannot be unsolvable because the agent was never told
     where to write. What no check can reach is whether the author wrote down
     every description level a correct answer might use — that is the
     judgement this grading rests on.
+
+    What is *not* here is the half that has to be run rather than read: see
+    `_discrimination_problems`, which the lint runs once this returns nothing.
     """
     if task.category != "fault-location":
         return []
@@ -1272,6 +1368,17 @@ def _answer_key_problems(task: Task) -> list[str]:
     problems = []
     if not key.accepted:
         problems.append(_empty_accepted_set_message(task))
+    if not key.rejected:
+        problems.append(
+            f"{task.id}: the accepted-answer key declares no rejected answers — "
+            "must-fail-on-pristine proves nothing about a fault-location task, "
+            "because a pristine repository carries no answer file at all, so "
+            "the near-miss the lint cannot invent is what stands between this "
+            "task and a grading test that would resolve anything: name the "
+            "plausible wrong file, the caller of the defective function or the "
+            "module that looks responsible"
+        )
+    problems.extend(_answer_module_problems(task))
     if _escapes_workdir(key.answer_path):
         problems.append(
             f"{task.id}: the accepted-answer key's answer_path "
@@ -1280,7 +1387,7 @@ def _answer_key_problems(task: Task) -> list[str]:
             "paths inside the workdir, so the agent's answer would never reach "
             "the diff however correctly it located the fault"
         )
-    elif key.answer_path in (ANSWER_KEY_FILE, *task.grading_test_paths):
+    elif key.answer_path in _tree_bytes(task.grading_dir):
         problems.append(
             f"{task.id}: the accepted-answer key's answer_path "
             f"{key.answer_path!r} collides with a file grading overlays over "
@@ -1295,32 +1402,66 @@ def _answer_key_problems(task: Task) -> list[str]:
             "an agent that is not told where to write it cannot solve the task "
             "however well it locates the fault"
         )
-    for accepted in key.accepted:
-        source = _repo_file(task, accepted.file)
-        if source is None:
-            problems.append(
-                f"{task.id}: the accepted-answer key names {accepted.file!r}, "
-                "which is not in the starting repository — no agent can answer "
-                "with a file it was never given"
-            )
-            continue
-        try:
-            defined = _defined_symbols(source.read_text(encoding="utf-8"))
-        except (OSError, SyntaxError, UnicodeDecodeError) as error:
-            problems.append(
-                f"{task.id}: the accepted-answer key names {accepted.file!r}, "
-                f"whose definitions cannot be read ({error}) — the key is checked "
-                "against what the file actually defines"
-            )
-            continue
-        if accepted.symbol not in defined:
-            problems.append(
-                f"{task.id}: the accepted-answer key names symbol "
-                f"{accepted.symbol!r}, which {accepted.file} does not define — it "
-                f"defines {sorted(defined)}, and a method is written "
-                "'Class.method'"
-            )
+    for half, answers in (("accepted", key.accepted), ("rejected", key.rejected)):
+        for answer in answers:
+            source = _repo_file(task, answer.file)
+            if source is None:
+                problems.append(
+                    f"{task.id}: the accepted-answer key's {half} answers name "
+                    f"{answer.file!r}, which is not in the starting repository — "
+                    "no agent can answer with a file it was never given"
+                )
+                continue
+            try:
+                defined = _defined_symbols(source.read_text(encoding="utf-8"))
+            except (OSError, SyntaxError, UnicodeDecodeError) as error:
+                problems.append(
+                    f"{task.id}: the accepted-answer key's {half} answers name "
+                    f"{answer.file!r}, whose definitions cannot be read "
+                    f"({error}) — the key is checked against what the file "
+                    "actually defines"
+                )
+                continue
+            if answer.symbol not in defined:
+                problems.append(
+                    f"{task.id}: the accepted-answer key's {half} answers name "
+                    f"symbol {answer.symbol!r}, which {answer.file} does not "
+                    f"define — it defines {sorted(defined)}, and a method is "
+                    "written 'Class.method'"
+                )
     return problems
+
+
+def _answer_module_problems(task: Task) -> list[str]:
+    """Whether this task ships the answer comparison, unedited.
+
+    The comparison is the half of the verdict that discriminates, so it is one
+    owned module copied identically into every fault-location task rather than
+    six hand-written ones — and the copies are read byte for byte, exactly as
+    the family lint reads a family's starting repositories and grading suites,
+    for the same stated reason: self-containedness beats deduplication, and
+    copies drift silently. A copy that forgave case, or stopped reading the
+    symbol, would grade every task shipping it differently from every task
+    that did not, with nothing else in the corpus objecting.
+    """
+    shipped = task.grading_dir / ANSWER_MODULE
+    try:
+        copy = shipped.read_bytes()
+    except OSError as error:
+        return [(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_MODULE} is missing or unreadable "
+            f"({error}) — the answer comparison is what the held-out grading "
+            "test asserts over, so without it the task grades every agent "
+            "unresolved"
+        )]
+    if copy != answer_module_source():
+        return [(
+            f"{task.id}: {GRADING_DIR}/{ANSWER_MODULE} is not the answer "
+            "comparison this project ships — it is one owned module copied "
+            "identically into every fault-location task, and a copy that has "
+            "drifted grades this task by rules no other task is graded by"
+        )]
+    return []
 
 
 def _escapes_workdir(name: str) -> bool:
@@ -1405,6 +1546,154 @@ def _empty_accepted_set_message(task: Task) -> str:
         "— every answer would be graded wrong, and the task would be "
         "indistinguishable from one no agent happens to solve"
     )
+
+
+# What a run that located nothing leaves behind, for the negative that proves
+# the grading test is not satisfied by any old change to the workdir. Distinct
+# from the pristine run, which is a workdir nobody touched.
+_NOTES_FILE = "NOTES.md"
+
+
+def _discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
+    """Whether this fault-location task's grading test tells a correct answer
+    from a wrong one — which is the half of the verdict must-fail-on-pristine
+    cannot reach.
+
+    A pristine repository carries no answer file, so the grading test fails
+    there whatever it asserts and the invariant is unconditionally satisfied:
+    a grading test reading no key at all passes it, and so does a task with no
+    defect in it. So this runs answers it expects to *fail* through the real
+    grading pipeline — the diff built by the live runner's own capture, graded
+    by `grade`, exactly as replay grades a logged run — and requires each to
+    come out unresolved.
+
+    Four the lint constructs, needing nothing from the author: a missing
+    answer file, an empty one, a malformed one, and an accepted file paired
+    with a symbol the key does not accept. The last is the load-bearing one:
+    it is what a grading test which never consults the key, or which checks
+    the file and not the symbol, cannot survive. It also forces the accepted
+    set to be honest — where the synthesised answer is in fact a legitimate
+    description of the fault, this fails and the author adds it to `accepted`,
+    which is the expensive assumption of this grading paid down by a mechanism
+    rather than by hope.
+
+    The rest are the author's `rejected` near-misses, run the same way.
+
+    What none of it proves is that there is a defect in the repository at all.
+    That is the paired `bug-fix` member's pristine failure, which is a
+    convention rather than a checked relation: the two members share a
+    starting repository but are deliberately neither a task family nor a pair,
+    so it holds only while both are authored together, and a fault-location
+    task authored alone has no proof there is anything in it to find.
+    """
+    key = answer_key(task)
+    problems: list[str] = []
+    negatives: list[tuple[str, Callable[[Path], None]]] = [
+        (
+            "a run that wrote no answer file at all",
+            _writing(_NOTES_FILE, "read the repository, wrote no answer\n"),
+        ),
+        ("an empty answer file", _writing(key.answer_path, "")),
+        (
+            "a malformed answer file",
+            _writing(key.answer_path, "the tax rounding, somewhere\n"),
+        ),
+    ]
+    near_miss = _near_miss(task, key)
+    if near_miss is None:
+        problems.append(
+            f"{task.id}: no near-miss can be constructed from the accepted "
+            "answers — every symbol defined in every file they name is itself "
+            "accepted, so the one negative that kills a grading test which "
+            "reads the file and not the symbol cannot be run. Key a repository "
+            "with somewhere else the fault could plausibly have been"
+        )
+    else:
+        file, symbol = near_miss
+        negatives.append((
+            f"the accepted file {file!r} paired with {symbol!r}, a symbol it "
+            "defines and the key does not accept",
+            _writing(key.answer_path, _answer_payload(file, symbol)),
+        ))
+    negatives.extend(
+        (
+            f"the rejected answer {answer.file!r}, {answer.symbol!r}",
+            _writing(key.answer_path, _answer_payload(answer.file, answer.symbol)),
+        )
+        for answer in key.rejected
+    )
+    for description, edit in negatives:
+        if grade(task, _negative_diff(task, edit), timeout_s=timeout_s):
+            problems.append(
+                f"{task.id}: {description} grades resolved — the grading test "
+                "does not tell a located fault from an answer that located "
+                "nothing, so a verdict on this task would measure whether the "
+                "agent wrote a file rather than where it said the defect was"
+            )
+    return problems
+
+
+def _writing(at: str, payload: str) -> Callable[[Path], None]:
+    """The edit a run that wrote this file would have made."""
+
+    def write(workdir: Path) -> None:
+        target = workdir / at
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(payload, encoding="utf-8")
+
+    return write
+
+
+def _answer_payload(file: str, symbol: str) -> str:
+    """One answer file's contents, shaped the way a task's prompt asks for."""
+    return json.dumps({"file": file, "symbol": symbol}, indent=2) + "\n"
+
+
+def _negative_diff(task: Task, edit: Callable[[Path], None]) -> str:
+    """The workdir diff a run that made this edit would log.
+
+    Built through the live runner's own capture rather than by writing into a
+    grading workdir directly, so that a negative the lint requires unresolved
+    travels to the verdict along the whole path an agent's answer travels: the
+    same initial commit, the same ignore file, the same `git add -A` and the
+    same `git apply` at the far end.
+    """
+    with tempfile.TemporaryDirectory(prefix="ai-bench-negative-") as name:
+        workdir = Path(name) / "workdir"
+        shutil.copytree(task.repo_dir, workdir)
+        initial = _commit_pristine(task, workdir)
+        edit(workdir)
+        return _capture_workdir_diff(task, workdir, initial)
+
+
+def _near_miss(task: Task, key: AnswerKey) -> tuple[str, str] | None:
+    """An accepted file paired with a symbol it defines and the key does not
+    accept — the negative no author has to write down.
+
+    Not accepted is read through the very comparison the grading test uses,
+    not through set membership: with the bare spelling of an accepted method
+    accepted too, a candidate picked by string difference alone could be a
+    correct answer the lint then demanded be graded wrong.
+    """
+    for file in dict.fromkeys(answer.file for answer in key.accepted):
+        source = _repo_file(task, file)
+        if source is None:
+            continue
+        try:
+            defined = _defined_symbols(source.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            continue
+        candidates = sorted(
+            symbol
+            for symbol in defined
+            if not any(
+                _answer.matches((file, symbol), (accepted.file, accepted.symbol))
+                for accepted in key.accepted
+            )
+        )
+        if candidates:
+            return file, candidates[0]
+    return None
 
 
 def _family_problems(tasks: list[Task]) -> list[str]:

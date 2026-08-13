@@ -1,5 +1,5 @@
-"""Fault-location tasks: the answer file, the accepted-answer key, and what a
-verdict makes of an answer (#49).
+"""Fault-location tasks: the answer file, the accepted-answer key, the answer
+comparison, and what a verdict makes of an answer (#49, #58).
 
 The first action whose deliverable is prose rather than a code change, graded
 without any new grading machinery. The task asks the agent to write a
@@ -22,6 +22,14 @@ The diffs are built with git by the shared task-test helper, the way the live
 runner builds one, and graded through `evaluate` — the same path replay grades
 a logged run through — so an answer file reaches the verdict exactly as an
 agent's would, and these tests cannot drift from what a live run would log.
+
+What #58 adds is the half that makes a verdict mean something. Must-fail-on-
+pristine cannot show it here — a pristine repository carries no answer file, so
+the check is unconditionally satisfied, and a grading test that reads no key at
+all passes it. So the lint runs answers it expects to *fail* through the real
+pipeline and demands unresolved: four it constructs itself, plus the author's
+`rejected` near-misses. Two fixtures below are the blind grading tests §36.1
+caught, kept as tests of the lint that now catches them.
 """
 
 import json
@@ -35,16 +43,19 @@ import pytest
 import yaml
 from firstparty_v1_tasks import run_for, workdir_diff
 
+from ai_benchmark import _answer
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty_v1 import (
     ANSWER_KEY_FILE,
-    AcceptedAnswer,
+    ANSWER_MODULE,
+    Answer,
     Task,
     _capture_workdir_diff,
     _commit_pristine,
     _defined_symbols,
     _repo_file,
     answer_key,
+    answer_module_source,
     evaluate,
     is_control,
     lint_task_set,
@@ -89,6 +100,27 @@ class Basket:
         return self.subtotal() + self.subtotal() * tax_percent // 100
 '''
 
+# The module that *looks* responsible: it is where the tax rate lives and
+# where the wrong number is returned from, and it is correct. The near-miss no
+# lint can invent — the plausible wrong file — needs a second module to be
+# written down at all, and its module-level TAX_PERCENT is what a fault in a
+# constant, a dispatch table or a compiled pattern looks like.
+CHECKOUT = '''\
+"""Taking payment for an order."""
+
+from pricing import Basket
+
+TAX_PERCENT = 15
+
+
+def charge(lines):
+    """What to bill for these order lines, in cents."""
+    basket = Basket()
+    for unit_cents, quantity in lines:
+        basket.add(unit_cents, quantity)
+    return basket.total_with_tax(TAX_PERCENT)
+'''
+
 PROMPT = f"""\
 A customer reports that a single 199-cent line taxed at 15% is billed 228
 cents when it should be 229: the tax is truncated instead of being rounded to
@@ -107,58 +139,66 @@ ACCEPTED: list[dict[str, object]] = [
     {"file": "pricing.py", "symbol": "Basket"},
 ]
 
-# Held out with the grading tests, and self-contained because grading runs
-# with conftest loading disabled and its config pinned outside the workdir. It
-# reads both files from its own directory, which is the workdir the overlay
-# copied it into.
+# The near-miss the lint cannot invent: the caller of the defective function,
+# in the module that looks responsible because the rate lives there.
+REJECTED: list[dict[str, object]] = [{"file": "checkout.py", "symbol": "charge"}]
+
+# Held out with the grading tests, and one line, because the comparison is
+# `_answer.py` — shipped identically into every fault-location task's grading
+# directory and read byte for byte by the lint.
 GRADING_TEST = '''\
-"""Held out: the agent's answer file, against the accepted-answer key."""
+"""Held out: the agent's answer file, against the accepted-answer key.
+
+The comparison itself is `_answer.py`, which reaches the workdir by the same
+overlay this test does. Importing it by bare name works at any nesting depth:
+grading appends the workdir to sys.path, behind the standard library.
+"""
+
+from _answer import answer_problem
+
+
+def test_the_answer_names_an_accepted_location():
+    assert (problem := answer_problem()) is None, problem
+'''
+
+# The grading test §36.1 caught: it never consults the key, so it grades a
+# wrong answer — and an empty answer file — resolved.
+BLIND_GRADING_TEST = '''\
+"""A grading test that proves only that the agent wrote something."""
+
+from pathlib import Path
+
+
+def test_the_answer_names_an_accepted_location():
+    assert (Path.cwd() / "ANSWER.json").is_file()
+'''
+
+# The floor of the two: a grading test that asserts nothing at all. It fails
+# must-fail-on-pristine, so it is caught today — and it is here to show every
+# negative the lint constructs, since it grades all of them resolved.
+ALWAYS_RESOLVES_GRADING_TEST = '''\
+"""A grading test that reads nothing and asserts nothing."""
+
+
+def test_the_answer_names_an_accepted_location():
+    assert True
+'''
+
+# The sloppier one: it reads the answer and checks the file, never the symbol,
+# so every symbol in the right module grades resolved.
+FILE_ONLY_GRADING_TEST = '''\
+"""A grading test that checks the file and not the symbol."""
 
 import json
 from pathlib import Path
 
-# cwd, not Path(__file__).resolve().parent: grading permits a nested grading
-# test (grading/ is rglobbed for test_*.py), and a nested test's own file
-# then sits under a subdirectory of the workdir while the key and the
-# agent's answer are both written at the workdir root. Grading always runs
-# pytest with the workdir as cwd, so this stays correct at any nesting depth.
 WORKDIR = Path.cwd()
 KEY = json.loads((WORKDIR / "accepted-answer.json").read_text(encoding="utf-8"))
 
 
-def _resolve(root, name):
-    """The named file under root, or None if it is not there — checked
-    component-by-component against the actual directory listing rather than
-    opened directly. Path.is_file() is case-insensitive on macOS, the
-    platform the sweeps run on, so an answer written as "answer.json" would
-    otherwise resolve here against a key declaring "ANSWER.json", while the
-    identical logged workdir diff replays to a different verdict on Linux.
-    Mirrors `_repo_file` in ai_benchmark.firstparty_v1, which resolves the
-    key's own `file` field the same way for the same reason."""
-    current = root
-    for part in Path(name).parts:
-        try:
-            entries = {entry.name for entry in current.iterdir()}
-        except OSError:
-            return None
-        if part not in entries:
-            return None
-        current = current / part
-    return current if current.is_file() else None
-
-
 def test_the_answer_names_an_accepted_location():
-    answer_file = _resolve(WORKDIR, KEY["answer_path"])
-    assert answer_file is not None, f"no answer file at {KEY['answer_path']}"
-    try:
-        answer = json.loads(answer_file.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
-        raise AssertionError(f"{KEY['answer_path']} is not JSON: {error}") from error
-    assert isinstance(answer, dict), f"{KEY['answer_path']} is not a JSON object"
-    located = {"file": answer.get("file"), "symbol": answer.get("symbol")}
-    assert located in KEY["accepted"], (
-        f"{located} is not one of the accepted locations {KEY['accepted']}"
-    )
+    answer = json.loads((WORKDIR / KEY["answer_path"]).read_text(encoding="utf-8"))
+    assert answer["file"] in {entry["file"] for entry in KEY["accepted"]}
 '''
 
 
@@ -166,8 +206,10 @@ def write_fixture(
     root: Path,
     *,
     accepted: list[dict[str, object]] | None = None,
+    rejected: list[dict[str, object]] | None = None,
     answer_path: str = ANSWER_PATH,
     prompt: str = PROMPT,
+    grading_test: str = GRADING_TEST,
     **spec: object,
 ) -> Path:
     """The fixture fault-location task, written into root ready to load.
@@ -175,6 +217,10 @@ def write_fixture(
     A coverage task rather than a knob experiment, so it declares itself a
     control: it claims nothing about difficulty, and saying so is the only way
     to say it outside the frozen 22.
+
+    The answer comparison is copied in rather than written here, because that
+    is what a real task does: one owned module, shipped identically, read back
+    byte for byte by the lint.
     """
     task_dir = root / FIXTURE_ID
     (task_dir / "repo").mkdir(parents=True)
@@ -191,12 +237,15 @@ def write_fixture(
     fields.update(spec)
     (task_dir / "task.yaml").write_text(yaml.safe_dump(fields, sort_keys=False))
     (task_dir / "repo" / "pricing.py").write_text(PRICING)
-    (task_dir / "grading" / "test_located_fault.py").write_text(GRADING_TEST)
+    (task_dir / "repo" / "checkout.py").write_text(CHECKOUT)
+    (task_dir / "grading" / "test_located_fault.py").write_text(grading_test)
+    (task_dir / "grading" / ANSWER_MODULE).write_bytes(answer_module_source())
     (task_dir / "grading" / ANSWER_KEY_FILE).write_text(
         json.dumps(
             {
                 "answer_path": answer_path,
                 "accepted": ACCEPTED if accepted is None else accepted,
+                "rejected": REJECTED if rejected is None else rejected,
             },
             indent=2,
         )
@@ -246,9 +295,10 @@ def test_a_fault_location_task_loads_carrying_its_accepted_answer_key(
     assert is_control(task)
     assert key.answer_path == ANSWER_PATH
     assert key.accepted == (
-        AcceptedAnswer(file="pricing.py", symbol="Basket.total_with_tax"),
-        AcceptedAnswer(file="pricing.py", symbol="Basket"),
+        Answer(file="pricing.py", symbol="Basket.total_with_tax"),
+        Answer(file="pricing.py", symbol="Basket"),
     )
+    assert key.rejected == (Answer(file="checkout.py", symbol="charge"),)
 
 
 def test_the_key_ships_in_the_grading_directory_without_being_collected(
@@ -373,9 +423,10 @@ def test_an_answer_written_at_another_path_is_unresolved(
 
 
 def test_the_pristine_repository_carries_no_answer_file(tmp_path: Path) -> None:
-    """Which is why the must-fail-on-pristine invariant needs no special case
-    here: with no answer to read, the grading test fails, exactly as the lint
-    demands of every task. A clean lint is that invariant holding."""
+    """Which is exactly why must-fail-on-pristine proves nothing here: with no
+    answer file to read, the grading test fails whatever it asserts, so the
+    invariant is unconditionally satisfied. What a clean lint means for this
+    task is the negatives below, not this."""
     task = fixture_task(tmp_path)
 
     assert not (task.repo_dir / ANSWER_PATH).exists()
@@ -568,6 +619,307 @@ def test_lint_accepts_an_answer_path_that_is_safe(tmp_path: Path) -> None:
     assert lint_task_set([task]) == []
 
 
+# --- the answer comparison: one owned module, copied ---------------------------
+
+
+def test_the_answer_comparison_ships_into_the_grading_directory(
+    tmp_path: Path,
+) -> None:
+    """The comparison is the half of the verdict that discriminates, so it is
+    owned rather than hand-copied six times: `grading/_answer.py` is the
+    project's own module, byte for byte, and the held-out test is a one-line
+    assertion over it."""
+    task = fixture_task(tmp_path)
+
+    assert (task.grading_dir / ANSWER_MODULE).read_bytes() == answer_module_source()
+    assert lint_task_set([task]) == []
+
+
+def test_the_comparison_and_the_loader_name_the_same_key_file() -> None:
+    """The comparison has to be self-contained — it runs with the project
+    unimportable — so it carries its own spelling of the key's filename. The
+    two agreeing is what makes the file the lint reads and the file the
+    verdict reads one file."""
+    assert _answer.KEY_FILE == ANSWER_KEY_FILE
+
+
+def test_lint_rejects_a_grading_directory_without_the_answer_comparison(
+    tmp_path: Path,
+) -> None:
+    task_dir = write_fixture(tmp_path)
+    (task_dir / "grading" / ANSWER_MODULE).unlink()
+    [task] = load_task_set(tmp_path)
+
+    problems = lint_task_set([task])
+
+    assert any(FIXTURE_ID in problem and ANSWER_MODULE in problem for problem in problems)
+
+
+def test_lint_rejects_an_edited_copy_of_the_answer_comparison(
+    tmp_path: Path,
+) -> None:
+    """Copies drift silently, which is the stated reason the family lint reads
+    a family's repositories and grading suites byte for byte. A copy that
+    forgave case, or stopped reading the symbol, would grade every task that
+    shipped it differently from every task that did not."""
+    task_dir = write_fixture(tmp_path)
+    shipped = task_dir / "grading" / ANSWER_MODULE
+    shipped.write_text(
+        shipped.read_text(encoding="utf-8").replace(
+            "if file != accepted_file:", "if file.lower() != accepted_file.lower():"
+        ),
+        encoding="utf-8",
+    )
+    [task] = load_task_set(tmp_path)
+
+    problems = lint_task_set([task])
+
+    assert any(FIXTURE_ID in problem and ANSWER_MODULE in problem for problem in problems)
+
+
+# --- what counts as the same answer --------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("file", "symbol"),
+    [
+        pytest.param("pricing.py", "Basket.total_with_tax", id="as-written"),
+        pytest.param("./pricing.py", "Basket.total_with_tax", id="leading-dot-slash"),
+        pytest.param(" pricing.py\n", " Basket \n", id="surrounding-whitespace"),
+        pytest.param("pricing.py", "Basket.total_with_tax()", id="trailing-parens"),
+        pytest.param("pricing.py", "total_with_tax", id="bare-symbol"),
+        pytest.param("pricing.py", "total_with_tax()", id="bare-symbol-called"),
+    ],
+)
+def test_an_answer_spelled_differently_still_resolves(
+    tmp_path: Path, file: str, symbol: str
+) -> None:
+    """What the comparison forgives is spelling, not identity. Every one of
+    these graded unresolved on #49's fixture, and over six tasks that is a
+    false-negative floor that would read as models being bad at locating
+    faults."""
+    task = fixture_task(tmp_path)
+
+    assert verdict(task, answers(naming(file, symbol))) == 1.0
+
+
+@pytest.mark.parametrize(
+    ("file", "symbol"),
+    [
+        pytest.param("Pricing.py", "Basket", id="file-case"),
+        pytest.param("pricing.py", "basket", id="symbol-case"),
+        pytest.param("pricing.py", "BASKET.TOTAL_WITH_TAX", id="qualified-case"),
+    ],
+)
+def test_a_case_variant_answer_is_unresolved(
+    tmp_path: Path, file: str, symbol: str
+) -> None:
+    """Python is case-sensitive, and a case-insensitive match on the grading
+    side would make a verdict depend on the filesystem the grader ran on."""
+    task = fixture_task(tmp_path)
+
+    assert verdict(task, answers(naming(file, symbol))) == 0.0
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        pytest.param(
+            json.dumps(
+                [
+                    {"file": "pricing.py", "symbol": "Basket.total_with_tax"},
+                    {"file": "pricing.py", "symbol": "line_total"},
+                ]
+            ),
+            id="a-list-of-answers",
+        ),
+        pytest.param(
+            json.dumps({"file": ["pricing.py"], "symbol": ["Basket"]}),
+            id="list-valued-fields",
+        ),
+        pytest.param(
+            json.dumps(
+                {
+                    "file": "pricing.py",
+                    "symbol": "Basket.total_with_tax",
+                    "alternatives": [{"file": "pricing.py", "symbol": "line_total"}],
+                }
+            ),
+            id="a-second-guess-beside-the-first",
+        ),
+        pytest.param(json.dumps({"file": "pricing.py"}), id="no-symbol"),
+        pytest.param(json.dumps("pricing.py: Basket"), id="a-bare-string"),
+    ],
+)
+def test_an_answer_naming_other_than_one_pair_is_unresolved(
+    tmp_path: Path, payload: str
+) -> None:
+    """A task measures whether the agent located the fault, so a shotgun of
+    every plausible location would be breadth rewarded as accuracy — including
+    the one that names a correct location first and hedges after it."""
+    task = fixture_task(tmp_path)
+
+    assert verdict(task, answers(payload)) == 0.0
+
+
+def test_an_answer_carrying_flat_prose_beside_the_pair_still_resolves(
+    tmp_path: Path,
+) -> None:
+    """The other direction of the rule above: refusing more than one guess is
+    refused by shape — a list or a nested object — not by refusing any field
+    the prompt did not ask for. An agent that writes its reasoning beside the
+    answer has still named exactly one location."""
+    task = fixture_task(tmp_path)
+    payload = json.dumps(
+        {
+            "file": "pricing.py",
+            "symbol": "Basket.total_with_tax",
+            "reason": "the tax is truncated by // instead of rounded",
+        }
+    )
+
+    assert verdict(task, answers(payload)) == 1.0
+
+
+def test_a_module_level_constant_can_be_keyed(tmp_path: Path) -> None:
+    """A `def` and a `class` were the only symbols #49 could see, so a fault in
+    a constant, a dispatch table or a compiled pattern was unkeyable — which
+    would have quietly steered a task whose defect is a wrong key in a lookup
+    into being written about something else."""
+    task = fixture_task(
+        tmp_path, accepted=[{"file": "checkout.py", "symbol": "TAX_PERCENT"}]
+    )
+
+    assert lint_task_set([task]) == []
+    assert verdict(task, answers(naming("checkout.py", "TAX_PERCENT"))) == 1.0
+
+
+def test_an_accepted_answer_naming_a_file_with_no_symbol_is_refused(
+    tmp_path: Path,
+) -> None:
+    """The other direction of what can be named: on repositories this small a
+    bare filename is barely a location, and would resolve for an agent that
+    located nothing."""
+    write_fixture(tmp_path, accepted=[{"file": "pricing.py"}])
+
+    with pytest.raises(IngestError, match="no symbol"):
+        load_task_set(tmp_path)
+
+
+# --- the lint: negatives run through the real pipeline -------------------------
+
+
+def test_lint_runs_four_constructed_negatives_and_the_authors_rejected_set(
+    tmp_path: Path,
+) -> None:
+    """What a fault-location task has to earn: four answers the lint builds
+    itself, each required to grade unresolved through the real pipeline, plus
+    every near-miss the author wrote down. Shown on a grading test that grades
+    everything resolved, so each negative reports separately."""
+    task = fixture_task(tmp_path, grading_test=ALWAYS_RESOLVES_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    for negative in (
+        "no answer file",
+        "an empty answer file",
+        "a malformed answer file",
+        "does not accept",
+        "rejected answer",
+    ):
+        assert any(negative in problem for problem in problems), negative
+
+
+def test_lint_refuses_a_grading_test_that_never_consults_the_key(
+    tmp_path: Path,
+) -> None:
+    """§36.1's first fixture: `assert ANSWER.json.is_file()` graded a wrong
+    answer resolved and an empty answer file too, while linting clean and
+    passing every gate the corpus had — because a pristine repository carries
+    no answer file, so must-fail-on-pristine is satisfied by anything."""
+    task = fixture_task(tmp_path, grading_test=BLIND_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert problems and all(FIXTURE_ID in problem for problem in problems)
+    assert any("empty" in problem for problem in problems)
+
+
+def test_lint_refuses_a_grading_test_that_checks_the_file_but_not_the_symbol(
+    tmp_path: Path,
+) -> None:
+    """The sloppier one, and what the synthesised near-miss exists to kill: an
+    accepted file paired with a symbol the key does not accept."""
+    task = fixture_task(tmp_path, grading_test=FILE_ONLY_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert problems and all(FIXTURE_ID in problem for problem in problems)
+    assert any("does not accept" in problem for problem in problems)
+
+
+def test_lint_requires_a_non_empty_rejected_set(tmp_path: Path) -> None:
+    """The near-miss no lint can invent is the author's to write down: the
+    plausible wrong file, the caller of the defective function, the module
+    that looks responsible."""
+    task = fixture_task(tmp_path, rejected=[])
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "rejected" in problem
+
+
+def test_lint_refuses_a_rejected_answer_the_comparison_actually_accepts(
+    tmp_path: Path,
+) -> None:
+    """Every rejected answer is run through the same pipeline and required to
+    grade unresolved, so a near-miss the comparison in fact accepts — here the
+    bare spelling of an accepted method — is caught rather than believed."""
+    task = fixture_task(
+        tmp_path, rejected=[{"file": "pricing.py", "symbol": "total_with_tax"}]
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "total_with_tax" in problem
+
+
+def test_lint_refuses_a_rejected_answer_that_is_not_in_the_repository(
+    tmp_path: Path,
+) -> None:
+    """A near-miss has to be a location the agent could plausibly have given:
+    an answer naming a file the repository does not hold grades unresolved for
+    a reason that says nothing about the grading test."""
+    task = fixture_task(
+        tmp_path, rejected=[{"file": "billing.py", "symbol": "charge"}]
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "billing.py" in problem
+    assert "starting repository" in problem
+
+
+def test_lint_reports_when_it_cannot_construct_the_near_miss(
+    tmp_path: Path,
+) -> None:
+    """The synthesised near-miss is the load-bearing negative, so a key whose
+    accepted set leaves no unaccepted symbol in the file it names has to say
+    so rather than quietly running one check fewer."""
+    task_dir = write_fixture(
+        tmp_path,
+        accepted=[{"file": "tiny.py", "symbol": "only"}],
+        rejected=[{"file": "pricing.py", "symbol": "line_total"}],
+    )
+    (task_dir / "repo" / "tiny.py").write_text("def only():\n    return 1\n")
+    [task] = load_task_set(tmp_path)
+
+    problems = lint_task_set([task])
+
+    assert any(FIXTURE_ID in problem and "near-miss" in problem for problem in problems)
+
+
 # --- mutation guards: behaviours the suite claims but did not test ----------
 
 
@@ -589,6 +941,44 @@ def test_defined_symbols_finds_a_definition_guarded_by_an_if_or_try() -> None:
     symbols = _defined_symbols(source)
 
     assert "Basket.total_with_tax" in symbols
+
+
+def test_defined_symbols_finds_module_level_assignment_targets() -> None:
+    """A module-level assignment target is a defined symbol, so a fault in a
+    constant, a dispatch table or a compiled pattern can be keyed. The
+    boundary is module level, which is what the ruling names: an assignment in
+    a class body or a function is a state change inside something already
+    keyable, and accepting `Basket.RATE` would key a location the author never
+    wrote down."""
+    source = textwrap.dedent("""\
+        import re
+
+        TAX_PERCENT = 15
+        PATTERN = re.compile(r"x")
+        HANDLERS: dict = {}
+        FIRST, SECOND = 1, 2
+        if TAX_PERCENT:
+            GUARDED = 1
+
+
+        class Basket:
+            RATE = 15
+
+
+        def charge():
+            local = 1
+            return local
+        """)
+
+    symbols = _defined_symbols(source)
+
+    assert {
+        "TAX_PERCENT", "PATTERN", "HANDLERS", "FIRST", "SECOND", "GUARDED"
+    } <= symbols
+    assert "Basket.RATE" not in symbols
+    assert "RATE" not in symbols
+    assert "charge.local" not in symbols
+    assert "local" not in symbols
 
 
 def test_repo_file_refuses_a_name_that_climbs_out_of_the_repository(
