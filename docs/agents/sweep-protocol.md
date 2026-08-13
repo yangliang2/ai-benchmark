@@ -54,8 +54,21 @@ the unit this document is about.
    runner takes every run's limit from it, and `eval-v1` has no `--timeout`
    for anyone to pass one by hand. Registering a tier is therefore a commit
    made before the sweep reads it; a category with none set keeps the flat
-   default, and category is the key because the lint already holds every
-   member of a family or a pair to one.
+   default. Category is the key because the lint already holds every member
+   of a family or a pair to one, so for those two constructs the first rule
+   above holds by construction. It holds only for them: a contrast whose
+   members differ in category — a locate/fix comparison over one planted
+   defect, whose members are declared neither a family nor a pair for exactly
+   that reason — is not held to one limit by this key, and tiering
+   fault-location and bug-fix differently would confound exactly that
+   comparison.
+
+   As of this writing the table registers no value, so every class still runs
+   at the flat default and this item is unmet by omission rather than by
+   choice. Which classes to tier, and by how much, is an open decision — one
+   this item cannot itself settle, because round 4's headline locate/fix
+   contrast spans two categories and the constraint above means those two
+   cannot be tiered apart without confounding it.
 
    A limit that changes between rounds is a cross-round caveat, recorded the
    way a CLI version change is (see "One agent version per sweep"): contrasts

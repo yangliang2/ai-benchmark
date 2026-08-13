@@ -1787,13 +1787,24 @@ _COMMIT_IDENTITY = {
     "GIT_COMMITTER_EMAIL": "eval@ai-bench.invalid",
 }
 
-# How long one live run of each task class gets, in seconds — the tier table,
-# and the only place a live run-time limit is set.
+# How long one live run of each task class gets, in seconds — the tier
+# table, and the only place a *v1* live run's agent time limit is set. Two
+# things it does not reach: `ai_benchmark.firstparty`'s v0 live runner still
+# hardcodes the flat `RUN_TIMEOUT_S` (reachable via `ai-bench eval --live`),
+# and every git invocation this runner makes while preparing or capturing a
+# workdir (`_commit_pristine`, `_capture_workdir_diff`) carries its own fixed
+# 60-second timeout in `_git`, untouched by any tier registered here.
 #
-# Keyed on the task's category, which is what makes tiering safe rather than
-# merely convenient: the task-set lint already holds every member of a family
-# or a pair to one category, so "every member of one contrast shares one
-# limit" holds by construction instead of by an author's discipline.
+# Keyed on the task's category, which is what makes tiering safe for a family
+# or a pair rather than merely convenient: the task-set lint already holds
+# every member of one of those to one category, so for those two constructs
+# "every member of one contrast shares one limit" holds by construction
+# instead of by an author's discipline. It does not extend past them: a
+# contrast whose members differ in category — a locate/fix comparison over
+# one planted defect, whose members are declared neither a family nor a pair
+# for exactly that reason — is not held to one limit by this key, and
+# registering different tiers for fault-location and bug-fix would confound
+# exactly that comparison.
 #
 # Registered here, in code committed before the sweep that reads it, rather
 # than passed at the invocation: a limit a caller can pass is a limit adjusted

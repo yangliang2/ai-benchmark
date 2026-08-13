@@ -2114,10 +2114,15 @@ def test_a_live_run_that_exceeds_its_class_limit_fails_loudly(
 # --- the live run-time limit: one table, keyed on the task's class ------------
 
 
-def test_every_class_keeps_the_flat_default_until_a_tier_is_registered() -> None:
-    """The table registers nothing yet, so every category — and therefore
-    every task in the checked-in corpus — still runs under the flat limit the
-    runner has always used. Registering the mechanism moves no cell."""
+def test_a_category_with_no_registered_tier_gets_the_flat_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AC 3: a class the table has not deliberately tiered runs under the flat
+    default it always has. Checked with the table cleared for the test's own
+    duration, so this keeps holding once a real tier is registered for some
+    other category — unlike asserting the whole table is empty, which that
+    first registration would turn red."""
+    monkeypatch.setattr("ai_benchmark.firstparty_v1.LIVE_RUN_LIMITS_S", {})
     seed = task_by_id(FEATURE_SEED)
     categories = [
         category
@@ -2131,9 +2136,7 @@ def test_every_class_keeps_the_flat_default_until_a_tier_is_registered() -> None
         for category in categories
     }
 
-    assert LIVE_RUN_LIMITS_S == {}
     assert by_category == dict.fromkeys(categories, RUN_TIMEOUT_S)
-    assert {live_run_limit_s(task) for task in load_task_set(TASKS)} == {RUN_TIMEOUT_S}
 
 
 def test_a_registered_tier_is_the_limit_of_its_class_and_of_no_other(
@@ -2154,15 +2157,55 @@ def test_a_registered_tier_is_the_limit_of_its_class_and_of_no_other(
     assert live_run_limit_s(other) == RUN_TIMEOUT_S
 
 
-def test_a_caller_cannot_pass_a_per_cell_run_limit(tmp_path: Path) -> None:
+def test_the_runner_keys_each_task_on_its_own_category(
+    fake_claude: FakeClaude, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """Two tasks of different categories in one call: the untiered one must
+    still get the flat default and the tiered one must get its own tier —
+    proving the runner reads *the task's* category rather than one fixed
+    category. A runner hardwired to always look up some constant key would
+    give the tiered task the default too, and it would then never time out."""
+    fake_claude("time.sleep(2)\n")
+    feature_task = task_by_id(FEATURE_SEED)  # feature-dev, untiered: keeps 600s
+    refactor_task = task_by_id(REFACTOR_SEED)  # refactor, tiered down to 1s
+    monkeypatch.setitem(LIVE_RUN_LIMITS_S, refactor_task.category, 1)
+    log = tmp_path / "runs.jsonl"
+
+    with pytest.raises(IngestError, match="timed out after 1s"):
+        run_live(
+            [feature_task, refactor_task], ["claude-sonnet-5"], log, sweep=SWEEP
+        )
+
+    # The feature-dev task ran to completion under the shared 2s sleep before
+    # the refactor task's own tier killed it — proof it was not given the
+    # refactor task's 1s limit (it would have timed out identically, and
+    # nothing would have reached the log).
+    logged = [json.loads(line) for line in log.read_text().splitlines()]
+    assert [run["task_id"] for run in logged] == [feature_task.id]
+
+
+def test_a_caller_cannot_pass_a_per_cell_run_limit(
+    fake_claude: FakeClaude, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
     """No per-invocation override, because that is a limit adjusted per cell:
     a cell granted a longer run once its neighbours have already run is
-    measured under conditions nobody chose before the sweep."""
+    measured under conditions nobody chose before the sweep. A bare TypeError
+    would pass just as well for a function that read its limit off some other
+    caller-settable global instead of the table, so this also proves the run
+    that follows the rejected call still obeys the table alone."""
+    task = task_by_id(FEATURE_SEED)
+
     with pytest.raises(TypeError, match="timeout_s"):
         run_live(
-            [task_by_id(FEATURE_SEED)], ["claude-sonnet-5"],
+            [task], ["claude-sonnet-5"],
             tmp_path / "runs.jsonl", sweep=SWEEP, timeout_s=1,  # type: ignore[call-arg]
         )
+
+    fake_claude("time.sleep(3)\n")
+    monkeypatch.setitem(LIVE_RUN_LIMITS_S, task.category, 2)
+
+    with pytest.raises(IngestError, match="timed out after 2s"):
+        run_live([task], ["claude-sonnet-5"], tmp_path / "runs.jsonl", sweep=SWEEP)
 
 
 def test_an_agent_authored_binary_file_survives_capture_and_replay(

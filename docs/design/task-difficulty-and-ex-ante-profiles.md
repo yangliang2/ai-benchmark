@@ -2690,7 +2690,12 @@ within it by construction, which is the price §23.10 named for building one.
    `--timeout`: a limit an invocation can pass is a limit adjusted per cell,
    which is the second rule above. The key is the task's category, because the
    task-set lint already holds a family's and a pair's category constant, so
-   the first rule holds by construction rather than by discipline. The table
+   for those two constructs the first rule holds by construction rather than
+   by discipline — and only for them: a contrast whose members differ in
+   category, such as round 4's locate/fix comparison over one planted defect
+   (its members declared neither a family nor a pair for exactly that
+   reason), is not held to one limit by this key, and tiering fault-location
+   and bug-fix differently would confound exactly that comparison. The table
    registers nothing yet — every category falls back to the flat 600, so no
    cell of the corpus moves, and the first tier set deliberately is a commit
    made before the sweep that reads it. When one is set, the change travels
