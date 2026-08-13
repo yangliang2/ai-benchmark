@@ -47,7 +47,7 @@ def test_a_task_naming_a_retired_category_fails_loudly(tmp_path: Path) -> None:
     path = tmp_path / "tasks.yaml"
     path.write_text(yaml.safe_dump(spec, sort_keys=False))
 
-    with pytest.raises(IngestError, match="surface"):
+    with pytest.raises(IngestError, match="surface.*frontend"):
         load_tasks(path)
 
 

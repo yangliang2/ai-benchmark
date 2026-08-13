@@ -1182,7 +1182,10 @@ def _varied_knob_problem(pair: str, one: Task, other: Task) -> str | None:
 
 def _annotations(task: Task) -> dict[str, str | None]:
     """What places a task in the capability matrix, as the family lint reads
-    it: the classification a record inherits and groups by."""
+    it: category, scale and language. `surface` is deliberately excluded —
+    it is not a row key this round, so family variants are not required to
+    hold it constant, even though `evaluate` still puts it on the records a
+    task produces."""
     return {
         "category": task.category,
         "scale": task.scale,

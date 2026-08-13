@@ -9,6 +9,7 @@ import pytest
 from ai_benchmark.schema import (
     Record,
     RecordValidationError,
+    Surface,
     TaskCategory,
     validate_record,
 )
@@ -130,12 +131,19 @@ def test_surface_annotates_where_the_work_happened() -> None:
     assert validate_record(data).surface == "infrastructure"
 
 
-def test_unknown_surface_is_rejected() -> None:
+def test_surface_outside_the_vocabulary_is_rejected() -> None:
     data = valid_record_data()
     data["surface"] = "backend"
 
-    with pytest.raises(RecordValidationError, match="surface"):
+    with pytest.raises(RecordValidationError) as excinfo:
         validate_record(data)
+    # Not just the field name: the message must actually enumerate the
+    # vocabulary a valid surface has to come from, or this passes however
+    # the rejection is (mis)implemented.
+    message = str(excinfo.value)
+    assert "surface" in message
+    for surface in get_args(Surface):
+        assert surface in message
 
 
 def test_unknown_category_is_rejected_with_clear_error() -> None:

@@ -1,4 +1,6 @@
-"""build_prompt is pure: the instance evidence must actually land in the prompt."""
+"""build_prompt is pure: the instance evidence must actually land in the
+prompt, and the categories it offers the classifier must stay in sync with
+the schema vocabulary (offering exactly it, and never a retired category)."""
 
 import re
 from typing import get_args

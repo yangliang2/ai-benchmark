@@ -358,7 +358,7 @@ def test_task_naming_a_retired_category_fails_loudly(tmp_path: Path) -> None:
     task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
     retitle(task_dir, category="infra-config")
 
-    with pytest.raises(IngestError, match="surface"):
+    with pytest.raises(IngestError, match="surface.*infrastructure"):
         load_task_set(tmp_path)
 
 

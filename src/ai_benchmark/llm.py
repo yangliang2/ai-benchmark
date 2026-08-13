@@ -31,16 +31,47 @@ LABEL_SCHEMA = {
 # schema and left unglossed here fails loudly at import rather than quietly
 # going unoffered to the classifier.
 GLOSSES: dict[TaskCategory, str] = {
-    "bug-fix": "correct existing behaviour that is wrong (SWE-bench-style issue->patch)",
-    "feature-dev": "add new user-visible capability",
-    "refactor": "behaviour-preserving restructuring",
-    "test-authoring": "tests are the primary deliverable",
-    "codebase-comprehension": "answer questions about code without changing it",
-    "fault-location": "say where a defect lives, without fixing it",
-    "code-review": "judge a diff someone else wrote",
-    "investigation": "investigate an open question and propose an answer",
-    "requirement-decomposition": "break a requirement into workable pieces",
-    "performance-optimisation": "make existing behaviour faster or cheaper",
+    "bug-fix": (
+        "correct existing behaviour that is wrong (SWE-bench-style "
+        "issue->patch); not a missing capability filed as a bug (feature-dev) "
+        "or newly written tests made to pass (test-authoring or feature-dev)"
+    ),
+    "feature-dev": (
+        "add new user-visible capability; not pure restructuring (refactor)"
+    ),
+    "refactor": (
+        "behaviour-preserving restructuring; not a change with an intended "
+        "behaviour difference (bug-fix or feature-dev)"
+    ),
+    "test-authoring": (
+        "tests are the primary deliverable; not tests written incidentally "
+        "while implementing a feature (feature-dev)"
+    ),
+    "codebase-comprehension": (
+        "answer questions about code without changing it; not a task whose "
+        "deliverable is an edit, and not saying where a defect lives "
+        "(fault-location)"
+    ),
+    "fault-location": (
+        "say where a defect lives, without fixing it; not producing the fix "
+        "as well (bug-fix)"
+    ),
+    "code-review": (
+        "judge a diff someone else wrote; not applying the corrections "
+        "(bug-fix or refactor)"
+    ),
+    "investigation": (
+        "investigate an open question and propose an answer; not a question "
+        "answerable by reading one module (codebase-comprehension)"
+    ),
+    "requirement-decomposition": (
+        "break a requirement into workable pieces; not delivering any of the "
+        "pieces (whatever action that piece is)"
+    ),
+    "performance-optimisation": (
+        "make existing behaviour faster or cheaper, measured against a "
+        "baseline; not restructuring with no performance target (refactor)"
+    ),
     "unclassified": (
         "use this whenever you cannot determine the category with reasonable "
         "confidence from the information given — never force-fit"

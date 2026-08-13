@@ -2,7 +2,7 @@
 #
 # Each task is self-contained: the agent answers in its final output, and the
 # check regex (re.search) grades that output as resolved (1.0) or not (0.0).
-# Every task is classified into taxonomy v0 up front — no unclassified escape
+# Every task is classified into the task taxonomy up front — no unclassified escape
 # hatch here; these tasks exist to fill known capability-matrix cells.
 #
 # Grading limitation (v0, see CONTEXT.md): checks require task-specific
