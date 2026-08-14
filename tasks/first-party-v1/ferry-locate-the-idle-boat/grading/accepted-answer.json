@@ -1,0 +1,12 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "loading.py", "symbol": "Line.call"},
+    {"file": "loading.py", "symbol": "Line"}
+  ],
+  "rejected": [
+    {"file": "ferry.py", "symbol": "Ferry.casts_off"},
+    {"file": "ferry.py", "symbol": "Ferry.one_crossing"},
+    {"file": "passengers.py", "symbol": "in_turn"}
+  ]
+}

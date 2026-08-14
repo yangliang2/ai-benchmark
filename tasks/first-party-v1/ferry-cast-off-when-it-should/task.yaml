@@ -1,0 +1,48 @@
+# bug-fix, and the "fix it" half of round 4's second planted defect: one
+# comparison used the wrong way round in a branch, authored twice over one
+# starting repository. Line.call in loading.py asks whether the line is at
+# most a load deep where it should ask whether it is at least that, so the
+# threshold rule admits exactly the lines it should hold and holds exactly the
+# ones it should serve: a jetty with nine on it and a boat that seats four
+# never casts off, while two — and nobody at all — are taken across. The
+# repository's own tests are green on the pristine tree: every fixture that
+# reaches the call stands exactly a load deep, which is the one length at
+# which "at most" and "at least" agree, and a visible test reproducing the
+# symptom would hand the agent the answer and delete the action being
+# measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that: the same comparison, spelled the same way over the same two
+# quantities, is correct in Ferry.one_crossing — whether one crossing would
+# clear the jetty is exactly the question "at most" answers — and the contract
+# a line has to meet before it is served is stated in loading.py's module
+# docstring and in the README rather than beside the line that breaks it.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: that pairing is
+# a convention rather than a checked relation (design note 36.2), so the two
+# members are authored together and share repo/ byte for byte.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: ferry-cast-off-when-it-should
+category: bug-fix
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong with the ferry across the river. On Saturday nine
+  people stood on the jetty with a boat that seats four, and it never left the
+  bank; twice this week it has pushed off with two aboard, and once with
+  nobody in it at all. With exactly four on the jetty it does what it always
+  did, so it only goes wrong for some numbers of people.
+
+  Fix it, so that the boat is only untied for a crossing worth making: it goes
+  as soon as there are enough on the jetty to fill every seat, and it stays
+  where it is while there are fewer than that. Nothing else about the ferry
+  changes — the order people are taken in, who is left behind when the boat
+  goes, and what the ferryman calls out.

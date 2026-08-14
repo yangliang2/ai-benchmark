@@ -1,0 +1,64 @@
+# fault-location, and the "say where it is" half of round 4's second planted
+# defect. Same starting repository as ferry-cast-off-when-it-should, byte for
+# byte, and the same one defect: Line.call in loading.py asks whether the line
+# is at most a load deep where it should ask whether it is at least that, so
+# the threshold rule admits exactly the lines it should hold. Same symptom in
+# the prompt, too — both members do the same detective work and only the
+# deliverable differs, which is what makes "what does locating cost, as
+# against fixing?" a reading of two actions rather than of two repositories.
+#
+# The accepted-answer key writes down both description levels that are
+# legitimately correct for this defect: the method the comparison is in, and
+# the class enclosing it. Naming the module alone is not one of them — on a
+# repository this small a bare filename is barely a location — and the class
+# level says strictly less than the module here, because loading.py holds the
+# two verdicts (SERVE, HOLD), the shortfall reckoning (short_by, EMPTY) and a
+# second class (Load) beside Line rather than Line alone.
+#
+# The terrain is what makes locating this work rather than a grep. The same
+# comparison, spelled the same way over the same two quantities, is correct in
+# Ferry.one_crossing — whether one crossing would clear the jetty is exactly
+# the question "at most" answers — so the defect's shape names two sites and
+# not one; the contract a line has to meet before it is served is stated in
+# loading.py's module docstring and in the README, both a file's length away
+# from the line that breaks it; and the prompt's own "it never left the bank"
+# points first at the ferry the symptom was seen on. The rejected near-misses
+# are the ones no lint can invent: ferry.py is where the wrong verdict is
+# asked for and displayed and where the same comparison is correct, and
+# passengers.py/in_turn is the order the jetty is read in, which is the other
+# thing a boat taking the wrong people could plausibly have got wrong.
+#
+# What proves there is a defect here at all is the paired bug-fix member's
+# held-out tests failing on this same pristine repository (design note 36.2).
+# That pairing is a convention rather than a checked relation, which is why
+# the two are authored together.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: ferry-locate-the-idle-boat
+category: fault-location
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong with the ferry across the river. On Saturday nine
+  people stood on the jetty with a boat that seats four, and it never left the
+  bank; twice this week it has pushed off with two aboard, and once with
+  nobody in it at all. With exactly four on the jetty it does what it always
+  did, so it only goes wrong for some numbers of people.
+
+  What the ferry is meant to do is untie only for a crossing worth making: it
+  goes as soon as there are enough on the jetty to fill every seat, and it
+  stays where it is while there are fewer than that. Nothing else about the
+  ferry is meant to be any different — the order people are taken in, who is
+  left behind when the boat goes, and what the ferryman calls out.
+
+  Say where that defect lives. Do not fix it and do not change any behaviour:
+  the deliverable is the location, not a repair.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the defect is in
+  relative to the repository root, and "symbol", the function, class or method
+  it lives in (a method written as Class.method).
