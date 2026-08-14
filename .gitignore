@@ -6,3 +6,7 @@ __pycache__/
 .venv/
 report.html
 data/unified.jsonl
+
+# qap (Quota Autopilot): local queue + usage ledger, and tickets derived from issues
+.qap/
+tickets/
