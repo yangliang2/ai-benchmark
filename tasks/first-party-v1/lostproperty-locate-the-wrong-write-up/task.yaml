@@ -1,0 +1,78 @@
+# fault-location, and the "say where it is" half of round 4's third planted
+# defect. Same starting repository as lostproperty-write-up-what-happened,
+# byte for byte, and the same one defect: Desk.verdict in sorting.py drops the
+# answer of the branch that deals with a thing that will not keep, so the
+# chain falls through and the later branch's answer — the shelf, or the sale
+# room — is what the book is written up from. Same symptom in the prompt, too:
+# both members do the same detective work and only the deliverable differs,
+# which is what makes "what does locating cost, as against fixing?" a reading
+# of two actions rather than of two repositories.
+#
+# The accepted-answer key writes down both description levels that are
+# legitimately correct for this defect: the method the chain is in, and the
+# class enclosing it. Naming the module alone is not one of them — on a
+# repository this small a bare filename is barely a location — and the class
+# level says strictly less than the module here, because sorting.py holds the
+# four verdicts, the keeping reckoning (outstayed, KEEPING_DAYS) and a second
+# class (Piles) beside Desk rather than Desk alone.
+#
+# The terrain is what makes locating this work rather than a grep. The same
+# chain shape, over the same two conditions in the same order, is written
+# correctly three times over — Desk.held_over in the same class,
+# handins.ticket_for and office.wording elsewhere — so the shape names four
+# sites and not one; the contract the fall-through breaks is stated in
+# sorting.py's module docstring and in the README, both a file's length from
+# the branch that breaks it; and the symptom the prompt reports is a book
+# written up wrongly, which points first at office.py, where the book is
+# written up and where every word the prompt quotes actually lives. The
+# rejected near-misses are the ones no lint can invent: office.py is where the
+# wrong line is printed and where the verdicts are turned into the words the
+# prompt reports, and handins.ticket_for is the other chain that asks whether
+# a thing will keep and answers with the wrong thing if it is read too fast.
+#
+# The second held-out grading test is this batch's, added after #52's review:
+# an agent that does the fix work and then writes a correct answer would grade
+# resolved at fix-member cost, contaminating the one measurement this pair
+# exists to produce, with nothing in the log to show it happened. So the
+# repository the agent was handed is hashed, and a run that changed any of it
+# grades unresolved. The prompt says so outright.
+#
+# What proves there is a defect here at all is the paired bug-fix member's
+# held-out tests failing on this same pristine repository (design note 36.2).
+# That pairing is a convention rather than a checked relation, which is why
+# the two are authored together.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: lostproperty-locate-the-wrong-write-up
+category: fault-location
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the lost property office. A bag of sandwiches
+  handed in on Tuesday was written up in the book that night as being on the
+  shelf, and a bunch of flowers that had been in since the spring was written
+  up as sent to the sale room; neither was in either place, because both had
+  been thrown away, which is what should have become of them. Anything that
+  keeps was written up correctly, and so was anything its owner had already
+  been in for.
+
+  What the office means to do is write the book up as things actually went:
+  anything its owner has been in for has gone back to them; anything that will
+  not keep has been thrown away that same night, however new or old it is and
+  whoever it belongs to; anything left that has been here longer than the
+  office keeps things has gone to the sale room; and everything else is on the
+  shelf.
+
+  Say where that defect lives. Do not fix it, and leave every file in the
+  repository exactly as you found it: the deliverable is the location, not a
+  repair, and a run that edits the code is graded unresolved however well it
+  answers.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the defect is in
+  relative to the repository root, and "symbol", the function, class or method
+  it lives in (a method written as Class.method).

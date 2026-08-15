@@ -1,0 +1,72 @@
+# bug-fix, and the "fix it" half of round 4's third planted defect: one
+# missing early return, authored twice over one starting repository.
+# Desk.verdict in sorting.py drops the answer of the branch that deals with a
+# thing that will not keep — it throws the thing out and then falls through
+# into the next branch, so the later branch's answer wins and the same thing
+# is settled twice: once into the bin, where it belongs, and once onto the
+# shelf or into the sale room, which is what the book is written up from. The
+# two halves of the one fall-through are what the prompt reports as two
+# symptoms: something in today comes out as shelved, something long in comes
+# out as sold.
+#
+# The repository's own tests are green on the pristine tree. Nothing visible
+# takes a thing that will not keep through any of the repository's three
+# dispatch chains — Handin's ticket, the desk's held_over and the desk's
+# verdict all have exactly that branch untested, so the defective one is not
+# the odd one out — while what those branches do reach is covered in both
+# directions. A visible test reproducing the symptom would hand the agent the
+# answer and delete the action being measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that: the same chain shape, over the same two conditions in the
+# same order, is written correctly three times over — Desk.held_over beside
+# it, handins.ticket_for and office.wording elsewhere — and the contract the
+# fall-through breaks is stated in sorting.py's module docstring and in the
+# README rather than beside the branch that breaks it. What the symptom points
+# at first is office.py, which is where the book is written up and where the
+# words the prompt quotes actually live.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: that pairing is
+# a convention rather than a checked relation (design note 36.2), so the two
+# members are authored together and share repo/ byte for byte.
+#
+# One thing the prompt does not say, and the author's call rather than an
+# oversight: the fix has to be the decision itself, because the held-out tests
+# ask the desk for a verdict directly. A repair that leaves Desk.verdict
+# answering what it answers now and corrects the book downstream satisfies
+# every word of the prompt and grades unresolved. It is defensible — the
+# module's own docstring says a verdict is what the desk answers with rather
+# than something a caller works out afterwards — but it is undeclared, and it
+# is the one false negative this task knowingly carries.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: lostproperty-write-up-what-happened
+category: bug-fix
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the lost property office. A bag of sandwiches
+  handed in on Tuesday was written up in the book that night as being on the
+  shelf, and a bunch of flowers that had been in since the spring was written
+  up as sent to the sale room; neither was in either place, because both had
+  been thrown away, which is what should have become of them. Anything that
+  keeps was written up correctly, and so was anything its owner had already
+  been in for.
+
+  What the office means to do is write the book up as things actually went:
+  anything its owner has been in for has gone back to them; anything that will
+  not keep has been thrown away that same night, however new or old it is and
+  whoever it belongs to; anything left that has been here longer than the
+  office keeps things has gone to the sale room; and everything else is on the
+  shelf.
+
+  Fix it, so that the book says what became of each thing. Nothing else about
+  the office changes — the order things are dealt with, the words each outcome
+  is written up in, and what is thrown away by the end of the night.

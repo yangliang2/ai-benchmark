@@ -1,0 +1,12 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "sorting.py", "symbol": "Desk.verdict"},
+    {"file": "sorting.py", "symbol": "Desk"}
+  ],
+  "rejected": [
+    {"file": "office.py", "symbol": "Office.written_up"},
+    {"file": "office.py", "symbol": "wording"},
+    {"file": "handins.py", "symbol": "ticket_for"}
+  ]
+}
