@@ -1,0 +1,12 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "tallying.py", "symbol": "Slate.bundles"},
+    {"file": "tallying.py", "symbol": "Slate"}
+  ],
+  "rejected": [
+    {"file": "newsagent.py", "symbol": "Newsagent.bundle_list"},
+    {"file": "newsagent.py", "symbol": "counter_line"},
+    {"file": "rounds.py", "symbol": "Round.drops"}
+  ]
+}

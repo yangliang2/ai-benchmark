@@ -1,0 +1,77 @@
+# fault-location, and the "say where it is" half of round 4's fourth planted
+# defect. Same starting repository as paperround-count-each-walk-on-its-own,
+# byte for byte, and the same one defect: `Slate.bundles` in tallying.py takes
+# the list it counts a walk's bundles onto as `so_far=[]`, so every ask that
+# passes no list of its own counts onto the one list the def line built at
+# import, and a later ask comes back carrying an earlier ask's bundles. Same
+# symptom in the prompt, too: both members do the same detective work and only
+# the deliverable differs, which is what makes "what does locating cost, as
+# against fixing?" a reading of two actions rather than of two repositories.
+#
+# The accepted-answer key writes down both description levels that are
+# legitimately correct for this defect: the method whose signature carries the
+# default, and the class enclosing it. Naming the module alone is not one of
+# them — on a repository this small a bare filename is barely a location — and
+# the class level says strictly less than the module here, because tallying.py
+# holds `Bundle`, `added_up` and `NOTHING_YET` beside `Slate` rather than
+# `Slate` alone.
+#
+# The terrain is what makes locating this work rather than a grep. A mutable
+# default argument is a shape a grep finds in one pass, so the repository holds
+# six more of them and every one is correct: `houses.in_order`, `Round.drops`,
+# `tallying.added_up`, `counter_line`, `Newsagent.bundle_list` and
+# `Newsagent.how_many` all read their default and never add to it, two of them
+# under a test that says so, and only `Slate.bundles` appends. The contract it
+# breaks is stated in tallying.py's module docstring and in the README, both a
+# file's length from the line that breaks it. And the symptom the prompt
+# reports points elsewhere first: the list it quotes is made up in
+# newsagent.py, and the thing it says was asked about is a walk, which is what
+# rounds.py is. Those are the rejected near-misses no lint can invent —
+# `Newsagent.bundle_list` is where the wrong list is returned from,
+# `counter_line` is where its lines are written, and `Round.drops` is the other
+# reckoning of which houses a walk takes in.
+#
+# The second held-out grading test is this batch's, carried over from #53: an
+# agent that does the fix work and then writes a correct answer would grade
+# resolved at fix-member cost, contaminating the one measurement this pair
+# exists to produce, with nothing in the log to show it happened. So the
+# repository the agent was handed is hashed, and a run that changed any of it
+# grades unresolved. The prompt says so outright.
+#
+# What proves there is a defect here at all is the paired bug-fix member's
+# held-out tests failing on this same pristine repository (design note 36.2).
+# That pairing is a convention rather than a checked relation, which is why
+# the two are authored together.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: paperround-locate-the-carried-over-count
+category: fault-location
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the newsagent's. On Monday we asked the shop
+  what to make up for the herald walk, and it said one for Fen Road and two
+  for Mill Lane, which was right. On Tuesday we asked what to make up for the
+  gazette walk: back came one for Kiln Row and one for Mill Lane, which was
+  right, and in front of them Monday's Fen Road and Mill Lane again, which
+  nobody had asked about and nobody was making up. Wednesday's answer carried
+  Monday's and Tuesday's as well, and by Saturday most of what the shop said
+  to make up was other days.
+
+  What the shop means to do is answer every ask on its own: what to make up
+  for one walk is the papers that walk drops, a street at a time and in the
+  order the walk goes, and nothing whatever left over from an earlier one.
+
+  Say where that defect lives. Do not fix it, and leave every file in the
+  repository exactly as you found it: the deliverable is the location and not
+  a repair, and a run that edits the code is graded unresolved however well it
+  answers.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the defect is in
+  relative to the repository root, and "symbol", the function, class or method
+  it lives in (a method written as Class.method).

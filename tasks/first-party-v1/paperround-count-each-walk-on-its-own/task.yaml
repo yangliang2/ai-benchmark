@@ -1,0 +1,74 @@
+# bug-fix, and the "fix it" half of round 4's fourth planted defect: one
+# mutable default argument, authored twice over one starting repository.
+# `Slate.bundles` in tallying.py takes the list it counts a walk's bundles
+# onto as `so_far=[]`, so every ask that does not pass one of its own counts
+# onto the same list object — the one the def line built, once, at import.
+# The first ask is right, the second comes back with the first's bundles in
+# front of its own, and the third with both. State leaks between calls and a
+# later call sees an earlier one's data, which is the shape this ticket plants.
+#
+# The repository's own tests are green on the pristine tree. What keeps them
+# green is that nothing visible ever reads a defaulted count as a whole: the
+# suite asks whether a bundle it expects is in what came back, which stays
+# true however much an earlier ask left in there. The two callers that do read
+# a count whole — `Slate.busiest` and `Newsagent.every_bundle` — pass a list of
+# their own, which is the parameter used as it was meant to be and is exactly
+# why they are unaffected. A visible test reproducing the symptom would hand
+# the agent the answer and delete the action being measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that. A mutable default is a shape a grep finds in one pass, so
+# the repository holds six more of them — `houses.in_order`, `Round.drops`,
+# `tallying.added_up`, `counter_line`, `Newsagent.bundle_list` and
+# `Newsagent.how_many` — and every one of them is correct, because it is read
+# and never added to; two of those six are asserted read-only by the
+# repository's own tests, and the defective one is the only one that appends.
+# The contract it breaks is stated in tallying.py's module docstring and in the
+# README rather than beside the line that breaks it. What the symptom points at
+# first is newsagent.py, which is where the list the prompt quotes is made up,
+# and rounds.py, which is what the prompt's own word for the thing asked about
+# names.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: that pairing is
+# a convention rather than a checked relation (design note 36.2), so the two
+# members are authored together and share repo/ byte for byte.
+#
+# One thing the prompt does not say, and the author's call rather than an
+# oversight: a count passed in is added to in place and not copied, so a fix
+# that rebuilds the list (`so_far = list(so_far)`) grades unresolved. That is
+# declared by the repository rather than by the prompt —
+# `Newsagent.every_bundle` throws the return value away and reads the list it
+# passed in, and the repository's own test of it goes red on such a fix — which
+# is why the prompt says instead that everything the repository's own tests
+# say still holds.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: paperround-count-each-walk-on-its-own
+category: bug-fix
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the newsagent's. On Monday we asked the shop
+  what to make up for the herald walk, and it said one for Fen Road and two
+  for Mill Lane, which was right. On Tuesday we asked what to make up for the
+  gazette walk: back came one for Kiln Row and one for Mill Lane, which was
+  right, and in front of them Monday's Fen Road and Mill Lane again, which
+  nobody had asked about and nobody was making up. Wednesday's answer carried
+  Monday's and Tuesday's as well, and by Saturday most of what the shop said
+  to make up was other days.
+
+  What the shop means to do is answer every ask on its own: what to make up
+  for one walk is the papers that walk drops, a street at a time and in the
+  order the walk goes, and nothing whatever left over from an earlier one.
+
+  Fix it, so that every answer is about the walk it was asked about and
+  nothing else. Nothing else changes: the order a walk goes in, the words a
+  line of the list is written in, what the shop needs for a whole title, and
+  everything the repository's own tests already say about the shop.
