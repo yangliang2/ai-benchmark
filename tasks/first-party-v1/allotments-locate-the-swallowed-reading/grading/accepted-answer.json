@@ -1,0 +1,13 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "ledger.py", "symbol": "Quarter.used_on"},
+    {"file": "ledger.py", "symbol": "Quarter"}
+  ],
+  "rejected": [
+    {"file": "society.py", "symbol": "Society.read"},
+    {"file": "society.py", "symbol": "Society.sheet"},
+    {"file": "cards.py", "symbol": "figure"},
+    {"file": "cards.py", "symbol": "written_up"}
+  ]
+}

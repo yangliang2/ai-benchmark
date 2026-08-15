@@ -1,0 +1,86 @@
+# fault-location, and the "say where it is" half of round 4's fifth planted
+# defect. Same starting repository as allotments-go-back-for-what-nobody-
+# could-read, byte for byte, and the same one defect: `Quarter.used_on` in
+# ledger.py catches the `Unreadable` that `cards.figure` raises and returns
+# `NOTHING_USED` instead, so a card nobody could make out comes back to the
+# caller as a reading of nought — a failure reported as a success, and as a
+# reading indistinguishable from a standpipe that was read and found not to
+# have moved. Same symptom in the prompt, too: both members do the same
+# detective work and only the deliverable differs, which is what makes "what
+# does locating cost, as against fixing?" a reading of two actions rather than
+# of two repositories.
+#
+# The accepted-answer key writes down both description levels that are
+# legitimately correct for this defect: the method whose handler throws the
+# exception away, and the class enclosing it. Naming the module alone is not
+# one of them — on a repository this small a bare filename is barely a
+# location — and the class level says strictly less than the module here,
+# because ledger.py holds `Reading`, `most_used`, `NOTHING_USED` and
+# `NOT_READ_BEFORE` beside `Quarter` rather than `Quarter` alone.
+#
+# The terrain is what makes locating this work rather than a grep. A caught
+# exception is a shape a grep finds in one pass, so the repository holds five
+# more handlers across all four modules and every one is correct:
+# `plots.number_of` re-raises as `NotAPlot`, `Society.read` records the plot it
+# could not read, and `cards.written_up`, `Quarter.read_before` and
+# `Society.note_on` fall back to a value that says outright there was nothing
+# to be had. Three of the six catch `Unreadable` itself, and ledger.py holds a
+# correct one of its own, so reaching the right file finishes nothing. The
+# nearest twin is `cards.written_up`: the same `except Unreadable: return
+# <constant>`, correct because what it falls back to says the card was not
+# read rather than that the plot used nothing — which is the whole
+# discrimination, and no pattern shows it.
+#
+# The contract the defect breaks is stated in ledger.py's module docstring and
+# in the README, both a file's length from the line that breaks it. And the
+# symptom the prompt reports points elsewhere first: the sheet and the list to
+# go back to are made up in society.py, whose `Society.read` catches
+# `Unreadable` and would put the plot on the list if it ever saw one — correct
+# code that can never fire — and a card becomes a figure at all in cards.py.
+# Those are the rejected near-misses no lint can invent.
+#
+# The second held-out grading test is this batch's, carried over from #53: an
+# agent that does the fix work and then writes a correct answer would grade
+# resolved at fix-member cost, contaminating the one measurement this pair
+# exists to produce, with nothing in the log to show it happened. So the
+# repository the agent was handed is hashed, and a run that changed any of it
+# grades unresolved. The prompt says so outright.
+#
+# What proves there is a defect here at all is the paired bug-fix member's
+# held-out tests failing on this same pristine repository (design note 36.2).
+# That pairing is a convention rather than a checked relation, which is why
+# the two are authored together.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: allotments-locate-the-swallowed-reading
+category: fault-location
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the allotments. Plot 7's card came back out of
+  the rain with the ink run right across it, and nobody could make out what
+  had been written on it at all. The sheet went up on the wall that same
+  evening with plot 7 down for nothing — as though the standpipe up there had
+  not been turned on since March — and the list of plots to go back to came
+  back empty, so nobody took a fresh card round and nobody ever will. What the
+  whole site had got through came out short by whatever plot 7 got through.
+
+  What the society means to do is this: where nobody can make out what came
+  back off a plot, the society has no figure for that plot at all. It is left
+  off the sheet, it goes on the list to go back to, and nothing whatever is put
+  in its place — least of all nothing itself, which is a perfectly ordinary
+  answer and belongs to a plot that was read and found not to have moved.
+
+  Say where that defect lives. Do not fix it, and leave every file in the
+  repository exactly as you found it: the deliverable is the location and not
+  a repair, and a run that edits the code is graded unresolved however well it
+  answers.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the defect is in
+  relative to the repository root, and "symbol", the function, class or method
+  it lives in (a method written as Class.method).

@@ -1,0 +1,79 @@
+# bug-fix, and the "fix it" half of round 4's fifth planted defect: one
+# swallowed exception, authored twice over one starting repository.
+# `Quarter.used_on` in ledger.py wraps the one call that turns what is written
+# on a card into a figure in `try: ... except Unreadable: return NOTHING_USED`.
+# `cards.figure` raises `Unreadable` exactly as it is meant to when the ink has
+# run or somebody wrote "see over"; the handler throws that away and hands the
+# caller a figure of nought instead. A failure comes back as a success, and a
+# reading of nought is a perfectly ordinary reading — a standpipe read and
+# found not to have moved — so nothing downstream can tell the two apart. The
+# handler in `Society.read` that was written to put such a plot on the list to
+# go back to never sees an exception and never fires.
+#
+# The repository's own tests are green on the pristine tree. What keeps them
+# green is that nothing visible ever puts a card nobody can make out into a
+# `Quarter`: the visible suite exercises the unreadable card at the level below
+# — `cards.figure` raises, and `cards.written_up` writes the card up as unread
+# — which legitimises the shape without ever routing it through the swallow. A
+# visible test reproducing the symptom would hand the agent the answer and
+# delete the action being measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that. A caught exception is a shape a grep finds in one pass, so
+# the repository holds five more handlers across all four modules and every one
+# of them is correct: `plots.number_of` re-raises as `NotAPlot`,
+# `Society.read` records the plot it could not read, and `cards.written_up`,
+# `Quarter.read_before` and `Society.note_on` fall back to a value that says
+# outright that there was nothing to be had. Three of the six catch
+# `Unreadable` itself. The nearest twin of all is `cards.written_up`, the same
+# `except Unreadable: return <constant>` written correctly, because what it
+# falls back to says the card was not read rather than that the plot used
+# nothing. The contract the defect breaks is stated in ledger.py's module
+# docstring and in the README rather than beside the line that breaks it.
+# What the symptom points at first is society.py, which is where the sheet and
+# the list to go back to are made up, and cards.py, which is where a card
+# becomes a figure at all.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: that pairing is
+# a convention rather than a checked relation (design note 36.2), so the two
+# members are authored together and share repo/ byte for byte.
+#
+# The grading asserts what the society answers and not how it answers it —
+# where the figure stops being made up is the fix's business. A fix that keeps
+# the plot off the sheet and puts it on the list to go back to resolves,
+# whether it lets `Unreadable` out of `used_on` or stops the figure being made
+# up somewhere else; the reference solution does the former, which is the one
+# edit that removes the swallow rather than working around it.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: allotments-go-back-for-what-nobody-could-read
+category: bug-fix
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the allotments. Plot 7's card came back out of
+  the rain with the ink run right across it, and nobody could make out what
+  had been written on it at all. The sheet went up on the wall that same
+  evening with plot 7 down for nothing — as though the standpipe up there had
+  not been turned on since March — and the list of plots to go back to came
+  back empty, so nobody took a fresh card round and nobody ever will. What the
+  whole site had got through came out short by whatever plot 7 got through.
+
+  What the society means to do is this: where nobody can make out what came
+  back off a plot, the society has no figure for that plot at all. It is left
+  off the sheet, it goes on the list to go back to, and nothing whatever is put
+  in its place — least of all nothing itself, which is a perfectly ordinary
+  answer and belongs to a plot that was read and found not to have moved.
+
+  Fix it, so that what nobody could make out is left off the sheet and its plot
+  goes on the list to go back to. Nothing else changes: the order the reader
+  goes round in, the way a card is written up in the book, what the society has
+  written against a plot, and everything the repository's own tests already say
+  about the site.
