@@ -1,0 +1,14 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "counter.py", "symbol": "Window.postage_on"},
+    {"file": "counter.py", "symbol": "Window"}
+  ],
+  "rejected": [
+    {"file": "card.py", "symbol": "to_pay"},
+    {"file": "card.py", "symbol": "POSTAGE"},
+    {"file": "parcels.py", "symbol": "size_band"},
+    {"file": "parcels.py", "symbol": "weight_band"},
+    {"file": "office.py", "symbol": "Office.sack_for"}
+  ]
+}

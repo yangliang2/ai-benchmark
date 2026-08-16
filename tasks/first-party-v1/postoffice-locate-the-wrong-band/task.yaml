@@ -1,0 +1,86 @@
+# fault-location, and the "say where it is" half of round 4's sixth planted
+# defect. Same starting repository as postoffice-charge-what-the-scale-said,
+# byte for byte, and the same one defect: `Window.postage_on` in counter.py
+# prices a parcel with `to_pay(size_band(...inches))`, the band the gauge put
+# it in, where the card on the wall is priced on the band the scale put it in.
+# Both readings come back as a letter A to D and the card carries a price
+# against all four, so the wrong key is one the card holds and the lookup
+# resolves silently to a neighbouring line. Same symptom in the prompt, too:
+# both members do the same detective work and only the deliverable differs,
+# which is what makes "what does locating cost, as against fixing?" a reading
+# of two actions rather than of two repositories.
+#
+# The accepted-answer key writes down both description levels that are
+# legitimately correct for this defect: the method that looks the price up
+# under the wrong band, and the class enclosing it. Naming the module alone is
+# not one of them — on a repository this small a bare filename is barely a
+# location — and the class level says strictly less than the module here,
+# because counter.py holds `Charge`, `most_charged` and `NOTHING_TAKEN` beside
+# `Window` rather than `Window` alone.
+#
+# The terrain is what makes locating this work rather than a grep. A band read
+# off a parcel and keyed into something is a shape a grep finds in one pass, so
+# the repository does it six times across three modules and five of the six are
+# correct: `parcels.to_the_scale` and `parcels.to_the_gauge` pick a day's
+# parcels out by either reading, `Window.weighed` reads the scale's band,
+# `Office.sack_for` reads the gauge's band into the sacks, and
+# `Office.two_to_carry` reads the scale's band into who carries a parcel out.
+# Three read the gauge and three the scale, and which reading a lookup is
+# keyed on is settled by what the lookup is *for* — the defective module holds
+# a correct one of its own, so reaching the right file finishes nothing. The
+# nearest twin is `Office.sack_for`: the same `TABLE[size_band(parcel.inches)]`
+# written correctly, because the sacks really are packed on the gauge, which is
+# the whole discrimination and no pattern shows it.
+#
+# The contract the defect breaks is stated in card.py's module docstring and in
+# the README, both a file away from the line that breaks it. And the symptom
+# the prompt reports points elsewhere first: the two prices it quotes are both
+# on card.py's card, a reading becomes a band at all in parcels.py, and the
+# takings that came out over are added up in office.py — whose `sack_for` is
+# the correct twin of the defective line. Those are the rejected near-misses no
+# lint can invent.
+#
+# The second held-out grading test is this batch's, carried over from #53: an
+# agent that does the fix work and then writes a correct answer would grade
+# resolved at fix-member cost, contaminating the one measurement this pair
+# exists to produce, with nothing in the log to show it happened. So the
+# repository the agent was handed is hashed, and a run that changed any of it
+# grades unresolved. The prompt says so outright.
+#
+# What proves there is a defect here at all is the paired bug-fix member's
+# held-out tests failing on this same pristine repository (design note 36.2).
+# That pairing is a convention rather than a checked relation, which is why
+# the two are authored together.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: postoffice-locate-the-wrong-band
+category: fault-location
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the post office. Mrs Neap brought a lampshade in
+  on Tuesday — next to no weight in it at all, but a great awkward thing to get
+  your arms round — and was charged £3.40 to send it. What the card on the wall
+  says against what the scale made of it is £2.35. She paid and said nothing,
+  and nobody would have known: the lampshade went off in the sack it belonged
+  in and got where it was going, and it is only the day's takings, over by the
+  £1.05 nobody owed, that says anything happened at all.
+
+  What the office means to do is this: what a parcel costs to send is read off
+  the card against what the scale made of it, and against nothing else. What
+  the gauge makes of it round the middle settles which sack it leaves in, and
+  that is the whole of what the second reading is for.
+
+  Say where that defect lives. Do not fix it, and leave every file in the
+  repository exactly as you found it: the deliverable is the location and not
+  a repair, and a run that edits the code is graded unresolved however well it
+  answers.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the defect is in
+  relative to the repository root, and "symbol", the function, class or method
+  it lives in (a method written as Class.method).

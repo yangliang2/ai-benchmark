@@ -1,0 +1,82 @@
+# bug-fix, and the "fix it" half of round 4's sixth planted defect: one wrong
+# key in a lookup, authored twice over one starting repository.
+# `Window.postage_on` in counter.py prices a parcel off the card on the wall
+# with `to_pay(size_band(...inches))` — the band the *gauge* put the parcel in,
+# where the card is priced on the band the *scale* put it in. Both readings are
+# taken off every parcel, both come back as a letter A to D, and the card
+# carries a price against all four, so the wrong key is a key the card holds:
+# the lookup resolves, silently, to the line the parcel would have been charged
+# at had the gauge's reading been the scale's. Nothing raises and nothing is
+# missing — the money is simply read off a neighbouring line.
+#
+# The repository's own tests are green on the pristine tree, because on an
+# ordinary parcel the two readings agree: a heavier parcel is usually a bigger
+# one, every visible fixture that is priced is one of those, and the wrong key
+# and the right key name the same line of the card. The visible suite exercises
+# the divergence at the level below instead — `weight_band(300)` is band B while
+# `size_band(40)` is band C, and a light awkward parcel is packed into the big
+# sack — which legitimises the shape without ever routing a parcel whose
+# readings disagree through the pricing. A visible test reproducing the symptom
+# would hand the agent the answer and delete the action being measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that. A band read off a parcel and keyed into something is a shape
+# a grep finds in one pass, so the repository does it six times across three
+# modules and five of the six are correct: `parcels.to_the_scale` and
+# `parcels.to_the_gauge` pick a day's parcels out by either reading,
+# `Window.weighed` reads the scale's band, `Office.sack_for` reads the gauge's
+# band into the sacks, and `Office.two_to_carry` reads the scale's band into
+# who carries a parcel out. Three read the scale and three the gauge, so the
+# pattern names six sites and decides nothing: which reading a lookup is keyed
+# on is settled by what the lookup is *for*. The nearest twin is
+# `Office.sack_for`, the same `TABLE[size_band(parcel.inches)]` written
+# correctly, because the sacks really are packed on the gauge — which is the
+# whole discrimination, and no pattern shows it.
+#
+# The contract the defect breaks is stated in card.py's
+# module docstring and in the README rather than beside the line that breaks
+# it. What the symptom points at first is card.py, which carries both the
+# prices the prompt quotes; parcels.py, where a reading becomes a band at all;
+# and office.py, where the takings that came out over are added up.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: that pairing is
+# a convention rather than a checked relation (design note 36.2), so the two
+# members are authored together and share repo/ byte for byte.
+#
+# The grading asserts what the office charges and not how it arrives at it —
+# where the price stops being read off the wrong band is the fix's business. A
+# fix resolves whether it swaps the key at the lookup or works the band out
+# earlier, so long as the money follows the scale and the sacks still follow
+# the gauge; the reference solution does the former, which is the one edit that
+# changes the key rather than the terrain around it.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: postoffice-charge-what-the-scale-said
+category: bug-fix
+scale: single-file
+language: python
+control: true
+prompt: |
+  Something has gone wrong at the post office. Mrs Neap brought a lampshade in
+  on Tuesday — next to no weight in it at all, but a great awkward thing to get
+  your arms round — and was charged £3.40 to send it. What the card on the wall
+  says against what the scale made of it is £2.35. She paid and said nothing,
+  and nobody would have known: the lampshade went off in the sack it belonged
+  in and got where it was going, and it is only the day's takings, over by the
+  £1.05 nobody owed, that says anything happened at all.
+
+  What the office means to do is this: what a parcel costs to send is read off
+  the card against what the scale made of it, and against nothing else. What
+  the gauge makes of it round the middle settles which sack it leaves in, and
+  that is the whole of what the second reading is for.
+
+  Fix it, so that a parcel is charged what the card says against what the scale
+  made of it. Nothing else changes: the sack each parcel leaves in, how the
+  money is written up in the book, what the office has written against a
+  label, and everything the repository's own tests already say.

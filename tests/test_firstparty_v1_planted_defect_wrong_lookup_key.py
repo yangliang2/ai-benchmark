@@ -1,0 +1,941 @@
+"""The sixth planted defect (#56): one wrong key in a lookup, authored as two
+tasks that share it.
+
+`postoffice-charge-what-the-scale-said` asks for the fix and
+`postoffice-locate-the-wrong-band` asks only for the location, over one
+hand-authored starting repository holding one planted defect:
+`Window.postage_on` prices a parcel with `to_pay(size_band(...inches))` — the
+band the *gauge* put it in — where the card on the wall is priced on the band
+the *scale* put it in. Both readings are taken off every parcel, both come back
+as a letter A to D, and the card carries a price against all four, so the wrong
+key is a key the card holds: nothing raises, nothing is missing, and the money
+is read off a neighbouring line of the same card. Same terrain, same defect,
+two actions — which is what makes "what does locating cost, as against
+fixing?" a reading of the two actions rather than of two repositories.
+
+This suite is #55's, re-aimed at a defect of a different shape. It checks the
+same things no other suite can:
+
+- **The two members really do share one repository**, byte for byte. The
+  pairing is a convention rather than a checked relation (design note 36.2):
+  the members are deliberately neither a task family nor a pair, so the lint
+  compares nothing between them and only a test can.
+- **The defect the fix removes is the defect the key names.** The lint proves
+  the answer key discriminates and the reference solution proves the fix
+  works, but nothing joins them (36.1). Here the file the fix touches and the
+  file every accepted answer names are asserted to be one file.
+- **The repository reproduces the symptom nowhere the agent can see it.** On an
+  ordinary parcel the two readings agree, every visible fixture that is priced
+  is one of those, and the wrong key and the right key name the same line of
+  the card. The visible suite exercises the divergence at the level *below* the
+  pricing instead — the scale and the gauge put one parcel in different bands,
+  and a light awkward parcel is packed into the big sack — so the shape is
+  legitimised without the symptom ever being reproduced. Proved here by
+  swapping the wrong key for the right one and watching the suite stay green,
+  with the vacuous reading refused first by making the lookup raise and
+  watching it go red.
+- **What the key accepts and refuses on this task's own terrain**: both
+  description levels the author wrote down resolve, and every other symbol of
+  the defective file does not.
+- **The terrain leaves the locating to be done.** The defective module defines
+  more than the defective class *and more than one class*, so the accepted
+  class-level answer says strictly less than the filename it would otherwise
+  restate (36.6); a band read off a parcel and keyed into something is a shape
+  a grep finds in one pass, so the repository does it six times across three
+  modules, three on each reading, and five of the six are correct; and the
+  contract the defect breaks is written in another file altogether.
+- **What no pattern can tell apart**, which is this defect's whole
+  discrimination: `Office.sack_for` keys a table off exactly the same
+  `size_band(parcel.inches)` and is correct, because the sacks really are
+  packed on the gauge. Asserted by running both over one light awkward parcel.
+- **This batch's own held-out gate**, carried over from #53: the
+  fault-location member hashes the repository it handed over and grades a run
+  that edited any of it unresolved, so an agent cannot do the fix work and
+  charge it to the locating member. Nothing asserts those digests still
+  describe the checked-in tree but this suite.
+
+The rest is what every checked-in task has to prove — lints clean, reference
+solution grades resolved, the empty diff grades unresolved — all through the
+same execution-verified pipeline real runs go through.
+"""
+
+import ast
+import hashlib
+import json
+import re
+from collections.abc import Callable
+from pathlib import Path
+
+import pytest
+from firstparty_v1_tasks import (
+    run_for,
+    solution_diff,
+    solved_tree,
+    task_by_id,
+    visible_tests_pass,
+    workdir_diff,
+)
+
+from ai_benchmark.firstparty_v1 import (
+    ANSWER_KEY_FILE,
+    Task,
+    _tree_bytes,
+    answer_key,
+    evaluate,
+    is_control,
+    lint_task_set,
+)
+
+BUG_FIX = "postoffice-charge-what-the-scale-said"
+FAULT_LOCATION = "postoffice-locate-the-wrong-band"
+MEMBERS = (BUG_FIX, FAULT_LOCATION)
+
+# The file the defect lives in, and the one the fix touches. One name, asserted
+# from both sides below.
+DEFECTIVE_FILE = "counter.py"
+DEFECTIVE_SYMBOL = "Window.postage_on"
+
+ANSWER_PATH = "ANSWER.json"
+
+# The one line the defect is: the price looked up under the band the gauge put
+# the parcel in, and the same line with the key the card is actually priced on.
+DEFECTIVE_LOOKUP = "        return to_pay(size_band(self.parcel_for(label).inches))\n"
+CORRECT_LOOKUP = "        return to_pay(weight_band(self.parcel_for(label).grams))\n"
+
+# Every place in the repository where a band is read off a parcel and keyed
+# into something, as (file, symbol, reading) — read and never added to. Named
+# here because the terrain claim is that a grep for the shape finds six sites,
+# evenly split between the two readings, and has to read all six.
+READINGS = {
+    ("parcels.py", "to_the_scale", "weight_band"),
+    ("parcels.py", "to_the_gauge", "size_band"),
+    (DEFECTIVE_FILE, "Window.weighed", "weight_band"),
+    (DEFECTIVE_FILE, DEFECTIVE_SYMBOL, "size_band"),
+    ("office.py", "Office.sack_for", "size_band"),
+    ("office.py", "Office.two_to_carry", "weight_band"),
+}
+
+# The contract the defect breaks, in the repository's own words and in another
+# file altogether — deliberately not the prompt's, so that reading the prompt
+# is not one grep away from the defective file. See `KNOWN_PROMPT_BAIT` below,
+# which is empty because of this.
+CONTRACT = (
+    "Which line of it a parcel is charged at is settled by what the parcel "
+    "weighed: the office has priced by the scale since the day it opened, and "
+    "what the gauge makes of a parcel has never had anything to do with the "
+    "money."
+)
+CONTRACT_FILE = "card.py"
+
+# The grading test that hashes the handed-over repository.
+AS_HANDED_OVER_TEST = "test_the_repository_is_as_it_was.py"
+
+# The parcel the prompt reports: next to no weight in it, and a great awkward
+# thing round the middle. Band B on the scale and band C on the gauge.
+AWKWARD = ("a lampshade", 300, 40)
+
+
+def repo_source(file: str) -> str:
+    return (task_by_id(FAULT_LOCATION).repo_dir / file).read_text(encoding="utf-8")
+
+
+def top_level_symbols(source: str) -> set[str]:
+    """What a module defines at its top level — the level a filename names."""
+    defined = set()
+    for node in ast.parse(source).body:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            defined.add(node.name)
+        elif isinstance(node, ast.Assign):
+            defined.update(
+                target.id for target in node.targets if isinstance(target, ast.Name)
+            )
+    return defined
+
+
+def classes(source: str) -> set[str]:
+    """The classes a module defines at its top level — the level an accepted
+    answer naming a class is answering at."""
+    return {
+        node.name for node in ast.parse(source).body if isinstance(node, ast.ClassDef)
+    }
+
+
+def function(source: str, symbol: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
+    """The `def` a bare name or a `Class.method` spelling names."""
+    enclosing, _, name = symbol.rpartition(".")
+    body = ast.parse(source).body
+    if enclosing:
+        [holder] = [
+            node
+            for node in body
+            if isinstance(node, ast.ClassDef) and node.name == enclosing
+        ]
+        body = holder.body
+    [found] = [
+        node
+        for node in body
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+        and node.name == name
+    ]
+    return found
+
+
+def symbol_lines(source: str, symbol: str) -> range:
+    """The line numbers a symbol occupies, its `def` line included."""
+    found = function(source, symbol)
+    assert found.end_lineno is not None
+    return range(found.lineno, found.end_lineno + 1)
+
+
+def functions(source: str) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
+    """Every function a module defines, methods spelled `Class.method`."""
+    found: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {}
+    for node in ast.parse(source).body:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            found[node.name] = node
+        elif isinstance(node, ast.ClassDef):
+            for member in node.body:
+                if isinstance(member, ast.FunctionDef | ast.AsyncFunctionDef):
+                    found[f"{node.name}.{member.name}"] = member
+    return found
+
+
+def code_files() -> list[Path]:
+    """The repository's modules, its own test suite left out."""
+    return [
+        path
+        for path in sorted(task_by_id(FAULT_LOCATION).repo_dir.glob("*.py"))
+        if not path.name.startswith("test_")
+    ]
+
+
+def answers(payload: str, *, at: str = ANSWER_PATH) -> Callable[[Path], None]:
+    """The edit a run that wrote this answer file would log."""
+
+    def write(workdir: Path) -> None:
+        target = workdir / at
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(payload)
+
+    return write
+
+
+def naming(file: str, symbol: str) -> str:
+    return json.dumps({"file": file, "symbol": symbol}, indent=2) + "\n"
+
+
+def verdict(task: Task, edit: Callable[[Path], None]) -> float:
+    """What the pipeline a real run replays through makes of this run."""
+    return evaluate(
+        [task], [run_for(task, workdir_diff(task, edit))], source="run-log"
+    )[0].quality_value
+
+
+# --- one repository, one defect, two actions -----------------------------------
+
+
+def test_the_two_members_share_one_starting_repository() -> None:
+    """Byte for byte, and checked here because nothing else checks it: the two
+    are deliberately neither a task family nor a pair — those constructs
+    require one varied knob and an agreed category, and these vary no knob and
+    differ in category — so the family lint's peer-to-peer tree comparison
+    never runs over them."""
+    fix, locate = task_by_id(BUG_FIX), task_by_id(FAULT_LOCATION)
+
+    assert _tree_bytes(fix.repo_dir) == _tree_bytes(locate.repo_dir)
+
+
+def test_the_defect_the_fix_removes_is_the_defect_the_key_names() -> None:
+    """The join the corpus cannot make on its own.
+
+    A fault-location task's grading proves only that its grading test tells an
+    accepted answer from a wrong one; what proves there is a defect to find at
+    all is the paired bug-fix member's held-out tests failing on the shared
+    pristine repository (36.2). That pairing is a convention, so the two halves
+    are tied together here: every file the accepted answers name is the one
+    file the reference fix touches.
+    """
+    fix = task_by_id(BUG_FIX)
+    key = answer_key(task_by_id(FAULT_LOCATION))
+
+    touched = {
+        line.split(" b/")[-1]
+        for line in solution_diff(fix).splitlines()
+        if line.startswith("diff --git ")
+    }
+
+    assert touched == {DEFECTIVE_FILE}
+    assert {answer.file for answer in key.accepted} == {DEFECTIVE_FILE}
+
+
+def test_the_fix_is_the_key_swapped_and_nothing_else() -> None:
+    """One planted defect and no other seeded fault: the whole of the reference
+    solution is the key of one lookup swapped for the reading the card is
+    priced on — and the import the wrong key was that module's only user of —
+    so the terrain the fault-location member is measured over holds exactly one
+    thing to find."""
+    changed = [
+        line
+        for line in solution_diff(task_by_id(BUG_FIX)).splitlines()
+        if line.startswith(("+", "-")) and not line.startswith(("+++", "---"))
+    ]
+
+    assert changed == [
+        "-from parcels import size_band, weight_band",
+        "+from parcels import weight_band",
+        f"-{DEFECTIVE_LOOKUP.rstrip()}",
+        f"+{CORRECT_LOOKUP.rstrip()}",
+    ]
+
+
+def test_neither_member_claims_anything_about_difficulty() -> None:
+    """Both are coverage tasks: authored to fill a category, betting nothing.
+    Outside the frozen 22 that has to be said outright, and saying it is also
+    what keeps them out of every knob reading — a task declaring no
+    construction can join no family, no pair and no effort claim, so neither
+    can advance a knob's counter or move a published multiplier."""
+    for task_id in MEMBERS:
+        task = task_by_id(task_id)
+
+        assert task.control
+        assert is_control(task)
+        assert task.construction is None
+
+
+def test_each_member_is_declared_as_designed() -> None:
+    fix, locate = task_by_id(BUG_FIX), task_by_id(FAULT_LOCATION)
+
+    assert (fix.category, fix.scale, fix.language) == (
+        "bug-fix", "single-file", "python",
+    )
+    assert (locate.category, locate.scale, locate.language) == (
+        "fault-location", "single-file", "python",
+    )
+
+
+# --- the symptom is visible and its cause is not -------------------------------
+
+
+def test_the_repository_reproduces_the_symptom_in_no_visible_test() -> None:
+    """The convention this batch holds to: a failing test in the starting
+    repository would point straight at the defect and delete the action both
+    members measure. So the repository's own suite is green while the defect
+    is in it — the symptom reaches the agent through the prompt alone."""
+    for task_id in MEMBERS:
+        assert visible_tests_pass(task_by_id(task_id))
+
+
+def test_the_visible_suite_stays_green_on_the_fix() -> None:
+    """The other direction: the fix is a fix and not a rewrite — everything
+    the repository already asserted about itself still holds."""
+    fix = task_by_id(BUG_FIX)
+
+    assert visible_tests_pass(fix, edit=solved_tree(fix))
+
+
+def swapping(what: str, into: str, *, inside: str = DEFECTIVE_FILE) -> Callable[
+    [Path], None
+]:
+    """One exact substitution in a module of the starting repository."""
+
+    def edit(workdir: Path) -> None:
+        source = workdir / inside
+        text = source.read_text(encoding="utf-8")
+        changed = text.replace(what, into)
+        assert changed != text, f"{what!r} is no longer in {inside}"
+        source.write_text(changed, encoding="utf-8")
+
+    return edit
+
+
+def test_no_visible_test_prices_a_parcel_the_two_readings_disagree_about(
+) -> None:
+    """*Why* the visible suite is green, asserted rather than hoped for.
+
+    A wrong key is invisible to every test whose fixtures make the wrong key
+    and the right key name the same entry, and the repository is written so
+    that nothing visible prices a parcel the scale and the gauge put in
+    different bands. It exercises such a parcel one level down instead — the
+    two band functions disagree about it, `to_the_scale` and `to_the_gauge`
+    pick out different parcels of one day, and a light awkward one is packed
+    into the big sack — which legitimises the shape in the repository's own
+    voice without reproducing the symptom. That is this defect's version of
+    #52's "every visible fixture stands at the boundary", and it is a property
+    of the fixtures rather than of the code, which would be silently lost the
+    first time a visible test priced an awkward parcel.
+
+    Asserted by putting the right key in: if the suite stays green with the
+    defect repaired, no visible test could ever have told the two apart.
+
+    The vacuous reading is refused first: with the lookup made to raise, the
+    suite has to go red, or nothing visible prices anything at all and the
+    green above is about nothing.
+    """
+    locate = task_by_id(FAULT_LOCATION)
+
+    assert not visible_tests_pass(
+        locate,
+        edit=swapping(
+            DEFECTIVE_LOOKUP,
+            '        raise AssertionError("a price was looked up")\n',
+        ),
+    )
+    assert visible_tests_pass(locate, edit=swapping(DEFECTIVE_LOOKUP, CORRECT_LOOKUP))
+
+
+def test_each_prompt_states_the_symptom_and_not_its_cause() -> None:
+    """Both members do the same detective work; only the deliverable differs.
+    A prompt naming the defective module or method would make the
+    fault-location task a transcription exercise."""
+    for task_id in MEMBERS:
+        prompt = task_by_id(task_id).prompt
+
+        assert "post office" in prompt
+        for giveaway in (
+            DEFECTIVE_FILE, "counter", "Window", "window", "postage", "Charge",
+            "band", "lookup", "key", "size_band", "weight_band", "inches",
+            "grams", "POSTAGE",
+        ):
+            assert giveaway not in prompt, f"{task_id} names {giveaway}"
+
+
+def test_both_prompts_state_the_intended_behaviour() -> None:
+    """Parity of information about what correct *is*, not identical text.
+
+    #51 found the fix member told what correct was while the locate member had
+    to infer it, which understates the fix side of the very comparison the two
+    members exist to produce. Here the symptom paragraph is one text in both
+    and the rule is stated in both: what separates them is the deliverable
+    paragraph alone. Saying what correct is leaks no location.
+    """
+    prompts = [task_by_id(task_id).prompt for task_id in MEMBERS]
+    symptom = "Something has gone wrong at the post office."
+
+    for prompt in prompts:
+        flowed = " ".join(prompt.split())
+        assert "read off the card against what the scale made of it" in flowed
+        assert "settles which sack it leaves in" in flowed
+        assert prompt.startswith(symptom)
+    reported = {"\n\n".join(prompt.split("\n\n")[:2]) for prompt in prompts}
+    assert len(reported) == 1, "the two members report different symptoms"
+
+
+# --- the terrain leaves the locating to be done --------------------------------
+
+
+def test_the_defective_module_holds_more_than_the_defective_class() -> None:
+    """`{"file": "counter.py", "symbol": "Window"}` is an accepted answer, so it
+    has to say strictly less than the filename does.
+
+    36.6 refuses an accepted answer naming a file with no symbol, because on a
+    repository this small a bare filename is barely a location. A module whose
+    only top-level symbol is the accepted class defeats that by the back door:
+    the class level *is* the file level, and an agent that grepped its way into
+    the file and named the class without reading the method would resolve. So
+    one parcel priced up, the dearest parcel of a day and what a day that took
+    nothing in comes to live beside `Window` at the top level of the same
+    module, and naming the class rules out three siblings.
+    """
+    top_level = top_level_symbols(repo_source(DEFECTIVE_FILE))
+
+    assert top_level == {"NOTHING_TAKEN", "Charge", "most_charged", "Window"}
+    assert len(top_level) > 1
+
+
+def test_an_accepted_class_is_chosen_from_several_and_not_the_only_one() -> None:
+    """The same back door, one gap narrower — and the gap the top-level count
+    above does not close.
+
+    An agent electing to answer at class level answers with the class, and if
+    the module defines exactly one, that answer is determined by the filename
+    alone: one grep to the file, the only class there, resolved, with the
+    defective method never read. So wherever the key accepts a class, that
+    class is one of at least two the file defines — `Charge`, one parcel priced
+    up and written up in the book, is as plausible a home for a parcel charged
+    the wrong money as `Window` is, and telling them apart takes reading both.
+    """
+    key = answer_key(task_by_id(FAULT_LOCATION))
+
+    named_at_class_level = [
+        answer for answer in key.accepted
+        if answer.symbol in classes(repo_source(answer.file))
+    ]
+
+    assert named_at_class_level, "the key is expected to accept the enclosing class"
+    for answer in named_at_class_level:
+        defined = classes(repo_source(answer.file))
+        assert len(defined) > 1, f"{answer.file} defines only {answer.symbol}"
+    assert classes(repo_source(DEFECTIVE_FILE)) == {"Charge", "Window"}
+
+
+# The words a prompt cannot be blamed for sharing with the repository: the
+# closed-class words English sentences are built out of, and the domain nouns a
+# prompt about a post office counter and a repository about a post office
+# counter have no way not to both use. Everything else either prompt says is
+# distinctive — and distinctive vocabulary is grep bait.
+FUNCTION_WORDS = frozenset("""
+    a about after all also an and any are as at be been being both but by can
+    could did do does each either few for from get given goes had has have he
+    her his how i if in into is it its just like made make many may me might
+    more most much must my no nor not now of off on once one only or other our
+    out over own per same she should since so some such than that the their
+    them then there these they this those through to too under until up us
+    very was we well were what when where whether which while who whom why
+    will with within would you your s t
+""".split())
+DOMAIN_NOUNS = frozenset(
+    "post office parcel parcels label card scale gauge sack sacks book "
+    "takings money day reading readings counter".split()
+)
+UNREVEALING = FUNCTION_WORDS | DOMAIN_NOUNS
+
+# Nothing, so far — see #54's version of this test, where the same terrain
+# claim held everywhere but three collisions that were pinned rather than
+# asserted away. The prompt here states the contract in the office's words
+# ("read off the card against what the scale made of it") and the repository
+# states it in card.py, a module the symptom already points at, so reading the
+# prompt is not one grep away from the defective file.
+KNOWN_PROMPT_BAIT: frozenset[str] = frozenset()
+
+
+def prompt_terms() -> set[str]:
+    """The distinctive vocabulary of the two prompts.
+
+    Every content word, and every adjacent pair of words at least one of which
+    is a content word — a pair as well as a word because "made of" and "round
+    the middle" narrow as hard as any single word does and neither half of
+    either narrows on its own.
+    """
+    terms: set[str] = set()
+    for task_id in MEMBERS:
+        words = re.findall(r"[a-z]+", task_by_id(task_id).prompt.lower())
+        terms |= {word for word in words if word not in UNREVEALING}
+        terms |= {
+            f"{first} {second}"
+            for first, second in zip(words, words[1:], strict=False)
+            if not (first in UNREVEALING and second in UNREVEALING)
+        }
+    return terms
+
+
+def repo_lines() -> list[tuple[str, str, int, str]]:
+    """Every line of the repository's code, as (module, file, number, text).
+
+    A test file counts as part of the module it tests, because `test_counter.py`
+    points at `counter.py` as surely as `counter.py` does. `README.md` counts as
+    no module at all: it is the index that names every module, so a word found
+    only there has selected the whole repository rather than one file — which
+    is why the README cannot rescue a word that otherwise narrows.
+    """
+    lines = []
+    for path in sorted(task_by_id(FAULT_LOCATION).repo_dir.glob("*.py")):
+        module = path.stem.removeprefix("test_")
+        for number, text in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            lines.append((module, path.name, number, text.lower()))
+    return lines
+
+
+def test_no_distinctive_prompt_word_narrows_to_the_defective_symbol() -> None:
+    """The prompts must not be greppable into the answer.
+
+    Two ways a term can narrow: selecting the defective module and no other,
+    and — inside that module — selecting the defective symbol and nothing else.
+    Both are refused outright here, which is where this stands where #54's
+    stood at a pinned set of three: see `KNOWN_PROMPT_BAIT` above.
+
+    Matched on word boundaries rather than as substrings, for #54's reason:
+    substring matching reads a term as narrowing to a symbol whose docstring
+    merely contains it inside a longer word, which is an artifact of the
+    matcher and not a path any solver could walk.
+    """
+    lines = repo_lines()
+    defect = symbol_lines(repo_source(DEFECTIVE_FILE), DEFECTIVE_SYMBOL)
+
+    to_the_module: dict[str, list[str]] = {}
+    to_the_symbol: dict[str, list[str]] = {}
+    for term in sorted(prompt_terms()):
+        pattern = re.compile(rf"\b{re.escape(term)}\b")
+        found = [line for line in lines if pattern.search(line[3])]
+        if not found:
+            continue
+        where = [f"{file}:{number}" for _, file, number, _ in found]
+        if {module for module, *_ in found} == {DEFECTIVE_FILE.removesuffix(".py")}:
+            to_the_module[term] = where
+        in_module = [line for line in found if line[1] == DEFECTIVE_FILE]
+        if in_module and all(number in defect for *_, number, _ in in_module):
+            to_the_symbol[term] = where
+
+    assert to_the_symbol == {}, (
+        f"prompt words selecting {DEFECTIVE_SYMBOL} alone: {to_the_symbol}"
+    )
+    assert set(to_the_module) == KNOWN_PROMPT_BAIT, (
+        "the prompt vocabulary reaching only the defective module has moved: "
+        f"{sorted(set(to_the_module) ^ KNOWN_PROMPT_BAIT)}"
+    )
+
+
+def readings_taken() -> set[tuple[str, str, str]]:
+    """Every (file, symbol, reading) where a band is read off a parcel."""
+    found = set()
+    for path in code_files():
+        for name, node in functions(path.read_text(encoding="utf-8")).items():
+            for call in ast.walk(node):
+                if (
+                    isinstance(call, ast.Call)
+                    and isinstance(call.func, ast.Name)
+                    and call.func.id in {"weight_band", "size_band"}
+                ):
+                    found.add((path.name, name, call.func.id))
+    return found
+
+
+def test_the_defect_is_not_the_only_reading_keyed_into_something() -> None:
+    """A single band read off a parcel makes locating a grep.
+
+    It is a shape a grep finds in one pass, so the repository reads a band off
+    a parcel six times, across three modules, and five of them are correct:
+    `parcels.to_the_scale` and `parcels.to_the_gauge` pick a day's parcels out
+    by either reading, `Window.weighed` is what the scale made of one parcel,
+    `Office.sack_for` packs the sacks off the gauge, and `Office.two_to_carry`
+    reads the scale into who carries a parcel out to the van.
+
+    The other half of the same claim, and the half that decides this defect:
+    three of the six read the scale and three read the gauge, so the shape a
+    reader would filter on — a lookup keyed on the gauge — still names three
+    sites, and which of them is wrong is settled by what the lookup is *for*
+    rather than by the pattern. The defective module holds a correct one of its
+    own, so reaching the right file finishes nothing.
+    """
+    found = readings_taken()
+
+    assert found == READINGS
+    assert len({file for file, *_ in found}) == 3
+    assert len([reading for *_, reading in found if reading == "size_band"]) == 3
+    assert len([reading for *_, reading in found if reading == "weight_band"]) == 3
+    assert len([file for file, *_ in found if file == DEFECTIVE_FILE]) == 2
+
+
+def test_the_repository_declares_the_shape_it_uses_correctly() -> None:
+    """Why the five correct ones are not merely five more places to look.
+
+    They are asserted by the repository's own tests, so the shape is
+    *legitimised* rather than left ambiguous: an agent reading the visible
+    suite is told, in the repository's own voice, that reading a band off a
+    parcel and keying it into something is how this office works. And the
+    visible suite says outright that the two readings need not agree — the
+    scale and the gauge put one parcel in different bands, they pick out
+    different parcels of one day, and a light awkward parcel goes in the big
+    sack all the same — so the concept is present everywhere except where the
+    wrong one of the two is used.
+    """
+    suite = "".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(task_by_id(FAULT_LOCATION).repo_dir.glob("test_*.py"))
+    )
+
+    for declared in (
+        "def test_a_light_parcel_can_be_an_awkward_one_all_the_same",
+        "def test_a_heavy_parcel_can_be_a_neat_one_just_as_easily",
+        "def test_the_two_readings_pick_out_different_parcels_of_a_day",
+        "def test_what_the_scale_made_of_a_parcel_is_the_band_it_goes_in",
+        "def test_the_sack_a_parcel_leaves_in_is_the_one_the_gauge_puts_it_in",
+        "def test_a_light_awkward_parcel_still_goes_in_the_sack_it_will_fit_in",
+    ):
+        assert declared in suite, f"the visible suite no longer says {declared}"
+
+
+def test_the_nearest_twin_is_the_same_key_used_correctly() -> None:
+    """This defect's whole discrimination, run rather than described.
+
+    `Office.sack_for` and `Window.postage_on` key a table off the very same
+    `size_band(parcel.inches)`, in the same shape, one line of code each. One
+    is correct and one is the defect, and what separates them is only what the
+    table is for: the sacks really are packed on the gauge, and the card really
+    is priced on the scale. Nothing a grep or a linter sees tells them apart —
+    so this is asserted by running both over one light awkward parcel, beside
+    what the card says against the band that parcel actually weighed.
+    """
+    import shutil
+    import subprocess
+    import sys
+    import tempfile
+
+    label, grams, inches = AWKWARD
+    with tempfile.TemporaryDirectory(prefix="ai-bench-twin-") as name:
+        # A throwaway copy, because importing writes bytecode and the
+        # checked-in `repo/` trees of swept tasks are immutable.
+        workdir = Path(name)
+        shutil.copytree(
+            task_by_id(FAULT_LOCATION).repo_dir, workdir, dirs_exist_ok=True
+        )
+        asked = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from card import to_pay\n"
+                "from counter import Window\n"
+                "from office import Office\n"
+                "from parcels import Parcel, weight_band\n"
+                f"parcel = Parcel({label!r}, {grams!r}, {inches!r})\n"
+                "day = Window([parcel])\n"
+                f"print(Office().sack_for(day, {label!r}))\n"
+                f"print(day.postage_on({label!r}))\n"
+                "print(to_pay(weight_band(parcel.grams)))\n",
+            ],
+            cwd=workdir,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.split()
+
+    assert asked == ["the", "big", "sack", "340", "235"]
+
+
+def test_the_contract_is_not_written_on_top_of_the_defect() -> None:
+    """Honest, and not in one glance.
+
+    Which of the two readings the card is priced on is the whole of the
+    inference, so a docstring saying so three lines above the lookup that gets
+    it wrong removes the last step of the work. It is stated once, in the
+    module docstring of another file altogether — card.py, which is where the
+    prices the prompt quotes come from — and the defective module says only
+    that the window prices what was brought in off the card, which is true and
+    decides nothing. The defective method's own docstring says what the method
+    is for and is silent about which reading it is looked up under.
+    """
+    card = repo_source(CONTRACT_FILE)
+    defective = repo_source(DEFECTIVE_FILE)
+    docstring = " ".join((ast.get_docstring(ast.parse(card)) or "").split())
+
+    assert " ".join(CONTRACT.split()) in docstring
+    for said in ("priced by the scale", "what the scale made", "to do with the money"):
+        assert said not in defective, f"{DEFECTIVE_FILE} states the contract: {said}"
+    assert ast.get_docstring(function(defective, DEFECTIVE_SYMBOL)) == (
+        "What one parcel comes to, off the card on the wall."
+    )
+
+
+# --- the gates every checked-in task passes ------------------------------------
+
+
+@pytest.mark.parametrize("task_id", MEMBERS)
+def test_task_lints_clean(task_id: str) -> None:
+    assert lint_task_set([task_by_id(task_id)]) == []
+
+
+@pytest.mark.parametrize("task_id", MEMBERS)
+def test_reference_solution_resolves_and_doing_nothing_does_not(
+    task_id: str,
+) -> None:
+    task = task_by_id(task_id)
+    runs = [
+        run_for(task, solution_diff(task), model="reference"),
+        run_for(task, "", model="empty"),
+    ]
+
+    records = evaluate([task], runs, source="run-log")
+
+    graded = {record.model: record.quality_value for record in records}
+    assert graded == {"reference": 1.0, "empty": 0.0}
+
+
+@pytest.mark.parametrize("task_id", MEMBERS)
+def test_declared_scale_matches_the_reference_solution(task_id: str) -> None:
+    """Single-file both ways, and for different reasons: the fix is one edit to
+    one module, and the located fault is one answer file written into the
+    workdir."""
+    task = task_by_id(task_id)
+
+    touched = {
+        line.split(" b/")[-1]
+        for line in solution_diff(task).splitlines()
+        if line.startswith("diff --git ")
+    }
+
+    assert len(touched) == 1
+
+
+# --- what each member's grading makes of a near-miss ---------------------------
+
+
+def test_a_fix_that_moves_the_gauge_instead_of_the_key_is_not_the_fix() -> None:
+    """The near-miss this defect invites, graded rather than assumed.
+
+    The symptom is one parcel charged a line too far down the card, so the
+    shortest thing that looks like a cure is to move the line the gauge draws
+    until that parcel falls the other side of it. The money then comes out
+    right for the parcel the prompt reports, and the sacks come out wrong: the
+    lampshade is sent off in the small sack it does not fit in. The prompt says
+    outright that the sack it went in was the one it belonged in, and the
+    held-out tests grade the near-miss unresolved.
+    """
+    fix = task_by_id(BUG_FIX)
+    moved = swapping(
+        'BY_THE_GAUGE = ((18, "A"), (30, "B"), (48, "C"), (72, "D"))',
+        'BY_THE_GAUGE = ((18, "A"), (48, "B"), (60, "C"), (72, "D"))',
+        inside="parcels.py",
+    )
+
+    assert verdict(fix, moved) == 0.0
+
+
+@pytest.mark.parametrize("symbol", ["Window.postage_on", "Window", "postage_on"])
+def test_every_description_level_the_author_wrote_down_resolves(
+    symbol: str,
+) -> None:
+    """The defective method and the class enclosing it are both legitimately
+    correct descriptions of this defect, so both are in the key — and the bare
+    method name, which is how an agent phrases an answer about something
+    nested, answers the qualified one it is spelled from."""
+    locate = task_by_id(FAULT_LOCATION)
+
+    assert verdict(locate, answers(naming(DEFECTIVE_FILE, symbol))) == 1.0
+
+
+@pytest.mark.parametrize(
+    "symbol",
+    [
+        "Window.weighed", "weighed", "Window.parcel_for", "parcel_for",
+        "Window.handed_in", "Window.charge_for", "charge_for", "Charge",
+        "Charge.written_up", "written_up", "most_charged", "NOTHING_TAKEN",
+    ],
+)
+def test_every_other_symbol_of_the_defective_file_is_unresolved(
+    symbol: str,
+) -> None:
+    """Every other site in the defective module, each of which an agent has to
+    read and rule out: `Window.weighed` is the module's other reading of a band
+    off a parcel and is correct, `Window.parcel_for` is what the wrong key's
+    lookup reads its parcel from, `Window.handed_in` decides which parcels are
+    priced at all, `Window.charge_for` is the caller that carries the wrong
+    figure into the book, `Charge` — the second class, the one that makes
+    naming `Window` a choice — is one parcel priced up, `Charge.written_up` is
+    where the money reaches the book, `most_charged` reads a day whole, and
+    `NOTHING_TAKEN` is what the module puts where nothing was taken. All of
+    them are correct, so an answer naming one has read the right file and not
+    found the defect."""
+    locate = task_by_id(FAULT_LOCATION)
+
+    assert verdict(locate, answers(naming(DEFECTIVE_FILE, symbol))) == 0.0
+
+
+def test_the_key_writes_down_the_plausible_wrong_files() -> None:
+    """The near-misses no lint can invent, and the judgement 36.3 asks be spent
+    on files the accepted set does not name.
+
+    `card.py` is the module the symptom points at first: the two prices the
+    prompt quotes are both on that card, and a card with the wrong money on it
+    would produce exactly the complaint that was made. `parcels.py` is where a
+    reading becomes a band at all, and holds both of the functions the wrong
+    key is a choice between. `office.py` is where the takings that came out
+    over are added up, and `Office.sack_for` is the correct twin of the
+    defective line. Every one of them is run through the real pipeline by the
+    lint and required to grade unresolved.
+    """
+    key = answer_key(task_by_id(FAULT_LOCATION))
+
+    assert key.rejected
+    assert {answer.file for answer in key.rejected} == {
+        "card.py", "parcels.py", "office.py",
+    }
+    named = {(answer.file, answer.symbol) for answer in key.rejected}
+    assert ("card.py", "to_pay") in named
+    assert ("card.py", "POSTAGE") in named
+    assert ("parcels.py", "size_band") in named
+    assert ("office.py", "Office.sack_for") in named
+
+
+def test_the_answer_key_ships_held_out_and_the_repository_carries_no_answer(
+) -> None:
+    """Held out of the workdir: the key travels with the grading directory the
+    overlay copies at grade time, and the pristine repository the agent is
+    given carries neither it nor an answer file."""
+    locate = task_by_id(FAULT_LOCATION)
+
+    assert (locate.grading_dir / ANSWER_KEY_FILE).is_file()
+    assert not (locate.repo_dir / ANSWER_KEY_FILE).exists()
+    assert not (locate.repo_dir / ANSWER_PATH).exists()
+
+
+# --- this batch's own gate: locating is not fixing -----------------------------
+
+
+def as_handed_over() -> dict[str, str]:
+    """The digests the fault-location member's second held-out test compares
+    the workdir against, read out of that test rather than restated here."""
+    source = (task_by_id(FAULT_LOCATION).grading_dir / AS_HANDED_OVER_TEST).read_text(
+        encoding="utf-8"
+    )
+    [assignment] = [
+        node
+        for node in ast.parse(source).body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "AS_HANDED_OVER"
+            for target in node.targets
+        )
+    ]
+    digests = ast.literal_eval(assignment.value)
+    assert isinstance(digests, dict)
+    return digests
+
+
+def test_the_hashed_repository_is_the_repository_that_is_checked_in() -> None:
+    """The claim that grading test's own docstring makes about this suite.
+
+    It hashes the starting repository so that a fault-location run which edited
+    the code grades unresolved. Digests are generated rather than typed, and
+    nothing re-derives them: a later edit to `repo/` would leave the task
+    lint-clean and the reference solution resolving, while grading *every* real
+    run unresolved — the same silent failure the loader's stdlib-name rule
+    exists to prevent. So the table is checked against the tree here, both ways
+    round: every file it names is what it says it is, and no file of the
+    starting repository is missing from it.
+    """
+    repo = task_by_id(FAULT_LOCATION).repo_dir
+    digests = as_handed_over()
+
+    assert set(digests) == {path.name for path in repo.iterdir() if path.is_file()}
+    assert digests == {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(repo.iterdir())
+        if path.is_file()
+    }
+
+
+def test_a_correct_answer_that_also_repaired_the_code_is_unresolved() -> None:
+    """What the second held-out test is for, and what nothing else can show.
+
+    The two members exist to produce one number — what locating costs, as
+    against fixing — so a run that does the fix work and then writes a correct
+    answer would resolve at fix-member cost with nothing in the log to say it
+    happened. The prompt forbids it and this makes the prompt binding: the same
+    answer that resolves on its own grades unresolved once the repair rides
+    along with it.
+    """
+    locate = task_by_id(FAULT_LOCATION)
+    accepted = naming(DEFECTIVE_FILE, DEFECTIVE_SYMBOL)
+
+    def answered_and_repaired(workdir: Path) -> None:
+        answers(accepted)(workdir)
+        swapping(DEFECTIVE_LOOKUP, CORRECT_LOOKUP)(workdir)
+
+    assert verdict(locate, answers(accepted)) == 1.0
+    assert verdict(locate, answered_and_repaired) == 0.0
+
+
+def test_reading_the_repository_leaves_it_as_it_was_found() -> None:
+    """What the gate does *not* forbid, which is as much of it as what it does:
+    a scratch file or a note left behind by an agent that read the code is not
+    a repair, and only the files handed over are compared. A gate that failed
+    on those would grade an honest run unresolved for having taken notes."""
+    locate = task_by_id(FAULT_LOCATION)
+    accepted = naming(DEFECTIVE_FILE, DEFECTIVE_SYMBOL)
+
+    def answered_with_notes(workdir: Path) -> None:
+        answers(accepted)(workdir)
+        (workdir / "notes.md").write_text("the money follows the wrong reading\n")
+
+    assert verdict(locate, answered_with_notes) == 1.0
