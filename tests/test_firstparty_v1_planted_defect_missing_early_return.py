@@ -46,10 +46,11 @@ the same things no other suite can:
   charge it to the locating member. Nothing asserted those digests still
   describe the checked-in tree — the grading test's own docstring says the
   task's suite does — and now something does.
-
-Where this terrain falls short of #52's, the shortfall is pinned rather than
-asserted away: see `KNOWN_PROMPT_BAIT` and the vocabulary test below, reported
-as a finding on #59.
+- **Reading the prompt is not one grep away from the defective file.** The
+  repository states its contract in deliberately different words from the
+  prompt's, so no distinctive prompt term selects the defective module alone —
+  #52's standard, which this terrain did not meet until #60 reworded it: see
+  `KNOWN_PROMPT_BAIT` and the vocabulary test below.
 
 The rest is what every checked-in task has to prove — lints clean, reference
 solution grades resolved, the empty diff grades unresolved — all through the
@@ -118,10 +119,14 @@ KEEPS_CHAINS = (
     ("handins.py", "ticket_for"),
 )
 
-# The contract the fall-through breaks, in the repository's own words.
+# The contract the fall-through breaks, in the repository's own words — and
+# they are deliberately not the prompt's, which says the same rule as "anything
+# that will not keep has been thrown away that same night". Not one word of
+# this sentence can be grepped out of either prompt, which is the whole of what
+# #60 bought.
 CONTRACT = (
-    "a thing nobody has been in for and that will not keep is settled as "
-    "BINNED and never as anything else"
+    "A perishable handin nobody has collected is BINNED at any age, and BINNED "
+    "is the last word on it: no rule below may settle it a second time."
 )
 
 # The grading test that hashes the handed-over repository, and the file it
@@ -486,28 +491,31 @@ DOMAIN_NOUNS = frozenset(
 )
 UNREVEALING = FUNCTION_WORDS | DOMAIN_NOUNS
 
-# **A finding, reported on #59 rather than asserted away.** #52's terrain holds
-# that no distinctive prompt term selects the defective module alone: the ferry
-# repository states its contract in deliberately different words from the
-# prompt's, so reading the prompt is not one grep away from the defective file.
-# This repository does not hold to that. `sorting.py`'s module docstring
-# paraphrases the prompt's contract close to word for word — "here longer than
-# the office keeps things", "what will not keep is thrown out" — and those
-# phrases appear in no other module, so a solver grepping the prompt lands in
-# the defective file.
+# Nothing, and #60 is what made it nothing. #52's terrain holds that no
+# distinctive prompt term selects the defective module alone: the repository
+# states its contract in deliberately different words from the prompt's, so
+# reading the prompt is not one grep away from the defective file. This
+# repository did not hold to that when #59 reviewed it. `sorting.py`'s module
+# docstring paraphrased the prompt's rule paragraph in the prompt's own words —
+# "here longer than the office keeps things", "what will not keep is thrown
+# out" — and those phrases appeared in no other module, so 20 terms pinned here
+# selected the defective file. The symbol-level half was sound throughout, so
+# no fault-location verdict was ever at risk; what was at risk was the
+# *finding* work both members are measured on, shortcut to one grep and so
+# understating this pair against the five defects swept beside it.
 #
-# What it does *not* do is name the defective symbol: every one of these terms
-# lands in the module docstring or in a sibling method, so the symbol-level
-# assertion below — the half that decides a fault-location verdict, since a
-# bare filename is not an accepted answer — passes outright. The bait is pinned
-# to its exact current set instead: this cannot get worse without turning red,
-# and the terrain cost is written down where the next author reads it.
-KNOWN_PROMPT_BAIT = frozenset({
-    "answers", "anything", "end", "end of", "everything", "here longer",
-    "is thrown", "keeps things", "left", "longer", "longer than", "new",
-    "not keep", "office keeps", "say", "say where", "something", "the end",
-    "went", "whoever",
-})
+# What #60 changed, before #57's sweep could bake that in: the module now
+# states the rule in the module's own vocabulary — a handin is `collected`
+# rather than been in for, `perishable` rather than not keeping, and BINNED is
+# "the last word on it" rather than "never as anything else" — and the prompt
+# says "the rest is on the shelf" where it said "everything else", the one
+# prompt word that could not be moved off the code, since `Piles.everything` is
+# a symbol and renaming it would be a terrain change rather than a prose one.
+# The pin is empty rather than shrunk to `paperround`'s three: once the
+# paraphrase went there was no honest collision left to keep. Empty is the
+# strictest reading of the same assertion — one new collision turns it red —
+# which is why this stays a pin and not a bound.
+KNOWN_PROMPT_BAIT: frozenset[str] = frozenset()
 
 
 def prompt_terms() -> set[str]:
@@ -554,8 +562,9 @@ def test_no_distinctive_prompt_word_narrows_to_the_defective_symbol() -> None:
 
     Two ways a term can narrow: selecting the defective module and no other,
     and — inside that module — selecting the defective symbol and nothing else.
-    The second is refused outright. The first is pinned to the set it is
-    already at, and reported as a finding: see `KNOWN_PROMPT_BAIT` above.
+    Both are refused outright, which is where this stands after #60 reworded
+    the paraphrase out of `sorting.py` and the one unmovable word out of the
+    prompts; it stood at a pinned set of twenty. See `KNOWN_PROMPT_BAIT` above.
 
     Matched on word boundaries rather than as substrings, which is where this
     departs from #52's version of the same test: under substring matching the
@@ -647,12 +656,13 @@ def test_the_contract_is_not_written_on_top_of_the_defect() -> None:
     """Honest, and not in one glance.
 
     Whether the binning branch answers is the whole of the inference, so a
-    docstring saying "and never as anything else" three lines above the branch
-    that lets it be something else removes the last step of the work. It is
-    stated once, in the module docstring at the top of the file, and the defect
-    is at the bottom: a reader has to carry it there. The defective method's
-    own docstring says which four verdicts it stands between, which is honest
-    about what the method is for and silent about whether every branch answers.
+    docstring saying "no rule below may settle it a second time" three lines
+    above the branch that lets a second rule settle it removes the last step of
+    the work. It is stated once, in the module docstring at the top of the
+    file, and the defect is at the bottom: a reader has to carry it there. The
+    defective method's own docstring says which four verdicts it stands
+    between, which is honest about what the method is for and silent about
+    whether every branch answers.
 
     What is *not* forbidden nearby is the word `BINNED` itself: `thrown_out`
     returns it seven lines up, which is the verdict the dropped answer came
@@ -670,7 +680,7 @@ def test_the_contract_is_not_written_on_top_of_the_defect() -> None:
         word in line
         for line in lines[max(0, defect - 12):defect]
         for word in (
-            "never as anything else", "thrown out that evening", "new in or long in",
+            "the last word on it", "settle it a second time", "is BINNED at any age",
         )
     )
     assert defect > 30

@@ -22,13 +22,17 @@
 # handins.ticket_for and office.wording elsewhere — so the shape names four
 # sites and not one; the contract the fall-through breaks is stated in
 # sorting.py's module docstring and in the README, both a file's length from
-# the branch that breaks it; and the symptom the prompt reports is a book
-# written up wrongly, which points first at office.py, where the book is
-# written up and where every word the prompt quotes actually lives. The
-# rejected near-misses are the ones no lint can invent: office.py is where the
-# wrong line is printed and where the verdicts are turned into the words the
-# prompt reports, and handins.ticket_for is the other chain that asks whether
-# a thing will keep and answers with the wrong thing if it is read too fast.
+# the branch that breaks it, and stated there in the module's own vocabulary
+# rather than the prompt's — a handin is collected and perishable where the
+# prompt says been in for and will not keep — so that grepping the prompt's
+# words selects no module at all (#60, and the guard suite pins it); and the
+# symptom the prompt reports is a book written up wrongly, which points first
+# at office.py, where the book is written up and where every word the prompt
+# quotes actually lives. The rejected near-misses are the ones no lint can
+# invent: office.py is where the wrong line is printed and where the verdicts
+# are turned into the words the prompt reports, and handins.ticket_for is the
+# other chain that asks whether a thing will keep and answers with the wrong
+# thing if it is read too fast.
 #
 # The second held-out grading test is this batch's, added after #52's review:
 # an agent that does the fix work and then writes a correct answer would grade
@@ -63,9 +67,9 @@ prompt: |
   What the office means to do is write the book up as things actually went:
   anything its owner has been in for has gone back to them; anything that will
   not keep has been thrown away that same night, however new or old it is and
-  whoever it belongs to; anything left that has been here longer than the
-  office keeps things has gone to the sale room; and everything else is on the
-  shelf.
+  whoever it belongs to; of what is left, a thing that has been here longer
+  than the office keeps things has gone to the sale room; and the rest is on
+  the shelf.
 
   Say where that defect lives. Do not fix it, and leave every file in the
   repository exactly as you found it: the deliverable is the location, not a

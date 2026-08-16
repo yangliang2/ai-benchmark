@@ -23,9 +23,11 @@
 # same order, is written correctly three times over — Desk.held_over beside
 # it, handins.ticket_for and office.wording elsewhere — and the contract the
 # fall-through breaks is stated in sorting.py's module docstring and in the
-# README rather than beside the branch that breaks it. What the symptom points
-# at first is office.py, which is where the book is written up and where the
-# words the prompt quotes actually live.
+# README rather than beside the branch that breaks it, in the module's own
+# vocabulary rather than the prompt's, so that grepping the prompt's words
+# selects no module at all (#60, and the guard suite pins it). What the symptom
+# points at first is office.py, which is where the book is written up and where
+# the words the prompt quotes actually live.
 #
 # The held-out tests fail on the pristine repository, as the lint requires,
 # and that failure is also what proves there is a defect for the
@@ -63,9 +65,9 @@ prompt: |
   What the office means to do is write the book up as things actually went:
   anything its owner has been in for has gone back to them; anything that will
   not keep has been thrown away that same night, however new or old it is and
-  whoever it belongs to; anything left that has been here longer than the
-  office keeps things has gone to the sale room; and everything else is on the
-  shelf.
+  whoever it belongs to; of what is left, a thing that has been here longer
+  than the office keeps things has gone to the sale room; and the rest is on
+  the shelf.
 
   Fix it, so that the book says what became of each thing. Nothing else about
   the office changes — the order things are dealt with, the words each outcome

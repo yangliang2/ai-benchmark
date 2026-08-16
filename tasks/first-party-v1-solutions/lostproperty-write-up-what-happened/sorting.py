@@ -1,17 +1,17 @@
 """The rules an evening's sorting goes by.
 
-Everything the office is holding is settled once each evening, and the four
-verdicts a thing is settled with are RETURNED, BINNED, AUCTION and SHELF.
+All the office is holding is settled once an evening, under one of four
+verdicts: RETURNED, BINNED, AUCTION and SHELF.
 
-Whoever has been in for their property has it back, and that is the end of it.
-Whatever will not keep is thrown out that evening, new in or long in, so a
-thing nobody has been in for and that will not keep is settled as BINNED and
-never as anything else. What is left goes to the sale room once it has been
-here longer than the office keeps things, and is on the shelf until then.
+A handin its owner has collected is RETURNED, and no rule below it applies.
+A perishable handin nobody has collected is BINNED at any age, and BINNED is
+the last word on it: no rule below may settle it a second time. A handin that
+gets past both of those is settled on age alone — beyond `KEEPING_DAYS` at the
+office it is AUCTION, and short of that it is SHELF.
 
 `Piles` is what one evening comes to and `Desk` is where the sorting is done.
-The desk is asked for a verdict a thing at a time, so a verdict is what it
-answers with rather than something a caller works out afterwards.
+The desk is asked for a verdict a handin at a time, so a verdict is what it
+hands back rather than a conclusion its caller assembles.
 """
 
 from typing import NamedTuple
@@ -40,7 +40,7 @@ class Piles(NamedTuple):
 
 
 def outstayed(handin, today, keeping=KEEPING_DAYS):
-    """Whether a thing has been here longer than the office keeps things."""
+    """Whether this handin has sat at the office past its keeping limit."""
     return days_in(handin, today) > keeping
 
 
@@ -60,7 +60,7 @@ class Desk:
         return not outstayed(handin, today, self.keeping)
 
     def thrown_out(self, handin):
-        """Drop this in the bin beside the desk, and say where it went."""
+        """Drop this in the bin beside the desk, and give back its verdict."""
         self.thrown.append(handin)
         return BINNED
 
