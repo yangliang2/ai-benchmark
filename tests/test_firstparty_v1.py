@@ -2163,6 +2163,24 @@ def test_a_registered_tier_is_the_limit_of_its_class_and_of_no_other(
     assert live_run_limit_s(other) == RUN_TIMEOUT_S
 
 
+def test_round_4_registers_bug_fix_and_fault_location_at_600() -> None:
+    """AC: the round-4 registration pinned, against the real table — no
+    monkeypatching it — so a future edit that drops or changes either
+    category's entry, or accidentally tiers a third one, fails this test
+    rather than silently drifting from the design note's §37 ruling. Both
+    categories share the flat default's own value, 600, by that ruling: the
+    round's locate/fix contrast spans exactly these two categories, and equal
+    registration is what keeps #50's one-limit-per-contrast guarantee true
+    without confounding it."""
+    seed = task_by_id(FEATURE_SEED)
+    bug_fix = seed.model_copy(update={"category": "bug-fix"})
+    fault_location = seed.model_copy(update={"category": "fault-location"})
+
+    assert live_run_limit_s(bug_fix) == 600
+    assert live_run_limit_s(fault_location) == 600
+    assert live_run_limit_s(seed) == RUN_TIMEOUT_S == 600
+
+
 def test_the_runner_keys_each_task_on_its_own_category(
     fake_claude: FakeClaude, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:

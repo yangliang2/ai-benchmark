@@ -2305,12 +2305,22 @@ _COMMIT_IDENTITY = {
 # default and no longer the rule (design note §29.4,
 # `docs/agents/sweep-protocol.md`).
 #
-# Nothing is registered yet, so every category takes the flat default and the
-# table arrives moving no cell. When a tier is set, the change travels as a
-# cross-round caveat, recorded beside its round the way a CLI version change
-# is: contrasts drawn inside one round are unaffected, comparisons across the
-# boundary carry it.
-LIVE_RUN_LIMITS_S: dict[TaskCategory, int] = {}
+# Nothing was registered before round 4, so every category took the flat
+# default and the table arrived moving no cell. When a tier is set, the
+# change travels as a cross-round caveat, recorded beside its round the way a
+# CLI version change is: contrasts drawn inside one round are unaffected,
+# comparisons across the boundary carry it.
+#
+# Round 4 (design note §30) registers `bug-fix` and `fault-location`, both at
+# the flat default's own value, 600: the round's one reading is
+# locate-versus-fix over six matched defects, and a limit that differed
+# between the two categories would confound the only comparison the round
+# exists to make. The value equals the default deliberately rather than by
+# omission, so no cross-round caveat arises against round 3.
+LIVE_RUN_LIMITS_S: dict[TaskCategory, int] = {
+    "bug-fix": 600,
+    "fault-location": 600,
+}
 
 
 def live_run_limit_s(task: Task) -> int:

@@ -63,12 +63,12 @@ the unit this document is about.
    fault-location and bug-fix differently would confound exactly that
    comparison.
 
-   As of this writing the table registers no value, so every class still runs
-   at the flat default and this item is unmet by omission rather than by
-   choice. Which classes to tier, and by how much, is an open decision — one
-   this item cannot itself settle, because round 4's headline locate/fix
-   contrast spans two categories and the constraint above means those two
-   cannot be tiered apart without confounding it.
+   As of this writing the table registers `bug-fix` and `fault-location`, both
+   at the flat default's own value, 600 (design note §37): equal registration
+   is what the constraint above allows for round 4's headline locate/fix
+   contrast, which spans exactly those two categories and cannot be tiered
+   apart without confounding it. No cell moves, so this item reads met without
+   moving any class off the default it always had.
 
    A limit that changes between rounds is a cross-round caveat, recorded the
    way a CLI version change is (see "One agent version per sweep"): contrasts

@@ -3526,6 +3526,41 @@ tier is registered, one sweep's rows will run under different ceilings and the
 narration stops determining anything. Stamp the limit on the row at that point,
 the way the sweep id was added.
 
+## Round 4 run-time limits — ruled 2026-08-16
+
+**37. §36.8 superseded: `bug-fix` and `fault-location` both register at 600.**
+§36.8 left `LIVE_RUN_LIMITS_S` empty for round 4 because the case for tiering
+`fault-location` was made for real-repository terrain this round does not use,
+and because tiering it apart from `bug-fix` would run the round's headline
+locate/fix comparison under different ceilings — #50's key guarantee (module
+comment, glossary, sweep protocol, design note) holds "every member of one
+contrast shares one limit" only for a family or a pair, and the locate/fix
+contrast is neither.
+
+That second reason rules out *different* values for the two categories; it
+says nothing against equal ones. Registering both at the same number keeps the
+guarantee true by equality rather than by omission, so it clears #50's
+constraint without reopening it. This is the adjudicated move: `bug-fix` and
+`fault-location` both register at **600** — the flat default's own value, so
+no cell of the round moves and every row still runs, as §36.9 already says,
+"at the flat 600". The nearest terrain with history, feature-dev over
+comparable multi-module stdlib repos (141 runs), shows p90 133–143 s and a
+historical maximum of 311 s (§23's reading of round 3, above); 600 s is
+roughly twice that maximum and four times the p90, wide enough that the
+unrecoverable direction — a clipped cell, unrepeatable because a task × agent
+× model cell is swept once, and a clipped `bug-fix` member corrupting the
+locate/fix reading itself — is the one this leaves no room for. The
+recoverable direction, a runaway run burning bounded minutes, cost at most
+$1.46 in the corpus's history.
+
+Because the registered value equals the value every category already fell
+back to, no cell runs under a different ceiling than it would have under
+§36.8's ruling, and §36.9's stamping trigger — "one sweep's rows will run
+under different ceilings" — is still unmet: this remains a narrated limit,
+not a stamped one. And because the number in force does not change, this is
+not a cross-round caveat under #50's rule: round 3 and round 4 both ran, and
+run, at 600.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
