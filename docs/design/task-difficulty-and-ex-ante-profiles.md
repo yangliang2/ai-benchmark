@@ -3561,6 +3561,302 @@ not a stamped one. And because the number in force does not change, this is
 not a cross-round caveat under #50's rule: round 3 and round 4 both ran, and
 run, at 600.
 
+## Round 4 verdicts — 2026-08-16
+
+Round 4 (#46) is built and swept: the taxonomy rebuild (#47–#50), the
+fault-location grading surface (#58), twelve tasks over six planted defects
+(#51–#56, #59, #60), the tier registration §37 ruled (#61), and one sweep
+(#57, sweep id `round-4`, 24 of 24 cells, one agent version 2.1.233,
+$3.2748). Everything below is recomputable from the checked-in artifacts:
+the table in §39 by `uv run ai-bench calibrate-v1`, the verdicts in §38 and
+§41 by re-grading each logged diff the way `eval-v1 --replay` does, and the
+per-pair multiples in §40 from the three run logs' own `cost_usd` and `turns`
+fields — quoted here because no report groups by a locate/fix pair, the two
+members being deliberately neither a **task family** nor a **pair** (§37).
+`tests/test_firstparty_v1_round4_record.py` pins every figure these sections
+publish, and §42 is how the logs were shown to replay exactly.
+
+**What these sections are not.** Round 4 registered no knob contrast — §34.6
+ruled the knob line to hygiene only — so there are no per-knob verdicts to
+write, no effort claim to grade, and no kill-discipline reading to take.
+`reconcile-v1` counts the round in its round list (`5 round(s): … sweep
+round-4`) and nowhere else: no knob's counter moves, and none is demoted or
+advanced by this round. All twelve tasks are **declared controls**, which is
+what a task authored to fill a **category** rather than to move a knob
+declares. What the round bought is two categories the corpus could not
+measure at all, one new grading mechanism exercised for the first time
+against paid runs, and one comparison — locating against fixing — that no
+earlier round could draw.
+
+### 38. What the round measured
+
+**The sweep.** Twelve tasks × the two ladder models = 24 cells, all swept,
+none twice. One sweep id `round-4` and one agent version
+`2.1.233 (Claude Code)` across all three invocations, the version re-checked
+between them: `r4-a` is the dry check (`noticeboard-locate-the-lost-notice`
+on haiku), written to a normally-named log as the protocol requires; `r4-b`
+is haiku's other eleven; `r4-c` is sonnet's twelve. The sweep ran from a
+dedicated worktree with guard backups kept outside it
+(`~/sweep-backups/round-4/`, verified byte-for-byte against the committed
+blobs) — the rule the #24 incident bought. All 24 cells logged a row, so none
+was blocked by the environment: a run with non-empty `permission_denials` is
+a broken run and fails loudly rather than logging a verdict.
+
+**Cost, against the expectation stated before the first paid run.** Expected
+**$5–8**, 24 cells priced at the nearest terrain's p90. Actual **$3.27** —
+$0.9066 on haiku and $2.3681 on sonnet, $3.2748 in total — against round 3's
+**$12.1969**. Per cell that is $0.1364 against round 3's $0.2837 over 43,
+and the reason is terrain rather than thrift: round 3's cells were mostly a
+vendored library, round 4's are twelve small hand-authored repositories, and
+§31 put the substrate step alone at roughly 2–3× on haiku. The round came in
+under a range stated in advance, which is worth exactly what it is worth —
+an estimate honoured, on the cheap side, once.
+
+**The limits in force.** #61 registered `bug-fix` and `fault-location` in
+`LIVE_RUN_LIMITS_S`, both at **600 seconds** — the flat default's own value,
+for the reason §37 gives: the round's headline contrast spans exactly those
+two categories and tiering them apart would confound it, so equal
+registration clears #50's constraint instead of reopening it. **No
+cross-round caveat arises**: the number in force did not change, round 3 and
+round 4 both ran at 600, and the limit stays narrated rather than stamped on
+a row. Nothing came near it — the round's longest run was **101.4 s**
+(`allotments-go-back-for-what-nobody-could-read` on haiku) and its mean
+**51.4 s**, against a corpus mean of 56.1 s over 201 runs and a longest-ever
+311.2 s. No cell was clipped, so no verdict in this record is a timeout in
+disguise.
+
+**Resolution: 21 of 24 cells.** haiku resolved **10/12**, sonnet **11/12**.
+Per category and model:
+
+```
+                  bug-fix      fault-location
+claude-haiku-4-5  4/6          6/6
+claude-sonnet-5   6/6          5/6
+```
+
+The three cells that did not resolve are
+`allotments-go-back-for-what-nobody-could-read` × haiku,
+`lostproperty-write-up-what-happened` × haiku, and
+`paperround-locate-the-carried-over-count` × sonnet. §41 reads each one.
+
+**Rungs.** Ten of the twelve tasks came back `haiku-solvable`; two came back
+`sonnet-only`, and both are `bug-fix` — the two haiku cells above. None
+landed `unsolved`, so the corpus's unsolved census is still the four round-1
+cells §23.10 counted, and its rung census now reads 85 `haiku-solvable`, 11
+`sonnet-only`, 4 `unsolved` and the one `incomplete` cell round 3 left. The
+two new `sonnet-only` tasks were authored to fill a category and declare
+nothing about difficulty, which is the shape §34.1 predicted the corpus would
+keep producing after it stopped trying to separate models: the separation
+that arrives arrives incidentally.
+
+**The corpus after the round.** 101 tasks, 201 runs, **22 cells over four
+categories**, and still no empty cell — against §31's 89 tasks, 177 runs and
+20 cells over two.
+
+### 39. The two new categories' rows, as printed
+
+`uv run ai-bench calibrate-v1` publishes them like this, quoted as printed:
+
+```
+category bug-fix
+   baseline mean cost   claude-haiku-4-5 $0.0805 (n=6), claude-sonnet-5 $0.2128 (n=6)
+   baseline mix         6 single-file; 6 hand-authored
+
+   profile      tasks  claude-haiku-4-5  claude-sonnet-5  rung floor
+   (zero-knob)  6      1.00x (n=6)       1.00x (n=6)      haiku-solvable (n=6)
+
+category fault-location
+   baseline mean cost   claude-haiku-4-5 $0.0706 (n=6), claude-sonnet-5 $0.1819 (n=6)
+   baseline mix         6 single-file; 6 hand-authored
+
+   profile      tasks  claude-haiku-4-5  claude-sonnet-5  rung floor
+   (zero-knob)  6      1.00x (n=6)       1.00x (n=6)      haiku-solvable (n=6)
+```
+
+**Both multipliers are 1.00× by construction and neither is a reading.**
+Every task in both categories is a declared control, so each row *is* its own
+category's denominator, over n=6 tasks that ran each model. What these two
+rows actually publish is the denominators — haiku $0.0805 and sonnet $0.2128
+for `bug-fix`, haiku $0.0706 and sonnet $0.1819 for `fault-location` — which
+is what a later constructed task in either category will be divided by, and
+what a selection query reads as the price of the shape of work. The table
+does what its own `refuses` preamble says and pools no category's controls
+into another category's denominator: it will not divide `fault-location`'s
+mean by `bug-fix`'s, which is why the locate-versus-fix reading is per defect
+in §40 and not read off these two lines. (Dividing them anyway gives 0.88×
+on haiku and 0.85× on sonnet; that is a ratio of means over two categories,
+not a number this table publishes, and §40's per-pair medians are the reading
+that survives the unresolved cells.)
+
+**The `bug-fix` floor hides its two hardest members.** It prints
+`haiku-solvable (n=6)` although two of the six came back `sonnet-only`,
+because a floor is the *weakest* rung any graded member landed on — the claim
+that this profile has been solved that cheaply at least once. §31 recorded
+that shape for a pooled knob row; it arrives here in a row of six controls
+that nothing pooled, which is the more exact statement of the same caveat:
+the floor moves only when *every* graded member moves, whatever the row is
+made of.
+
+**The mixes are the one thing these rows do not have to apologise for.** Both
+baselines read `6 single-file; 6 hand-authored`, and every task in both
+categories is single-file and hand-authored, so no row in either table
+discloses a mix of its own — the first two categories in this corpus whose
+multipliers, when they arrive, will not be reading across a scope or
+substrate difference on top of the knobs.
+
+### 40. Locating against fixing, per model over six matched defects
+
+Six planted defects, each authored twice against one byte-identical starting
+repository: a `bug-fix` member whose deliverable is the correction and a
+`fault-location` member whose deliverable is one (file, symbol) pair in an
+**answer file**. Both members do the same detective work, so the pair prices
+the second action against the first. Read locate-relative-to-fix, within one
+model:
+
+```
+defect         haiku cost  haiku turns  sonnet cost  sonnet turns
+allotments          0.59x*       0.69x*       0.57x         0.54x
+ferry               0.92x        0.78x        0.87x         0.89x
+lostproperty        3.01x*      10.00x*       0.71x         0.67x
+noticeboard         0.93x        0.89x        0.90x         0.89x
+paperround          0.87x        0.75x        1.53x*        1.22x*
+postoffice          0.70x        0.67x        0.72x         0.64x
+```
+
+`*` marks a pair one of whose two cells did not resolve.
+
+**How the unresolved cells are handled: quoted, never dropped.** An
+unresolved run still spent its dollars — the calibration view counts it for
+exactly that reason — but what it spent them on is a failed attempt, not the
+action the pair is trying to price, so a ratio built on one measures the
+failure. All twelve ratios are printed above; the reading below is taken over
+the pairs whose *both* members resolved, and the three marked pairs are read
+one at a time in §41 instead. Dropping them silently would have been dropping
+the counterexamples, because **both of the round's only above-parity readings
+are marked pairs**: haiku's `lostproperty` (the fix cell wrote nothing and
+cost $0.0258 over one turn) and sonnet's `paperround` (the locate cell
+answered wrongly after eleven turns).
+
+**The reading: locating cost less than fixing, in nine of nine pairs where
+both members resolved.** On haiku, four such pairs: **0.70×–0.93× on cost,
+median 0.89×**, and 0.67×–0.89× on turns, median 0.76×. On sonnet, five:
+**0.57×–0.90× on cost, median 0.72×**, and 0.54×–0.89× on turns, median
+0.67×. No both-resolved pair on either model reached parity, and turns move
+in the same direction as cost in every one of them — the two channels agree
+here, which they have not always done (§20, §27).
+
+**What the number is, and four things it is not.** It is what locating cost
+against fixing, on six hand-authored single-file repositories, in one round,
+on one agent version, with both members of each pair written by the same
+author. It is *not* a general price of the action: the corpus has six
+defects, and §25's own qualifier about four claims on one snapshot applies
+here in the mirror image — six repositories, one authoring hand. It is not a
+statement that locating is *easy*: the fault-location cells run 6–11 turns on
+haiku and 7–11 on sonnet, which is real reading, and the terrain was built to
+defeat a grep (`paperround`'s repository holds seven mutable defaults and one
+of them is the defect). It is not a claim the calibration table makes, for
+the reason §39 gives. And it is not a turns result independent of the cost
+one: turn counts here are small integers, so a single turn moves a ratio by
+more than a tenth, which is the quantisation the **effort claim** vocabulary
+already refuses to bet on.
+
+**What it does support.** The cheaper action is the one whose deliverable is
+smaller, on both models, at a discount that is larger on the stronger model —
+median 0.72× over sonnet's five pairs against 0.89× over haiku's four, which
+are different pair sets, because the two models failed on different cells and
+each model's reading drops its own. A selection query that has both rows can
+now ask what it costs to have a fault *named* rather than *fixed*, which is a
+question the corpus could not answer before this round at any price.
+
+### 41. The three cells that did not resolve, read
+
+**`lostproperty-write-up-what-happened` × haiku — an empty workdir diff.**
+One turn, $0.0258, 24.7 s, and no file written. The agent worked the puzzle
+out correctly in prose ("both should be written as thrown away … perishable
+takes priority") and then asked which format to work in — "code that
+implements this logic, or something else?" — and stopped. There is nothing to
+grade: the diff is empty, so grading applies nothing and the held-out tests
+fail on the pristine repository exactly as the lint requires them to. This is
+the cell that makes its pair read 3.01× on cost and 10.00× on turns, and the
+denominator is a run that did no work. Worth recording beside #60, which took
+the filenames out of both `lostproperty` prompts hours before the sweep so
+they would not be grep bait: the prompt this cell answered names no file, and
+haiku answered the prompt as a question rather than as a task. Sonnet, on the
+same prompt, resolved it in twelve turns.
+
+**`allotments-go-back-for-what-nobody-could-read` × haiku — the right edit
+and one too many.** Eight of the nine held-out tests passed. The agent
+removed the swallowed exception in `Quarter.used_on` correctly — that *is*
+the planted defect — and then also filtered unreadable plots out of
+`Society.book`, which the held-out
+`test_the_book_still_writes_up_every_card_that_came_back` forbids in as many
+words: the book says what came back off each plot, unread cards and all; it
+is the sheet that leaves them off. The run even wrote its own test asserting
+the opposite of that one. Sonnet's cell made the same change in `used_on` and
+touched `Society.book` not at all. This is a task's own contract catching an overreach, which is
+the discrimination held-out tests exist for, and it is why the pair reads
+0.59× on cost with a star beside it rather than as a reading.
+
+**`paperround-locate-the-carried-over-count` × sonnet — onto a registered
+near-miss.** The answer file read
+`{"file": "newsagent.py", "symbol": "Newsagent.bundle_list"}`, which is
+verbatim the first of the three **rejected answers** the task's
+**accepted-answer key** registered: the place the wrong list is returned
+from, where the prompt's symptom points before the trail reaches
+`Slate.bundles` in `tallying.py`. §36 built the rejected half of the key for
+exactly this shape — the plausible wrong *file* no lint can invent — and the
+round's one failed locate cell landed on an answer the author had written
+down in advance as wrong. That is the strongest evidence this round produces
+that the new mechanism grades something: the key discriminated a near-miss,
+on a paid run, in the direction it was built to.
+
+**And the mechanism's first paid outing, taken as a whole.** Twelve
+fault-location cells, eleven resolved, one failed onto a registered
+near-miss, no broken run, no clipped cell, and no case of the failure mode
+§34.5 called the round's most expensive assumption — an agent locating the
+fault correctly and describing it at a level the key did not anticipate.
+Zero of twelve is not proof that the assumption is safe; it is one round's
+worth of it not having bitten, on six defects whose accepted sets were
+written to two description levels each.
+
+### 42. Replay, and how it was shown
+
+The provenance claim v1 rests on is that a record is recomputable from the
+run log: the log carries the workdir diff, and the verdict is obtained by
+re-grading that diff against the held-out tests rather than by trusting
+anything the agent said. Round 4's three logs were replayed one command per
+log, each into a scratch `--data` path (never the checked-in dataset, which
+is untracked and holds only round-1 records — the discipline §29.5 recorded
+after a replay rewrote it):
+
+```
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-16-r4-a.jsonl --data /tmp/r4replay/a.jsonl
+  evaluated 1 runs over 101 tasks (1 resolved)
+  merged 1 records into /tmp/r4replay/a.jsonl (1 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-16-r4-b.jsonl --data /tmp/r4replay/b.jsonl
+  evaluated 11 runs over 101 tasks (9 resolved)
+  merged 11 records into /tmp/r4replay/b.jsonl (11 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-16-r4-c.jsonl --data /tmp/r4replay/c.jsonl
+  evaluated 12 runs over 101 tasks (11 resolved)
+  merged 12 records into /tmp/r4replay/c.jsonl (12 total)
+```
+
+24 runs, 21 resolved, matching §38's per-category counts. The same three
+commands with one shared `--data` path merge to 24 records (`1 total`,
+`12 total`, `24 total`), and the three per-log datasets concatenated are
+identical to
+that merged corpus record for record — no row missing, no row duplicated, no
+field differing — with every record carrying its log row's own measurements
+(cost, turns, tokens, latency, agent version, as-of date) unchanged, because
+replay reads the log and never re-runs the agent.
+`tests/test_firstparty_v1_round4_record.py` runs that comparison as a test,
+so the claim is re-checked rather than remembered.
+
+What this shows is that every verdict in this record is recomputable from
+checked-in bytes by one command per log. What it does not show is that a
+re-run would produce the same diff: a task × agent × model cell is swept
+once, and replay reproduces the grading, not the agent.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

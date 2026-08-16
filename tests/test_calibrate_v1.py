@@ -437,22 +437,34 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
     assert disclosed["K7=calm"] == "2 single-file; 2 vendored"
 
 
-# What the table published over the checked-in corpus after round 3, per
+# What the table published over the checked-in corpus after round 4, per
 # category and profile: the two multiplier columns and the denominator each
 # was divided by. Pinned rather than derived, which is the opposite of what
 # the demo tests above do and is the point of this one — a derived expectation
 # follows the corpus wherever it goes, and these numbers are quoted in the
-# design note's section 31 and read by whoever is deciding what a round cost.
-# A round that adds feature-dev or refactor tasks moves them and updates this
-# table in the same commit; anything else that moves them is the defect this
-# watches for.
-# Each row: tasks, the two multiplier columns, rung floor. A declared
-# feature-dev or refactor control would move every one of these — the tasks
-# column by joining the row it lands in, a multiplier by entering the mean it
-# divides by or is divided by, and a rung floor by adding a graded task to a
-# cell's population — so all four are pinned together rather than just the
-# two multipliers.
+# design note's sections 31 and 39 and read by whoever is deciding what a
+# round cost. A round that adds tasks to a category here moves them and
+# updates this table in the same commit; anything else that moves them is the
+# defect this watches for.
+# Each row: tasks, the two multiplier columns, rung floor. A declared control
+# in any of these categories would move every one of these — the tasks column
+# by joining the row it lands in, a multiplier by entering the mean it divides
+# by or is divided by, and a rung floor by adding a graded task to a cell's
+# population — so all four are pinned together rather than just the two
+# multipliers.
+# Round 4 added the first two categories below: twelve declared controls over
+# six planted defects, which is why each is a single row that is its own
+# denominator and reads 1.00x by construction. The design note's section 39
+# quotes those two blocks as printed, and
+# tests/test_firstparty_v1_round4_record.py holds the quote to the bytes the
+# command emits; what is pinned here is the published table itself, whole.
 _PUBLISHED = {
+    "bug-fix": {
+        "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
+    },
+    "fault-location": {
+        "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
+    },
     "feature-dev": {
         "(zero-knob)": ("11", "1.00x (n=11)", "1.00x (n=11)", "haiku-solvable (n=11)"),
         "K1=acceptance": ("6", "2.06x (n=6)", "1.79x (n=6)", "haiku-solvable (n=6)"),
@@ -490,18 +502,28 @@ _PUBLISHED = {
 }
 
 _PUBLISHED_DENOMINATORS = {
+    "bug-fix": f"{_HAIKU} $0.0805 (n=6), {_SONNET} $0.2128 (n=6)",
+    "fault-location": f"{_HAIKU} $0.0706 (n=6), {_SONNET} $0.1819 (n=6)",
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other
 # two axes a declared control would move, on top of the row's own numbers.
+# Round 4's two categories disclose no row mix at all: every task in them is
+# single-file and hand-authored, baseline and row alike, so they are the first
+# categories here whose multipliers will not read across a scope or substrate
+# difference when they eventually have one.
 _PUBLISHED_MIX = {
+    "bug-fix": "6 single-file; 6 hand-authored",
+    "fault-location": "6 single-file; 6 hand-authored",
     "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
 }
 
-_PUBLISHED_ROW_MIX = {
+_PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
+    "bug-fix": {},
+    "fault-location": {},
     "feature-dev": {
         "K1=acceptance": "6 single-file; 6 hand-authored",
         "K1=description": "4 single-file; 4 hand-authored",
@@ -527,7 +549,7 @@ _PUBLISHED_ROW_MIX = {
 }
 
 
-def test_calibrate_v1_publishes_the_multipliers_round_3_published(
+def test_calibrate_v1_publishes_the_multipliers_round_4_published(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The published table, pinned.
@@ -535,16 +557,21 @@ def test_calibrate_v1_publishes_the_multipliers_round_3_published(
     A multiplier is divided by its own category's controls, so anything that
     changes which tasks are read as controls changes every number in that
     category's column — quietly, because the arithmetic stays consistent with
-    itself. The two categories the corpus holds are the two whose numbers are
-    already published and being read, so this is where a change in the notion
-    of a control would have to show up first. Pinned in full: tasks, both
-    multipliers and the rung floor per row, the baseline's own mix, and every
-    row's disclosed mix — a declared control moves all of them, not just the
-    two multiplier columns.
+    itself. Every category the corpus holds has its numbers published and
+    being read, so this is where a change in the notion of a control would
+    have to show up first. Pinned in full: tasks, both multipliers and the
+    rung floor per row, the baseline's own mix, and every row's disclosed
+    mix — a declared control moves all of them, not just the two multiplier
+    columns.
     """
     main(checked_in_argv())
     out = capsys.readouterr().out
 
+    # Every category in the table, not a subset of them: a category left out
+    # of the pins is a category whose published numbers nothing is watching.
+    assert set(_PUBLISHED) == {
+        category for category, _ in checked_in_profiles()
+    }
     for category, published in _PUBLISHED.items():
         assert baseline_line(out, category, "baseline mean cost") == (
             _PUBLISHED_DENOMINATORS[category]
