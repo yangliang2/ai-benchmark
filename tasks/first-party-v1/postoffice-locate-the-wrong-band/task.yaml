@@ -47,10 +47,12 @@
 # repository the agent was handed is hashed, and a run that changed any of it
 # grades unresolved. The prompt says so outright.
 #
-# What proves there is a defect here at all is the paired bug-fix member's
-# held-out tests failing on this same pristine repository (design note 36.2).
-# That pairing is a convention rather than a checked relation, which is why
-# the two are authored together.
+# What proves there is a defect here at all is this task's existence proof,
+# and for fault-location that is the paired bug-fix member's held-out tests
+# failing on this same pristine repository (design note 45.4). A checked
+# relation rather than a convention: the two declare no link — they are
+# deliberately neither a task family nor a pair — so the lint finds the
+# partner by the bytes of the repo/ the two share, and runs it.
 #
 # A control: authored to fill a category, claiming nothing about difficulty.
 # The two members are deliberately neither a task family nor a pair — both

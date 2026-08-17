@@ -294,16 +294,23 @@ def test_lint_v1_write_hash_gates_regenerates_a_stale_gate_and_then_lints(
     repaired gate to the check every other one is held to.
 
     Copied into a tmp corpus rather than run over the checked-in one, because
-    the point of the flag is that it writes files.
+    the point of the flag is that it writes files. The bug-fix partner is copied
+    with it — and edited the same way — because a keyed task's existence proof is
+    that partner's failure on the starting repository the two share (#71), so a
+    corpus holding the locate member alone, or holding the two with `repo/`
+    drifted apart, is one the lint refuses for a reason this test is not about.
     """
     seed = Path(__file__).parent.parent / "tasks" / "first-party-v1"
     task_id = "paperround-locate-the-carried-over-count"
+    partner_id = "paperround-count-each-walk-on-its-own"
     task_dir = tmp_path / task_id
     shutil.copytree(seed / task_id, task_dir)
+    shutil.copytree(seed / partner_id, tmp_path / partner_id)
     gate = task_dir / "grading" / firstparty_v1.HASH_GATE_FILE
     stale = gate.read_bytes()
-    edited = task_dir / "repo" / "README.md"
-    edited.write_text(edited.read_text() + "\n(a later note.)\n")
+    for edited in (task_dir, tmp_path / partner_id):
+        readme = edited / "repo" / "README.md"
+        readme.write_text(readme.read_text() + "\n(a later note.)\n")
 
     with pytest.raises(SystemExit, match="README.md"):
         main(["lint-v1", "--tasks", str(tmp_path)])
@@ -315,17 +322,23 @@ def test_lint_v1_write_hash_gates_regenerates_a_stale_gate_and_then_lints(
     assert str(gate) in out
     assert gate.read_bytes() != stale
     assert gate.read_bytes() == firstparty_v1.hash_gate_source(task_dir / "repo")
-    assert "lint clean: 1 task(s)" in out
+    assert "lint clean: 2 task(s)" in out
 
 
 def test_lint_v1_write_hash_gates_over_an_unchanged_task_writes_nothing(
     tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Re-running the generator is a no-op, which is what makes it safe to run
-    and its result reviewable in a diff."""
+    and its result reviewable in a diff. The bug-fix partner comes with the
+    locate member for the reason it does above: the lint runs after the
+    generator, and a locate task with no partner in the corpus is refused."""
     seed = Path(__file__).parent.parent / "tasks" / "first-party-v1"
     task_id = "paperround-locate-the-carried-over-count"
     shutil.copytree(seed / task_id, tmp_path / task_id)
+    shutil.copytree(
+        seed / "paperround-count-each-walk-on-its-own",
+        tmp_path / "paperround-count-each-walk-on-its-own",
+    )
     before = (tmp_path / task_id / "grading" / firstparty_v1.HASH_GATE_FILE).read_bytes()
 
     main(["lint-v1", "--write-hash-gates", "--tasks", str(tmp_path)])

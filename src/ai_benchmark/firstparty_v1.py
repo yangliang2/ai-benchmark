@@ -70,13 +70,18 @@ through the real pipeline — four it constructs itself, plus the plausible
 wrong file the author writes into the key's rejected set — and the comparison
 those negatives are run against is one owned module, `grading/_answer.py`,
 copied identically into every such task and read back byte for byte. Whether
-there is a defect to find at all is answered by the paired `bug-fix` member,
-whose held-out tests must fail on the same pristine repository; that pairing
-is a convention rather than a checked relation, so a fault-location task
-authored alone has no proof there is anything in it to find. A locate-style
-comprehension task needs no such partner: it has no defect behind it, and what
-its accepted answer has to be is a location that resolves in the starting
-repository — which the key's own rules already check.
+there is a defect to find at all is the *existence proof*, and its form is
+registered per action (`EXISTENCE_PROOFS`): for a fault-location task, the
+partner `bug-fix` member's held-out tests failing on the same pristine
+repository, which the lint now goes looking for and runs rather than trusting
+to the convention the two were once authored under; for a code-review task, a
+held-out test per planted finding that fails on the starting repository and
+passes on the author's corrected tree; and for a locate-style comprehension
+task, which has no defect behind it, a location that resolves in the starting
+repository — the key's own rule, registered as this action's form so that a
+fourth keyed action cannot be added without one. A proof is checked by the
+lint and never by grading: they live outside `grading/`, so nothing overlays
+them into a workdir or collects them as verdict tests.
 
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
@@ -105,7 +110,7 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import date
 from pathlib import Path
-from typing import Any, Literal, Self, get_args
+from typing import Any, Literal, NamedTuple, Self, get_args
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -155,6 +160,17 @@ GRADING_DIR = "grading"
 # the workdir wholesale at grade time: source files placed there would land in
 # the graded workdir, and test files there would be collected as verdict tests.
 CORRECTED_DIR = "corrected"
+
+# Where a task's existence proofs live: its own subtree of the task directory,
+# beside REPO_DIR and CORRECTED_DIR and — for the same reason that one is —
+# outside GRADING_DIR. A proof test is run by the lint and by nothing else. It
+# is never overlaid into a workdir, so it cannot reach the agent; it is never
+# collected, so it cannot decide a verdict. Both of those are properties of
+# where it sits rather than of anyone's discipline: grading copies REPO_DIR and
+# GRADING_DIR and nothing else, collection globs test files under GRADING_DIR
+# only, and the loader refuses a proof subtree or a corrected tree found inside
+# GRADING_DIR (see `_check_task_layout`).
+PROOFS_DIR = "proofs"
 
 # The accepted-answer key of a fault-location or codebase-comprehension task,
 # inside GRADING_DIR: held out with the grading tests, reaching the workdir by
@@ -757,6 +773,19 @@ class Task(BaseModel):
         place is the layout, not this property.
         """
         return self.directory / CORRECTED_DIR
+
+    @property
+    def proofs_dir(self) -> Path:
+        """This task's existence proofs: the held-out tests that say a planted
+        truth is really there.
+
+        Beside `repo/` and `corrected/` and outside `grading/`, so that nothing
+        in it is overlaid into a workdir or collected as a grading test — the
+        lint runs these against `repo/` and `corrected/` itself, and no other
+        caller ever opens this directory. Empty for every action whose proof
+        form runs no test, which is why this is a path rather than a check.
+        """
+        return self.directory / PROOFS_DIR
 
     @property
     def grading_test_paths(self) -> tuple[str, ...]:
@@ -1491,6 +1520,18 @@ def _check_task_layout(task: Task) -> None:
             "one, so the agent would see a repository that differs from the "
             "pristine one grading applies the diff to"
         )
+    if misplaced := _held_out_of_the_workdir_but_not_of_grading(task):
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/ holds {misplaced} — the corrected tree "
+            "and the existence proofs are read by the lint and by nothing else, "
+            f"and {GRADING_DIR}/ is overlaid into the workdir wholesale at grade "
+            "time, so a corrected tree kept there would hand the agent the "
+            "answers and a proof test kept there would be collected as a verdict "
+            f"test. Both live beside {REPO_DIR}/ in the task directory "
+            f"({CORRECTED_DIR}/ and {PROOFS_DIR}/), which is what makes 'never "
+            "overlaid, never collected, run by the lint only' a property of the "
+            "layout rather than of an author remembering it"
+        )
     if not task.grading_test_paths:
         raise IngestError(
             f"{task.id}: {GRADING_DIR}/ holds no test_*.py — a v1 task is graded "
@@ -1557,6 +1598,25 @@ def _check_task_layout(task: Task) -> None:
         findings = findings_key(task)
         if not findings.accepted:
             raise IngestError(_empty_accepted_findings_message(task))
+
+
+def _held_out_of_the_workdir_but_not_of_grading(task: Task) -> list[str]:
+    """Corrected trees and proof subtrees found inside the grading directory.
+
+    The two are the only parts of a task that are held out of the *workdir* as
+    well as of the agent: grading copies the grading directory over the workdir
+    wholesale, so a corrected tree there lands in the graded workdir and a proof
+    test there is collected as a verdict test. Read at any depth, because a
+    nested `grading/extras/corrected/` is overlaid exactly as a top-level one
+    is.
+    """
+    if not task.grading_dir.is_dir():
+        return []
+    return sorted(
+        str(path.relative_to(task.grading_dir)) + "/"
+        for path in task.grading_dir.rglob("*")
+        if path.is_dir() and path.name in (CORRECTED_DIR, PROOFS_DIR)
+    )
 
 
 def _stdlib_collisions(repo_dir: Path) -> list[str]:
@@ -1814,8 +1874,16 @@ def lint_task_set(
     but one, and every planted finding plus a rejected one — are what make the
     two quantifiers of a set-shaped verdict real rather than declared.
 
-    A task carrying a key of either shape is held to the three terrain rules
-    as well (`_terrain_problems`): whether it gives its own answer away is an
+    A task carrying a key of either shape is also held to its action's
+    registered **existence proof** (`EXISTENCE_PROOFS`), which asks the prior
+    question none of the negatives can: whether the truth the task is keyed on
+    is in the repository at all. The three forms are a partner `bug-fix` task's
+    pristine failure, a held-out test per planted finding run against two trees,
+    and an accepted location that resolves — and an action carrying a key with
+    no registered form is refused rather than exempt.
+
+    It is held to the three terrain rules as well
+    (`_terrain_problems`): whether it gives its own answer away is an
     authoring invariant like any other, and one that used to be proved per
     task, in six copies, so that a seventh keyed task inherited none of it.
     The hash gate (`_hash_gate_problems`) is here for the same reason and was
@@ -1830,7 +1898,10 @@ def lint_task_set(
     outcome is known is not a prediction, and a sweep is only paid for once.
     """
     problems = (
-        _family_problems(tasks) + _effort_claim_problems(tasks) + _pair_problems(tasks)
+        _unregistered_proof_form_problems()
+        + _family_problems(tasks)
+        + _effort_claim_problems(tasks)
+        + _pair_problems(tasks)
     )
     for task in tasks:
         problems.extend(construction_problems(task))
@@ -1873,6 +1944,18 @@ def lint_task_set(
             # whether its held-out test discriminates.
             problems.extend(
                 _findings_discrimination_problems(task, timeout_s=timeout_s)
+            )
+        if (is_keyed(task) or is_findings_keyed(task)) and not (
+            key_problems or findings_problems
+        ):
+            # The prior question the negatives above cannot ask: whether the
+            # truth this task is keyed on is in the repository at all. Gated on
+            # whichever key this task carries reading clean, for the reason the
+            # negatives are — a key naming a file the repository does not hold
+            # says nothing about whether a defect exists at that location, and
+            # the review form runs tests against two trees, which is expensive.
+            problems.extend(
+                _existence_proof_problems(task, tasks, timeout_s=timeout_s)
             )
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
             problems.append(
@@ -3172,15 +3255,16 @@ def _discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
     The rest are the author's `rejected` near-misses, run the same way.
 
     What none of it proves is that there is a defect in the repository at all.
-    That is the paired `bug-fix` member's pristine failure, which is a
-    convention rather than a checked relation: the two members share a
-    starting repository but are deliberately neither a task family nor a pair,
-    so it holds only while both are authored together, and a fault-location
-    task authored alone has no proof there is anything in it to find. A
-    locate-style `codebase-comprehension` task owes no such proof, having no
-    defect behind it: what has to exist there is the behaviour the question
-    asks after, and that its accepted answer resolves in the starting
-    repository is checked by `_answer_key_problems` (design note §45.4).
+    That is the task's registered **existence proof** (`EXISTENCE_PROOFS`), run
+    by the lint beside these negatives: for a fault-location task, the partner
+    `bug-fix` member's held-out tests failing on the starting repository the two
+    share, which the lint discovers by those repositories' bytes — the two
+    members are deliberately neither a task family nor a pair, so there is no
+    declared link to read — and runs, rather than leaving it to the convention
+    they were once authored under. A locate-style `codebase-comprehension` task
+    owes a different proof, having no defect behind it: what has to exist there
+    is the behaviour the question asks after, and its form is that the accepted
+    answer resolves in the starting repository (design note §45.4).
     """
     key = answer_key(task)
     problems: list[str] = []
@@ -3427,6 +3511,312 @@ def _findings_payload(findings: Sequence[tuple[str, str]]) -> str:
         )
         + "\n"
     )
+
+
+# --- the existence proof: that the planted truth is there at all ---------------
+#
+# Every gate above asks whether a task's grading *discriminates*: whether the
+# held-out test can tell a correct answer from a wrong one. None of them asks
+# the prior question — whether there is anything to find. A key naming a
+# location no defect lives at, a review whose "planted" findings are correct
+# code, a question about behaviour the repository does not have: each of those
+# lints clean under everything above and grades every agent unresolved for a
+# reason that says nothing about the agent.
+#
+# Round 4 answered it for `fault-location` by convention: the locate member was
+# authored beside a `bug-fix` partner whose held-out tests fail on the same
+# pristine repository, and that failure is the defect's existence proof. The
+# convention named its own trigger to revisit — the first fault-location-style
+# task with no partner — and round 5 authors exactly that, so it is a rule here,
+# with a registry of proof forms per action that the lint reads.
+#
+# What the registry buys is that a fourth keyed action cannot be added without
+# saying what would prove its truth exists: an action carrying a key and
+# registering no form is refused, rather than inheriting silence.
+
+# The action whose held-out tests are a `fault-location` task's existence proof.
+# Named apart so the refusal can say which action it went looking for.
+_PARTNER_CATEGORY: TaskCategory = "bug-fix"
+
+
+class ExistenceProof(NamedTuple):
+    """One action's registered proof form: what says its planted truth exists.
+
+    `form` states in one line what the proof is, so that the registry reads as
+    the three rules it is rather than as three function names — the refusals
+    themselves are written where each check is, in the terms that check failed
+    in. `check` runs it, and is handed the whole task set because one of the
+    three forms is a relation between two tasks rather than a property of one.
+    """
+
+    form: str
+    check: Callable[[Task, Sequence[Task], int], list[str]]
+
+
+def _partner_pristine_failure(
+    task: Task, tasks: Sequence[Task], timeout_s: int
+) -> list[str]:
+    """`fault-location`'s proof form: the partner `bug-fix` task exists, and its
+    held-out tests fail on the starting repository the two share.
+
+    Partner discovery is by shared starting-repository *bytes*, and has to be:
+    the two members are deliberately neither a task family nor a pair — both
+    constructs require one varied knob and an agreed category, and a locate/fix
+    contrast varies no knob and differs in category — so there is no declared
+    link to read. What there is instead is the thing the contrast is built on,
+    that the two start from one repository byte for byte, which `_tree_bytes`
+    already compares for a family.
+
+    The partner's failure is run rather than taken from its own must-fail-on-
+    pristine check, because the proof is a property of *this* task: the partner
+    is graded on its own repository, which the byte comparison above has just
+    established is this one. A set holding several partners is proved by the
+    first of them, the rest being tasks of the set in their own right and held
+    to the same invariant anyway.
+    """
+    pristine = _tree_bytes(task.repo_dir)
+    partners = sorted(
+        (
+            other
+            for other in tasks
+            if other.id != task.id
+            and other.category == _PARTNER_CATEGORY
+            and _tree_bytes(other.repo_dir) == pristine
+        ),
+        key=lambda other: other.id,
+    )
+    if not partners:
+        return [(
+            f"{task.id}: no {_PARTNER_CATEGORY} task in the set starts from this "
+            f"task's {REPO_DIR}/ byte for byte, so nothing proves there is a "
+            "defect here to find. Everything else the lint runs on a keyed task "
+            "asks whether its grading tells a right answer from a wrong one; "
+            "this asks the prior question, and a locate task authored alone has "
+            "no answer to it — a key naming a location no defect lives at lints "
+            "clean under every other rule and grades every agent unresolved. "
+            f"Author the partner beside it, sharing {REPO_DIR}/ byte for byte"
+        )]
+    partner = partners[0]
+    if _run_grading(partner, "", partner.grading_test_paths, timeout_s=timeout_s):
+        return [(
+            f"{task.id}: its existence proof is {partner.id}, whose held-out "
+            "tests pass on the starting repository the two share — so the "
+            "repository has nothing wrong with it, and this task asks where a "
+            "defect lives that its own partner cannot demonstrate. The proof is "
+            "the partner's pristine *failure*: fix the partner's tests, or the "
+            "defect the two were built around"
+        )]
+    return []
+
+
+def _proof_test_per_planted_finding(
+    task: Task, tasks: Sequence[Task], timeout_s: int
+) -> list[str]:
+    """`code-review`'s proof form: per planted finding, a held-out test that
+    fails on the starting repository and passes on the author's corrected tree.
+
+    A review task's `repo/` ships the change under review already applied, so
+    "the finding is really a defect" is exactly "this test fails here and passes
+    once the author's correction is in". Both directions are required and for
+    different reasons: a proof test that passes on the starting repository
+    proves nothing was wrong, and one that fails on the corrected tree proves
+    the author's own correction does not fix what the finding claims — a finding
+    the verdict would then demand of every agent while the task's own author
+    could not satisfy it.
+
+    Every message names the finding, because a review plants several and "a
+    proof test failed" would leave the author to work out which.
+
+    Nothing here is ever run by grading. The proofs sit outside `grading/`,
+    which the loader enforces (`_held_out_of_the_workdir_but_not_of_grading`),
+    so they are neither overlaid into a workdir nor collected as verdict tests.
+    """
+    del tasks  # a review task's proof is a property of the task alone
+    key = findings_key(task)
+    if not task.corrected_dir.is_dir() or not any(task.corrected_dir.iterdir()):
+        return [(
+            f"{task.id}: {CORRECTED_DIR}/ is missing or empty — the corrected "
+            "tree is the repository with every planted finding put right, and it "
+            "is the half of each finding's existence proof that says the finding "
+            "is a defect rather than a preference. Without it nothing can be "
+            "shown to have been fixed"
+        )]
+    problems: list[str] = []
+    proved: dict[str, tuple[str, str]] = {}
+    for finding in key.accepted:
+        planted = (finding.file, finding.symbol)
+        name = proof_test_name(finding)
+        if name in proved:
+            problems.append(
+                f"{task.id}: the planted findings {proved[name]} and {planted} "
+                f"are both proved by {PROOFS_DIR}/{name} — a proof test is named "
+                "after the finding it proves, so two findings sharing a name "
+                "leaves one of them with no proof of its own. Rename one of the "
+                "symbols, or plant them in different files"
+            )
+            continue
+        proved[name] = planted
+        proof = task.proofs_dir / name
+        if not proof.is_file():
+            problems.append(
+                f"{task.id}: the planted finding {planted} has no existence "
+                f"proof — {PROOFS_DIR}/{name} is missing. Each planted finding "
+                "carries a held-out test that fails on the starting repository "
+                "and passes on the corrected tree, because a 'finding' nothing "
+                "demonstrates is a preference the verdict would grade every "
+                "agent against"
+            )
+            continue
+        if _proof_test_passes(task.repo_dir, proof, timeout_s=timeout_s):
+            problems.append(
+                f"{task.id}: the existence proof of the planted finding "
+                f"{planted} ({PROOFS_DIR}/{name}) passes on the starting "
+                "repository — the change under review ships applied there, so a "
+                "proof that passes shows the finding is not a defect at all, and "
+                "the verdict would fail every agent that declined to report it"
+            )
+        if not _proof_test_passes(task.corrected_dir, proof, timeout_s=timeout_s):
+            problems.append(
+                f"{task.id}: the existence proof of the planted finding "
+                f"{planted} ({PROOFS_DIR}/{name}) fails on the corrected tree — "
+                f"so {CORRECTED_DIR}/ does not in fact put this finding right, "
+                "and what the proof demonstrates is a defect the author has not "
+                "shown how to fix rather than one the change introduced"
+            )
+    return problems
+
+
+def _accepted_locations_resolve(
+    task: Task, tasks: Sequence[Task], timeout_s: int
+) -> list[str]:
+    """`codebase-comprehension`'s proof form: every accepted (file, symbol)
+    resolves in the starting repository.
+
+    The one form that runs nothing, and the one that was already a rule before
+    this registry existed — `_answer_key_problems` reads it over both halves of
+    every accepted-answer key. It is registered here anyway, and deliberately as
+    the very same check rather than a second copy of it: what the registry is
+    for is that a keyed action cannot be added without saying what proves its
+    truth exists, and an action whose answer is "the rule you already run" has
+    to say so rather than be silently exempt.
+
+    Why this is the whole of it for a locate-style comprehension task: there is
+    no defect behind it, so there is nothing a partner could fail on. What has
+    to exist is the behaviour the question asks after, and a location that
+    resolves in the repository the agent is handed is that.
+    """
+    del tasks, timeout_s  # a location resolving is a property of one task, read
+    return _key_location_problems(
+        task, "the accepted-answer key's accepted answers", answer_key(task).accepted
+    )
+
+
+# One entry per action that carries a key. A fourth cannot be added without one:
+# `_unregistered_proof_form_problems` refuses a keyed action this dict does not
+# name, and `_existence_proof_problems` refuses the task that would have been
+# swept under it.
+EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
+    "fault-location": ExistenceProof(
+        form=(
+            f"the partner {_PARTNER_CATEGORY} task's held-out tests failing on "
+            "the starting repository the two share"
+        ),
+        check=_partner_pristine_failure,
+    ),
+    "code-review": ExistenceProof(
+        form=(
+            "a held-out test per planted finding, failing on the starting "
+            "repository and passing on the author's corrected tree"
+        ),
+        check=_proof_test_per_planted_finding,
+    ),
+    "codebase-comprehension": ExistenceProof(
+        form="every accepted (file, symbol) resolving in the starting repository",
+        check=_accepted_locations_resolve,
+    ),
+}
+
+# What a proof test may not be named after: the characters a finding's file and
+# symbol carry that a module name cannot. Collapsed to underscores rather than
+# dropped, so `Rota.add` and `Rotaadd` cannot name one file.
+_NOT_IN_A_MODULE_NAME = re.compile(r"[^0-9A-Za-z]+")
+
+
+def proof_test_name(finding: Answer) -> str:
+    """The proof test a planted finding is proved by, by name.
+
+    Derived from the finding rather than declared in the key, so that a proof
+    test and the finding it proves cannot drift apart: there is no third place
+    saying which is which. Case is kept, because the key's symbols are matched
+    case-exactly and lowercasing here would let two findings that differ only in
+    case claim one proof — which `_proof_test_per_planted_finding` reports
+    rather than lets pass, for the residual case two spellings still collide.
+    """
+    slug = _NOT_IN_A_MODULE_NAME.sub("_", f"{finding.file}_{finding.symbol}")
+    return f"test_{slug.strip('_')}.py"
+
+
+def _proof_test_passes(tree: Path, proof: Path, *, timeout_s: int) -> bool:
+    """Whether this proof test passes when run against this tree.
+
+    The tree is copied rather than run in place and the proof laid beside it,
+    the way grading copies the starting repository and overlays the held-out
+    files — same pinned config, same `--noconftest`, same workdir-behind-the-
+    standard-library sys.path, same report read from outside the workdir. The
+    proof is run alone: what it says about one planted finding must not depend
+    on another proof test in the same session.
+    """
+    _require_pytest()
+    with tempfile.TemporaryDirectory(prefix="ai-bench-proof-") as name:
+        root = Path(name)
+        workdir = root / "workdir"
+        workdir.mkdir()
+        shutil.copytree(tree, workdir, dirs_exist_ok=True)
+        shutil.copyfile(proof, workdir / proof.name)
+        return _pytest_passes(root, workdir, [proof.name], timeout_s=timeout_s)
+
+
+def _unregistered_proof_form_problems() -> list[str]:
+    """Keyed actions this project can grade and cannot prove.
+
+    Read off the two sets that say which actions may ship a key, so that adding
+    a fourth without registering what proves its truth exists is refused by the
+    lint rather than discovered by a sweep that measured nothing.
+    """
+    unregistered = sorted(
+        (_KEYED_CATEGORIES | {_FINDINGS_CATEGORY}) - set(EXISTENCE_PROOFS)
+    )
+    if not unregistered:
+        return []
+    return [(
+        f"the action(s) {unregistered} carry a key and register no existence "
+        "proof — every gate the lint runs on a keyed task asks whether its "
+        "grading tells a right answer from a wrong one, and none of them asks "
+        "whether there is anything to find. Register the form that answers it "
+        "in EXISTENCE_PROOFS, beside "
+        f"{sorted(EXISTENCE_PROOFS)}"
+    )]
+
+
+def _existence_proof_problems(
+    task: Task, tasks: Sequence[Task], *, timeout_s: int
+) -> list[str]:
+    """Whether this keyed task's planted truth is shown to be there at all.
+
+    Dispatched off the registry rather than off a chain of category tests, so
+    that the three forms are one list a reader can see the whole of, and so that
+    a task of an action with no registered form is refused here rather than
+    passing through a final `else` that checked nothing.
+    """
+    proof = EXISTENCE_PROOFS.get(task.category)
+    if proof is None:
+        return [(
+            f"{task.id}: a {task.category} task carries a key, and that action "
+            "registers no existence proof — so nothing says the truth this task "
+            "is keyed on is in the repository at all, and the task would grade "
+            "every agent against a claim no mechanism ever checked"
+        )]
+    return proof.check(task, tasks, timeout_s)
 
 
 def _family_problems(tasks: list[Task]) -> list[str]:

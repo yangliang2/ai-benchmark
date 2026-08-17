@@ -18,9 +18,10 @@
 #
 # The held-out tests fail on the pristine repository, as the lint requires,
 # and that failure is also what proves there is a defect for the
-# fault-location member built on this same repository to find: that pairing is
-# a convention rather than a checked relation (design note 36.2), so the two
-# members are authored together and share repo/ byte for byte.
+# fault-location member built on this same repository to find: it is that
+# member's registered existence proof (design note 45.4). A checked relation
+# rather than a convention — the lint finds this task by the bytes of the
+# repo/ the two share, and runs it — so the two share repo/ byte for byte.
 #
 # A control: authored to fill a category, claiming nothing about difficulty.
 # The two members are deliberately neither a task family nor a pair — both

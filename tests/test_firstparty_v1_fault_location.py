@@ -58,6 +58,7 @@ from ai_benchmark.firstparty_v1 import (
     _defined_classes,
     _defined_symbols,
     _hash_gate_problems,
+    _load_task,
     _repo_file,
     _terrain_problems,
     answer_key,
@@ -427,6 +428,82 @@ def fixture_task(root: Path, **overrides: Any) -> Task:
     return task
 
 
+# The bug-fix partner every fixture here is linted beside, and the id it is
+# written under — distinct from any id a test writes a second *locate* fixture
+# at. A fault-location task's existence proof is this partner's failure on the
+# starting repository the two share (#71), so a lone locate task has nothing
+# saying there is a defect in it to find, and every rule below is about some
+# other half of the same task. `linted` supplies it; the rule itself, in both
+# directions, is `tests/test_firstparty_v1_existence_proofs.py`'s.
+PARTNER_ID = "pricing-round-the-tax-to-the-nearest-cent"
+
+# The partner's held-out test: what the planted defect gets wrong. It fails on
+# the pristine repository — a 199-cent line taxed at 15% is billed 228 where 229
+# is owed — and that failure is the proof the locate member is keyed on.
+PARTNER_GRADING_TEST = '''\
+"""What the defect gets wrong, held out from the agent."""
+
+from checkout import charge
+
+
+def test_a_single_line_is_taxed_to_the_nearest_cent():
+    assert charge([(199, 1)]) == 229
+'''
+
+PARTNER_PROMPT = (
+    "A 199-cent line taxed at 15% is billed 228 cents when it should be 229.\n"
+    "Put it right, and change nothing else.\n"
+)
+
+
+def write_partner(task: Task) -> Task:
+    """Write the bug-fix partner beside this fixture task, and load it.
+
+    Its `repo/` is a copy of the task's own rather than a second authoring of
+    the same modules, so the two share the starting repository byte for byte
+    however the task under test varied it (`repo_files`) — which is what the
+    existence proof looks the partner up by, the two members declaring no link
+    to read. Loaded one directory at a time rather than through
+    `load_task_set`, because some tests here deliberately leave an unloadable
+    fixture in the same root.
+    """
+    partner_dir = task.directory.parent / PARTNER_ID
+    if partner_dir.exists():
+        shutil.rmtree(partner_dir)
+    (partner_dir / "grading").mkdir(parents=True)
+    shutil.copytree(task.repo_dir, partner_dir / "repo")
+    (partner_dir / "grading" / "test_tax.py").write_text(PARTNER_GRADING_TEST)
+    (partner_dir / "task.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "id": PARTNER_ID,
+                "category": "bug-fix",
+                "scale": "single-file",
+                "surface": "application",
+                "language": "python",
+                "control": True,
+                "prompt": PARTNER_PROMPT,
+            },
+            sort_keys=False,
+        )
+    )
+    return _load_task(partner_dir)
+
+
+def linted(*tasks: Task, **kwargs: Any) -> list[str]:
+    """The lint over these fixture tasks *and* the bug-fix partner beside them.
+
+    Every fixture in this suite is a lone fault-location task, and a lone
+    fault-location task has no existence proof: what would prove a defect is in
+    its repository at all is a partner whose held-out tests fail there, and the
+    lint goes looking for one (#71). So the partner is written beside the task
+    under test and the two are linted together, leaving each test below about
+    the one rule it bends. The partner is clean, so it contributes no problem of
+    its own and the message counts these tests assert are unchanged.
+    """
+    return lint_task_set([*tasks, write_partner(tasks[0])], **kwargs)
+
+
 def answers(payload: str, *, at: str = ANSWER_PATH) -> Callable[[Path], None]:
     """The edit a run that wrote this answer file would log."""
 
@@ -597,7 +674,7 @@ def test_the_pristine_repository_carries_no_answer_file(tmp_path: Path) -> None:
     task = fixture_task(tmp_path)
 
     assert not (task.repo_dir / ANSWER_PATH).exists()
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 # --- the lint: what the accepted-answer key has to say --------------------------
@@ -622,7 +699,7 @@ def test_lint_rejects_an_empty_accepted_set(tmp_path: Path) -> None:
     spec = yaml.safe_load((task_dir / "task.yaml").read_text())
     task = Task.model_validate(spec | {"directory": task_dir})
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "accepts no" in problem
 
@@ -634,7 +711,7 @@ def test_lint_rejects_a_key_naming_a_file_that_is_not_in_the_repo(
         tmp_path, accepted=[{"file": "billing.py", "symbol": "Basket"}]
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "billing.py" in problem
     assert "starting repository" in problem
@@ -651,7 +728,7 @@ def test_lint_rejects_a_key_naming_a_file_matching_only_by_case(
         tmp_path, accepted=[{"file": "pricing.PY", "symbol": "Basket"}]
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "pricing.PY" in problem
     assert "starting repository" in problem
@@ -665,7 +742,7 @@ def test_lint_rejects_a_key_naming_a_symbol_the_file_does_not_define(
         tmp_path, accepted=[{"file": "pricing.py", "symbol": "total_wth_tax"}]
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "total_wth_tax" in problem
     assert "does not define" in problem
@@ -690,7 +767,7 @@ def test_lint_refuses_a_bare_method_name_where_a_qualified_spelling_exists(
         tmp_path, accepted=[{"file": "pricing.py", "symbol": "total_with_tax"}]
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "total_with_tax" in problem
     assert "Basket.total_with_tax" in problem
@@ -728,7 +805,7 @@ def test_lint_rejects_a_prompt_that_never_names_the_answer_file(
             """),
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and ANSWER_PATH in problem
     assert "prompt" in problem
@@ -746,7 +823,7 @@ def test_lint_rejects_a_prompt_where_the_path_is_only_a_substring(
         prompt="Say where the defect is. Write your answer to MYANSWER.jsonx.\n",
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "prompt" in problem
 
@@ -778,7 +855,7 @@ def test_lint_rejects_an_answer_path_that_cannot_reach_the_verdict(
         prompt=f"Say where the defect is. Write your answer to {answer_path}.\n",
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem
 
@@ -792,7 +869,7 @@ def test_lint_accepts_an_answer_path_that_is_safe(tmp_path: Path) -> None:
         prompt="Say where the defect is. Write your answer to report/ANSWER.json.\n",
     )
 
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 # --- the answer comparison: one owned module, copied ---------------------------
@@ -808,7 +885,7 @@ def test_the_answer_comparison_ships_into_the_grading_directory(
     task = fixture_task(tmp_path)
 
     assert (task.grading_dir / ANSWER_MODULE).read_bytes() == answer_module_source()
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_the_comparison_and_the_loader_name_the_same_key_file() -> None:
@@ -826,7 +903,7 @@ def test_lint_rejects_a_grading_directory_without_the_answer_comparison(
     (task_dir / "grading" / ANSWER_MODULE).unlink()
     [task] = load_task_set(tmp_path)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert any(FIXTURE_ID in problem and ANSWER_MODULE in problem for problem in problems)
 
@@ -848,7 +925,7 @@ def test_lint_rejects_an_edited_copy_of_the_answer_comparison(
     )
     [task] = load_task_set(tmp_path)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert any(FIXTURE_ID in problem and ANSWER_MODULE in problem for problem in problems)
 
@@ -877,7 +954,7 @@ def test_lint_rejects_a_grading_directory_without_the_held_out_test(
     )
     [task] = load_task_set(tmp_path)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert any(
         FIXTURE_ID in problem and ANSWER_TEST_FILE in problem for problem in problems
@@ -910,7 +987,7 @@ def test_lint_refuses_a_hand_written_grading_test_even_with_answer_py_intact(
     or would not have caught."""
     task = fixture_task(tmp_path, grading_test=grading_test)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert problems and all(FIXTURE_ID in problem for problem in problems)
     assert any(ANSWER_TEST_FILE in problem for problem in problems), fixture_name
@@ -1034,7 +1111,7 @@ def test_a_module_level_constant_can_be_keyed(tmp_path: Path) -> None:
         rejected=[{"file": "pricing.py", "symbol": "line_total"}],
     )
 
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
     assert verdict(task, answers(naming("checkout.py", "TAX_PERCENT"))) == 1.0
 
 
@@ -1062,7 +1139,7 @@ def test_lint_runs_four_constructed_negatives_and_the_authors_rejected_set(
     everything resolved, so each negative reports separately."""
     task = fixture_task(tmp_path, grading_test=ALWAYS_RESOLVES_GRADING_TEST)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert all(FIXTURE_ID in problem for problem in problems)
     for negative in (
@@ -1084,7 +1161,7 @@ def test_lint_refuses_a_grading_test_that_never_consults_the_key(
     no answer file, so must-fail-on-pristine is satisfied by anything."""
     task = fixture_task(tmp_path, grading_test=BLIND_GRADING_TEST)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert problems and all(FIXTURE_ID in problem for problem in problems)
     assert any("empty" in problem for problem in problems)
@@ -1097,7 +1174,7 @@ def test_lint_refuses_a_grading_test_that_checks_the_file_but_not_the_symbol(
     accepted file paired with a symbol the key does not accept."""
     task = fixture_task(tmp_path, grading_test=FILE_ONLY_GRADING_TEST)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert problems and all(FIXTURE_ID in problem for problem in problems)
     assert any("does not accept" in problem for problem in problems)
@@ -1109,7 +1186,7 @@ def test_lint_requires_a_non_empty_rejected_set(tmp_path: Path) -> None:
     that looks responsible."""
     task = fixture_task(tmp_path, rejected=[])
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "rejected" in problem
 
@@ -1129,7 +1206,7 @@ def test_lint_requires_a_rejected_answer_naming_a_file_not_already_accepted(
         rejected=[{"file": "pricing.py", "symbol": "Basket.add"}],
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "pricing.py" in problem
 
@@ -1153,7 +1230,7 @@ def test_lint_refuses_a_rejected_answer_equal_to_the_synthesised_near_miss(
         ],
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "Basket.__init__" in problem
 
@@ -1176,7 +1253,7 @@ def test_lint_refuses_a_rejected_answer_the_comparison_actually_accepts(
         rejected=[{"file": "./pricing.py", "symbol": "Basket.total_with_tax"}],
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "Basket.total_with_tax" in problem
 
@@ -1191,7 +1268,7 @@ def test_lint_refuses_a_rejected_answer_that_is_not_in_the_repository(
         tmp_path, rejected=[{"file": "billing.py", "symbol": "charge"}]
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "billing.py" in problem
     assert "starting repository" in problem
@@ -1211,7 +1288,7 @@ def test_lint_reports_when_it_cannot_construct_the_near_miss(
     )
     [task] = load_task_set(tmp_path)
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert any(FIXTURE_ID in problem and "near-miss" in problem for problem in problems)
 
@@ -1236,7 +1313,7 @@ def test_near_miss_skips_a_fully_accepted_file_and_tries_the_next(
     )
     [task] = load_task_set(tmp_path)
 
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_the_missing_answer_negative_leaves_the_declared_path_missing_even_when_it_is_named_notes_md(
@@ -1259,7 +1336,7 @@ def test_the_missing_answer_negative_leaves_the_declared_path_missing_even_when_
         grading_test=RESOLVES_WHEN_ANSWER_MISSING_GRADING_TEST,
     )
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert any(
         FIXTURE_ID in problem and "no answer file" in problem for problem in problems
@@ -1305,7 +1382,7 @@ def test_lint_refuses_a_prompt_naming_an_accepted_location(tmp_path: Path) -> No
     asserted it by hand — and mechanical here."""
     task = fixture_task(tmp_path, prompt=NAMES_THE_ACCEPTED_CLASS_PROMPT)
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "'Basket'" in problem
     assert "prompt-names-a-key-location" in problem
@@ -1318,7 +1395,7 @@ def test_lint_refuses_a_prompt_naming_a_rejected_location(tmp_path: Path) -> Non
     as surely as naming the answer does."""
     task = fixture_task(tmp_path, prompt=NAMES_A_REJECTED_LOCATION_PROMPT)
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "'charge'" in problem
     assert "rejected" in problem
@@ -1332,7 +1409,7 @@ def test_the_declared_answer_path_is_never_read_as_bait(tmp_path: Path) -> None:
     task = fixture_task(tmp_path)
 
     assert ANSWER_PATH in task.prompt
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_lint_refuses_a_prompt_word_that_narrows_to_the_accepted_module(
@@ -1343,7 +1420,7 @@ def test_lint_refuses_a_prompt_word_that_narrows_to_the_accepted_module(
     then measures whether the agent greps rather than whether it locates."""
     task = fixture_task(tmp_path, prompt=NARROWING_PROMPT)
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "'subtotal'" in problem
     assert "pricing.py:" in problem
@@ -1358,7 +1435,7 @@ def test_a_declared_domain_noun_does_not_narrow(tmp_path: Path) -> None:
     task = fixture_task(tmp_path)
 
     assert {"cent", "line", "tax"} <= set(task.domain_nouns)
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_the_narrowing_rule_reads_only_the_keyed_tasks_own_prompt(
@@ -1375,7 +1452,7 @@ def test_the_narrowing_rule_reads_only_the_keyed_tasks_own_prompt(
                   prompt=NARROWING_PROMPT)
     tasks = load_task_set(tmp_path)
 
-    problems = lint_task_set(tasks)
+    problems = linted(*tasks)
 
     assert {task.id for task in tasks} == {
         FIXTURE_ID, "pricing-fix-the-rounding-fault"
@@ -1412,7 +1489,7 @@ def test_lint_refuses_an_accepted_class_that_is_the_only_class_in_its_file(
     )
     [task] = load_task_set(tmp_path)
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "lone.py:Lone" in problem
     assert "accepted-class-is-the-only-class" in problem
@@ -1426,7 +1503,7 @@ def test_an_accepted_class_chosen_from_several_lints_clean(tmp_path: Path) -> No
 
     assert Answer(file="pricing.py", symbol="Basket") in answer_key(task).accepted
     assert _defined_classes(PRICING) == {"Basket", "Coupon"}
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_a_terrain_waiver_silences_exactly_what_it_names(tmp_path: Path) -> None:
@@ -1444,7 +1521,7 @@ def test_a_terrain_waiver_silences_exactly_what_it_names(tmp_path: Path) -> None
         }],
     )
 
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_a_terrain_waiver_does_not_silence_a_word_it_does_not_name(
@@ -1463,7 +1540,7 @@ def test_a_terrain_waiver_does_not_silence_a_word_it_does_not_name(
         }],
     )
 
-    problems = lint_task_set([task])
+    problems = linted(task)
 
     assert any("'subtotal'" in problem for problem in problems)
     assert any("'coupon'" in problem and "does not fire" in problem for problem in problems)
@@ -1484,7 +1561,7 @@ def test_a_waiver_naming_a_rule_that_did_not_fire_is_a_lint_problem(
         }],
     )
 
-    [problem] = lint_task_set([task])
+    [problem] = linted(task)
 
     assert FIXTURE_ID in problem and "'subtotal'" in problem
     assert "does not fire" in problem
@@ -1804,7 +1881,7 @@ def test_near_miss_uses_the_forgiving_comparison_not_plain_equality(
     )
     [task] = load_task_set(tmp_path)
 
-    assert lint_task_set([task]) == []
+    assert linted(task) == []
 
 
 def test_repo_file_refuses_a_name_that_climbs_out_of_the_repository(

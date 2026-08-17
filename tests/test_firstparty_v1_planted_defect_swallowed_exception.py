@@ -17,10 +17,13 @@ fixing?" a reading of the two actions rather than of two repositories.
 This suite is #52's, re-aimed at a defect of a different shape and following
 #54's, which #59 recovered. It checks the same things no other suite can:
 
-- **The two members really do share one repository**, byte for byte. The
-  pairing is a convention rather than a checked relation (design note 36.2):
-  the members are deliberately neither a task family nor a pair, so the lint
-  compares nothing between them and only a test can.
+- **The two members really do share one repository**, byte for byte. Those
+  shared bytes are a checked relation now (design note 45.4): the members are
+  deliberately neither a task family nor a pair, so they declare no link, and
+  the bytes are how the lint finds the bug-fix partner that is the locate
+  member's existence proof. What the lint reads them for is *finding* the
+  partner rather than holding the two trees identical, so this is still the
+  only thing that says they have not drifted.
 - **The defect the fix removes is the defect the key names.** The lint proves
   the answer key discriminates and the reference solution proves the fix
   works, but nothing joins them (36.1). Here the file the fix touches and the
@@ -205,9 +208,10 @@ def test_the_defect_the_fix_removes_is_the_defect_the_key_names() -> None:
     A fault-location task's grading proves only that its grading test tells an
     accepted answer from a wrong one; what proves there is a defect to find at
     all is the paired bug-fix member's held-out tests failing on the shared
-    pristine repository (36.2). That pairing is a convention, so the two halves
-    are tied together here: every file the accepted answers name is the one
-    file the reference fix touches.
+    pristine repository — its registered existence proof (45.4). What that proof
+    does not reach is whether the two are about the *same* defect, so the two
+    halves are tied together here: every file the accepted answers name is the
+    one file the reference fix touches.
     """
     fix = task_by_id(BUG_FIX)
     key = answer_key(task_by_id(FAULT_LOCATION))
@@ -545,9 +549,13 @@ def test_the_contract_is_not_written_on_top_of_the_defect() -> None:
 # --- the gates every checked-in task passes ------------------------------------
 
 
-@pytest.mark.parametrize("task_id", MEMBERS)
-def test_task_lints_clean(task_id: str) -> None:
-    assert lint_task_set([task_by_id(task_id)]) == []
+def test_the_two_members_lint_clean_together() -> None:
+    """Linted as the two members they are rather than one at a time: the locate
+    member's existence proof is the bug-fix member's failure on the starting
+    repository they share (design note 45.4), so a set holding only one of them
+    is one in which the locate task has nothing saying there is a defect in it
+    to find."""
+    assert lint_task_set([task_by_id(member) for member in MEMBERS]) == []
 
 
 @pytest.mark.parametrize("task_id", MEMBERS)

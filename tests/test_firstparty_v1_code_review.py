@@ -38,6 +38,14 @@ through the real pipeline, two of which are what a set verdict has to earn:
 every planted finding but one, and every planted finding plus a rejected one.
 The three terrain rules reach a review task here too, keyed on the task
 carrying a key rather than on which key it carries.
+
+What #71 adds is the prior question none of that asks: whether the planted
+findings are defects at all. The fixture therefore ships an **existence proof**
+per planted finding — a held-out test in its own `proofs/` subtree that fails on
+the starting repository and passes on the corrected tree — because that is what
+a review task ships from now on, and a fixture that did not could not be used to
+prove anything else about the lint. The rule itself, in both directions, is
+`tests/test_firstparty_v1_existence_proofs.py`'s.
 """
 
 import json
@@ -57,6 +65,7 @@ from ai_benchmark.firstparty_v1 import (
     FINDINGS_MODULE,
     FINDINGS_TEST_FILE,
     GRADING_DIR,
+    PROOFS_DIR,
     REPO_DIR,
     REVIEW_DIFF_FILE,
     Answer,
@@ -72,6 +81,7 @@ from ai_benchmark.firstparty_v1 import (
     is_keyed,
     lint_task_set,
     load_task_set,
+    proof_test_name,
 )
 
 FIXTURE_ID = "rota-review-the-overtime-change"
@@ -309,6 +319,49 @@ DOMAIN_NOUNS = [
     "week", "work",
 ]
 
+# The existence proof of each planted finding (#71): a held-out test that fails
+# on the starting repository — which ships the change under review already
+# applied — and passes on the corrected tree. Neither direction is optional. A
+# proof that passed on the starting repository would say the finding is not a
+# defect at all; one that failed on the corrected tree would say the author's own
+# correction does not fix what the finding claims.
+#
+# They live in the task's `proofs/` subtree, beside `corrected/` and outside
+# `grading/`, so the lint runs them and grading can neither overlay nor collect
+# them.
+OVERTIME_PROOF = '''\
+"""Overtime is owed on the hours past the threshold, not on every hour."""
+
+from payroll import overtime_pay
+
+
+def test_a_nine_hour_stretch_pays_eight_flat_and_the_ninth_at_the_multiplier():
+    assert overtime_pay(9) == 8 * 1200 + 1200 * 2
+'''
+
+REST_PROOF = '''\
+"""The gap is measured from the end of the previous stretch, not its start."""
+
+from shifts import Rota, Shift
+
+
+def test_a_stretch_starting_too_soon_after_the_last_one_ended_is_refused():
+    rota = Rota()
+    rota.add(Shift("ada", 0, 12))
+    try:
+        rota.add(Shift("ada", 14, 20))
+    except ValueError:
+        return
+    raise AssertionError("a stretch two hours after the last one ended was taken on")
+'''
+
+# Named after the findings they prove, by the very function the lint looks them
+# up with, so a proof test and its finding cannot drift apart here.
+PROOFS: dict[str, str] = {
+    proof_test_name(Answer(file="payroll.py", symbol="overtime_pay")): OVERTIME_PROOF,
+    proof_test_name(Answer(file="shifts.py", symbol="Rota.add")): REST_PROOF,
+}
+
 GRADING_TEST = findings_test_source().decode("utf-8")
 
 # An additional held-out test, of the kind a task may legitimately ship beside
@@ -484,6 +537,8 @@ def write_fixture(
     key_text: str | None = None,
     ship_key: bool = True,
     task_id: str = FIXTURE_ID,
+    corrected_files: dict[str, str] | None = None,
+    proof_tests: dict[str, str] | None = None,
     **spec: object,
 ) -> Path:
     """The fixture `code-review` task, written into root ready to load.
@@ -511,6 +566,12 @@ def write_fixture(
     `repo_files` adds modules to the starting repository — passed in here
     rather than written afterwards so that a test naming one in its key gets a
     repository the whole lint agrees about.
+
+    `proof_tests` ships the existence proof of each planted finding, keyed by
+    the filename `proof_test_name` derives from the finding it proves — the
+    default two, or `{}` for a task shipping none, or a bent one for the test
+    about the direction it is bent in. `corrected_files` overrides what the
+    corrected tree holds, for the test about a correction that does not correct.
 
     `scale` is read off the reference solution's diff, as every task's is, and
     a review's reference solution is one answer file: `single-file`, whatever
@@ -540,10 +601,19 @@ def write_fixture(
         (task_dir / REPO_DIR / name).write_text(source)
     if review_diff is not None:
         (task_dir / REPO_DIR / REVIEW_DIFF_FILE).write_text(review_diff)
-    (task_dir / CORRECTED_DIR / "payroll.py").write_text(CORRECTED_PAYROLL)
-    (task_dir / CORRECTED_DIR / "shifts.py").write_text(CORRECTED_SHIFTS)
-    (task_dir / CORRECTED_DIR / "people.py").write_text(PEOPLE)
-    (task_dir / CORRECTED_DIR / "swaps.py").write_text(SWAPS)
+    corrected = {
+        "payroll.py": CORRECTED_PAYROLL,
+        "shifts.py": CORRECTED_SHIFTS,
+        "people.py": PEOPLE,
+        "swaps.py": SWAPS,
+    } | (corrected_files or {})
+    for name, source in corrected.items():
+        (task_dir / CORRECTED_DIR / name).write_text(source)
+    proofs = PROOFS if proof_tests is None else proof_tests
+    if proofs:
+        (task_dir / PROOFS_DIR).mkdir()
+        for name, source in proofs.items():
+            (task_dir / PROOFS_DIR / name).write_text(source)
     if grading_test is not None:
         (task_dir / GRADING_DIR / FINDINGS_TEST_FILE).write_text(grading_test)
     for name, source in (extra_grading_tests or {}).items():
