@@ -1,0 +1,102 @@
+# code-review, and the first of them in the corpus: the agent is handed a
+# change that has already been applied to the starting repository, plus the
+# unified diff of it the prompt names (repo/review.diff), and asked which of it
+# is wrong. There is no second tree it can see — the change lives inside the
+# repository — and the deliverable is the findings file, never an edit.
+#
+# The change is one week's work at a launderette: a cheaper rate for a load put
+# on late in the evening, and a card that earns a free wash for every ten. It
+# reads as a piece of work rather than as three bugs in a row, which is what a
+# review has to be graded on: the house rules it is meant to keep are the
+# README's, written before the change and in the shop's own words, so each
+# planted finding is the code disagreeing with a rule somebody wrote down
+# rather than a matter of taste.
+#
+# The three planted findings, each keyed at the one description level a review
+# verdict can accept:
+#
+#   tariff.py price_for       the cheaper hour is tested with a strict >, so a
+#                             load put on as the clock goes round pays the day
+#                             rate — the rule takes eight o'clock itself in.
+#   stamps.py Card.add_stamp  the card is never cleared, so the count runs past
+#                             ten and the equality is true once in a card's
+#                             life: only the first ten washes ever earn one.
+#   washes.py Book.owed       the prices are ordered upwards and the front of
+#                             the list dropped, so a free wash comes off the
+#                             cheapest of somebody's loads and not the dearest.
+#
+# Why one level each, where a fault-location key writes down every level that is
+# legitimately correct: a findings key's accepted half is read under *every*,
+# not *any*, so a second entry for the same defect would demand that an answer
+# report the same problem twice, at both levels. What does the work the locate
+# key's set does is the comparison's own forgiveness — a bare symbol answers a
+# key spelled `Class.method` — so `add_stamp` and `Card.add_stamp` both answer
+# the second finding, and `owed` and `Book.owed` both answer the third.
+#
+# The rejected non-findings are the two places a reviewer plausibly points at
+# and is wrong to, and they are the half no lint can invent: LATE_OFF_PENCE is
+# the constant the change introduced, and sixty pence off is exactly what was
+# asked for; Book.takings is the caller whose number comes out wrong, because
+# it adds up prices the defect above got wrong, and is itself correct.
+#
+# Each planted finding carries its existence proof in proofs/ — a held-out test
+# that fails on repo/, which ships the change applied, and passes on
+# corrected/, the same repository with all three put right. Both trees sit
+# beside repo/ and outside grading/, which is overlaid into the workdir
+# wholesale, so the lint runs them and grading can neither collect nor copy
+# them.
+#
+# The terrain: the prompt names neither a file nor a symbol of either half of
+# the key, and its own vocabulary is either English's or the domain's below or
+# appears outside the modules the findings live in — machines.py and
+# openings.py are untouched by the change and carry the words a prompt about a
+# launderette cannot avoid, and openings.py writes the very boundary comparison
+# tariff.py gets wrong, correctly. The repository's own tests are green as it
+# ships and name none of the three planted symbols: what the change added tests
+# for is the part of it that works.
+#
+# The hash gate is generated (`ai-bench lint-v1 --write-hash-gates`) and the
+# prompt says outright what it enforces: the deliverable is the findings file,
+# and a run that edited the code is graded unresolved however well it reviewed
+# the change.
+#
+# A control: authored to fill a category, claiming nothing about difficulty. It
+# is neither a family member nor a pair member, and it names no behaviour
+# tests — those are a refactor task's.
+id: launderette-review-the-rate-and-the-card
+category: code-review
+# The reference solution is the pristine tree plus the findings file, so the
+# diff a solved run logs touches exactly one file.
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a launderette and a repository about one cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds every
+# other word of the prompt to appearing somewhere other than the modules the
+# planted findings live in.
+domain_nouns: [wash, washes, load, loads, price, prices, rate, card, stamp,
+               stamps, drum, drums, machine, machines, day, hour, hours,
+               pence, book]
+prompt: |
+  This repository is what runs behind the counter of a community launderette,
+  and review.diff in its root is a change that has already been applied to it:
+  what that change was for is the last few house rules of the README, which
+  were written down as it was asked for, and the code around it is what it
+  looks like now.
+
+  Read the change against those rules and say what is wrong with it. Report
+  every problem it introduced and nothing that is not one — somewhere it got
+  right, reported as a problem, is as wrong an answer as a problem you never
+  mention.
+
+  Write what you find to FINDINGS.json in the root of the repository, as a JSON
+  list holding one object per problem, each with "file" (the path, relative to
+  the root of the repository, of the file the problem is in), "symbol" (the
+  function, class or method it is in, a method written as Class.method) and,
+  if you like, "note" (a sentence on what is wrong there). Nothing reads the
+  note.
+
+  That file is the deliverable. Do not put any of it right, and leave every
+  other file exactly as you found it: a run that edits the code is graded
+  unresolved however well it reviewed the change.
