@@ -146,6 +146,16 @@ TASK_SPEC = "task.yaml"
 REPO_DIR = "repo"
 GRADING_DIR = "grading"
 
+# The corrected tree of a `code-review` task: the author's fixed version of the
+# starting repository, in its own subtree of the task directory beside REPO_DIR
+# and deliberately *outside* GRADING_DIR. A review task's `repo/` ships the
+# change under review already applied, so the corrected tree is what says which
+# of those edits were defects; it is read only by the lint, never by grading and
+# never by the agent. Outside `grading/` because that directory is overlaid into
+# the workdir wholesale at grade time: source files placed there would land in
+# the graded workdir, and test files there would be collected as verdict tests.
+CORRECTED_DIR = "corrected"
+
 # The accepted-answer key of a fault-location or codebase-comprehension task,
 # inside GRADING_DIR: held out with the grading tests, reaching the workdir by
 # the overlay that copies that directory wholesale, and never collected,
@@ -154,9 +164,10 @@ ANSWER_KEY_FILE = "accepted-answer.json"
 
 # The answer comparison, inside GRADING_DIR beside the key and reaching the
 # workdir the same way: `ai_benchmark._answer`, shipped byte for byte into
-# every task of both actions below. Owned rather than hand-written per task
-# because the half of the verdict that discriminates is the half worth not
-# miscopying.
+# every task of both actions below — and into every `code-review` task too,
+# because the findings comparison imports its forgiveness rather than restating
+# it (see `FINDINGS_MODULE`). Owned rather than hand-written per task because
+# the half of the verdict that discriminates is the half worth not miscopying.
 ANSWER_MODULE = "_answer.py"
 
 # The held-out grading test that reads the answer comparison, shipped the same
@@ -170,10 +181,13 @@ ANSWER_MODULE = "_answer.py"
 # answer through, and nothing here should be tightened into a ban on that.
 ANSWER_TEST_FILE = "test_answer.py"
 
-# The two actions whose deliverable is an answer file rather than a code
-# change, and so the only two that may ship an accepted-answer key (design
-# note §45.2). Said once here, because it is the one thing about them worth
-# not restating per gate:
+# The two actions whose ground truth is an accepted-answer key, and so the only
+# two that may ship one (design note §45.2). `code-review`'s deliverable is an
+# answer file too, but what grades it is the set-shaped findings key below, not
+# this one: it names the findings of a change rather than the one location of a
+# defect, and the quantifier over its accepted half is "every", not "any". Said
+# once here, because it is the one thing about these two worth not restating
+# per gate:
 #
 # What they *share* is everything mechanical, verbatim — the key's shape, its
 # forgiveness in `_answer.py`, the held-out grading test above, every lint
@@ -206,6 +220,42 @@ ANSWER_TEST_FILE = "test_answer.py"
 _KEY_REQUIRED_CATEGORY: TaskCategory = "fault-location"
 _KEY_OPTIONAL_CATEGORY: TaskCategory = "codebase-comprehension"
 _KEYED_CATEGORIES = frozenset({_KEY_REQUIRED_CATEGORY, _KEY_OPTIONAL_CATEGORY})
+
+# The one action the findings key belongs to, and the only one that may ship
+# one. Mandatory there, the way the accepted-answer key is mandatory for
+# fault-location and for the same reason: the findings *are* the deliverable of
+# a review, so a review task with no key has no ground truth at all.
+_FINDINGS_CATEGORY: TaskCategory = "code-review"
+
+# A `code-review` task's ground truth, inside GRADING_DIR beside the
+# accepted-answer key's precedent, and held out exactly as that one is: it
+# reaches the workdir by the overlay that copies the grading directory
+# wholesale, and is never collected, collection globbing test files only.
+FINDINGS_KEY_FILE = "findings-key.json"
+
+# The findings comparison, inside GRADING_DIR beside the key and reaching the
+# workdir the same way: `ai_benchmark._findings`, shipped byte for byte into
+# every `code-review` task. It imports the location forgiveness from
+# ANSWER_MODULE rather than restating it — a review answer and a locate answer
+# have to forgive the same spellings — so a review task ships that module
+# beside this one, and what checks these bytes has to check those too.
+FINDINGS_MODULE = "_findings.py"
+
+# The held-out grading test that reads the findings comparison, shipped the
+# same way and for the same reason ANSWER_TEST_FILE is: shipping the module
+# byte-identical proves nothing about whether a task's grading test actually
+# calls it. A task may ship *additional* grading tests beside this one —
+# resolution requires every grading test to pass, so an extra test can only
+# make a task harder to resolve, never let a wrong answer through.
+FINDINGS_TEST_FILE = "test_findings.py"
+
+# The change under review, inside REPO_DIR: a `code-review` task's starting
+# repository ships that change already applied, plus this unified diff of it as
+# a file the prompt names, so the agent reviews a diff without a second tree it
+# would have to be given. Named here rather than per task so that what reads it
+# — the lint, checking that the key's findings describe the change rather than
+# the repository at large — finds it the way `REPO_DIR` is found.
+REVIEW_DIFF_FILE = "review.diff"
 
 # The workdir's ignore file belongs to the live runner (which writes and owns
 # it), so the loader refuses tasks that ship one of their own.
@@ -696,6 +746,19 @@ class Task(BaseModel):
         return self.directory / GRADING_DIR
 
     @property
+    def corrected_dir(self) -> Path:
+        """A `code-review` task's corrected tree: the starting repository with
+        the defects of the change under review put right.
+
+        Beside `repo/` and outside `grading/`, so nothing about it is overlaid
+        into a workdir or collected as a grading test — it is read by the lint
+        and by nothing else. Empty for every other action, which is why this is
+        a path rather than a check: what refuses a corrected tree in the wrong
+        place is the layout, not this property.
+        """
+        return self.directory / CORRECTED_DIR
+
+    @property
     def grading_test_paths(self) -> tuple[str, ...]:
         """Every grading test, relative to the workdir it is overlaid into."""
         return tuple(
@@ -866,6 +929,25 @@ class Answer(BaseModel):
         return data
 
 
+def _repeated_pairs(answers: Sequence[Answer]) -> list[tuple[str, str]]:
+    """The (file, symbol) pairs this half of a key names more than once.
+
+    One implementation for both key shapes: each half of an accepted-answer key
+    and each half of a findings key is a *set* of locations, and a pair
+    repeated in one claims nothing an unrepeated one would not. Shared because
+    the two keys would otherwise carry two copies of one rule, and a set that
+    stopped being a set in one of them would be a verdict counting one location
+    twice.
+    """
+    return sorted(
+        pair
+        for pair, count in Counter(
+            (answer.file, answer.symbol) for answer in answers
+        ).items()
+        if count > 1
+    )
+
+
 class AnswerKey(BaseModel):
     """A keyed task's ground truth: where the agent writes its answer, every
     location that answer may name, and the near-misses it may not. One shape
@@ -904,14 +986,7 @@ class AnswerKey(BaseModel):
     @model_validator(mode="after")
     def each_half_is_a_set_and_names_no_pair_twice(self) -> Self:
         for half, answers in (("accepted", self.accepted), ("rejected", self.rejected)):
-            repeated = sorted(
-                pair
-                for pair, count in Counter(
-                    (answer.file, answer.symbol) for answer in answers
-                ).items()
-                if count > 1
-            )
-            if repeated:
+            if repeated := _repeated_pairs(answers):
                 raise ValueError(
                     f"{half} names the same (file, symbol) pair more than once: "
                     f"{repeated} — {half} is a set of locations, and a pair "
@@ -1073,6 +1148,181 @@ def _defined_symbols(source: str) -> set[str]:
 
     walk(ast.parse(source), "")
     return symbols
+
+
+# --- code-review: the findings key and its set-shaped verdict ------------------
+#
+# The round's one new instrument (design note §45.2-45.3). A review task hands
+# the agent a change that is already applied to its starting repository, plus a
+# unified diff of that change (`REVIEW_DIFF_FILE`), and asks which of it is
+# wrong; the deliverable is an answer file listing findings, one (file, symbol)
+# location each, and the ground truth is a key whose two halves are *sets*.
+#
+# What it borrows, whole: the answer file reaching grading in the workdir diff
+# with no new seam, the pair model and its refusals (`Answer`), the location
+# forgiveness (`_answer.py`, imported by `_findings.py` rather than copied), and
+# one owned comparison module plus one owned held-out test shipped byte for
+# byte. What is genuinely new is the quantifier — a locate verdict asks whether
+# the one answer is *in* the accepted set, a review verdict asks whether the
+# answer's findings *cover* it — and that is the whole of why this is a second
+# key rather than a second use of the first.
+
+
+class FindingsKey(BaseModel):
+    """A `code-review` task's ground truth: where the agent writes its answer,
+    every planted finding that answer has to report, and the non-findings it
+    may not report.
+
+    Both halves are sets of (file, symbol) locations, modelled on `AnswerKey`
+    and built out of the same `Answer` — the same refusal of a line number,
+    which shifts under any edit, and of a bare file, which on repositories this
+    small is barely a location. A second pair model would be a second place for
+    those refusals to be written and drift from.
+
+    Where it differs from `AnswerKey` is not its shape but what the verdict does
+    with it. `accepted` is read under "every": each planted finding has to be
+    matched by some finding of the answer, so a review that spots three of four
+    defects is unresolved. `rejected` is read under "none": a finding matching
+    one of them is a defect reported where the change is correct, which is what
+    stops every-line-is-a-finding from passing. A finding matching neither half
+    is ignored and archived — a real problem the author did not plant must not
+    fail the run — and there is nothing between the two verdicts, because a
+    partial recall rate would be a new quality metric.
+
+    Either set may be empty as far as this model is concerned, for the reason
+    `AnswerKey` gives: a task that cannot load cannot be linted, and an empty
+    half is exactly the defect the loader and the lint exist to name.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    answer_path: NonEmptyStr
+    accepted: tuple[Answer, ...] = ()
+    rejected: tuple[Answer, ...] = ()
+
+    @model_validator(mode="after")
+    def each_half_is_a_set_and_names_no_pair_twice(self) -> Self:
+        for half, findings in (
+            ("accepted", self.accepted),
+            ("rejected", self.rejected),
+        ):
+            if repeated := _repeated_pairs(findings):
+                raise ValueError(
+                    f"{half} names the same (file, symbol) pair more than once: "
+                    f"{repeated} — {half} is a set of findings, and a planted "
+                    "finding named twice would have to be reported twice by an "
+                    "answer that is a set as well, or counted twice by a verdict "
+                    "that is not"
+                )
+        return self
+
+
+def is_findings_keyed(task: Task) -> bool:
+    """Whether this task ships a findings key.
+
+    Read off the key on disk rather than off the category, the way `is_keyed`
+    is, so that every gate over a review task's ground truth is gated on the
+    ground truth being there. The one place `category` is read is the loader,
+    which says which action may ship this key and must
+    (`_FINDINGS_CATEGORY`).
+    """
+    return (task.grading_dir / FINDINGS_KEY_FILE).is_file()
+
+
+def findings_key(task: Task) -> FindingsKey:
+    """The findings key shipped inside this task's grading directory.
+
+    One file read two ways, exactly as `answer_key` is: the lint reads it from
+    the task directory, and the held-out grading test reads the very same bytes
+    out of the workdir the overlay copied them into. The declared answer path
+    lives here rather than in the grading test, so nothing can hardcode a path
+    the prompt does not name.
+    """
+    path = task.grading_dir / FINDINGS_KEY_FILE
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{FINDINGS_KEY_FILE} is missing or "
+            f"unreadable ({error}) — a {task.category} task is graded by "
+            "comparing the findings the agent reports against the planted "
+            "findings, which ship with the held-out grading tests"
+        ) from error
+    except json.JSONDecodeError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{FINDINGS_KEY_FILE} is not JSON ({error}) "
+            "— the grading test reads it with the standard library alone"
+        ) from error
+    try:
+        return FindingsKey.model_validate(raw)
+    except ValidationError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{FINDINGS_KEY_FILE}: {error}"
+        ) from error
+
+
+def _empty_accepted_findings_message(task: Task) -> str:
+    """What is wrong with a review task whose findings key plants nothing,
+    worded once so the loader and the lint say the same thing.
+
+    The loader has to refuse this too, for the reason it refuses an empty
+    accepted-answer key: `ai-bench run-live` loads a task set but never lints
+    it, so a review task with nothing to find would otherwise reach a paid run
+    — and it would grade every agent *resolved*, since "every planted finding
+    is matched" is vacuously true of no planted findings.
+    """
+    return (
+        f"{task.id}: the findings key plants no findings — a review verdict is "
+        "that every planted finding was reported, which is satisfied by any "
+        "answer at all when none were planted, so the task would grade every "
+        "agent resolved without measuring anything"
+    )
+
+
+def findings_module_source() -> bytes:
+    """The findings comparison, as every `code-review` task's
+    `grading/_findings.py` has to be byte for byte.
+
+    The project's own module read off disk rather than a string constant, so
+    that the shipped copies are compared against code mypy type-checks and the
+    tests exercise, and an author has one file to copy. Note that the file is
+    read, never imported: it imports `_answer` flat, the way the two sit beside
+    each other in a grading directory, which is the only place it runs.
+    """
+    return Path(__file__).with_name(FINDINGS_MODULE).read_bytes()
+
+
+# The held-out grading test itself, canonical: a one-line assertion over
+# `findings_problem()`, shipped byte for byte as `_ANSWER_TEST_SOURCE` is and
+# for the same reason — a task shipping the comparison unedited proves nothing
+# about whether its grading test still calls it. A plain string constant rather
+# than a second file on disk: there is no logic here worth having mypy check,
+# only the one assertion the held-out test is required to make.
+_FINDINGS_TEST_SOURCE = '''\
+"""Held out: whether the agent's answer file reports every planted finding.
+
+Canonical — this project's own file, shipped byte for byte into every
+code-review task's grading directory and read back that way by the task-set
+lint, so that nothing in a task's grading directory can stop consulting
+`_findings.py` while still shipping an unedited copy of it. A task may ship
+additional grading tests beside this one: resolution requires every grading
+test to pass, so an extra test can only make the task harder to resolve, never
+let a wrong answer through.
+"""
+
+from _findings import findings_problem
+
+
+def test_the_answer_reports_every_planted_finding():
+    assert (problem := findings_problem()) is None, problem
+'''
+
+
+def findings_test_source() -> bytes:
+    """The held-out grading test, as every `code-review` task's
+    `grading/test_findings.py` has to be byte for byte — see
+    `FINDINGS_TEST_FILE` and `_FINDINGS_TEST_SOURCE`."""
+    return _FINDINGS_TEST_SOURCE.encode("utf-8")
 
 
 # What a sweep id has to be to work as a round key, said once for the two
@@ -1250,6 +1500,28 @@ def _check_task_layout(task: Task) -> None:
         key = answer_key(task)
         if not key.accepted:
             raise IngestError(_empty_accepted_set_message(task))
+    if is_findings_keyed(task) and task.category != _FINDINGS_CATEGORY:
+        raise IngestError(
+            f"{task.id}: a {task.category} task ships {GRADING_DIR}/"
+            f"{FINDINGS_KEY_FILE} — the findings key is the ground truth of "
+            f"{_FINDINGS_CATEGORY}, the one action that judges a whole change "
+            "rather than naming one location, and every rule that reads it is "
+            "gated on the key being there, so a key shipped by any other "
+            "action would hold this task to the review rules while its own "
+            "grading never consulted the key at all"
+        )
+    if is_findings_keyed(task) or task.category == _FINDINGS_CATEGORY:
+        # The ground truth of a review: which of the change under review is
+        # wrong. Read here, and not left to the lint alone, for the reason the
+        # accepted-answer key is read here — `ai-bench run-live` loads a task
+        # set but never lints it, so a key that is missing, unparseable, or
+        # written in line numbers would otherwise reach a paid run. Read off
+        # the key on disk *or* the category, so that a review task shipping no
+        # key is refused by `findings_key()` right here rather than swept as a
+        # task with no ground truth.
+        findings = findings_key(task)
+        if not findings.accepted:
+            raise IngestError(_empty_accepted_findings_message(task))
 
 
 def _stdlib_collisions(repo_dir: Path) -> list[str]:

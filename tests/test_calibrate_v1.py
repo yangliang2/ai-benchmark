@@ -1090,35 +1090,45 @@ def test_calibrate_v1_prices_a_category_off_the_controls_it_declares(
     — each category divides by its own controls whatever the corpus grows
     beside it, which is why both K9=single rows read 3.00x, where a
     denominator pooling the two categories' controls would have printed 1.50x
-    for feature-dev and 4.50x for code-review.
+    for feature-dev and 4.50x for performance-optimisation.
 
-    The second category is `code-review` because the fixtures here are generic
-    task directories with a category written on them: an action carrying
-    authoring rules of its own — a refactor's behaviour tests, a
-    fault-location's accepted-answer key — would make these fixtures fail to
-    load for a reason that has nothing to do with what is being priced.
+    The second category is `performance-optimisation` because the fixtures here
+    are generic task directories with a category written on them: an action
+    carrying authoring rules of its own — a refactor's behaviour tests, a
+    fault-location's accepted-answer key, a code-review's findings key — would
+    make these fixtures fail to load for a reason that has nothing to do with
+    what is being priced.
     """
     tasks = tmp_path / "tasks"
     write_task(tasks, _CONTROL)
     write_task(tasks, "feature-crux", knobs={"K9": "single"})
-    write_task(tasks, "reviewed-control", category="code-review", control=True)
-    write_task(tasks, "reviewed-crux", category="code-review", knobs={"K9": "single"})
+    write_task(
+        tasks, "tuned-control", category="performance-optimisation", control=True
+    )
+    write_task(
+        tasks, "tuned-crux", category="performance-optimisation",
+        knobs={"K9": "single"},
+    )
     loaded = firstparty_v1.load_task_set(tasks)
     log = tmp_path / "runs.jsonl"
     write_log(log, loaded, {}, cost={
         _CONTROL: {_HAIKU: 0.10},
         "feature-crux": {_HAIKU: 0.30},
-        "reviewed-control": {_HAIKU: 0.30},
-        "reviewed-crux": {_HAIKU: 0.90},
+        "tuned-control": {_HAIKU: 0.30},
+        "tuned-crux": {_HAIKU: 0.90},
     })
 
     out = calibrate(tasks, log, capsys)
 
-    assert baseline_line(out, "code-review", "baseline mean cost").startswith(
-        f"{_HAIKU} $0.3000 (n=1)"
+    assert baseline_line(
+        out, "performance-optimisation", "baseline mean cost"
+    ).startswith(f"{_HAIKU} $0.3000 (n=1)")
+    assert cells(out, "performance-optimisation", "(zero-knob)")[_HAIKU] == (
+        "1.00x (n=1)"
     )
-    assert cells(out, "code-review", "(zero-knob)")[_HAIKU] == "1.00x (n=1)"
-    assert cells(out, "code-review", "K9=single")[_HAIKU] == "3.00x (n=1)"
+    assert cells(out, "performance-optimisation", "K9=single")[_HAIKU] == (
+        "3.00x (n=1)"
+    )
     assert baseline_line(out, "feature-dev", "baseline mean cost").startswith(
         f"{_HAIKU} $0.1000 (n=1)"
     )
