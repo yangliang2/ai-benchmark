@@ -62,6 +62,12 @@ scale: single-file
 surface: application
 language: python
 control: true
+# The nouns a prompt about a post office counter and a repository about one
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing in more than the
+# module the accepted answer names.
+domain_nouns: [post, office, parcel, parcels, label, card, scale, gauge, sack,
+               sacks, book, takings, money, day, reading, readings, counter]
 prompt: |
   Something has gone wrong at the post office. Mrs Neap brought a lampshade in
   on Tuesday — next to no weight in it at all, but a great awkward thing to get

@@ -43,6 +43,12 @@ scale: single-file
 surface: application
 language: python
 control: true
+# The nouns a prompt about a ferry and a repository about a ferry cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds
+# every other word of the prompt to appearing in more than the module the
+# accepted answer names.
+domain_nouns: [ferry, ferryman, boat, boats, jetty, river, bank, passenger,
+               passengers, crossing, crossings, seat, seats, people, person]
 prompt: |
   Something has gone wrong with the ferry across the river. On Saturday nine
   people stood on the jetty with a boat that seats four, and it never left the

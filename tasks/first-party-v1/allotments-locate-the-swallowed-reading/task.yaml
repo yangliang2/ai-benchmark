@@ -61,6 +61,29 @@ scale: single-file
 surface: application
 language: python
 control: true
+# The nouns a prompt about an allotment society and a repository about one
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing in more than the
+# module the accepted answer names.
+domain_nouns: [allotment, allotments, plot, plots, card, cards, standpipe,
+               standpipes, society, site, sheet, reader, read, book, books,
+               figure]
+terrain_waiver:
+  - rule: prompt-names-a-key-location
+    covers: [figure]
+    reason: >-
+      The prompt says the society "has no figure for that plot at all", using
+      *figure* as the everyday noun for a reading written down; `cards.figure`
+      is the function that turns a card into one, and it sits in the key's
+      **rejected** half — the plausible wrong file, never the answer. So what
+      the collision hands the agent is a pointer to a location the key
+      refuses, drawing a grep away from ledger.py rather than towards it, and
+      the accepted answers (`Quarter.used_on` and `Quarter`) appear nowhere in
+      the prompt. Rewording around the word would cost the plainest way of
+      saying what the society does not have, and renaming `cards.figure` would
+      cost the repository the noun its own domain uses. Written down here
+      instead, and pinned to this one word: any other key location turning up
+      in this prompt still turns the lint red.
 prompt: |
   Something has gone wrong at the allotments. Plot 7's card came back out of
   the rain with the ink run right across it, and nobody could make out what

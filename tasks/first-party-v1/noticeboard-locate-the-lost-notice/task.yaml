@@ -42,6 +42,11 @@ scale: single-file
 surface: application
 language: python
 control: true
+# The nouns a prompt about a noticeboard and a repository about a noticeboard
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing in more than the
+# module the accepted answer names.
+domain_nouns: [notice, notices, noticeboard, board, boards, page, pages]
 prompt: |
   The village noticeboard is losing notices. With nine notices posted and four
   to a board, it shows two boards of four: the oldest notice is on neither of

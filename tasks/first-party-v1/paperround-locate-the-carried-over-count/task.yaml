@@ -53,6 +53,39 @@ scale: single-file
 surface: application
 language: python
 control: true
+# The nouns a prompt about a paper round and a repository about a paper round
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing in more than the
+# module the accepted answer names.
+domain_nouns: [shop, newsagent, paper, papers, walk, walks, round, rounds,
+               street, streets, house, houses, title, titles, bag, bags,
+               morning]
+# The one declared exception the corpus carries, reported as a finding on #59
+# rather than asserted away, and carried across from round 4's per-task test
+# (`KNOWN_PROMPT_BAIT` in tests/test_firstparty_v1_planted_defect_mutable_default.py).
+terrain_waiver:
+  - rule: prompt-word-narrows-to-the-accepted-module
+    covers: [ask, "every ask"]
+    reason: >-
+      The terrain rule holds that no distinctive prompt term selects the
+      defective module alone — the ferry repository states its contract in
+      deliberately different words from its prompt's, so reading the prompt is
+      not one grep away from the defective file. This repository nearly holds
+      to that and not quite. The prompt says the shop "means to answer every
+      ask on its own"; tallying.py's module docstring says "Every ask is
+      worked out on a clean slate", and *ask* in that sense appears in no
+      other module, so grepping the prompt's own noun for the thing that went
+      wrong lands in the defective file. What it does not do is name the
+      defective symbol: both terms land in the module docstring or in a
+      sibling, and a bare filename is not an accepted answer here, so the half
+      of the verdict that discriminates is untouched. Round 4 also pinned
+      "already" — the same collision by accident rather than by paraphrase,
+      from the fix member's "everything the repository's own tests already
+      say" against tallying.py's "a count already begun" — but that word is
+      the *fix* prompt's and occurs nowhere in this one, and the rule reads
+      the keyed task's own prompt only, so waiving it here would be waiving a
+      rule that never fired. The cost is written down where the next author
+      reads it, and it cannot get worse without the lint turning red.
 prompt: |
   Something has gone wrong at the newsagent's. On Monday we asked the shop
   what to make up for the herald walk, and it said one for Fen Road and two

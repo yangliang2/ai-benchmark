@@ -41,7 +41,7 @@ from typing import Any
 
 import pytest
 import yaml
-from firstparty_v1_tasks import run_for, workdir_diff
+from firstparty_v1_tasks import run_for, task_by_id, workdir_diff
 
 from ai_benchmark import _answer
 from ai_benchmark.dataset import IngestError
@@ -53,8 +53,10 @@ from ai_benchmark.firstparty_v1 import (
     Task,
     _capture_workdir_diff,
     _commit_pristine,
+    _defined_classes,
     _defined_symbols,
     _repo_file,
+    _terrain_problems,
     answer_key,
     answer_module_source,
     answer_test_source,
@@ -75,6 +77,14 @@ ANSWER_PATH = "ANSWER.json"
 # cent, so a 199-cent order taxed at 15% is billed 228 instead of 229. It sits
 # in a method, so the author has two legitimately correct description levels to
 # write down — the method and the class enclosing it.
+#
+# The fixture holds to the terrain rules the lint applies to every keyed task
+# (#65), because a fixture that did not could not be used to prove anything
+# else about the lint. `Coupon` is here so `Basket` is not the only class the
+# file defines — an accepted class-level answer in a one-class module is
+# determined by the filename alone — and `total_with_tax`'s docstring states
+# what it is for in words the prompt does not use, so the prompt's own
+# vocabulary is not one grep from the defective module.
 PRICING = '''\
 """What an order costs."""
 
@@ -82,6 +92,16 @@ PRICING = '''\
 def line_total(unit_cents, quantity):
     """The cost of one order line, in cents."""
     return unit_cents * quantity
+
+
+class Coupon:
+    """A flat reduction, applied before tax."""
+
+    def __init__(self, off):
+        self.off = off
+
+    def applied_to(self, amount):
+        return max(0, amount - self.off)
 
 
 class Basket:
@@ -98,7 +118,7 @@ class Basket:
         return sum(line_total(unit, quantity) for unit, quantity in self.lines)
 
     def total_with_tax(self, tax_percent):
-        """The subtotal plus tax, rounded to the nearest cent."""
+        """The subtotal with tax added, to the cent."""
         return self.subtotal() + self.subtotal() * tax_percent // 100
 '''
 
@@ -106,13 +126,26 @@ class Basket:
 # where the wrong number is returned from, and it is correct. The near-miss no
 # lint can invent — the plausible wrong file — needs a second module to be
 # written down at all, and its module-level TAX_PERCENT is what a fault in a
-# constant, a dispatch table or a compiled pattern looks like.
+# constant, a dispatch table or a compiled pattern looks like. `Till` is here
+# for terrain rather than for the defect: without a class of its own this
+# module would leave "class", a word the prompt has to use to say what a
+# symbol may be, appearing in the defective module and nowhere else.
 CHECKOUT = '''\
 """Taking payment for an order."""
 
 from pricing import Basket
 
 TAX_PERCENT = 15
+
+
+class Till:
+    """Where an order is paid for."""
+
+    def __init__(self, tax_percent=TAX_PERCENT):
+        self.tax_percent = tax_percent
+
+    def takings(self, orders):
+        return sum(charge(order) for order in orders)
 
 
 def charge(lines):
@@ -144,6 +177,14 @@ ACCEPTED: list[dict[str, object]] = [
 # The near-miss the lint cannot invent: the caller of the defective function,
 # in the module that looks responsible because the rate lives there.
 REJECTED: list[dict[str, object]] = [{"file": "checkout.py", "symbol": "charge"}]
+
+# The nouns a prompt about what an order costs and a repository about what an
+# order costs cannot help sharing — the half of the "unrevealing vocabulary"
+# split that is a fact about this task's subject rather than about English, so
+# the half a task declares for itself. Everything else the prompt says is
+# distinctive, and the narrowing terrain rule holds it to appearing in more
+# than the module the answer is in.
+DOMAIN_NOUNS = ["basket", "cent", "cents", "line", "lines", "order", "orders", "tax"]
 
 # Held out with the grading tests, and one line, because the comparison is
 # `_answer.py` — shipped identically into every fault-location task's grading
@@ -303,6 +344,7 @@ def write_fixture(
     answer_path: str = ANSWER_PATH,
     prompt: str = PROMPT,
     grading_test: str = GRADING_TEST,
+    task_id: str = FIXTURE_ID,
     **spec: object,
 ) -> Path:
     """The fixture fault-location task, written into root ready to load.
@@ -315,17 +357,24 @@ def write_fixture(
     are both copied in rather than written here, because that is what a real
     task does: two owned files, shipped identically, read back byte for byte
     by the lint (`_answer_module_problems`, `_answer_test_problems`).
+
+    It declares `domain_nouns` for the same reason a real keyed task does: the
+    narrowing terrain rule holds every distinctive prompt word to appearing in
+    more than the accepted module, and "cent", "line" and "tax" are words a
+    prompt about what an order costs and a repository about what an order
+    costs cannot help sharing.
     """
-    task_dir = root / FIXTURE_ID
+    task_dir = root / task_id
     (task_dir / "repo").mkdir(parents=True)
     (task_dir / "grading").mkdir()
     fields: dict[str, object] = {
-        "id": FIXTURE_ID,
+        "id": task_id,
         "category": "fault-location",
         "scale": "single-file",
         "surface": "application",
         "language": "python",
         "control": True,
+        "domain_nouns": DOMAIN_NOUNS,
         "prompt": prompt,
     }
     fields.update(spec)
@@ -1191,6 +1240,301 @@ def test_the_missing_answer_negative_leaves_the_declared_path_missing_even_when_
     assert any(
         FIXTURE_ID in problem and "no answer file" in problem for problem in problems
     ), problems
+
+
+# --- the lint: the three terrain rules, and the waiver (#65) ----------------
+#
+# Terrain is what makes locating a fault work rather than a grep, and round 4
+# proved it per task: the same three assertions, hand-copied into six suites,
+# so that a seventh keyed task inherited none of them. They are rules of the
+# task-set lint here, applied to every task carrying an accepted-answer key —
+# each caught in both directions below, on a fixture that is otherwise
+# lint-clean, so that what fires is the rule under test and nothing else.
+
+# A prompt naming the accepted class outright. "Basket" is a declared domain
+# noun, so the narrowing rule has nothing to say about it and the location
+# rule fires alone.
+NAMES_THE_ACCEPTED_CLASS_PROMPT = (
+    "The defect is in Basket. Say where it lives, and do not fix it.\n"
+    "Write your answer to ANSWER.json.\n"
+)
+
+# A prompt naming a *rejected* location: the near-miss the key exists to
+# refuse, handed over in the prompt.
+NAMES_A_REJECTED_LOCATION_PROMPT = (
+    "Something is wrong with what we bill, and charge is not where it is.\n"
+    "Say where the defect lives. Write your answer to ANSWER.json.\n"
+)
+
+# "subtotal" is a word of pricing.py and of no other module in the fixture
+# repository, so a prompt that uses it is one grep from the answer.
+NARROWING_PROMPT = (
+    "A subtotal is coming out wrong. Say where the defect lives, and do not\n"
+    "fix it. Write your answer to ANSWER.json.\n"
+)
+
+
+def test_lint_refuses_a_prompt_naming_an_accepted_location(tmp_path: Path) -> None:
+    """Terrain rule 1, the accepted half: locating the fault is the whole
+    deliverable, so a prompt naming a location out of the key hands the agent
+    the reading it was supposed to do. Convention until now — six suites
+    asserted it by hand — and mechanical here."""
+    task = fixture_task(tmp_path, prompt=NAMES_THE_ACCEPTED_CLASS_PROMPT)
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'Basket'" in problem
+    assert "prompt-names-a-key-location" in problem
+
+
+def test_lint_refuses_a_prompt_naming_a_rejected_location(tmp_path: Path) -> None:
+    """The same rule from the other side, and why it reads both halves of the
+    key: a prompt that names the plausible wrong file has told the agent which
+    near-miss to avoid, which makes the task unfair in the agent's favour just
+    as surely as naming the answer does."""
+    task = fixture_task(tmp_path, prompt=NAMES_A_REJECTED_LOCATION_PROMPT)
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'charge'" in problem
+    assert "rejected" in problem
+
+
+def test_the_declared_answer_path_is_never_read_as_bait(tmp_path: Path) -> None:
+    """The prompt is *required* to name the answer path, so the location rule
+    has to exempt it: a task whose key happened to name a file spelled like
+    its own answer_path would otherwise be caught coming and going, told to
+    name the path by one rule and not to name it by another."""
+    task = fixture_task(tmp_path)
+
+    assert ANSWER_PATH in task.prompt
+    assert lint_task_set([task]) == []
+
+
+def test_lint_refuses_a_prompt_word_that_narrows_to_the_accepted_module(
+    tmp_path: Path,
+) -> None:
+    """Terrain rule 2: a content word of the prompt that appears in the
+    accepted module and in no other is one grep from the answer, and the task
+    then measures whether the agent greps rather than whether it locates."""
+    task = fixture_task(tmp_path, prompt=NARROWING_PROMPT)
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'subtotal'" in problem
+    assert "pricing.py:" in problem
+
+
+def test_a_declared_domain_noun_does_not_narrow(tmp_path: Path) -> None:
+    """The other direction, and what `domain_nouns` is for: "cent", "line" and
+    "tax" all appear in pricing.py and nowhere else in this repository, and a
+    prompt about what an order costs cannot avoid them. Declared, they are
+    vocabulary rather than bait — and the rule is still live for everything
+    else the same prompt says."""
+    task = fixture_task(tmp_path)
+
+    assert {"cent", "line", "tax"} <= set(task.domain_nouns)
+    assert lint_task_set([task]) == []
+
+
+def test_the_narrowing_rule_reads_only_the_keyed_tasks_own_prompt(
+    tmp_path: Path,
+) -> None:
+    """Round 4's suites computed prompt vocabulary over both members of a
+    locate/fix pair, which made a word the *fix* prompt used count as bait in
+    the locate task that never said it. The agent solving a task sees that
+    task's prompt, so that is the rule's input: a sibling task in the same set
+    whose prompt narrows is a problem reported against the sibling, and
+    changes nothing about this one."""
+    write_fixture(tmp_path)
+    write_fixture(tmp_path, task_id="pricing-fix-the-rounding-fault",
+                  prompt=NARROWING_PROMPT)
+    tasks = load_task_set(tmp_path)
+
+    problems = lint_task_set(tasks)
+
+    assert {task.id for task in tasks} == {
+        FIXTURE_ID, "pricing-fix-the-rounding-fault"
+    }
+    assert not any(problem.startswith(f"{FIXTURE_ID}:") for problem in problems)
+    assert any(
+        problem.startswith("pricing-fix-the-rounding-fault:") and "'subtotal'" in problem
+        for problem in problems
+    )
+
+
+def test_lint_refuses_an_accepted_class_that_is_the_only_class_in_its_file(
+    tmp_path: Path,
+) -> None:
+    """Terrain rule 3: an agent electing to answer at class level answers with
+    the class, and where the module defines exactly one, that answer is
+    determined by the filename alone — one grep to the file, the only class
+    there, resolved, with the defective method never read."""
+    task_dir = write_fixture(
+        tmp_path,
+        accepted=[
+            {"file": "lone.py", "symbol": "Lone"},
+            {"file": "lone.py", "symbol": "Lone.slip"},
+        ],
+        rejected=[{"file": "pricing.py", "symbol": "line_total"}],
+    )
+    (task_dir / "repo" / "lone.py").write_text(
+        "class Lone:\n"
+        "    def slip(self):\n"
+        "        return 1\n"
+        "\n"
+        "    def other(self):\n"
+        "        return 2\n"
+    )
+    [task] = load_task_set(tmp_path)
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "lone.py:Lone" in problem
+    assert "accepted-class-is-the-only-class" in problem
+
+
+def test_an_accepted_class_chosen_from_several_lints_clean(tmp_path: Path) -> None:
+    """The other direction: pricing.py defines `Coupon` beside `Basket`, so
+    telling them apart takes reading both, and the accepted class level is a
+    location rather than a restatement of the filename."""
+    task = fixture_task(tmp_path)
+
+    assert Answer(file="pricing.py", symbol="Basket") in answer_key(task).accepted
+    assert _defined_classes(PRICING) == {"Basket", "Coupon"}
+    assert lint_task_set([task]) == []
+
+
+def test_a_terrain_waiver_silences_exactly_what_it_names(tmp_path: Path) -> None:
+    """The waiver is the only sanctioned way past a terrain rule, and it
+    applies only to what it names: the word it covers stops being reported and
+    nothing else does."""
+    task = fixture_task(
+        tmp_path,
+        prompt=NARROWING_PROMPT,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows-to-the-accepted-module",
+            "covers": ["subtotal"],
+            "reason": "the repository states what it computes in the one word "
+                      "the symptom has to be reported in",
+        }],
+    )
+
+    assert lint_task_set([task]) == []
+
+
+def test_a_terrain_waiver_does_not_silence_a_word_it_does_not_name(
+    tmp_path: Path,
+) -> None:
+    """What makes a waiver a declaration rather than a mute button: waiving
+    one word leaves the rule live for every other, and the waiver that missed
+    is itself reported for naming something the rule never fired on."""
+    task = fixture_task(
+        tmp_path,
+        prompt=NARROWING_PROMPT,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows-to-the-accepted-module",
+            "covers": ["coupon"],
+            "reason": "a word this prompt does not in fact use",
+        }],
+    )
+
+    problems = lint_task_set([task])
+
+    assert any("'subtotal'" in problem for problem in problems)
+    assert any("'coupon'" in problem and "does not fire" in problem for problem in problems)
+
+
+def test_a_waiver_naming_a_rule_that_did_not_fire_is_a_lint_problem(
+    tmp_path: Path,
+) -> None:
+    """A waiver cannot rot silently once the terrain it apologised for has
+    been improved: the fixture's prompt never says "subtotal", so the waiver
+    covering it silences nothing and says so."""
+    task = fixture_task(
+        tmp_path,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows-to-the-accepted-module",
+            "covers": ["subtotal"],
+            "reason": "terrain that was improved out from under this waiver",
+        }],
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'subtotal'" in problem
+    assert "does not fire" in problem
+
+
+def test_a_waiver_naming_an_unknown_rule_fails_to_load(tmp_path: Path) -> None:
+    """The rules are named one by one so a waiver names exactly one of them: a
+    misspelled rule refuses to load rather than waiving nothing quietly."""
+    write_fixture(
+        tmp_path,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows",
+            "covers": ["subtotal"],
+            "reason": "misspelled",
+        }],
+    )
+
+    with pytest.raises(IngestError, match="terrain_waiver"):
+        load_task_set(tmp_path)
+
+
+def test_a_waiver_covering_nothing_fails_to_load(tmp_path: Path) -> None:
+    """A waiver applies only to what it names, so one naming nothing is a
+    reason written down beside a rule that is still firing."""
+    write_fixture(
+        tmp_path,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows-to-the-accepted-module",
+            "covers": [],
+            "reason": "covers nothing at all",
+        }],
+    )
+
+    with pytest.raises(IngestError, match="covers nothing"):
+        load_task_set(tmp_path)
+
+
+def test_one_rule_cannot_carry_two_waivers(tmp_path: Path) -> None:
+    """Two waivers for one rule are two reasons for one exception, with
+    nothing saying which covers what."""
+    write_fixture(
+        tmp_path,
+        terrain_waiver=[
+            {
+                "rule": "prompt-word-narrows-to-the-accepted-module",
+                "covers": ["subtotal"],
+                "reason": "one reason",
+            },
+            {
+                "rule": "prompt-word-narrows-to-the-accepted-module",
+                "covers": ["coupon"],
+                "reason": "another reason",
+            },
+        ],
+    )
+
+    with pytest.raises(IngestError, match="waived more than once"):
+        load_task_set(tmp_path)
+
+
+def test_the_round_four_waiver_is_declared_where_the_rule_fires() -> None:
+    """The one declared exception round 4 carried, as it reads now: a waiver
+    naming the two words the locate prompt actually produces. "already" was
+    the *fix* member's word — round 4 computed the set over both prompts —
+    and under a per-task rule a waiver naming it would itself be a lint
+    problem, so it survives in the reason and not in `covers`."""
+    task = task_by_id("paperround-locate-the-carried-over-count")
+
+    [waiver] = task.terrain_waiver
+
+    assert waiver.rule == "prompt-word-narrows-to-the-accepted-module"
+    assert waiver.covers == ("ask", "every ask")
+    assert "already" in waiver.reason
+    assert _terrain_problems(task) == []
 
 
 # --- mutation guards: behaviours the suite claims but did not test ----------

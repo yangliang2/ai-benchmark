@@ -56,6 +56,12 @@ scale: single-file
 surface: application
 language: python
 control: true
+# The nouns a prompt about a lost-property office and a repository about one
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing in more than the
+# module the accepted answer names.
+domain_nouns: [office, lost, property, handin, handins, thing, things, day,
+               days, owner, shelf, book, desk, counter]
 prompt: |
   Something has gone wrong at the lost property office. A bag of sandwiches
   handed in on Tuesday was written up in the book that night as being on the

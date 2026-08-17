@@ -528,6 +528,72 @@ class Grading(BaseModel):
     behaviour_tests: tuple[NonEmptyStr, ...] = ()
 
 
+# The terrain rules the task-set lint holds every task carrying an
+# accepted-answer key to (design note 45.6), named one by one because a waiver
+# names the single rule it waives: a waiver spelled loosely would waive more
+# than its author meant, and a rule renamed under a waiver's feet would refuse
+# to load rather than silently widening it.
+TerrainRule = Literal[
+    # The prompt names no file and no symbol from either half of the key.
+    "prompt-names-a-key-location",
+    # No content word or word pair of the prompt appears only in the module
+    # the accepted answer names.
+    "prompt-word-narrows-to-the-accepted-module",
+    # An accepted class-level location comes from a file defining more than
+    # one class, so answering at class level is not determined by the filename.
+    "accepted-class-is-the-only-class",
+]
+
+TERRAIN_RULES: tuple[TerrainRule, ...] = get_args(TerrainRule)
+
+
+class TerrainWaiver(BaseModel):
+    """A per-task declaration, with a reason, that one named terrain rule does
+    not apply to some exact thing in this task.
+
+    The only sanctioned way past a terrain rule: the rule itself is never
+    loosened, because a loosened rule is loosened for the whole corpus and for
+    every task authored after it, while a waiver costs its author a written
+    reason and is visible in the one `task.yaml` it sits in.
+
+    Two properties make it a declaration rather than a mute button, and both
+    are the lint's (`_terrain_problems`): a waiver applies *only to what it
+    names*, so waiving one word does not silence the rule for a different one;
+    and a waiver naming something the rule does not in fact fire on is itself
+    a lint problem, so a waiver cannot rot silently once the terrain it
+    apologised for has been improved.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rule: TerrainRule
+    # The exact words, or `file.py:Symbol` locations, this waiver covers —
+    # spelled the way the rule's own report spells them, so what a waiver
+    # names and what it silences cannot drift apart.
+    covers: tuple[NonEmptyStr, ...]
+    reason: NonEmptyStr
+
+    @model_validator(mode="after")
+    def a_waiver_names_what_it_covers(self) -> Self:
+        if not self.covers:
+            raise ValueError(
+                f"the terrain waiver for {self.rule!r} covers nothing — a "
+                "waiver applies only to what it names, so one naming nothing "
+                "silences nothing and is a reason written down beside a rule "
+                "that is still firing"
+            )
+        repeated = sorted(
+            covered for covered, count in Counter(self.covers).items() if count > 1
+        )
+        if repeated:
+            raise ValueError(
+                f"the terrain waiver for {self.rule!r} names {repeated} more "
+                "than once — what a waiver covers is a set, and a repeated "
+                "entry waives nothing a single one would not"
+            )
+        return self
+
+
 class Task(BaseModel):
     """One v1 first-party benchmark instance: a task directory holding the
     prompt, the pristine starting repository, and the held-out grading tests.
@@ -560,6 +626,19 @@ class Task(BaseModel):
     # Strict: this flag is load-bearing enough that a lax `control: "yes"`
     # coercing quietly to True would be the wrong kind of surprise.
     control: StrictBool = False
+    # The domain nouns a prompt and a repository about the same subject cannot
+    # help sharing — "walk", "round", "parcel" — declared per task because they
+    # are per task: the closed-class function words English is built out of are
+    # the same everywhere and are owned once in code (`FUNCTION_WORDS`), but
+    # what counts as an unavoidable noun is a fact about *this* task's subject
+    # and nothing else knows it. Read only by the narrowing terrain rule, which
+    # treats these as vocabulary a prompt cannot be blamed for sharing.
+    domain_nouns: tuple[NonEmptyStr, ...] = ()
+    # Where this task says a named terrain rule does not apply to it, and why.
+    # One waiver per rule: two waivers for one rule would be two reasons for
+    # one exception, and which of them a given word was covered by would be
+    # unanswerable.
+    terrain_waiver: tuple[TerrainWaiver, ...] = ()
     directory: Path
 
     @property
@@ -626,6 +705,25 @@ class Task(BaseModel):
                 "about difficulty and knob activations are exactly that claim, "
                 "so a task declares one or the other. Drop the construction "
                 "block, or drop the control declaration"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def each_terrain_rule_is_waived_at_most_once(self) -> Self:
+        repeated = sorted(
+            rule
+            for rule, count in Counter(
+                waiver.rule for waiver in self.terrain_waiver
+            ).items()
+            if count > 1
+        )
+        if repeated:
+            raise ValueError(
+                f"terrain rule(s) {repeated} are waived more than once — a "
+                "waiver carries the reason its rule does not apply here, and "
+                "two waivers for one rule are two reasons for one exception "
+                "with nothing saying which covers what. Name every word the "
+                "rule is waived for in one waiver"
             )
         return self
 
@@ -1309,6 +1407,11 @@ def lint_task_set(
     because for that action the pristine run proves nothing — see
     `_discrimination_problems`.
 
+    A task carrying an accepted-answer key is held to the three terrain rules
+    as well (`_terrain_problems`): whether it gives its own answer away is an
+    authoring invariant like any other, and one that used to be proved per
+    task, in six copies, so that a seventh keyed task inherited none of it.
+
     The construction invariants are read rather than run, but belong here for
     the same reason: an undeclared knob, an unregistered prediction, a family
     whose variants differ in more than the knob they vary, or an effort claim
@@ -1330,6 +1433,11 @@ def lint_task_set(
         # canonical test is untouched can still carry a key that does not
         # discriminate — which only running the real pipeline below can show.
         problems.extend(_answer_test_problems(task))
+        # Independent of key_problems too, and read rather than run: the three
+        # terrain rules are about the prompt and the repository the agent is
+        # handed, which are as readable when the key names a file that is not
+        # there as when it does not.
+        problems.extend(_terrain_problems(task))
         if task.category == "fault-location" and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
@@ -1679,6 +1787,267 @@ def _answer_test_problems(task: Task) -> list[str]:
             "task harder to resolve, never let a wrong answer through"
         )]
     return []
+
+
+# --- terrain: the three rules a keyed task's prompt and repository hold to -----
+#
+# Terrain is what makes locating a fault work rather than a grep. Round 4
+# proved all three of these per task, in six copies of the same assertions
+# spread across six suites, which meant a seventh keyed task inherited none of
+# them and a drift in one copy was invisible from the other five. They are
+# rules of the task-set lint now: applied to *every* task carrying an
+# accepted-answer key, so a task cannot be authored without them, and so that
+# the one declared exception is a `terrain_waiver` in a `task.yaml` — read
+# beside the task it apologises for — rather than a pinned frozenset in a test
+# file nobody reads until it turns red.
+
+# The words a prompt cannot be blamed for sharing with the repository it is
+# about: the closed-class words English sentences are built out of. Owned here,
+# once and in code, because they are the same list for every task in every
+# domain — the *domain* nouns that a prompt and a repository about one subject
+# unavoidably share are the half that varies, and those are declared per task
+# as `domain_nouns`. Everything a prompt says that is in neither list is
+# distinctive, and distinctive vocabulary is grep bait.
+FUNCTION_WORDS = frozenset("""
+    a about after all also an and any are as at be been being both but by can
+    could did do does each either few for from get given goes had has have he
+    her his how i if in into is it its just like made make many may me might
+    more most much must my no nor not now of off on once one only or other our
+    out over own per same she should since so some such than that the their
+    them then there these they this those through to too under until up us
+    very was we well were what when where whether which while who whom why
+    will with within would you your s t
+""".split())
+
+
+def _prompt_terms(prompt: str, domain_nouns: Sequence[str]) -> set[str]:
+    """The distinctive vocabulary of one prompt.
+
+    Every content word, and every adjacent pair of words at least one of which
+    is a content word — a pair as well as a word because "every ask" and "left
+    over" narrow as hard as any single word does and neither half of either
+    narrows on its own.
+
+    One prompt and never two. Round 4's suites read both members of a
+    locate/fix pair together, which made a word the *fix* task's prompt
+    happened to use count as bait in the locate task that never said it; the
+    agent solving a task sees that task's prompt, so that is the input the rule
+    reads.
+    """
+    unrevealing = FUNCTION_WORDS | {noun.lower() for noun in domain_nouns}
+    words = re.findall(r"[a-z]+", prompt.lower())
+    terms = {word for word in words if word not in unrevealing}
+    terms |= {
+        f"{first} {second}"
+        for first, second in zip(words, words[1:], strict=False)
+        if not (first in unrevealing and second in unrevealing)
+    }
+    return terms
+
+
+def _repo_lines(task: Task) -> list[tuple[str, str, int, str]]:
+    """Every line of the starting repository's code, as
+    (module, file, number, lowercased text).
+
+    A test file counts as part of the module it tests, because `test_paging.py`
+    points at `paging.py` as surely as `paging.py` does. Anything that is not a
+    top-level `.py` file — `README.md` above all — counts as no module at all:
+    the README is the index that names every module, so a word found only there
+    has selected the whole repository rather than one file, and cannot rescue a
+    word that otherwise narrows.
+    """
+    lines: list[tuple[str, str, int, str]] = []
+    for path in sorted(task.repo_dir.glob("*.py")):
+        module = path.stem.removeprefix("test_")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for number, line in enumerate(text.splitlines(), start=1):
+            lines.append((module, path.name, number, line.lower()))
+    return lines
+
+
+def _defined_classes(source: str) -> set[str]:
+    """The classes a module defines at its own top level — the level an
+    accepted answer naming a class is answering at.
+
+    A companion reading to `_defined_symbols` rather than a rival to it:
+    that function deliberately flattens `def`, `class` and module-level
+    assignment into one namespace, because a key may legitimately name any of
+    them, and that flattening is exactly what this rule cannot use — "more
+    than one class" is a question about classes and not about symbols. It
+    descends through an `if` or a `try` for the same reason `_defined_symbols`
+    does, and into neither a class body nor a function body: a class nested
+    inside either is not a level a filename names.
+    """
+    classes: set[str] = set()
+
+    def walk(node: ast.AST) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.ClassDef):
+                classes.add(child.name)
+            elif not isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef):
+                walk(child)
+
+    walk(ast.parse(source))
+    return classes
+
+
+def _key_locations_the_prompt_names(task: Task, key: AnswerKey) -> dict[str, str]:
+    """Terrain rule 1: where the prompt names a location out of the key.
+
+    Either half of it. An accepted location in the prompt hands the agent the
+    answer; a *rejected* one in the prompt hands it the near-miss the key
+    exists to refuse, which is the same task made unfair from the other side.
+
+    Matched on whole tokens the way `_prompt_names_path` matches the answer
+    path, and for the same reason: "Line" must not be found inside "Lines".
+    The key's own spellings are what is checked — an author writes down every
+    description level that is legitimately correct, so a class the prompt must
+    not name is in the key under its own name already.
+
+    The declared answer path is never bait, however it is spelled: the prompt
+    is *required* to name it (`_answer_key_problems`), so a task that declared
+    its answer path equal to one of its own key locations would otherwise be
+    caught coming and going.
+    """
+    named: dict[str, str] = {}
+    for half, answers in (("accepted", key.accepted), ("rejected", key.rejected)):
+        for answer in answers:
+            for what, token in (("file", answer.file), ("symbol", answer.symbol)):
+                if token == key.answer_path or token in named:
+                    continue
+                if _prompt_names_path(task.prompt, token):
+                    named[token] = (
+                        f"the prompt names {token!r}, the {what} of one of the "
+                        f"key's {half} answers — locating the fault is the "
+                        "whole deliverable, so a prompt that names a location "
+                        "out of the key hands the agent the reading it was "
+                        "supposed to do"
+                    )
+    return named
+
+
+def _narrowing_prompt_terms(task: Task, key: AnswerKey) -> dict[str, str]:
+    """Terrain rule 2: where a content word of the prompt selects the accepted
+    module and nothing else.
+
+    A word the prompt uses that appears in exactly the module(s) the accepted
+    answer names is one grep from the answer, and the task then measures
+    whether the agent greps rather than whether it locates. Matched on word
+    boundaries and never as a substring: substring matching reads "night" as
+    narrowing to a docstring that says "tonight", which is an artifact of the
+    matcher and not a path any solver could walk.
+    """
+    accepted_modules = {Path(answer.file).stem for answer in key.accepted}
+    if not accepted_modules:
+        return {}
+    lines = _repo_lines(task)
+    narrowing: dict[str, str] = {}
+    for term in sorted(_prompt_terms(task.prompt, task.domain_nouns)):
+        pattern = re.compile(rf"\b{re.escape(term)}\b")
+        found = [line for line in lines if pattern.search(line[3])]
+        if not found or not {line[0] for line in found} <= accepted_modules:
+            continue
+        where = [f"{line[1]}:{line[2]}" for line in found]
+        narrowing[term] = (
+            f"the prompt's {term!r} appears only in the module the accepted "
+            f"answer names ({', '.join(where)}) — one grep of the prompt's own "
+            "vocabulary lands in the file the agent was asked to find, so the "
+            "task measures grepping rather than locating. Say it in the "
+            "prompt's words and the repository's own, differently; or, where "
+            "the word is one a prompt and a repository about this subject "
+            "cannot help sharing, declare it in `domain_nouns`"
+        )
+    return narrowing
+
+
+def _lone_accepted_classes(task: Task, key: AnswerKey) -> dict[str, str]:
+    """Terrain rule 3: where an accepted class is the only class in its file.
+
+    An agent electing to answer at class level answers with the class, and if
+    the module defines exactly one, that answer is determined by the filename
+    alone: one grep to the file, the only class there, resolved, with the
+    defective method never read. So wherever a key accepts a class, that class
+    is one of at least two the file defines, and telling them apart takes
+    reading both.
+    """
+    lone: dict[str, str] = {}
+    for answer in key.accepted:
+        source = _repo_file(task, answer.file)
+        if source is None:
+            continue
+        try:
+            classes = _defined_classes(source.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            # Reported by `_answer_key_problems`, which reads the same file
+            # for the same reason; saying it twice adds nothing.
+            continue
+        if answer.symbol in classes and len(classes) < 2:
+            token = f"{answer.file}:{answer.symbol}"
+            lone[token] = (
+                f"the accepted class-level location {token!r} is the "
+                f"only class {answer.file} defines — an agent answering at "
+                "class level would have that answer determined by the filename "
+                "alone, without ever reading the defective method"
+            )
+    return lone
+
+
+def _terrain_problems(task: Task) -> list[str]:
+    """The three terrain rules, applied to every task carrying an
+    accepted-answer key, and the waivers a task declares against them.
+
+    Keyed on the key rather than on the category: `fault-location` is where
+    these started, but a locate-style `codebase-comprehension` task is graded
+    off the same file and greppable in exactly the same way, so what makes a
+    task subject to them is that it has an answer to give away.
+
+    A waiver silences a rule only for what it names, and a waiver naming
+    something the rule does not fire on is itself reported: those two together
+    are what stop a waiver from quietly widening as a prompt is edited, or
+    from surviving the terrain improvement that made it unnecessary.
+    """
+    fired: dict[TerrainRule, dict[str, str]] = {rule: {} for rule in TERRAIN_RULES}
+    if (task.grading_dir / ANSWER_KEY_FILE).is_file():
+        try:
+            key = answer_key(task)
+        except IngestError:
+            # A key that cannot be read is reported where it is read; terrain
+            # is not judgeable without one, and a second complaint about the
+            # same file would only bury the first.
+            return []
+        fired["prompt-names-a-key-location"] = _key_locations_the_prompt_names(
+            task, key
+        )
+        fired["prompt-word-narrows-to-the-accepted-module"] = _narrowing_prompt_terms(
+            task, key
+        )
+        fired["accepted-class-is-the-only-class"] = _lone_accepted_classes(task, key)
+
+    problems: list[str] = []
+    for rule in TERRAIN_RULES:
+        violations = fired[rule]
+        waived = {
+            covered
+            for waiver in task.terrain_waiver
+            if waiver.rule == rule
+            for covered in waiver.covers
+        }
+        problems += [
+            f"{task.id}: terrain rule {rule!r}: {violations[token]}"
+            for token in sorted(violations)
+            if token not in waived
+        ]
+        problems += [
+            f"{task.id}: the terrain waiver for {rule!r} covers {token!r}, which "
+            "the rule does not fire on — a waiver applies only to what it names, "
+            "so this one silences nothing and is a written-down apology for "
+            "terrain that is no longer there. Drop it, or correct what it names"
+            for token in sorted(waived - set(violations))
+        ]
+    return problems
 
 
 def _escapes_workdir(name: str) -> bool:
