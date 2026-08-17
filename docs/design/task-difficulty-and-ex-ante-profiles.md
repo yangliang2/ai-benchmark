@@ -3857,6 +3857,89 @@ checked-in bytes by one command per log. What it does not show is that a
 re-run would produce the same diff: a task × agent × model cell is swept
 once, and replay reproduces the grading, not the agent.
 
+## Round 5 candidates — listed 2026-08-16
+
+Round 4 is closed: #47–#61 are shut, §§38–42 are the record and
+`tests/test_firstparty_v1_round4_record.py` re-checks it. What follows is the
+candidate list for the next round in §33's sense — **candidates, not
+tickets**, each gated on `/grill-with-docs` or `/to-spec` before it is work.
+Nothing below authors a task, a spec or a ticket. The ordering follows §6:
+kill the most expensive assumption cheapest and first, and carry one new
+instrument per round.
+
+### 43. What round 5 should take up (candidates, not tickets)
+
+**Residue from round 4, none of it blocking, all of it cheaper to clear
+before a round than during one.**
+
+- #46 is open by the parent-ticket convention; a `/frontier #46` pass confirms
+  nothing on that spec remains and the owner closes it.
+- `.qap/regen_hashes.py`, which generates the held-out "repository is as it
+  was handed over" digests for every locate task, is uncommitted; the next
+  locate-style task cannot be authored against a generator that only one
+  machine holds.
+- `surface` is undeclared on all twelve round-4 tasks (#46 said "decide once,
+  not at #56"; it was not decided).
+- The taxonomy ADR that #46 judged warranted (3/3 on the criteria) is
+  unwritten.
+- §34.5's most expensive assumption — an agent locates the fault correctly
+  and describes it at a level the key did not anticipate — went 0/12 in
+  round 4. That is one round of not being bitten, not a proof; it stays on
+  the watch list.
+
+**Candidate A — finish heap 2: `review a diff` and locate-style
+comprehension.** §34.5 named this the step after real runs had exercised
+plant-and-check, and §41 supplies the exercise: eleven of twelve locate
+cells resolved, the twelfth failed onto a registered near-miss, so the
+mechanism has been paid for once and discriminated in the direction it was
+built to. The grading principle is unchanged (plant the ground truth, read a
+structured answer file from the workdir diff, compare through a
+project-owned comparison module), which is why this is the cheapest new
+coverage available. It also forces a ruling round 4 deferred: §36 keeps the
+bug-fix/fault-location pairing as an **unchecked convention** whose stated
+revisit trigger is "the first fault-location-style task with no partner".
+`review a diff` is that task — its planted findings have no fix-side member
+whose mandatory pristine failure proves a defect exists — so round 5 either
+turns the convention into a checked rule (a second proof of existence per
+planted finding) or records why review-a-diff needs none. About twelve
+tasks, in round 4's cost band.
+
+**Candidate B — the knob line's parked work, as a rider not a subject.**
+§34.6 left §33 candidates 3, 7 and 8 "not dropped and not scheduled":
+rebuild an existing pair's shape on a second vendored library, replicate
+K10 there, and sweep `pysm-work-out-a-way-there` × sonnet, the corpus's one
+`incomplete` cell. Candidate 8 is now unblocked (its dependency was §33
+candidate 1's tier limit, which #50/#61 delivered) and costs one cell under
+the recorded cross-round caveat of §29.4. Candidates 3 and 7 buy the
+cross-substrate agreement §10 has wanted since before round 1. None of the
+three opens a new capability, which is why they ride alongside A rather
+than displace it.
+
+**Candidate C — heap 3 now (investigate and propose, decompose a
+requirement, explain-style comprehension).** §34.3 deferred these because
+grading them needs two new instruments — a subjective grader and a
+calibration experiment proving it is worth trusting — and round 4 already
+carried one. The argument for **not** doing this in round 5 is that §34.4
+already archives every run's free-text answer as an artifact the verdict
+does not read, precisely so a heap-3 grader has something to be calibrated
+against: round 4 contributed 24 such answers, round 5 under A would
+contribute more, all on tasks whose ground truth is known. A grader
+calibrated on one round of archive is thinner than one calibrated on two.
+
+**Candidate D — heap 4 (optimise performance).** Needs a stable performance
+baseline, a third grading mechanism, on a single-machine harness with no
+process isolation (#15 open, unscheduled). Highest variance of the four
+heaps under present conditions; ordered after C.
+
+**Cross-cutting, any round can carry one:** repeat sampling per cell and a
+run-index schema (pass@k against mean, the open question parked since
+2026-08-05); a third ladder model; #15 process isolation.
+
+**The recommendation put to the grill:** round 5 = A as the subject, with
+B's candidate 8 as a one-cell rider; round 6 = C, calibrated against the
+free-text archive of rounds 4 and 5. One new instrument per round, the
+pairing convention forced to a ruling by the first task that breaks it.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
