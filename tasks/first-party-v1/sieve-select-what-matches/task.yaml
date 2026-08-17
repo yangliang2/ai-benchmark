@@ -92,6 +92,7 @@
 id: sieve-select-what-matches
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   sieve.py picks records out of a list one field at a time, and `compare`

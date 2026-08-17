@@ -11,6 +11,7 @@
 id: digest-merge-runs
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   digest.py works on one run of entries at a time, but a job that was

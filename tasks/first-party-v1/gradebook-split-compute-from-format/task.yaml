@@ -5,6 +5,7 @@
 id: gradebook-split-compute-from-format
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   summary in gradebook.py computes its statistics and formats the report in

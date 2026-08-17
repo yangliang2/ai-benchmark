@@ -9,6 +9,7 @@
 id: settleup-apply-expense
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   settleup.py works out balances for a whole trip at once, but an expense

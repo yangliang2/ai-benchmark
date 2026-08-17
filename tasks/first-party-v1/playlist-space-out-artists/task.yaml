@@ -9,6 +9,7 @@
 id: playlist-space-out-artists
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   playlist.py can measure a queue of tracks and group them by artist, but

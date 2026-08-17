@@ -13,6 +13,7 @@
 id: standrig-run-stations
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   standrig.py knows how to bring one station up and take it down, but

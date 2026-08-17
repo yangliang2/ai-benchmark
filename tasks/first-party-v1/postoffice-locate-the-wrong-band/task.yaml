@@ -59,6 +59,7 @@
 id: postoffice-locate-the-wrong-band
 category: fault-location
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

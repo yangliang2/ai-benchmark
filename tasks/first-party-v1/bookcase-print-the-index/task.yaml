@@ -14,6 +14,7 @@
 id: bookcase-print-the-index
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   bookcase.py can say which subjects a run of books covers, but the printed

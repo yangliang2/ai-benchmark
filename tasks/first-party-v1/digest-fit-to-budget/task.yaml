@@ -24,6 +24,7 @@
 id: digest-fit-to-budget
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   digest.py can say what a digest stands for and print one, but nothing in it

@@ -36,6 +36,7 @@
 id: roll-pick-from-bursts
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   roll.py can say when each photograph was taken and which of them the

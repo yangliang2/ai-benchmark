@@ -78,6 +78,7 @@
 id: gauge-evaluate-in-units
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   gauge.py knows what each unit is worth and what kind of quantity it

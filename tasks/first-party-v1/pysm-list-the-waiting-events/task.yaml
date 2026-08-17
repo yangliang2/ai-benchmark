@@ -51,6 +51,7 @@
 id: pysm-list-the-waiting-events
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   A queued pysm machine can be holding events nobody has handled yet — one a

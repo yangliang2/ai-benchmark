@@ -16,6 +16,7 @@
 id: pysm-remember-substate-history
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm's composite states have no memory: leave a StateMachine that has

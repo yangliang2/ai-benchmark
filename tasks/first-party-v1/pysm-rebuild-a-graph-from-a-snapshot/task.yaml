@@ -88,6 +88,7 @@
 id: pysm-rebuild-a-graph-from-a-snapshot
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm can write a graph's configuration out as plain data and read it back

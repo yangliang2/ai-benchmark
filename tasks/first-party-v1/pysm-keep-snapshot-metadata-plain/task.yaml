@@ -52,6 +52,7 @@
 id: pysm-keep-snapshot-metadata-plain
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   `snapshot` promises plain data, and everything it builds is plain — lists

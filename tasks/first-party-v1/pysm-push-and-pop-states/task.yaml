@@ -49,6 +49,7 @@
 id: pysm-push-and-pop-states
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   A StateMachine carries a `stack` "that can be used if the Pushdown Automaton

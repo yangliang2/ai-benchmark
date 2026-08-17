@@ -4,6 +4,7 @@
 id: tablecli-filter-command
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   This repository reads small comma-separated tables (tabular.py) and

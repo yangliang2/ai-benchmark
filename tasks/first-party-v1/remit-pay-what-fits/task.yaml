@@ -38,6 +38,7 @@
 id: remit-pay-what-fits
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   remit.py can say what is owed on an invoice and what a customer owes

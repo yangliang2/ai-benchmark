@@ -5,6 +5,7 @@
 id: metrics-dispatch-table
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   format_metric in metrics.py is an if/elif chain over the metric kind, and

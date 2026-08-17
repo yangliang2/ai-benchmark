@@ -19,6 +19,7 @@
 id: rbql-quote-fields-by-policy
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   rbql/csv_utils.py owns one half of the CSV dialect. Given a delimiter, a

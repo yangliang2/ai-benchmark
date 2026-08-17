@@ -8,6 +8,7 @@
 id: alerts-rule-table
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   severity in alerts.py is an if/elif chain over the incoming event, and it

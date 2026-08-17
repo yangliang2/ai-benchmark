@@ -4,6 +4,7 @@
 id: docstore-json-pointer
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   docstore.py keeps named JSON-like documents (nested dicts and lists) in

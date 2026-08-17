@@ -5,6 +5,7 @@
 id: cart-extract-coupon-policy
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   Cart in cart.py manages its items and, inline, all of the coupon

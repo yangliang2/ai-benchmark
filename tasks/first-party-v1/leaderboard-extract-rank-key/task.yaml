@@ -8,6 +8,7 @@
 id: leaderboard-extract-rank-key
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   standings, top and rank_of in leaderboard.py each sort by the same

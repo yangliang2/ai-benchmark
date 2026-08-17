@@ -9,6 +9,7 @@
 id: sessions-extract-expiry
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   sessions.py works out whether a session is still usable in three places,

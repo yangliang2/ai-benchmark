@@ -11,6 +11,7 @@
 id: settleup-settle-debts
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   settleup.py works out what everybody's balance is after a trip and who

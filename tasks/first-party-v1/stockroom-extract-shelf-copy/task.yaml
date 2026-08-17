@@ -13,6 +13,7 @@
 id: stockroom-extract-shelf-copy
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   place and remove in stockroom.py each copy the shelving before changing it,

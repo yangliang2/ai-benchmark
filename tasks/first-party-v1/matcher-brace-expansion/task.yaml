@@ -3,6 +3,7 @@
 id: matcher-brace-expansion
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   matchers.py does shell-style name matching with * and ?.

@@ -97,6 +97,7 @@
 id: pysm-work-out-a-way-there
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm can always say where a machine is standing. What it cannot say is how

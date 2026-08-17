@@ -10,6 +10,7 @@
 id: pysm-extract-transition-step
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   In pysm/pysm.py, StateMachine.dispatch does two separable jobs. It decides

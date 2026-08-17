@@ -84,6 +84,7 @@ def write_task(
         "id": task_id,
         "category": category,
         "scale": scale,
+        "surface": "application",
         "language": "python",
         "prompt": f"make answer() return 42 ({task_id})",
     }

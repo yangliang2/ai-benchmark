@@ -13,6 +13,7 @@
 id: cadence-next-due
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   cadence.py can say when a job is due — a first time and an interval, and

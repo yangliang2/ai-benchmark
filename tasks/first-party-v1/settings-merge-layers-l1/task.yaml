@@ -9,6 +9,7 @@
 id: settings-merge-layers-l1
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   This repository has a small layered-settings module in settings.py.

@@ -24,6 +24,7 @@
 id: dossier-merge-two-records
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   dossier.py can say what one system holds and where two of them disagree,

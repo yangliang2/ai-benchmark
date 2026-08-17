@@ -52,6 +52,7 @@
 id: nightbus-print-the-sheet-c1
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   This repository has a small night-bus timetable module in nightbus.py.

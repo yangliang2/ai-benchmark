@@ -16,6 +16,7 @@
 id: rbql-like-escape-wildcards
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   RBQL queries can filter with like(), whose pattern language has two

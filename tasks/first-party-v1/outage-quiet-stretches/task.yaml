@@ -11,6 +11,7 @@
 id: outage-quiet-stretches
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   outage.py can say which stretches a service was down for, but the status

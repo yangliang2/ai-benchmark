@@ -5,6 +5,7 @@
 id: exporters-pull-up-base-class
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   TableExporter and DelimitedExporter in exporters.py duplicate all of their

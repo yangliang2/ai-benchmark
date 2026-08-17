@@ -538,7 +538,14 @@ class Task(BaseModel):
     id: NonEmptyStr
     category: TaskCategoryField
     scale: Scale
-    surface: Surface = "unknown"
+    # Required here, with no default, though a *record*'s surface still
+    # defaults to `unknown` (`ai_benchmark.schema.Record`): an ingested
+    # second-hand row is annotated with whatever its source disclosed, but a
+    # task we author ourselves knows where its work happens, and the coverage
+    # table counts `category × surface × language` cells. An undeclared
+    # surface would land every new task in the `unknown` column and make that
+    # table report the author's silence as a gap in the corpus.
+    surface: Surface
     language: LanguageStr | None = None
     prompt: NonEmptyStr
     grading: Grading = Grading()

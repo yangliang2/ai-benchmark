@@ -51,6 +51,7 @@
 id: lostproperty-write-up-what-happened
 category: bug-fix
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

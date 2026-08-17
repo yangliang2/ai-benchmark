@@ -50,6 +50,7 @@
 id: pysm-reset-to-initial-states
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm machines run forwards. Once a StateMachine has been initialized and

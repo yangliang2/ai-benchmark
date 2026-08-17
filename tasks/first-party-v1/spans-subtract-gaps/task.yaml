@@ -3,6 +3,7 @@
 id: spans-subtract-gaps
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   spans.py works with half-open integer spans: (start, end) pairs covering

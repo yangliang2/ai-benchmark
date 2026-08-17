@@ -52,6 +52,7 @@
 id: paperround-count-each-walk-on-its-own
 category: bug-fix
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

@@ -10,6 +10,7 @@
 id: cartons-pack-shipments
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   cartons.py can weigh a carton and say whether one more item would fit, but

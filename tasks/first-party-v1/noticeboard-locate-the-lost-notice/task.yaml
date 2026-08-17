@@ -39,6 +39,7 @@
 id: noticeboard-locate-the-lost-notice
 category: fault-location
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

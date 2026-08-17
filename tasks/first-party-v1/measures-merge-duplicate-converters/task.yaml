@@ -5,6 +5,7 @@
 id: measures-merge-duplicate-converters
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   lengths.py and weights.py are the same module written twice: each holds a

@@ -17,6 +17,7 @@
 id: pricelist-price-a-sale-c3
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   This repository has a small price-list module in pricelist.py.

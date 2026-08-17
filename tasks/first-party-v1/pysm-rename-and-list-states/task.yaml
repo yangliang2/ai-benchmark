@@ -41,6 +41,7 @@
 id: pysm-rename-and-list-states
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm/builder.py can only add. A state given the wrong name has to be built

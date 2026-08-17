@@ -9,6 +9,7 @@
 id: cartons-label-shipments
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   cartons.py summarises a despatch for us, but the cartons themselves still

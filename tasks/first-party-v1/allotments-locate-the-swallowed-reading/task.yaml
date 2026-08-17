@@ -58,6 +58,7 @@
 id: allotments-locate-the-swallowed-reading
 category: fault-location
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

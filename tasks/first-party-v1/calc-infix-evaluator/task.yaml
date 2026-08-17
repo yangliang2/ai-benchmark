@@ -3,6 +3,7 @@
 id: calc-infix-evaluator
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   calc.py evaluates arithmetic handed to it as reverse Polish token lists,

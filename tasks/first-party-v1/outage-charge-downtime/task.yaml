@@ -25,6 +25,7 @@
 id: outage-charge-downtime
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   outage.py can say how long a service was down and who was covering any

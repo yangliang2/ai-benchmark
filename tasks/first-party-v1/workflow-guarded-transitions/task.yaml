@@ -4,6 +4,7 @@
 id: workflow-guarded-transitions
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   fsm.py is a minimal finite-state machine and tickets.py builds the ticket

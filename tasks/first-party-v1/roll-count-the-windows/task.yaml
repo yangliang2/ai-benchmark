@@ -14,6 +14,7 @@
 id: roll-count-the-windows
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   roll.py can say how long the gap between one photograph and the next was,

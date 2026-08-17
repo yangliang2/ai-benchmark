@@ -4,6 +4,7 @@
 id: microtemplate-for-loops
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   This repository is a tiny template language: template.py renders

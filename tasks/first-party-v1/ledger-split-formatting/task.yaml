@@ -5,6 +5,7 @@
 id: ledger-split-formatting
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   This repository has an expense ledger in ledger.py that also owns its own

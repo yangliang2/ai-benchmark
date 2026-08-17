@@ -9,6 +9,7 @@
 id: playlist-trim-to-length
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   playlist.py can tell us how long a queue runs, but the radio slots we

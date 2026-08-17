@@ -115,6 +115,7 @@
 id: pysm-refuse-a-snapshot-in-flight
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm/serialization.py assumes the machine is standing still. `snapshot`

@@ -5,6 +5,7 @@
 id: textdoc-split-render-flag
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   render(doc, as_html) in textdoc.py is a boolean-flag function: every

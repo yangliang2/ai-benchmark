@@ -32,6 +32,7 @@
 id: ferry-cast-off-when-it-should
 category: bug-fix
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

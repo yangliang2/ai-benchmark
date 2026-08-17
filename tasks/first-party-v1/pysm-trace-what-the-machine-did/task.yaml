@@ -83,6 +83,7 @@
 id: pysm-trace-what-the-machine-did
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   pysm machines forget what they did. A handler can see where the machine is

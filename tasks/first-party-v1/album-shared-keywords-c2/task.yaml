@@ -16,6 +16,7 @@
 id: album-shared-keywords-c2
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   This repository has a small photo-album module in album.py.

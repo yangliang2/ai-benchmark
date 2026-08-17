@@ -8,6 +8,7 @@
 id: pysm-revert-through-one-step
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   In pysm/pysm.py, StateMachine.revert_to_previous_leaf_state is written as a

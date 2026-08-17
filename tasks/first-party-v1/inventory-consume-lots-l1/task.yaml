@@ -9,6 +9,7 @@
 id: inventory-consume-lots-l1
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   This repository has a small inventory module in inventory.py.

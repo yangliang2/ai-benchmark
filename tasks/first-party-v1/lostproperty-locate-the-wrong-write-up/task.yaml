@@ -53,6 +53,7 @@
 id: lostproperty-locate-the-wrong-write-up
 category: fault-location
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

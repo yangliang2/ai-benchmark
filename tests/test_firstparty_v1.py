@@ -69,6 +69,14 @@ def retitle(task_dir: Path, **fields: object) -> None:
     (task_dir / "task.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
 
 
+def undeclare(task_dir: Path, field: str) -> None:
+    """Drop a field from a cloned task's task.yaml — the one thing `retitle`
+    cannot express, and the only way to build a spec that never declared one."""
+    spec = yaml.safe_load((task_dir / "task.yaml").read_text())
+    del spec[field]
+    (task_dir / "task.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
+
+
 def append(path: Path, source: str) -> None:
     path.write_text(path.read_text() + textwrap.dedent(source))
 
@@ -217,6 +225,7 @@ def synthetic_task(root: Path) -> Task:
         id: exact-ratio
         category: feature-dev
         scale: single-file
+        surface: application
         language: python
         prompt: |
           Add ratio(a, b) to calc.py, returning a / b as an exact fraction.
@@ -373,12 +382,17 @@ def test_task_naming_a_retired_category_fails_loudly(tmp_path: Path) -> None:
         load_task_set(tmp_path)
 
 
-def test_task_surface_defaults_to_unknown_and_reaches_the_record(
+def test_every_task_declares_the_application_surface_and_it_reaches_the_record(
     tmp_path: Path,
 ) -> None:
-    """No migration: every checked-in task loads without declaring a surface,
-    and a task that declares one hands it to the records it produces."""
-    assert {task.surface for task in load_task_set(TASKS)} == {"unknown"}
+    """The corpus is all application, and says so rather than defaulting to it.
+
+    Pinned as an exact set, like the category pin above: this is the coverage
+    baseline a later round's widening is read against, so the first task
+    authored on another surface has to move this line rather than slip in
+    beside the others. A declared surface still reaches the records the task
+    produces, which is the half of the old pin worth keeping."""
+    assert {task.surface for task in load_task_set(TASKS)} == {"application"}
 
     task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
     retitle(task_dir, surface="frontend")
@@ -387,6 +401,18 @@ def test_task_surface_defaults_to_unknown_and_reaches_the_record(
     [record] = evaluate([task], [run_for(task, "")], source="run-log")
 
     assert record.surface == "frontend"
+
+
+def test_task_declaring_no_surface_fails_loudly(tmp_path: Path) -> None:
+    """Where a *record* still reads `unknown` (test_schema.py): a second-hand
+    row is annotated with whatever its source disclosed, but a task we authored
+    knows where its own work happens, so silence there is an omission rather
+    than an unavailable fact."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    undeclare(task_dir, "surface")
+
+    with pytest.raises(IngestError, match=f"(?s){FEATURE_SEED}.*surface"):
+        load_task_set(tmp_path)
 
 
 def test_unclassified_task_fails_loudly(tmp_path: Path) -> None:

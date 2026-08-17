@@ -5,6 +5,7 @@
 id: logparse-extract-timestamp-parsing
 category: refactor
 scale: single-file
+surface: application
 language: python
 prompt: |
   Every function in logparse.py starts with the same timestamp-handling

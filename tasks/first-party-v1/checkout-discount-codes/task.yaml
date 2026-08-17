@@ -4,6 +4,7 @@
 id: checkout-discount-codes
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   The shop's cart (cart.py, prices in whole cents from catalog.py) needs

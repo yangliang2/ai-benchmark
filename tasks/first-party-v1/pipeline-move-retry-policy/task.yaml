@@ -4,6 +4,7 @@
 id: pipeline-move-retry-policy
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   pipeline.py owns both the Pipeline and the RetryPolicy it retries failing

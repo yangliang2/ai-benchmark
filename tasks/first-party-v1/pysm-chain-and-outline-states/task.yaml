@@ -44,6 +44,7 @@
 id: pysm-chain-and-outline-states
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   pysm/builder.py builds a machine one state and one transition at a time.

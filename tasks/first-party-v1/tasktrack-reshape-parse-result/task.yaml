@@ -5,6 +5,7 @@
 id: tasktrack-reshape-parse-result
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   parse_task in tasktrack.py returns a bare 4-tuple, and boardview.py and

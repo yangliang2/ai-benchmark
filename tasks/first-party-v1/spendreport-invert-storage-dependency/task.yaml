@@ -5,6 +5,7 @@
 id: spendreport-invert-storage-dependency
 category: refactor
 scale: cross-file
+surface: application
 language: python
 prompt: |
   analysis.py reaches down into storage itself: summarise and over_budget

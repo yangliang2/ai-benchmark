@@ -40,6 +40,7 @@
 id: bookcase-shelve-the-run
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   bookcase.py can say what a stretch of books takes up and where one subject

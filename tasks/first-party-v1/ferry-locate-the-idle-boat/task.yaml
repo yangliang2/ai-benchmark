@@ -40,6 +40,7 @@
 id: ferry-locate-the-idle-boat
 category: fault-location
 scale: single-file
+surface: application
 language: python
 control: true
 prompt: |

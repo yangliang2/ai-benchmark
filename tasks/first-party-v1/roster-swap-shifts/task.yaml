@@ -18,6 +18,7 @@
 id: roster-swap-shifts
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   roster.py can put people on shifts and take them off, but every change is

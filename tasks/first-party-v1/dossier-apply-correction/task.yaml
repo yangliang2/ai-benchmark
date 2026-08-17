@@ -12,6 +12,7 @@
 id: dossier-apply-correction
 category: feature-dev
 scale: single-file
+surface: application
 language: python
 prompt: |
   dossier.py can say what a system holds, but nothing in it records a

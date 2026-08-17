@@ -4,6 +4,7 @@
 id: jobrunner-dependency-order
 category: feature-dev
 scale: cross-file
+surface: application
 language: python
 prompt: |
   This repository is a tiny job runner: jobs.py defines Job, and runner.py
