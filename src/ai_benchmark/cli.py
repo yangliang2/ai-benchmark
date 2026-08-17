@@ -148,6 +148,15 @@ def _lint_v1_command(args: argparse.Namespace) -> None:
     if problems := firstparty_v1.lint_task_set(tasks):
         raise SystemExit("\n".join([f"error: {problem}" for problem in problems]))
     print(f"lint clean: {len(tasks)} task(s) in {args.tasks}")
+    print()
+    print("coverage: category x surface x language")
+    header = ["category", "surface", "language", "count"]
+    rows = [
+        [category, surface, language, str(count)]
+        for category, surface, language, count in firstparty_v1.coverage_table(tasks)
+    ]
+    for line in reconcile_v1.padded_table([header, *rows], indent="  "):
+        print(line)
 
 
 def _reconcile_v1_command(args: argparse.Namespace) -> None:

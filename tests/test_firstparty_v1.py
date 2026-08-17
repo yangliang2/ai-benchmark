@@ -40,8 +40,10 @@ from ai_benchmark.firstparty_v1 import (
     BENCHMARK,
     KNOB_LEVELS,
     LIVE_RUN_LIMITS_S,
+    NO_LANGUAGE,
     KnobActivation,
     Task,
+    coverage_table,
     evaluate,
     lint_task_set,
     live_run_limit_s,
@@ -497,6 +499,49 @@ def test_feature_dev_task_naming_behaviour_tests_fails_loudly(tmp_path: Path) ->
 
     with pytest.raises(IngestError, match="behaviour"):
         load_task_set(tmp_path)
+
+
+# --- coverage table: category x surface x language ------------------------------
+
+
+def test_coverage_table_counts_category_x_surface_x_language(tmp_path: Path) -> None:
+    """A hand-built task set, checked against a hand-built expectation.
+
+    Covers what the ticket pins down: every `TaskCategory` appears even with
+    no tasks in it (`test-authoring` here), and a task with no declared
+    `language` is counted under `NO_LANGUAGE` rather than dropped."""
+    one = clone_seed(tmp_path, FEATURE_SEED, "cov-one")
+    retitle(one, id="cov-one")  # feature-dev / application / python, unchanged
+
+    two = clone_seed(tmp_path, FEATURE_SEED, "cov-two")
+    retitle(two, id="cov-two", category="bug-fix")
+
+    three = clone_seed(tmp_path, FEATURE_SEED, "cov-three")
+    retitle(
+        three, id="cov-three", category="bug-fix",
+        surface="infrastructure", language="typescript",
+    )
+
+    four = clone_seed(tmp_path, FEATURE_SEED, "cov-four")
+    retitle(four, id="cov-four", category="codebase-comprehension")
+    undeclare(four, "language")
+
+    tasks = load_task_set(tmp_path)
+
+    assert coverage_table(tasks) == [
+        ("bug-fix", "application", "python", 1),
+        ("bug-fix", "infrastructure", "typescript", 1),
+        ("feature-dev", "application", "python", 1),
+        ("refactor", "-", "-", 0),
+        ("test-authoring", "-", "-", 0),
+        ("codebase-comprehension", "application", NO_LANGUAGE, 1),
+        ("fault-location", "-", "-", 0),
+        ("code-review", "-", "-", 0),
+        ("investigation", "-", "-", 0),
+        ("requirement-decomposition", "-", "-", 0),
+        ("performance-optimisation", "-", "-", 0),
+        ("unclassified", "-", "-", 0),
+    ]
 
 
 # --- construction metadata: knobs, families, predictions, provenance -----------

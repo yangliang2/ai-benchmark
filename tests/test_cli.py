@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from conftest import FakeClaude
 
-from ai_benchmark import firstparty_v1
+from ai_benchmark import firstparty_v1, reconcile_v1
 from ai_benchmark.cli import main
 
 
@@ -241,6 +241,34 @@ def test_lint_v1_passes_on_the_checked_in_task_set(
     main(["lint-v1", "--tasks", str(tasks)])
 
     assert f"lint clean: {checked_in} task(s)" in capsys.readouterr().out
+
+
+def test_lint_v1_prints_the_coverage_table_for_the_checked_in_task_set(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The counts read from the printed page, not pinned by hand: derived
+    from the same task set `coverage_table` reads, so a table that is right
+    in the data and wrong on the page fails here rather than only in a unit
+    test of the counting function alone."""
+    tasks_dir = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    tasks = firstparty_v1.load_task_set(tasks_dir)
+    header = ["category", "surface", "language", "count"]
+    rows = [
+        [category, surface, language, str(count)]
+        for category, surface, language, count in firstparty_v1.coverage_table(tasks)
+    ]
+    expected = reconcile_v1.padded_table([header, *rows], indent="  ")
+
+    main(["lint-v1", "--tasks", str(tasks_dir)])
+
+    out = capsys.readouterr().out
+    assert "coverage: category x surface x language" in out
+    for line in expected:
+        assert line in out
+    # test-authoring is the registered empty cell (design note 45.12): it
+    # must appear in the table it belongs to, not be omitted for want of
+    # tasks.
+    assert any(line.split() == ["test-authoring", "-", "-", "0"] for line in expected)
 
 
 def test_lint_v1_exits_non_zero_on_a_broken_task(tmp_path: Path) -> None:

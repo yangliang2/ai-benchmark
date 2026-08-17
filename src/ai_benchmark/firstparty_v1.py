@@ -99,7 +99,7 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import date
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, get_args
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
@@ -1349,6 +1349,39 @@ def lint_task_set(
                 "refactor task must start from behaviour that already works"
             )
     return problems
+
+
+# What a task with no declared `language` counts under in the coverage
+# table, rather than being dropped from it: `language` is only absent when
+# it is not meaningful, and that is itself a fact worth disclosing.
+NO_LANGUAGE = "(none)"
+
+
+def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
+    """Task counts over `category x surface x language`, for `ai-bench
+    lint-v1` to print. Reports only — nothing here gates the lint.
+
+    Every `TaskCategory` appears at least once, `test-authoring`'s
+    registered-empty cell (design note 45.12) included, so a category with
+    no tasks reads as `0` rather than as an omission. `scale` and substrate
+    are disclosed on a task but not gridded here (design note 45.10).
+    """
+    counts: Counter[tuple[str, str, str]] = Counter(
+        (task.category, task.surface, task.language or NO_LANGUAGE) for task in tasks
+    )
+    order = {category: index for index, category in enumerate(get_args(TaskCategory))}
+    rows = [
+        (category, surface, language, count)
+        for (category, surface, language), count in counts.items()
+    ]
+    covered = {row[0] for row in rows}
+    rows += [
+        (category, "-", "-", 0)
+        for category in get_args(TaskCategory)
+        if category not in covered
+    ]
+    rows.sort(key=lambda row: (order[row[0]], row[1], row[2]))
+    return rows
 
 
 def construction_problems(task: Task) -> list[str]:
