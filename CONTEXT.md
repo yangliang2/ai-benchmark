@@ -15,6 +15,8 @@ The vocabulary this project uses. Skills and contributors should use these terms
 
 ## Task taxonomy
 
+See ADR-0002 for why categories are shaped this way.
+
 A **category** is one **engineering action** — what is done, never what kind of ticket the work arrived as, and never where it happens (that is the **surface** annotation). Every benchmark instance and first-party eval task is classified into exactly one category: a benchmark task measures **exactly one action**, because it needs one gradeable deliverable. A *real* ticket is a **sequence** of actions — investigate, then edit, then test — and that relation is documented here rather than keyed on: there is no multi-label category and no category tuple, and when several actions apply the **primary deliverable** of the task decides which one it is filed under.
 
 - **bug-fix** — correct existing behaviour that is wrong.
