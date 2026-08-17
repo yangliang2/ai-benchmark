@@ -3940,6 +3940,107 @@ B's candidate 8 as a one-cell rider; round 6 = C, calibrated against the
 free-text archive of rounds 4 and 5. One new instrument per round, the
 pairing convention forced to a ruling by the first task that breaks it.
 
+### 44. Three rounds at once — the arc from round 5 to round 7 (candidates, not tickets)
+
+The owner asked, on 2026-08-16, to think rounds 5, 6 and 7 together, with
+round 7's subject fixed in advance: **widen the corpus** — more benchmark
+samples, specifically more programming languages and more differentiated
+tasks. This section records the arc as candidates for `/grill-with-docs`;
+it authors nothing. §43's per-round detail for round 5 stands; what changes
+is the reason for round 5's and round 6's shape, which is now partly
+"round 7 needs it".
+
+**44.1 The arc.** Finish the graders (round 5 heap 2, round 6 heap 3), then
+widen (round 7). Widening before the graders exist would author tasks that
+land in no gradeable box; widening before the graders are trusted would
+scale noise. One new instrument per round, as §6 requires:
+
+| Round | Subject | The instrument | Riders |
+|---|---|---|---|
+| 5 | finish heap 2 (`review a diff`, locate-style comprehension) | none new — plant-and-check reused; §36's pairing convention forced to a ruling | §33 cand. 8; round-4 residue (§43) |
+| 6 | heap 3 (investigate/propose, decompose, explain-style comprehension) | a subjective grader plus its calibration experiment against the free-text archive of rounds 4–5 | a third ladder model; #15 or a hermetic-grading ruling |
+| 7 | widen: languages and differentiated scenarios | a per-language grading runner (44.2) and a coverage grid with a lint (44.3) | repeat sampling / pass@k schema, if the budget allows |
+
+**44.2 More languages is a third grading mechanism, not more tasks.** All
+101 tasks carry `language: python`, and although `schema.py` has held a
+`language` field since v0, the grader in `src/ai_benchmark/firstparty_v1.py`
+is pytest-shaped end to end: `--noconftest`, stdlib-first `sys.path`,
+a junitxml verdict, the loader invariant that no top-level `repo/` entry
+shares a stdlib name. Every one of those is a Python fact. Adding a language
+therefore means a **runner registered per language** — its test invocation,
+its machine-readable verdict, and its own answers to the two questions the
+Python runner already answers (how held-out tests override visible ones;
+which verdict-forgery classes are closed). Two costs to name at the grill:
+
+- *Hermeticity.* The corpus is stdlib-only and grades offline. TypeScript or
+  Rust bring a toolchain and a dependency tree; #15 (process isolation),
+  open and unscheduled since 2026-08-04, becomes a precondition rather than
+  a residual, or round 7 records an explicit hermetic-grading ruling in its
+  place.
+- *A new confounder.* The same action in two languages costs differently for
+  reasons that are toolchain, not model. The clean reading is §10's
+  cross-substrate method transposed: **port an existing task's shape to the
+  second language** — same action, scale and surface — and read whether the
+  round-3/4 readings transfer, before authoring new scenarios in it.
+
+§34.5's discipline applies verbatim: one language proves the runner. The
+leading candidate is TypeScript (opens the `frontend-ui` surface, mature
+tooling, a public multi-language benchmark to read against); Go is the cheap
+alternative (single-binary toolchain, easiest hermeticity).
+
+**44.3 "More differentiated" has to be a coordinate, or it is a mood.** The
+repo already has the axes: `category` (ten actions), `surface` (introduced by
+#46, declared on no task), `scale`, `language`, and substrate (hand-authored;
+vendored pysm and RBQL; three untouched entries in
+`docs/research/substrate-candidate-repos.md`). Differentiation is **filling
+empty cells of that grid**, and the lint says so: a new task must land in an
+under-populated cell or declare why not. Round 7's acceptance is then a
+coverage figure — cells populated before and after — not a task count.
+
+One guard-rail, from §34.1: the rung axis was conceded to the ingested public
+benchmarks, so "differentiated" must not drift back into "harder". The
+axis being widened is scenario — surface, language, terrain — not
+difficulty.
+
+**44.4 What rounds 5 and 6 must lay down for round 7.**
+
+- Round 5 decides `surface` once and declares it on every task (a round-4
+  residue), and spreads its own ~12 new tasks across surfaces on purpose —
+  otherwise round 7 has no coverage baseline to move.
+- Round 5 generalises #51's terrain assertions into lint rules (a prompt may
+  not name an accepted file or symbol; an accepted class level requires more
+  than one class in the file). Round 5 is the last low-volume authoring pass
+  before volume, and the hand-run adversarial review that #51 needed twice
+  does not scale to round 7.
+- Round 6's subjective grader is designed language-agnostic — it reads the
+  structured answer file and the archived free text, never the test runner —
+  or every language round 7 adds re-opens heap 3.
+- Round 6 carries #15 or the hermetic-grading ruling, and trials a third
+  ladder model: model differences by language are where a two-model ladder
+  reads least.
+
+**44.5 Cost, stated before anyone spends.** Round 4 came in at $0.14 per cell
+on hand-authored Python. Rounds 5 and 6 should sit in that band. Round 7 is
+the first round that could not: a second language on vendored substrates
+carries §31's 2–3× terrain step, a third model adds a column, and repeat
+sampling multiplies by n. Fifty tasks × three models × n=3 is ~450 cells and
+roughly $60–130 by round-3/4 unit costs. That is why repeat sampling is a
+rider "if the budget allows" and why the language runner is proven on a
+ported handful before anything is authored fresh.
+
+**44.6 The questions the grill has to answer.**
+
+1. Round 7's first language — TypeScript (surface + ecosystem) or Go
+   (hermeticity)?
+2. Is round 7's acceptance a coverage-grid figure with a lint, rather than a
+   task count?
+3. Does round 7 port existing shapes first (transfer reading, cheap, clean)
+   or author new scenarios in the new language (wider, more confounded) —
+   or a small port followed by new authoring?
+4. Round 6's calibration bar for the subjective grader (agreement with the
+   held-out verdict on archived free text) — the number decides whether heap
+   3 takes part in round 7's widening at all.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
