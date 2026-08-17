@@ -15,9 +15,10 @@ What it does not forbid is what a reader leaves behind: a scratch file, a
 note, __pycache__ from running the repository's own tests. Only the seven
 files below are compared, and only against what they were.
 
-Canonical for this task and generated rather than typed (.qap/regen_hashes.py
-in the ai-benchmark repository); the task's own suite asserts these digests
-still describe the checked-in starting repository.
+Canonical for this task and generated rather than typed. Regenerate it with
+`ai-bench lint-v1 --write-hash-gates` in the
+ai-benchmark repository; the task-set lint reads it back and asserts these
+digests still describe the checked-in starting repository, both ways round.
 """
 
 import hashlib

@@ -86,6 +86,7 @@ no network and no installs.
 """
 
 import ast
+import hashlib
 import importlib.util
 import json
 import math
@@ -872,6 +873,21 @@ class AnswerKey(BaseModel):
         return self
 
 
+def is_keyed(task: Task) -> bool:
+    """Whether this task holds an answer to give away.
+
+    One definition of "keyed", read by everything that applies a rule to the
+    keyed corpus rather than to a category: the terrain rules
+    (`_terrain_problems`) and the hash gate (`_hash_gate_problems`). Keyed on
+    the *key*, never on `category` and never on a hand-kept list of task ids:
+    `fault-location` is where the keys started, but a locate-style
+    `codebase-comprehension` task is graded off the same file and is greppable
+    in the same way, and a list would leave the seventh keyed task inheriting
+    none of it.
+    """
+    return (task.grading_dir / ANSWER_KEY_FILE).is_file()
+
+
 def answer_key(task: Task) -> AnswerKey:
     """The accepted-answer key shipped inside this task's grading directory.
 
@@ -1411,6 +1427,9 @@ def lint_task_set(
     as well (`_terrain_problems`): whether it gives its own answer away is an
     authoring invariant like any other, and one that used to be proved per
     task, in six copies, so that a seventh keyed task inherited none of it.
+    The hash gate (`_hash_gate_problems`) is here for the same reason and was
+    moved here from the same place: a keyed task asks for a location and not a
+    repair, and it used to be four tasks' own suites that said so.
 
     The construction invariants are read rather than run, but belong here for
     the same reason: an undeclared knob, an unregistered prediction, a family
@@ -1438,6 +1457,10 @@ def lint_task_set(
         # handed, which are as readable when the key names a file that is not
         # there as when it does not.
         problems.extend(_terrain_problems(task))
+        # Independent for the same reason, and unrunnable by construction: the
+        # gate hashes the pristine repository, so running the grading tests on
+        # that repository is the one thing that can never fail it.
+        problems.extend(_hash_gate_problems(task))
         if task.category == "fault-location" and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
@@ -1789,6 +1812,258 @@ def _answer_test_problems(task: Task) -> list[str]:
     return []
 
 
+# --- the hash gate: the repository is as it was handed over --------------------
+#
+# The deliverable of a keyed task is the location, not a repair, and the prompt
+# says so — but an agent that does the fix work and then writes a correct
+# answer would grade resolved at fix-member cost with nothing in the run log to
+# show it. So the starting repository is hashed into a held-out grading test
+# and compared at grade time.
+#
+# Round 4 wrote those digests with a script outside the repository and proved
+# them per task, in four copies of the same assertion, which meant the gate was
+# a property of the four tasks whose author remembered it rather than of the
+# corpus. Generation is `write_hash_gates` below (reached by `ai-bench lint-v1
+# --write-hash-gates`) and the proof is `_hash_gate_problems`, applied to every
+# keyed task.
+
+HASH_GATE_FILE = "test_the_repository_is_as_it_was.py"
+
+# The table inside it, by the name the generated file gives it.
+_HASH_GATE_TABLE = "AS_HANDED_OVER"
+
+# The flag that writes the gate, named here because the generated file's own
+# docstring has to tell a reader how it was made and how to remake it.
+HASH_GATE_FLAG = "ai-bench lint-v1 --write-hash-gates"
+
+# The two round-4 fault-location tasks authored before the gate existed, which
+# ship none and never will. Adding one retroactively would change what a replay
+# of round 4's logs computes — a run that answered correctly and also edited the
+# code is recorded resolved, and gating it now would turn that recorded verdict
+# over, which the spec puts out of scope.
+#
+# Frozen, and frozen in the direction that matters: a task authored from here on
+# has no way into this set, because the only way in is to be one of these two
+# names, and `tests/test_firstparty_v1_fault_location.py` pins the membership
+# exactly so that widening it is an edit to a test that says why it is closed.
+HASH_GATE_EXEMPT: frozenset[str] = frozenset({
+    "ferry-locate-the-idle-boat",
+    "noticeboard-locate-the-lost-notice",
+})
+
+# How the generated docstring counts the files it hashes. Words rather than
+# numerals because it is prose, and a table rather than a library because the
+# corpus is small and the alternative is a dependency for eight words. A count
+# outside it falls back to the numeral: ungainly to read, but never wrong, and
+# it cannot silently drop a file from the table itself.
+_COUNTED = {
+    1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+    7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve",
+}
+
+_HASH_GATE_HEADER = '''\
+"""Held out: whether the repository is exactly as the agent was handed it.
+
+The deliverable of a fault-location task is the location, and this task's
+prompt says so outright: do not fix it, leave every file as you found it. That
+went unenforced until this batch, and for a task read on its own it would not
+matter. It matters here, because this task and the bug-fix task built on the
+same starting repository exist to produce one number — what locating a defect
+costs, as against fixing it — and an agent that does the fix work and then
+writes a correct answer would grade resolved at fix-member cost, with nothing
+in the run log to show that it happened.
+
+So the files the agent was handed are hashed here, and a run that changed,
+deleted or replaced any of them grades unresolved however well it answered.
+What it does not forbid is what a reader leaves behind: a scratch file, a
+note, __pycache__ from running the repository's own tests. Only the {counted}
+files below are compared, and only against what they were.
+
+Canonical for this task and generated rather than typed. Regenerate it with
+`{flag}` in the
+ai-benchmark repository; the task-set lint reads it back and asserts these
+digests still describe the checked-in starting repository, both ways round.
+"""
+
+import hashlib
+from pathlib import Path
+
+{table} = {{
+'''
+
+_HASH_GATE_FOOTER = '''}
+
+
+def test_the_repository_is_exactly_as_it_was_handed_over():
+    changed = {}
+    for name, digest in sorted(AS_HANDED_OVER.items()):
+        found = Path.cwd() / name
+        if not found.is_file():
+            changed[name] = "gone"
+        elif hashlib.sha256(found.read_bytes()).hexdigest() != digest:
+            changed[name] = "edited"
+    assert not changed, (
+        f"the repository was not left as it was handed over: {changed} — this "
+        "task asks for the location of the defect and not a repair"
+    )
+'''
+
+
+def repo_digests(repo_dir: Path) -> dict[str, str]:
+    """The sha256 of every file of a starting repository, by name.
+
+    Top-level files only, which is what a v1 starting repository is: the gate
+    compares each name against `Path.cwd() / name` in the workdir, so a name
+    that is not a bare filename is not something it could check anyway.
+    """
+    return {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(repo_dir.iterdir())
+        if path.is_file()
+    }
+
+
+def hash_gate_source(repo_dir: Path) -> bytes:
+    """This starting repository's hash gate, as the task has to ship it.
+
+    A pure function of the repository's bytes, so re-running the generator over
+    an unchanged corpus rewrites every gate identically and the result of the
+    flag is reviewable in a diff.
+    """
+    digests = repo_digests(repo_dir)
+    header = _HASH_GATE_HEADER.format(
+        counted=_COUNTED.get(len(digests), str(len(digests))),
+        flag=HASH_GATE_FLAG,
+        table=_HASH_GATE_TABLE,
+    )
+    table = "".join(
+        f'    "{name}": "{digest}",\n' for name, digest in sorted(digests.items())
+    )
+    return (header + table + _HASH_GATE_FOOTER).encode("utf-8")
+
+
+def write_hash_gates(tasks: list[Task]) -> list[Path]:
+    """Write every keyed task's hash gate from its `repo/` bytes, and return
+    the gates whose contents actually changed.
+
+    Which tasks get one is discovered from their keys (`is_keyed`) and never
+    from a list, so a keyed task authored tomorrow is generated for without
+    anyone remembering to add it. `HASH_GATE_EXEMPT` is the one thing skipped,
+    and it is skipped rather than merely not required: writing a gate for those
+    two would change what a replay of round 4 computes.
+
+    Untouched files are not rewritten, so an unchanged corpus is a no-op down
+    to the mtimes as well as the bytes.
+    """
+    written: list[Path] = []
+    for task in tasks:
+        if not is_keyed(task) or task.id in HASH_GATE_EXEMPT:
+            continue
+        gate = task.grading_dir / HASH_GATE_FILE
+        source = hash_gate_source(task.repo_dir)
+        if not gate.is_file() or gate.read_bytes() != source:
+            gate.write_bytes(source)
+            written.append(gate)
+    return written
+
+
+def _declared_digests(source: str) -> dict[str, str] | None:
+    """The digest table a shipped hash gate declares, or None if it declares
+    none that can be read.
+
+    Read out of the shipped file rather than restated, because the shipped file
+    is what grading runs: a check against a table this module reconstructed
+    would prove the reconstruction and not the gate.
+    """
+    try:
+        module = ast.parse(source)
+    except SyntaxError:
+        return None
+    for node in module.body:
+        if not isinstance(node, ast.Assign) or not any(
+            isinstance(target, ast.Name) and target.id == _HASH_GATE_TABLE
+            for target in node.targets
+        ):
+            continue
+        try:
+            table = ast.literal_eval(node.value)
+        except ValueError:
+            return None
+        if isinstance(table, dict) and all(
+            isinstance(name, str) and isinstance(digest, str)
+            for name, digest in table.items()
+        ):
+            return {str(name): str(digest) for name, digest in table.items()}
+        return None
+    return None
+
+
+def _hash_gate_problems(task: Task) -> list[str]:
+    """Whether this keyed task ships the hash gate, and whether its digests
+    still describe the repository that is checked in.
+
+    Both ways round, because each direction misses what the other catches: a
+    table whose digests are all correct still gates nothing about a file it
+    does not name, and a table naming a file the repository no longer holds
+    grades every run unresolved on a file that is not there. Neither shows up
+    in a lint that only ran the grading tests on the pristine repository —
+    the gate passes there by construction, since the pristine repository is
+    what it was hashed from.
+
+    Read rather than run, and held against the corpus rather than proved per
+    task: this is the round-4 per-suite assertion moved to where a keyed task
+    authored tomorrow inherits it.
+    """
+    if not is_keyed(task) or task.id in HASH_GATE_EXEMPT:
+        return []
+    gate = task.grading_dir / HASH_GATE_FILE
+    try:
+        source = gate.read_text(encoding="utf-8")
+    except OSError as error:
+        return [(
+            f"{task.id}: {GRADING_DIR}/{HASH_GATE_FILE} is missing or unreadable "
+            f"({error}) — a task that ships an accepted-answer key asks for a "
+            "location and not a repair, and without this gate a run that "
+            "repaired the code and then answered correctly grades resolved at "
+            f"fix-member cost. Generate it with `{HASH_GATE_FLAG}`"
+        )]
+    declared = _declared_digests(source)
+    if declared is None:
+        return [(
+            f"{task.id}: {GRADING_DIR}/{HASH_GATE_FILE} declares no readable "
+            f"{_HASH_GATE_TABLE} table of digests — the gate is generated and "
+            f"not typed, so regenerate it with `{HASH_GATE_FLAG}` rather than "
+            "repairing it by hand"
+        )]
+    handed_over = repo_digests(task.repo_dir)
+    problems: list[str] = []
+    for name in sorted(declared):
+        if name not in handed_over:
+            problems.append(
+                f"{task.id}: {GRADING_DIR}/{HASH_GATE_FILE} hashes {name!r}, "
+                "which the starting repository does not hold — the gate would "
+                "grade every run unresolved over a file no agent was handed. "
+                f"Regenerate it with `{HASH_GATE_FLAG}`"
+            )
+        elif declared[name] != handed_over[name]:
+            problems.append(
+                f"{task.id}: {GRADING_DIR}/{HASH_GATE_FILE} records a digest for "
+                f"{name!r} that is not the digest of the checked-in file — "
+                "`repo/` was edited after the gate was written, which leaves "
+                "the task lint-clean and its reference solution resolving "
+                "while grading every real run unresolved. Regenerate it with "
+                f"`{HASH_GATE_FLAG}`"
+            )
+    problems += [
+        f"{task.id}: {GRADING_DIR}/{HASH_GATE_FILE} does not hash {name!r}, "
+        "which is a file of the starting repository — an agent may edit it and "
+        "still grade resolved, which is the whole of what the gate is for. "
+        f"Regenerate it with `{HASH_GATE_FLAG}`"
+        for name in sorted(set(handed_over) - set(declared))
+    ]
+    return problems
+
+
 # --- terrain: the three rules a keyed task's prompt and repository hold to -----
 #
 # Terrain is what makes locating a fault work rather than a grep. Round 4
@@ -2010,7 +2285,7 @@ def _terrain_problems(task: Task) -> list[str]:
     from surviving the terrain improvement that made it unnecessary.
     """
     fired: dict[TerrainRule, dict[str, str]] = {rule: {} for rule in TERRAIN_RULES}
-    if (task.grading_dir / ANSWER_KEY_FILE).is_file():
+    if is_keyed(task):
         try:
             key = answer_key(task)
         except IngestError:

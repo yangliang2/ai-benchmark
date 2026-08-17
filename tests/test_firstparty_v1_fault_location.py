@@ -41,7 +41,7 @@ from typing import Any
 
 import pytest
 import yaml
-from firstparty_v1_tasks import run_for, task_by_id, workdir_diff
+from firstparty_v1_tasks import TASKS, run_for, task_by_id, workdir_diff
 
 from ai_benchmark import _answer
 from ai_benchmark.dataset import IngestError
@@ -49,21 +49,27 @@ from ai_benchmark.firstparty_v1 import (
     ANSWER_KEY_FILE,
     ANSWER_MODULE,
     ANSWER_TEST_FILE,
+    HASH_GATE_EXEMPT,
+    HASH_GATE_FILE,
     Answer,
     Task,
     _capture_workdir_diff,
     _commit_pristine,
     _defined_classes,
     _defined_symbols,
+    _hash_gate_problems,
     _repo_file,
     _terrain_problems,
     answer_key,
     answer_module_source,
     answer_test_source,
     evaluate,
+    hash_gate_source,
     is_control,
+    is_keyed,
     lint_task_set,
     load_task_set,
+    write_hash_gates,
 )
 
 FIXTURE_ID = "pricing-locate-the-rounding-fault"
@@ -345,6 +351,7 @@ def write_fixture(
     prompt: str = PROMPT,
     grading_test: str = GRADING_TEST,
     task_id: str = FIXTURE_ID,
+    repo_files: dict[str, str] | None = None,
     **spec: object,
 ) -> Path:
     """The fixture fault-location task, written into root ready to load.
@@ -363,6 +370,18 @@ def write_fixture(
     more than the accepted module, and "cent", "line" and "tax" are words a
     prompt about what an order costs and a repository about what an order
     costs cannot help sharing.
+
+    The hash gate is generated from the repository this function just wrote,
+    by the very generator the CLI flag runs, because that is what a keyed task
+    ships (#67) — a fixture without one could not be used to prove anything
+    else about the lint. The tests that need a task *without* a sound gate
+    break it afterwards, each in the one way it is about.
+
+    That is also why a test wanting a third module in the repository passes it
+    as `repo_files` rather than writing it in afterwards: the gate hashes the
+    starting repository, so a file added after the gate was written is a file
+    the gate does not name, and the task would carry a second, unrelated lint
+    problem.
     """
     task_dir = root / task_id
     (task_dir / "repo").mkdir(parents=True)
@@ -381,6 +400,8 @@ def write_fixture(
     (task_dir / "task.yaml").write_text(yaml.safe_dump(fields, sort_keys=False))
     (task_dir / "repo" / "pricing.py").write_text(PRICING)
     (task_dir / "repo" / "checkout.py").write_text(CHECKOUT)
+    for name, source in (repo_files or {}).items():
+        (task_dir / "repo" / name).write_text(source)
     (task_dir / "grading" / ANSWER_TEST_FILE).write_text(grading_test)
     (task_dir / "grading" / ANSWER_MODULE).write_bytes(answer_module_source())
     (task_dir / "grading" / ANSWER_KEY_FILE).write_text(
@@ -393,6 +414,9 @@ def write_fixture(
             indent=2,
         )
         + "\n"
+    )
+    (task_dir / "grading" / HASH_GATE_FILE).write_bytes(
+        hash_gate_source(task_dir / "repo")
     )
     return task_dir
 
@@ -452,7 +476,7 @@ def test_the_key_ships_in_the_grading_directory_without_being_collected(
     task = fixture_task(tmp_path)
 
     assert (task.grading_dir / ANSWER_KEY_FILE).is_file()
-    assert task.grading_test_paths == (ANSWER_TEST_FILE,)
+    assert task.grading_test_paths == (ANSWER_TEST_FILE, HASH_GATE_FILE)
 
 
 def test_an_accepted_answer_naming_a_line_number_fails_loudly(
@@ -1179,12 +1203,12 @@ def test_lint_reports_when_it_cannot_construct_the_near_miss(
     """The synthesised near-miss is the load-bearing negative, so a key whose
     accepted set leaves no unaccepted symbol in the file it names has to say
     so rather than quietly running one check fewer."""
-    task_dir = write_fixture(
+    write_fixture(
         tmp_path,
         accepted=[{"file": "tiny.py", "symbol": "only"}],
         rejected=[{"file": "pricing.py", "symbol": "line_total"}],
+        repo_files={"tiny.py": "def only():\n    return 1\n"},
     )
-    (task_dir / "repo" / "tiny.py").write_text("def only():\n    return 1\n")
     [task] = load_task_set(tmp_path)
 
     problems = lint_task_set([task])
@@ -1208,8 +1232,8 @@ def test_near_miss_skips_a_fully_accepted_file_and_tries_the_next(
             {"file": "pricing.py", "symbol": "Basket"},
         ],
         rejected=[{"file": "checkout.py", "symbol": "charge"}],
+        repo_files={"tiny.py": "def only():\n    return 1\n"},
     )
-    (task_dir / "repo" / "tiny.py").write_text("def only():\n    return 1\n")
     [task] = load_task_set(tmp_path)
 
     assert lint_task_set([task]) == []
@@ -1370,21 +1394,21 @@ def test_lint_refuses_an_accepted_class_that_is_the_only_class_in_its_file(
     the class, and where the module defines exactly one, that answer is
     determined by the filename alone — one grep to the file, the only class
     there, resolved, with the defective method never read."""
-    task_dir = write_fixture(
+    write_fixture(
         tmp_path,
         accepted=[
             {"file": "lone.py", "symbol": "Lone"},
             {"file": "lone.py", "symbol": "Lone.slip"},
         ],
         rejected=[{"file": "pricing.py", "symbol": "line_total"}],
-    )
-    (task_dir / "repo" / "lone.py").write_text(
-        "class Lone:\n"
-        "    def slip(self):\n"
-        "        return 1\n"
-        "\n"
-        "    def other(self):\n"
-        "        return 2\n"
+        repo_files={
+            "lone.py": "class Lone:\n"
+            "    def slip(self):\n"
+            "        return 1\n"
+            "\n"
+            "    def other(self):\n"
+            "        return 2\n"
+        },
     )
     [task] = load_task_set(tmp_path)
 
@@ -1537,6 +1561,166 @@ def test_the_round_four_waiver_is_declared_where_the_rule_fires() -> None:
     assert _terrain_problems(task) == []
 
 
+# --- the hash gate: the repository is as it was handed over (#67) -----------
+
+
+def gate_of(task: Task) -> Path:
+    return task.grading_dir / HASH_GATE_FILE
+
+
+def test_a_keyed_fixture_ships_a_generated_gate_and_lints_clean(
+    tmp_path: Path,
+) -> None:
+    """What the rest of this section is measured against: the gate a keyed
+    task ships is what the generator produces from its `repo/` bytes, and the
+    lint has nothing to say about it."""
+    task = fixture_task(tmp_path)
+
+    assert is_keyed(task)
+    assert gate_of(task).read_bytes() == hash_gate_source(task.repo_dir)
+    assert _hash_gate_problems(task) == []
+
+
+def test_the_checked_in_gates_are_exactly_what_the_generator_writes() -> None:
+    """Generation reproduces what is on disk, over the whole keyed corpus.
+
+    This is the claim that lets the round-4 script the gates were written by
+    be retired: the CLI flag is not a second generator that happens to agree
+    with the checked-in files, it is the one generator. Read over every keyed
+    task rather than over the four that were gated by hand, so a keyed task
+    authored tomorrow is covered by it without this test being edited.
+    """
+    keyed = [
+        task
+        for task in load_task_set(TASKS)
+        if is_keyed(task) and task.id not in HASH_GATE_EXEMPT
+    ]
+
+    assert keyed
+    for task in keyed:
+        assert gate_of(task).read_bytes() == hash_gate_source(task.repo_dir), task.id
+
+
+def test_regenerating_the_checked_in_corpus_writes_nothing() -> None:
+    """The no-op that makes the flag safe to run: over an unchanged corpus the
+    generator rewrites no file, so its result in a diff is exactly what
+    changed and nothing else."""
+    assert write_hash_gates(load_task_set(TASKS)) == []
+
+
+def test_the_lint_reports_a_keyed_task_that_ships_no_gate(tmp_path: Path) -> None:
+    """The hole this closes: round 4 gated the four tasks whose author
+    remembered, and a fifth keyed task inherited nothing."""
+    task = fixture_task(tmp_path)
+    gate_of(task).unlink()
+
+    [problem] = _hash_gate_problems(task)
+
+    assert task.id in problem
+    assert HASH_GATE_FILE in problem
+
+
+def test_the_lint_reports_a_digest_that_no_longer_describes_the_repository(
+    tmp_path: Path,
+) -> None:
+    """The silent failure the gate is otherwise wide open to: `repo/` edited
+    after the gate was written leaves the task lint-clean and its reference
+    solution resolving, while grading every real run unresolved."""
+    task = fixture_task(tmp_path)
+    edited = task.repo_dir / "checkout.py"
+    edited.write_text(edited.read_text() + "\n# a later tidy-up\n")
+
+    [problem] = _hash_gate_problems(task)
+
+    assert task.id in problem
+    assert "checkout.py" in problem
+
+
+def test_the_lint_reports_a_repository_file_the_gate_does_not_hash(
+    tmp_path: Path,
+) -> None:
+    """The other direction, which correct digests say nothing about: a file
+    added to `repo/` after the gate was written is one an agent may edit and
+    still grade resolved."""
+    task = fixture_task(tmp_path)
+    (task.repo_dir / "receipts.py").write_text('"""What a till prints."""\n')
+
+    [problem] = _hash_gate_problems(task)
+
+    assert task.id in problem
+    assert "receipts.py" in problem
+
+
+def test_the_generator_repairs_every_way_the_gate_can_be_wrong(
+    tmp_path: Path,
+) -> None:
+    """One flag, and the lint reads the repaired corpus clean — including the
+    task that shipped no gate at all, which is how a keyed task authored
+    tomorrow gets one."""
+    task = fixture_task(tmp_path)
+    gate_of(task).unlink()
+    (task.repo_dir / "receipts.py").write_text('"""What a till prints."""\n')
+
+    assert write_hash_gates([task]) == [gate_of(task)]
+    assert _hash_gate_problems(task) == []
+
+
+def test_the_frozen_exemption_is_exactly_the_two_round_four_tasks() -> None:
+    """Pinned, because the set is frozen and the only way to widen it is to
+    edit this test.
+
+    The two were authored before the gate existed. Gating them now would let a
+    replay of round 4's logs turn a recorded verdict over — a run that
+    answered correctly and also edited the code is recorded resolved — and
+    rewriting recorded verdicts is out of scope. That is a fact about those
+    two runs, so nothing authored afterwards can qualify.
+    """
+    assert HASH_GATE_EXEMPT == frozenset({
+        "ferry-locate-the-idle-boat",
+        "noticeboard-locate-the-lost-notice",
+    })
+
+
+def test_the_exempt_tasks_are_keyed_ship_no_gate_and_still_read_clean() -> None:
+    """Exempt rather than accidentally passing: they carry the key the rule is
+    keyed on, they ship no gate, and the lint says nothing about them."""
+    exempt = [task_by_id(task_id) for task_id in sorted(HASH_GATE_EXEMPT)]
+
+    for task in exempt:
+        assert is_keyed(task), task.id
+        assert not gate_of(task).exists(), task.id
+        assert _hash_gate_problems(task) == [], task.id
+
+
+def test_the_generator_leaves_the_exempt_tasks_alone(tmp_path: Path) -> None:
+    """Skipped rather than merely not required: writing a gate for these two
+    would change what a replay of round 4 computes.
+
+    Run over a copy, because a generator that did not skip them would write
+    into the checked-in corpus and this test would prove it by doing the very
+    damage it is here to rule out.
+    """
+    for task_id in sorted(HASH_GATE_EXEMPT):
+        shutil.copytree(TASKS / task_id, tmp_path / task_id)
+    copies = load_task_set(tmp_path)
+
+    assert write_hash_gates(copies) == []
+    for task in copies:
+        assert not gate_of(task).exists(), task.id
+
+
+def test_every_other_keyed_task_in_the_corpus_ships_a_gate() -> None:
+    """The exemption is two names and not a category: every keyed task outside
+    it carries the gate."""
+    ungated = sorted(
+        task.id
+        for task in load_task_set(TASKS)
+        if is_keyed(task) and not (task.grading_dir / HASH_GATE_FILE).is_file()
+    )
+
+    assert ungated == sorted(HASH_GATE_EXEMPT)
+
+
 # --- mutation guards: behaviours the suite claims but did not test ----------
 
 
@@ -1612,13 +1796,11 @@ def test_near_miss_uses_the_forgiving_comparison_not_plain_equality(
     — the *bare* spelling of the accepted `zz.aa` — which `matches()` in fact
     accepts, so the lint would wrongly demand a legitimate answer grade
     unresolved."""
-    task_dir = write_fixture(
+    write_fixture(
         tmp_path,
         accepted=[{"file": "lower.py", "symbol": "zz.aa"}],
         rejected=[{"file": "pricing.py", "symbol": "line_total"}],
-    )
-    (task_dir / "repo" / "lower.py").write_text(
-        "class zz:\n    def aa(self):\n        return 1\n"
+        repo_files={"lower.py": "class zz:\n    def aa(self):\n        return 1\n"},
     )
     [task] = load_task_set(tmp_path)
 

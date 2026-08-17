@@ -59,7 +59,6 @@ same execution-verified pipeline real runs go through.
 """
 
 import ast
-import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -134,10 +133,6 @@ CONTRACT = (
     "invented for it: the books would sooner run a plot light than stand "
     "behind a total nobody wrote down."
 )
-
-# The grading test that hashes the handed-over repository, and the file it
-# hashes them into.
-AS_HANDED_OVER_TEST = "test_the_repository_is_as_it_was.py"
 
 # A card the rain got to: what `cards.figure` refuses and the defect turns into
 # a reading of nought.
@@ -898,49 +893,6 @@ def test_the_answer_key_ships_held_out_and_the_repository_carries_no_answer(
 
 
 # --- this batch's own gate: locating is not fixing -----------------------------
-
-
-def as_handed_over() -> dict[str, str]:
-    """The digests the fault-location member's second held-out test compares
-    the workdir against, read out of that test rather than restated here."""
-    source = (task_by_id(FAULT_LOCATION).grading_dir / AS_HANDED_OVER_TEST).read_text(
-        encoding="utf-8"
-    )
-    [assignment] = [
-        node
-        for node in ast.parse(source).body
-        if isinstance(node, ast.Assign)
-        and any(
-            isinstance(target, ast.Name) and target.id == "AS_HANDED_OVER"
-            for target in node.targets
-        )
-    ]
-    digests = ast.literal_eval(assignment.value)
-    assert isinstance(digests, dict)
-    return digests
-
-
-def test_the_hashed_repository_is_the_repository_that_is_checked_in() -> None:
-    """The claim that grading test's own docstring makes about this suite.
-
-    It hashes the starting repository so that a fault-location run which edited
-    the code grades unresolved. Digests are generated rather than typed, and
-    nothing re-derives them: a later edit to `repo/` would leave the task
-    lint-clean and the reference solution resolving, while grading *every* real
-    run unresolved — the same silent failure the loader's stdlib-name rule
-    exists to prevent. So the table is checked against the tree here, both ways
-    round: every file it names is what it says it is, and no file of the
-    starting repository is missing from it.
-    """
-    repo = task_by_id(FAULT_LOCATION).repo_dir
-    digests = as_handed_over()
-
-    assert set(digests) == {path.name for path in repo.iterdir() if path.is_file()}
-    assert digests == {
-        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-        for path in sorted(repo.iterdir())
-        if path.is_file()
-    }
 
 
 def test_a_correct_answer_that_also_repaired_the_code_is_unresolved() -> None:

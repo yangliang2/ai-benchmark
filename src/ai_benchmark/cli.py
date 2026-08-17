@@ -144,7 +144,21 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
 
 
 def _lint_v1_command(args: argparse.Namespace) -> None:
+    """Check the task set's authoring invariants, and optionally regenerate
+    the one artifact of a task that is generated rather than authored.
+
+    `--write-hash-gates` writes each keyed task's hash gate from its `repo/`
+    bytes before the lint reads them back, which is the order that makes the
+    flag safe to run: the gates the flag just wrote are then held to the same
+    both-ways check as any other, so a corpus that regenerates into something
+    the lint refuses still exits non-zero.
+    """
     tasks = firstparty_v1.load_task_set(args.tasks)
+    if args.write_hash_gates:
+        written = firstparty_v1.write_hash_gates(tasks)
+        print(f"hash gates: {len(written)} rewritten")
+        for path in written:
+            print(f"  wrote {path}")
     if problems := firstparty_v1.lint_task_set(tasks):
         raise SystemExit("\n".join([f"error: {problem}" for problem in problems]))
     print(f"lint clean: {len(tasks)} task(s) in {args.tasks}")
@@ -362,6 +376,14 @@ def main(argv: list[str] | None = None) -> None:
         "running each task's grading tests on its pristine repository",
     )
     lint_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    lint_v1.add_argument(
+        "--write-hash-gates",
+        action="store_true",
+        help="before linting, (re)generate every keyed task's held-out "
+        f"{firstparty_v1.HASH_GATE_FILE} from that task's repo/ bytes — the "
+        "digests are generated and never typed, and re-running this on an "
+        "unchanged corpus writes nothing, so its result is reviewable in a diff",
+    )
     lint_v1.set_defaults(command=_lint_v1_command)
 
     reconcile_v1_parser = subcommands.add_parser(

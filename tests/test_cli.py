@@ -285,6 +285,57 @@ def test_lint_v1_exits_non_zero_on_a_broken_task(tmp_path: Path) -> None:
         main(["lint-v1", "--tasks", str(tmp_path)])
 
 
+def test_lint_v1_write_hash_gates_regenerates_a_stale_gate_and_then_lints(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The generator lives in the CLI now (#67), and it runs *before* the lint
+    reads the gates back — so one command repairs a keyed task whose `repo/`
+    was edited after its gate was written, and the same command then holds the
+    repaired gate to the check every other one is held to.
+
+    Copied into a tmp corpus rather than run over the checked-in one, because
+    the point of the flag is that it writes files.
+    """
+    seed = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    task_id = "paperround-locate-the-carried-over-count"
+    task_dir = tmp_path / task_id
+    shutil.copytree(seed / task_id, task_dir)
+    gate = task_dir / "grading" / firstparty_v1.HASH_GATE_FILE
+    stale = gate.read_bytes()
+    edited = task_dir / "repo" / "README.md"
+    edited.write_text(edited.read_text() + "\n(a later note.)\n")
+
+    with pytest.raises(SystemExit, match="README.md"):
+        main(["lint-v1", "--tasks", str(tmp_path)])
+
+    main(["lint-v1", "--write-hash-gates", "--tasks", str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert "hash gates: 1 rewritten" in out
+    assert str(gate) in out
+    assert gate.read_bytes() != stale
+    assert gate.read_bytes() == firstparty_v1.hash_gate_source(task_dir / "repo")
+    assert "lint clean: 1 task(s)" in out
+
+
+def test_lint_v1_write_hash_gates_over_an_unchanged_task_writes_nothing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Re-running the generator is a no-op, which is what makes it safe to run
+    and its result reviewable in a diff."""
+    seed = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    task_id = "paperround-locate-the-carried-over-count"
+    shutil.copytree(seed / task_id, tmp_path / task_id)
+    before = (tmp_path / task_id / "grading" / firstparty_v1.HASH_GATE_FILE).read_bytes()
+
+    main(["lint-v1", "--write-hash-gates", "--tasks", str(tmp_path)])
+
+    assert "hash gates: 0 rewritten" in capsys.readouterr().out
+    assert (
+        tmp_path / task_id / "grading" / firstparty_v1.HASH_GATE_FILE
+    ).read_bytes() == before
+
+
 def test_lint_v1_exits_non_zero_on_an_effort_claim_with_no_comparator(
     tmp_path: Path,
 ) -> None:
