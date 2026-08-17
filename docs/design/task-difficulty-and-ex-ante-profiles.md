@@ -3984,7 +3984,7 @@ which verdict-forgery classes are closed). Two costs to name at the grill:
   round-3/4 readings transfer, before authoring new scenarios in it.
 
 §34.5's discipline applies verbatim: one language proves the runner. The
-leading candidate is TypeScript (opens the `frontend-ui` surface, mature
+leading candidate is TypeScript (opens the `frontend` surface, mature
 tooling, a public multi-language benchmark to read against); Go is the cheap
 alternative (single-binary toolchain, easiest hermeticity).
 
@@ -4040,6 +4040,165 @@ ported handful before anything is authored fresh.
 4. Round 6's calibration bar for the subjective grader (agreement with the
    held-out verdict on archived free text) — the number decides whether heap
    3 takes part in round 7's widening at all.
+
+## Rounds 5–7 rulings — 2026-08-17
+
+§§43–44 were put through `/grill-with-docs` on 2026-08-17. Fifteen decisions,
+taken one at a time in dependency order; where a ruling reverses a §43/§44
+recommendation the reversal is stated. This section still authors nothing:
+it is the input to `/to-spec`, which files one spec per round.
+
+### 45. What rounds 5, 6 and 7 are
+
+**45.1 The arc is re-ordered: widen before the subjective grader.** §44.1's
+linear R5 → R6 (heap 3) → R7 (widen) assumed widening waits on every grader.
+It does not — widening covers heaps 1–2 only, and heap 3 stays on Python
+until its grader is trusted. Ruling: **round 5 = heap 2; round 6 = the agent
+round (45.13); round 7 = the widening round; round 8 is not ruled** (45.15).
+Two consequences: the heap-3 grader gains two more rounds of free-text
+archive to be calibrated against, and the hermeticity question loses the
+buffer round it had — 45.8 answers it instead of #15.
+
+**45.2 Round 5's scope is `review a diff` plus locate-style comprehension,
+and its one instrument is the set-shaped answer key.** Locate-style
+comprehension ("where is X handled") is a (file, symbol) answer with no
+defect behind it: it reuses the fault-location key, `_answer.py`, lint and
+hash gate verbatim and rides at zero mechanism cost (~4 tasks). Review-a-diff
+is the new shape — a **findings key** whose accepted and rejected halves are
+*sets* — and is the round's instrument (~8 tasks). About twelve tasks, in
+round 4's cost band.
+
+**45.3 A review-a-diff verdict is recall over the planted findings, guarded
+by rejected findings.** `resolved` iff every **planted finding** in the key
+is matched by some answer *and* no answer matches a rejected finding.
+Unregistered extra findings are archived and not scored — a real problem the
+author did not plant must not fail the run, and every-line-is-a-finding
+fails on the rejected half. The lint requires at least one rejected finding
+per task, as it does for fault-location; the verdict stays binary — partial
+recall is not a score, because a partial score would be a new quality
+metric.
+
+**45.4 §36's pairing convention becomes a rule with three registered forms.**
+Every planted truth in a plant-and-check task needs a mechanical **existence
+proof**, and the form is registered per action: fault-location's is the
+partner bug-fix member's mandatory pristine failure (unchanged);
+review-a-diff's is a held-out test shipped per planted finding that **fails
+on the repository with the reviewed diff applied and passes on the author's
+corrected version**, run by the lint and never by grading; locate-style
+comprehension's is that the accepted (file, symbol) resolves in the starting
+repository. §44's alternative — a bug-fix partner per finding — was rejected
+as N partners nobody runs; "author attests" was rejected as the convention it
+already is.
+
+**45.5 `surface` is declared once, mechanically, and round 5 does not
+spread it.** All 101 existing tasks are stdlib Python libraries and CLIs and
+are declared `application` in one commit; from then on the lint requires a
+first-party task to declare `surface` explicitly (`unknown` stays legal only
+for ingested records). §44.4's "round 5 spreads its tasks across surfaces"
+is **withdrawn**: under a pytest grader `frontend` is unauthorable and
+`infrastructure` is contrived, and a task written to occupy a coordinate is a
+bad task. Surface diversity is the widening round's, and only once 45.11's
+condition is met.
+
+**45.6 The terrain assertions become task-set lint, with a declared waiver.**
+Three rules, over every task that carries an answer key: the prompt names no
+accepted or rejected file or symbol; no prompt content word narrows to the
+accepted module alone; an accepted class-level answer requires the file to
+define more than one class. Per-task tests stop copying them. False positives
+are handled by a per-task `terrain_waiver:` carrying a reason, never by
+loosening the rule. The hash-gate digests move from the uncommitted
+`.qap/regen_hashes.py` into the CLI, discovering locate-style tasks from
+their keys rather than a hand-kept tuple; the script retires.
+
+**45.7 Round 5 carries §33 candidate 8 and nothing else from the knob line.**
+`pysm-work-out-a-way-there` × sonnet is swept, one cell, under the 600 s now
+registered, and read with §29.4's cross-round caveat. Candidates 3 and 7 stay
+parked: their question — does a reading survive a change of substrate — will
+be asked in a stronger form when the corpus changes language, and is
+re-weighed after that. The taxonomy ADR #46 owed is written in round 5.
+
+**45.8 The widening round's first language is TypeScript on `node:test`, and
+"stdlib-only runner" is the entry condition for every language.** Node 22
+ships `node:test`, a JUnit reporter and default type-stripping, so a
+TypeScript task can be authored and graded with no `node_modules` at all —
+the same hermetic footing the Python corpus has had since round 1, the same
+verdict shape (JUnit XML), and the same held-out-overrides-visible mechanics.
+That removes the hermeticity cost that made Go attractive; Go remains the
+alternative if a second language is wanted. The **stdlib-only rule** — a
+**language runner** is admitted only if a task in that language can be graded
+with the language's own toolchain and nothing installed — is what keeps #15
+unscheduled. This is the second ADR the arc owes (45.16).
+
+**45.9 TypeScript tasks are authored fresh; nothing is ported.** §44.2's
+"port a handful first" was put and declined: a ported batch by itself buys a
+transfer reading the owner does not want and no coverage. The cost is
+recorded as a known forfeit — the runner's first paid outing confounds new
+language with new scenario, and no cross-language transfer reading exists —
+and the runner's credibility rests on the free instruments round 4 used:
+lint-constructed negatives through the real pipeline, the reference-solution
+gate, replay.
+
+**45.10 The coverage grid is `category × surface × language`; acceptance is a
+spec target; the lint prints, it does not steer.** `scale` is derived and
+`substrate` is nearly all hand-authored, so both are disclosed, not gridded.
+The widening spec names its target cells (as many tasks per action ×
+`typescript` as it commits to); `ai-bench lint-v1` gains a **coverage
+table** so the figure is read, not remembered. §44.3's per-task rule — a new
+task must land in an under-populated cell — is **withdrawn**: coverage is a
+round's goal, not a task's property, and the rule would tax every later
+round that wants depth.
+
+**45.11 TypeScript tasks are all `application`; `frontend` is deferred behind
+its own ruling.** Node has no DOM; jsdom is a dependency; a browser is a
+different runner. So `frontend` cannot be opened under 45.8 this round, and
+declaring DOM-free UI logic as `frontend` was rejected as misnaming the
+glossary's "where the work happens". Differentiation in the widening round
+comes from **language and scenario type** — `node:http` services,
+async/event flow, streams, CLI and filesystem tools, none of which the Python
+corpus has — with `surface` unmoved. Opening `frontend` (a vendored jsdom as
+substrate? a browser runner?) is a separate ruling.
+
+**45.12 The widening round covers the actions that already have graders, and
+`test-authoring` is a registered empty cell.** TypeScript gets bug-fix +
+fault-location pairs, feature-dev, refactor and code-review, two to three
+each, ~12–14 tasks. `test-authoring` — the only heap-1 action with zero
+tasks in *any* language — needs a mutation gate (the agent's suite must pass
+on the starting repository and fail on each planted mutant), a new verdict
+shape, and does not ride on the language runner. It appears in the coverage
+table as 0 and queues for round 8 (45.15).
+
+**45.13 Round 6 is the agent round: a Codex adapter, no new tasks.** The
+owner's "read Codex too" is, in this glossary, a second **agent**, not a
+third model — `combination = agent × model`, and harness-versus-model
+attribution is what §34.1 kept for the first-party layer. `codex-cli` is
+installed and `codex exec --json` yields a headless event stream. The
+adapter is a real instrument (invocation, event parsing to turns/tokens,
+version capture, the permission-denial equivalent, the run-time limit) and
+gets its own round so it is not confounded with the language runner. Scope:
+round 4's twelve tasks plus a per-category sample, ~30 cells, one OpenAI
+model (named at spec time; default the CLI's default), **$5–10 stated in
+advance**; the whole-corpus sweep is decided on that reading. From round 7
+on, Codex is a second column.
+
+**45.14 Codex cost is table-derived and says so.** Codex reports tokens, not
+dollars. `cost_usd` is computed from a checked-in, as-of-dated **price
+table**, whose version rides in the run log beside `agent_version`; the run
+carries a **cost source** field, `vendor-reported` (claude-code's
+`total_cost_usd`) or `table-derived`, so cross-agent cost readings disclose
+that the two numbers were obtained differently. Replay never recomputes cost.
+
+**45.15 The arc is ruled to round 7; round 8 is chosen after the widening
+record.** Two candidates queue: the heap-3 subjective grader (§34.3, now
+with three rounds of archive) and the `test-authoring` mutation gate
+(45.12). Their order, and the grader's calibration bar, are set on the
+widening round's record rather than today.
+
+**45.16 Models, sampling, budget.** The two-model ladder stands through the
+arc; repeat sampling stays parked (a whole-corpus sampling round, once the
+corpus's shape settles, is cleaner than adding n per round). Rounds 5 and 6
+sit in round 4's ~$0.14/cell band; the widening round's range is stated in
+its spec from round 6's per-cell figure. ADRs owed: the taxonomy change (#46,
+round 5) and the stdlib-only runner rule (round 7's spec).
 
 ## Open questions (superseded list resolved 2026-08-05)
 
