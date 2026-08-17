@@ -36,13 +36,12 @@ the same things no other suite can:
 - **What the key accepts and refuses on this task's own terrain**: both
   description levels the author wrote down resolve, and every other symbol of
   the defective file does not.
-- **The terrain leaves the locating to be done.** The defective module defines
-  more than the defective class *and more than one class*, so the accepted
-  class-level answer says strictly less than the filename it would otherwise
-  restate (36.6); a mutable default is a shape a grep finds in one pass, so the
-  repository holds six more of them and every one is correct; and the contract
-  the defect breaks is written a file's length away from the line that breaks
-  it.
+- **The terrain leaves the locating to be done**, the half of it the task-set
+  lint cannot see: a mutable default is a shape a grep finds in one pass, so
+  the repository holds six more of them and every one is correct; and the
+  contract the defect breaks is written a file's length away from the line
+  that breaks it. The class-level answer and the prompt's vocabulary are the
+  task-set lint's terrain rules now (#65).
 - **This batch's own held-out gate**, which #52's tasks did not carry: the
   fault-location member hashes the repository it handed over and grades a run
   that edited any of it unresolved, so an agent cannot do the fix work and
@@ -50,9 +49,9 @@ the same things no other suite can:
   describe the checked-in tree — the grading test's own docstring says the
   task's suite does — and now something does.
 
-Where this terrain falls short of #52's, the shortfall is pinned rather than
-asserted away: see `KNOWN_PROMPT_BAIT` and the vocabulary test below, reported
-as a finding on #59.
+Where this terrain falls short of #52's, the shortfall is a declared
+`terrain_waiver` on `paperround-locate-the-carried-over-count` rather than
+asserted away, reported as a finding on #59.
 
 The rest is what every checked-in task has to prove — lints clean, reference
 solution grades resolved, the empty diff grades unresolved — all through the
@@ -61,7 +60,6 @@ same execution-verified pipeline real runs go through.
 
 import ast
 import json
-import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -128,27 +126,6 @@ def repo_source(file: str) -> str:
     return (task_by_id(FAULT_LOCATION).repo_dir / file).read_text(encoding="utf-8")
 
 
-def top_level_symbols(source: str) -> set[str]:
-    """What a module defines at its top level — the level a filename names."""
-    defined = set()
-    for node in ast.parse(source).body:
-        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-            defined.add(node.name)
-        elif isinstance(node, ast.Assign):
-            defined.update(
-                target.id for target in node.targets if isinstance(target, ast.Name)
-            )
-    return defined
-
-
-def classes(source: str) -> set[str]:
-    """The classes a module defines at its top level — the level an accepted
-    answer naming a class is answering at."""
-    return {
-        node.name for node in ast.parse(source).body if isinstance(node, ast.ClassDef)
-    }
-
-
 def function(source: str, symbol: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
     """The `def` a bare name or a `Class.method` spelling names."""
     enclosing, _, name = symbol.rpartition(".")
@@ -167,13 +144,6 @@ def function(source: str, symbol: str) -> ast.FunctionDef | ast.AsyncFunctionDef
         and node.name == name
     ]
     return found
-
-
-def symbol_lines(source: str, symbol: str) -> range:
-    """The line numbers a symbol occupies, its `def` line included."""
-    found = function(source, symbol)
-    assert found.end_lineno is not None
-    return range(found.lineno, found.end_lineno + 1)
 
 
 def functions(source: str) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
@@ -419,174 +389,6 @@ def test_both_prompts_state_the_intended_behaviour() -> None:
 
 
 # --- the terrain leaves the locating to be done --------------------------------
-
-
-def test_the_defective_module_holds_more_than_the_defective_class() -> None:
-    """`{"file": "tallying.py", "symbol": "Slate"}` is an accepted answer, so it
-    has to say strictly less than the filename does.
-
-    36.6 refuses an accepted answer naming a file with no symbol, because on a
-    repository this small a bare filename is barely a location. A module whose
-    only top-level symbol is the accepted class defeats that by the back door:
-    the class level *is* the file level, and an agent that grepped its way into
-    the file and named the class without reading the method would resolve. So
-    what a bundle is, what some bundles add up to and the count a street starts
-    at live beside `Slate` at the top level of the same module, and naming the
-    class rules out three siblings.
-    """
-    top_level = top_level_symbols(repo_source(DEFECTIVE_FILE))
-
-    assert top_level == {"NOTHING_YET", "Bundle", "added_up", "Slate"}
-    assert len(top_level) > 1
-
-
-def test_an_accepted_class_is_chosen_from_several_and_not_the_only_one() -> None:
-    """The same back door, one gap narrower — and the gap the top-level count
-    above does not close.
-
-    An agent electing to answer at class level answers with the class, and if
-    the module defines exactly one, that answer is determined by the filename
-    alone: one grep to the file, the only class there, resolved, with the
-    defective method never read. So wherever the key accepts a class, that
-    class is one of at least two the file defines — `Bundle`, which is what a
-    street's papers tied together comes to, is as plausible a home for another
-    day's papers turning up as `Slate` is, and telling them apart takes reading
-    both.
-    """
-    key = answer_key(task_by_id(FAULT_LOCATION))
-
-    named_at_class_level = [
-        answer for answer in key.accepted
-        if answer.symbol in classes(repo_source(answer.file))
-    ]
-
-    assert named_at_class_level, "the key is expected to accept the enclosing class"
-    for answer in named_at_class_level:
-        defined = classes(repo_source(answer.file))
-        assert len(defined) > 1, f"{answer.file} defines only {answer.symbol}"
-    assert classes(repo_source(DEFECTIVE_FILE)) == {"Bundle", "Slate"}
-
-
-# The words a prompt cannot be blamed for sharing with the repository: the
-# closed-class words English sentences are built out of, and the domain nouns a
-# prompt about a paper round and a repository about a paper round have no way
-# not to both use. Everything else either prompt says is distinctive — and
-# distinctive vocabulary is grep bait.
-FUNCTION_WORDS = frozenset("""
-    a about after all also an and any are as at be been being both but by can
-    could did do does each either few for from get given goes had has have he
-    her his how i if in into is it its just like made make many may me might
-    more most much must my no nor not now of off on once one only or other our
-    out over own per same she should since so some such than that the their
-    them then there these they this those through to too under until up us
-    very was we well were what when where whether which while who whom why
-    will with within would you your s t
-""".split())
-DOMAIN_NOUNS = frozenset(
-    "shop newsagent paper papers walk walks round rounds street streets house "
-    "houses title titles bag bags morning".split()
-)
-UNREVEALING = FUNCTION_WORDS | DOMAIN_NOUNS
-
-# **A finding, reported on #59 rather than asserted away.** #52's terrain holds
-# that no distinctive prompt term selects the defective module alone: the ferry
-# repository states its contract in deliberately different words from the
-# prompt's, so reading the prompt is not one grep away from the defective file.
-# This repository nearly holds to that and not quite. The prompt says the shop
-# "means to answer every ask on its own"; `tallying.py`'s module docstring says
-# "Every ask is worked out on a clean slate", and *ask* in that sense appears in
-# no other module — so grepping the prompt's own noun for the thing that went
-# wrong lands in the defective file. ("already" is the same collision by
-# accident rather than by paraphrase: the fix prompt's "everything the
-# repository's own tests already say" has nothing to do with `tallying.py`'s "a
-# count already begun".)
-#
-# What it does *not* do is name the defective symbol: both terms land in the
-# module docstring or in a sibling, so the symbol-level assertion below — the
-# half that decides a fault-location verdict, since a bare filename is not an
-# accepted answer — passes outright. The bait is pinned to its exact current
-# set instead: this cannot get worse without turning red, and the terrain cost
-# is written down where the next author reads it.
-KNOWN_PROMPT_BAIT = frozenset({"already", "ask", "every ask"})
-
-
-def prompt_terms() -> set[str]:
-    """The distinctive vocabulary of the two prompts.
-
-    Every content word, and every adjacent pair of words at least one of which
-    is a content word — a pair as well as a word because "every ask" and "left
-    over" narrow as hard as any single word does and neither half of either
-    narrows on its own.
-    """
-    terms: set[str] = set()
-    for task_id in MEMBERS:
-        words = re.findall(r"[a-z]+", task_by_id(task_id).prompt.lower())
-        terms |= {word for word in words if word not in UNREVEALING}
-        terms |= {
-            f"{first} {second}"
-            for first, second in zip(words, words[1:], strict=False)
-            if not (first in UNREVEALING and second in UNREVEALING)
-        }
-    return terms
-
-
-def repo_lines() -> list[tuple[str, str, int, str]]:
-    """Every line of the repository's code, as (module, file, number, text).
-
-    A test file counts as part of the module it tests, because
-    `test_tallying.py` points at `tallying.py` as surely as `tallying.py` does.
-    `README.md` counts as no module at all: it is the index that names every
-    module, so a word found only there has selected the whole repository rather
-    than one file — which is why the README cannot rescue a word that otherwise
-    narrows.
-    """
-    lines = []
-    for path in sorted(task_by_id(FAULT_LOCATION).repo_dir.glob("*.py")):
-        module = path.stem.removeprefix("test_")
-        for number, text in enumerate(
-            path.read_text(encoding="utf-8").splitlines(), start=1
-        ):
-            lines.append((module, path.name, number, text.lower()))
-    return lines
-
-
-def test_no_distinctive_prompt_word_narrows_to_the_defective_symbol() -> None:
-    """The prompts must not be greppable into the answer.
-
-    Two ways a term can narrow: selecting the defective module and no other,
-    and — inside that module — selecting the defective symbol and nothing else.
-    The second is refused outright. The first is pinned to the set it is
-    already at, and reported as a finding: see `KNOWN_PROMPT_BAIT` above.
-
-    Matched on word boundaries rather than as substrings, which is where this
-    departs from #52's version of the same test: substring matching reads
-    "night" as narrowing to a symbol whose docstring says "tonight", which is an
-    artifact of the matcher and not a path any solver could walk.
-    """
-    lines = repo_lines()
-    defect = symbol_lines(repo_source(DEFECTIVE_FILE), DEFECTIVE_SYMBOL)
-
-    to_the_module: dict[str, list[str]] = {}
-    to_the_symbol: dict[str, list[str]] = {}
-    for term in sorted(prompt_terms()):
-        pattern = re.compile(rf"\b{re.escape(term)}\b")
-        found = [line for line in lines if pattern.search(line[3])]
-        if not found:
-            continue
-        where = [f"{file}:{number}" for _, file, number, _ in found]
-        if {module for module, *_ in found} == {DEFECTIVE_FILE.removesuffix(".py")}:
-            to_the_module[term] = where
-        in_module = [line for line in found if line[1] == DEFECTIVE_FILE]
-        if in_module and all(number in defect for *_, number, _ in in_module):
-            to_the_symbol[term] = where
-
-    assert to_the_symbol == {}, (
-        f"prompt words selecting {DEFECTIVE_SYMBOL} alone: {to_the_symbol}"
-    )
-    assert set(to_the_module) == KNOWN_PROMPT_BAIT, (
-        "the prompt vocabulary reaching only the defective module has moved: "
-        f"{sorted(set(to_the_module) ^ KNOWN_PROMPT_BAIT)}"
-    )
 
 
 def mutable_defaults() -> set[tuple[str, str, str]]:
