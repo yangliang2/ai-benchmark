@@ -48,15 +48,17 @@ declare nothing: a control is declared and never inferred from an absence,
 which is what the frozen set was frozen to protect.
 
 A task whose deliverable is prose rather than a code change is graded through
-that same pipeline and adds no seam to it. A fault-location task asks the agent
-to write a structured answer file into the workdir; it lands in the workdir
-diff like anything else the agent wrote, and a held-out grading test reads it
-back and compares it against the accepted-answer key shipped beside that test
-in `grading/`. So the verdict stays execution-verified rather than
-pattern-verified — the run log still stores the agent's final message and the
-verdict still never reads it — and the ground truth is a set of accepted (file,
-symbol) pairs, never a line number, because lines shift under any edit and two
-equally correct answers land on different ones.
+that same pipeline and adds no seam to it. A fault-location task — and the
+locate-style form of a codebase-comprehension one, which rides all of this
+verbatim (`_KEYED_CATEGORIES`) — asks the agent to write a structured answer
+file into the workdir; it lands in the workdir diff like anything else the
+agent wrote, and a held-out grading test reads it back and compares it against
+the accepted-answer key shipped beside that test in `grading/`. So the verdict
+stays execution-verified rather than pattern-verified — the run log still
+stores the agent's final message and the verdict still never reads it — and the
+ground truth is a set of accepted (file, symbol) pairs, never a line number,
+because lines shift under any edit and two equally correct answers land on
+different ones.
 
 What that action does *not* inherit is the gate that protects a code task. A
 pristine repository carries no answer file, so the must-fail-on-pristine
@@ -71,7 +73,10 @@ copied identically into every such task and read back byte for byte. Whether
 there is a defect to find at all is answered by the paired `bug-fix` member,
 whose held-out tests must fail on the same pristine repository; that pairing
 is a convention rather than a checked relation, so a fault-location task
-authored alone has no proof there is anything in it to find.
+authored alone has no proof there is anything in it to find. A locate-style
+comprehension task needs no such partner: it has no defect behind it, and what
+its accepted answer has to be is a location that resolves in the starting
+repository — which the key's own rules already check.
 
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
@@ -141,20 +146,21 @@ TASK_SPEC = "task.yaml"
 REPO_DIR = "repo"
 GRADING_DIR = "grading"
 
-# The accepted-answer key of a fault-location task, inside GRADING_DIR: held
-# out with the grading tests, reaching the workdir by the overlay that copies
-# that directory wholesale, and never collected, because collection globs test
-# files only.
+# The accepted-answer key of a fault-location or codebase-comprehension task,
+# inside GRADING_DIR: held out with the grading tests, reaching the workdir by
+# the overlay that copies that directory wholesale, and never collected,
+# because collection globs test files only.
 ANSWER_KEY_FILE = "accepted-answer.json"
 
 # The answer comparison, inside GRADING_DIR beside the key and reaching the
 # workdir the same way: `ai_benchmark._answer`, shipped byte for byte into
-# every fault-location task. Owned rather than hand-written per task because
-# the half of the verdict that discriminates is the half worth not miscopying.
+# every task of both actions below. Owned rather than hand-written per task
+# because the half of the verdict that discriminates is the half worth not
+# miscopying.
 ANSWER_MODULE = "_answer.py"
 
 # The held-out grading test that reads the answer comparison, shipped the same
-# way and for the same reason: byte for byte into every fault-location task,
+# way and for the same reason: byte for byte into every task of both actions,
 # so that nothing binds a task's *grading test* to `_answer.py` except that it
 # is the very test this project owns, rather than a hand-written assertion
 # that quietly stops calling `answer_problem()` while still shipping an
@@ -163,6 +169,43 @@ ANSWER_MODULE = "_answer.py"
 # so an extra test can only make a task harder to resolve, never let a wrong
 # answer through, and nothing here should be tightened into a ban on that.
 ANSWER_TEST_FILE = "test_answer.py"
+
+# The two actions whose deliverable is an answer file rather than a code
+# change, and so the only two that may ship an accepted-answer key (design
+# note §45.2). Said once here, because it is the one thing about them worth
+# not restating per gate:
+#
+# What they *share* is everything mechanical, verbatim — the key's shape, its
+# forgiveness in `_answer.py`, the held-out grading test above, every lint
+# rule that reads or runs the key, and the hash gate. There is no new file and
+# no new field for the second action.
+#
+# What they do *not* share is the meaning of each half of the key. For
+# `fault-location` the accepted set names where a planted defect lives, and
+# the rejected set names the plausible wrong file the symptom points at. For
+# `codebase-comprehension` — the locate-style form, "where is X handled", with
+# no defect behind it — the accepted set names where correct code lives, and
+# the rejected set names the plausible wrong place a related but different
+# behaviour lives. That is a shift in what the author writes down, not in what
+# is checked: the rejected-half rules (non-empty; names a file the accepted
+# set does not already name; not the lint's own synthesised near-miss) apply
+# to a comprehension key exactly as written, and are not softened for it.
+#
+# Which tasks of each action carry a key is where the two differ again. Every
+# `fault-location` task does: the location *is* the deliverable, so a task of
+# that action with no key has no ground truth at all and the loader refuses
+# it. Only *some* `codebase-comprehension` tasks do — carrying a key is what
+# makes one locate-style, while an explain-this-module task of the same
+# category is graded by its own held-out tests and keys nothing. So this set
+# is read at load, to say which actions may ship a key and which must; every
+# gate after that reads `is_keyed()`, the key on disk, and never a category
+# (design note §45.6: locate-style tasks are discovered from their keys, never
+# from a hand-kept list). The two are named apart rather than only listed, so
+# that the loader can say which of the two rules it is applying, and so that a
+# typo in either is a type error rather than a category nothing matches.
+_KEY_REQUIRED_CATEGORY: TaskCategory = "fault-location"
+_KEY_OPTIONAL_CATEGORY: TaskCategory = "codebase-comprehension"
+_KEYED_CATEGORIES = frozenset({_KEY_REQUIRED_CATEGORY, _KEY_OPTIONAL_CATEGORY})
 
 # The workdir's ignore file belongs to the live runner (which writes and owns
 # it), so the loader refuses tasks that ship one of their own.
@@ -824,8 +867,11 @@ class Answer(BaseModel):
 
 
 class AnswerKey(BaseModel):
-    """A fault-location task's ground truth: where the agent writes its answer,
-    every location that answer may name, and the near-misses it may not.
+    """A keyed task's ground truth: where the agent writes its answer, every
+    location that answer may name, and the near-misses it may not. One shape
+    for both actions that carry one — see `_KEYED_CATEGORIES` for what
+    fault-location and locate-style codebase-comprehension share (all of this)
+    and what they do not (what each half *means*).
 
     The accepted set is the mitigation for this grading's one expensive
     assumption — that an agent which correctly locates a fault describes it at
@@ -841,7 +887,8 @@ class AnswerKey(BaseModel):
     which reads no key at all. The lint constructs four negatives itself and
     requires each to grade unresolved; what it cannot invent is the plausible
     wrong *file* — the caller of the defective function, the module that looks
-    responsible — and that is what the author writes here.
+    responsible, or the module a related but different behaviour lives in —
+    and that is what the author writes here.
 
     Either set may be empty as far as this model is concerned: the lint is
     where an empty one is refused, because a task that cannot load cannot be
@@ -877,13 +924,18 @@ def is_keyed(task: Task) -> bool:
     """Whether this task holds an answer to give away.
 
     One definition of "keyed", read by everything that applies a rule to the
-    keyed corpus rather than to a category: the terrain rules
-    (`_terrain_problems`) and the hash gate (`_hash_gate_problems`). Keyed on
-    the *key*, never on `category` and never on a hand-kept list of task ids:
-    `fault-location` is where the keys started, but a locate-style
+    keyed corpus: the key's own rules (`_answer_key_problems`), the held-out
+    grading test (`_answer_test_problems`), the discrimination gate the lint
+    runs through the real pipeline (`_discrimination_problems`), the terrain
+    rules (`_terrain_problems`) and the hash gate (`_hash_gate_problems`).
+    Keyed on the *key*, never on `category` and never on a hand-kept list of
+    task ids: `fault-location` is where the keys started, but a locate-style
     `codebase-comprehension` task is graded off the same file and is greppable
     in the same way, and a list would leave the seventh keyed task inheriting
     none of it.
+
+    The one place `category` is still read is the loader, which says which
+    actions may ship a key and which must ship one (`_KEYED_CATEGORIES`).
     """
     return (task.grading_dir / ANSWER_KEY_FILE).is_file()
 
@@ -921,8 +973,10 @@ def answer_key(task: Task) -> AnswerKey:
 
 
 def answer_module_source() -> bytes:
-    """The answer comparison, as every fault-location task's
-    `grading/_answer.py` has to be byte for byte.
+    """The answer comparison, as every keyed task's `grading/_answer.py` has to
+    be byte for byte — a fault-location task's and a locate-style
+    codebase-comprehension task's alike, since neither the comparison nor its
+    forgiveness differs between the two actions (`_KEYED_CATEGORIES`).
 
     The project's own module read off disk rather than a string constant, so
     that the shipped copies are compared against code mypy type-checks and the
@@ -959,9 +1013,12 @@ def test_the_answer_names_an_accepted_location():
 
 
 def answer_test_source() -> bytes:
-    """The held-out grading test, as every fault-location task's
+    """The held-out grading test, as every keyed task's
     `grading/test_answer.py` has to be byte for byte — see `ANSWER_TEST_FILE`
-    and `_ANSWER_TEST_SOURCE`."""
+    and `_ANSWER_TEST_SOURCE`. Its own text still says "fault-location",
+    because it is shipped bytes: rewording it would make the six checked-in
+    copies drift from their source, and the second action rides this file
+    unchanged, which is the point (`_KEYED_CATEGORIES`)."""
     return _ANSWER_TEST_SOURCE.encode("utf-8")
 
 
@@ -1166,13 +1223,30 @@ def _check_task_layout(task: Task) -> None:
             f"{task.id}: every grading test is a behaviour test, so nothing "
             "asserts that the restructuring happened"
         )
-    if task.category == "fault-location":
-        # The ground truth of a task whose deliverable is prose. Read here so
-        # that a key which is missing, unparseable, or written in line numbers
-        # fails at load rather than at the first paid run. The empty-accepted-
-        # set check is read here too, and not left to the lint alone: `ai-bench
-        # run-live` loads a task set but never lints it, so an unsolvable key
-        # would otherwise reach a paid run.
+    if is_keyed(task) and task.category not in _KEYED_CATEGORIES:
+        raise IngestError(
+            f"{task.id}: a {task.category} task ships {GRADING_DIR}/"
+            f"{ANSWER_KEY_FILE} — the accepted-answer key is the ground truth "
+            "of the two actions whose deliverable is an answer file rather "
+            f"than a code change ({', '.join(sorted(_KEYED_CATEGORIES))}), and "
+            "every rule that reads it is gated on the key being there, so a "
+            "key shipped by any other action would hold this task to the "
+            "terrain rules and the hash gate while its own grading never "
+            "consulted the key at all"
+        )
+    if is_keyed(task) or task.category == _KEY_REQUIRED_CATEGORY:
+        # The ground truth of a task whose deliverable is prose: where a
+        # fault-location task's defect lives, or where a locate-style
+        # codebase-comprehension task's asked-about behaviour lives. Read here
+        # so that a key which is missing, unparseable, or written in line
+        # numbers fails at load rather than at the first paid run — and read
+        # off the key on disk, plus the one action whose key is mandatory, so
+        # that a `fault-location` task shipping none is refused by
+        # `answer_key()` right here while a `codebase-comprehension` task
+        # shipping none is simply not the locate-style form. The empty-
+        # accepted-set check is read here too, and not left to the lint alone:
+        # `ai-bench run-live` loads a task set but never lints it, so an
+        # unsolvable key would otherwise reach a paid run.
         key = answer_key(task)
         if not key.accepted:
             raise IngestError(_empty_accepted_set_message(task))
@@ -1419,9 +1493,12 @@ def lint_task_set(
     already fail can never be solved. Both are cheap to catch here and
     expensive to discover in the middle of a paid sweep.
 
-    A fault-location task is run against more than the pristine repository,
-    because for that action the pristine run proves nothing — see
-    `_discrimination_problems`.
+    A task carrying an accepted-answer key — a fault-location task, or the
+    locate-style form of a codebase-comprehension one (`_KEYED_CATEGORIES`) —
+    is run against more than the pristine repository, because for those
+    actions the pristine run proves nothing: see `_discrimination_problems`.
+    Every gate here reads the key on disk (`is_keyed`) rather than the
+    category, so the second action inherited all of it unchanged.
 
     A task carrying an accepted-answer key is held to the three terrain rules
     as well (`_terrain_problems`): whether it gives its own answer away is an
@@ -1461,7 +1538,7 @@ def lint_task_set(
         # gate hashes the pristine repository, so running the grading tests on
         # that repository is the one thing that can never fail it.
         problems.extend(_hash_gate_problems(task))
-        if task.category == "fault-location" and not key_problems:
+        if is_keyed(task) and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
             # a key that names a file the repository does not hold has nothing
@@ -1565,7 +1642,13 @@ def construction_problems(task: Task) -> list[str]:
 
 
 def _answer_key_problems(task: Task) -> list[str]:
-    """What is wrong with a fault-location task's accepted-answer key.
+    """What is wrong with a keyed task's accepted-answer key.
+
+    Gated on the key being on disk rather than on the category, so it reads a
+    locate-style `codebase-comprehension` key by exactly these rules and not a
+    softened set of them (`_KEYED_CATEGORIES` says what the two actions do and
+    do not share). A `fault-location` task shipping no key never reaches here:
+    the loader refuses it.
 
     Read rather than run, and for the reason every other read invariant is
     here: none of it is repairable once the sweep is paid for, and each defect
@@ -1595,7 +1678,7 @@ def _answer_key_problems(task: Task) -> list[str]:
     What is *not* here is the half that has to be run rather than read: see
     `_discrimination_problems`, which the lint runs once this returns nothing.
     """
-    if task.category != "fault-location":
+    if not is_keyed(task):
         return []
     key = answer_key(task)
     problems = []
@@ -1604,19 +1687,24 @@ def _answer_key_problems(task: Task) -> list[str]:
     if not key.rejected:
         problems.append(
             f"{task.id}: the accepted-answer key declares no rejected answers — "
-            "must-fail-on-pristine proves nothing about a fault-location task, "
-            "because a pristine repository carries no answer file at all, so "
+            "must-fail-on-pristine proves nothing about a keyed task, because "
+            "a pristine repository carries no answer file at all, so "
             "the near-miss the lint cannot invent is what stands between this "
             "task and a grading test that would resolve anything: name the "
-            "plausible wrong file, the caller of the defective function or the "
-            "module that looks responsible"
+            "plausible wrong file — the caller of the defective function or "
+            "the module that looks responsible where a defect is what is being "
+            "located, the module holding a related but different behaviour "
+            "where the question is where a behaviour is handled"
         )
     else:
         # `rejected` being non-empty is not the same as it saying anything:
         # §36.3 names the one negative the lint cannot invent as the
         # plausible wrong *file*, so a rejected set confined to files the
         # accepted set already names never supplies it, however many entries
-        # it carries. And a rejected answer that happens to equal the
+        # it carries. That holds for a comprehension key as written: only the
+        # meaning of "plausible wrong file" shifts, from the module the
+        # symptom points at to the module a related but different behaviour
+        # lives in. And a rejected answer that happens to equal the
         # near-miss the lint synthesises for itself spends the author's
         # judgement on a symbol the lint already checks for nothing, rather
         # than on the one thing only the author can supply.
@@ -1628,7 +1716,8 @@ def _answer_key_problems(task: Task) -> list[str]:
                 f"the accepted set ({rejected_files}) — the rejected set "
                 "exists for the near-miss the lint cannot invent, the "
                 "plausible wrong *file* (the caller of the defective "
-                "function, the module that looks responsible), and a "
+                "function, the module that looks responsible, or the module "
+                "a related but different behaviour lives in), and a "
                 "rejected answer confined to a file the accepted set "
                 "already names never supplies it"
             )
@@ -1724,14 +1813,15 @@ def _answer_module_problems(task: Task) -> list[str]:
     """Whether this task ships the answer comparison, unedited.
 
     The comparison is the half of the verdict that discriminates, so it is one
-    owned module copied identically into every fault-location task rather than
-    six hand-written ones — and the copies are read byte for byte against the
-    bytes this package itself owns (`answer_module_source()`). This is a
-    *stronger* check than the one the family lint runs on a family's starting
-    repositories and grading suites: the family lint compares each member's
-    tree against the alphabetically-first member's, peer to peer, because
-    that is the only source a family lint has — a lone fault-location task has
-    no sibling to compare against. Here there is a privileged source instead,
+    owned module copied identically into every task of both keyed actions
+    (fault-location and codebase-comprehension) rather than hand-written per
+    task — and the copies are read byte for byte against the bytes this
+    package itself owns (`answer_module_source()`). This is a *stronger* check
+    than the one the family lint runs on a family's starting repositories and
+    grading suites: the family lint compares each member's tree against the
+    alphabetically-first member's, peer to peer, because that is the only
+    source a family lint has — a lone keyed task has no sibling to compare
+    against. Here there is a privileged source instead,
     the package's own file, so drift is caught even on a task authored alone.
     A copy that forgave case, or stopped reading the symbol, would grade every
     task shipping it differently from every task that did not, with nothing
@@ -1753,8 +1843,8 @@ def _answer_module_problems(task: Task) -> list[str]:
         return [(
             f"{task.id}: {GRADING_DIR}/{ANSWER_MODULE} is not the answer "
             "comparison this project ships — it is one owned module copied "
-            "identically into every fault-location task, and a copy that has "
-            "drifted grades this task by rules no other task is graded by"
+            "identically into every keyed task, and a copy that has drifted "
+            "grades this task by rules no other task is graded by"
         )]
     return []
 
@@ -1779,12 +1869,12 @@ def _answer_test_problems(task: Task) -> list[str]:
     ban on other grading tests, only a requirement that this one is among
     them, unedited.
 
-    Applies only to fault-location tasks, and is not gated on
-    `_answer_key_problems`: unlike a broken key, a drifted copy of this file
-    says nothing about whether the *key* is sound, so it does not stop
-    `_discrimination_problems` from running (see `lint_task_set`).
+    Applies to every task carrying a key — both keyed actions — and is not
+    gated on `_answer_key_problems`: unlike a broken key, a drifted copy of
+    this file says nothing about whether the *key* is sound, so it does not
+    stop `_discrimination_problems` from running (see `lint_task_set`).
     """
-    if task.category != "fault-location":
+    if not is_keyed(task):
         return []
     shipped = task.grading_dir / ANSWER_TEST_FILE
     try:
@@ -1801,9 +1891,9 @@ def _answer_test_problems(task: Task) -> list[str]:
         return [(
             f"{task.id}: {GRADING_DIR}/{ANSWER_TEST_FILE} is not the held-out "
             "grading test this project ships — it is one owned file copied "
-            "identically into every fault-location task, so that its grading "
-            "test is always the one-line assertion over `answer_problem()` "
-            "that binds the verdict to `_answer.py`, and never a hand-written "
+            "identically into every keyed task, so that its grading test is "
+            "always the one-line assertion over `answer_problem()` that "
+            "binds the verdict to `_answer.py`, and never a hand-written "
             "test that quietly stops consulting it. A task may ship "
             "*additional* grading tests beside it — resolution requires "
             "every one of them to pass, so an extra test can only make the "
@@ -2397,11 +2487,11 @@ def _prompt_names_path(prompt: str, path: str) -> bool:
 
 
 def _empty_accepted_set_message(task: Task) -> str:
-    """What is wrong with a fault-location task whose accepted-answer key
-    accepts nothing, worded once so the loader and the lint say the same
-    thing: the loader has to refuse this too, because `ai-bench run-live`
-    loads a task set but never lints it, so an unsolvable key would otherwise
-    reach a paid run."""
+    """What is wrong with a keyed task whose accepted-answer key accepts
+    nothing, worded once so the loader and the lint say the same thing: the
+    loader has to refuse this too, because `ai-bench run-live` loads a task
+    set but never lints it, so an unsolvable key would otherwise reach a paid
+    run."""
     return (
         f"{task.id}: the accepted-answer key accepts no (file, symbol) pair "
         "— every answer would be graded wrong, and the task would be "
@@ -2436,9 +2526,9 @@ def _missing_answer_edit_target(key: AnswerKey) -> str:
 
 
 def _discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
-    """Whether this fault-location task's grading test tells a correct answer
-    from a wrong one — which is the half of the verdict must-fail-on-pristine
-    cannot reach.
+    """Whether this keyed task's grading test tells a correct answer from a
+    wrong one — which is the half of the verdict must-fail-on-pristine cannot
+    reach.
 
     A pristine repository carries no answer file, so the grading test fails
     there whatever it asserts and the invariant is unconditionally satisfied:
@@ -2465,7 +2555,11 @@ def _discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
     convention rather than a checked relation: the two members share a
     starting repository but are deliberately neither a task family nor a pair,
     so it holds only while both are authored together, and a fault-location
-    task authored alone has no proof there is anything in it to find.
+    task authored alone has no proof there is anything in it to find. A
+    locate-style `codebase-comprehension` task owes no such proof, having no
+    defect behind it: what has to exist there is the behaviour the question
+    asks after, and that its accepted answer resolves in the starting
+    repository is checked by `_answer_key_problems` (design note §45.4).
     """
     key = answer_key(task)
     problems: list[str] = []
