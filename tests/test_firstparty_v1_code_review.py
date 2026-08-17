@@ -1,5 +1,6 @@
-"""`code-review`: the set-shaped findings key and the verdict it decides
-(#69, design note §45.2-45.3).
+"""`code-review`: the set-shaped findings key, the verdict it decides, and the
+lint that refuses a review task which cannot measure anything (#69, #70, design
+note §45.2-45.3).
 
 The round's one new instrument. A review task hands the agent a change that is
 already applied to its starting repository, plus a unified diff of that change
@@ -22,11 +23,21 @@ credit.
 
 Everything here is proved on a **fixture** task built into tmp_path, the way
 `tests/test_firstparty_v1_fault_location.py` proves the mechanism it owns: no
-`code-review` task is authored here, and the lint rules over this key are a
-later ticket. The diffs are built with git by the shared task-test helper, the
-way the live runner builds one, and graded by `grade` — the same call replay
-grades a logged run through — so an answer file reaches the verdict exactly as
-an agent's would.
+`code-review` task is authored here. The diffs are built with git by the shared
+task-test helper, the way the live runner builds one, and graded by `grade` —
+the same call replay grades a logged run through — so an answer file reaches
+the verdict exactly as an agent's would.
+
+What #70 adds is the proof, before a paid run, that the held-out test
+discriminates. Must-fail-on-pristine cannot show it: a pristine repository
+carries no answer file, so the check is unconditionally satisfied and a grading
+test asking "did some finding match" passes it. So the lint reads the key
+against the change under review — the accepted set describes the change and not
+the repository at large — and then runs seven answers it expects to *fail*
+through the real pipeline, two of which are what a set verdict has to earn:
+every planted finding but one, and every planted finding plus a rejected one.
+The three terrain rules reach a review task here too, keyed on the task
+carrying a key rather than on which key it carries.
 """
 
 import json
@@ -50,6 +61,7 @@ from ai_benchmark.firstparty_v1 import (
     REVIEW_DIFF_FILE,
     Answer,
     Task,
+    _terrain_problems,
     answer_module_source,
     evaluate,
     findings_key,
@@ -136,6 +148,59 @@ class Rota:
         return theirs[-1] if theirs else None
 '''
 
+# Two modules the change under review does not touch. They are here for the
+# same reason `checkout.py`'s `Till` is in the fault-location fixture: the
+# terrain rules apply to a task carrying a findings key too, and the narrowing
+# rule holds every distinctive prompt word to appearing in more than the modules
+# the accepted findings name. "class" is a word the prompt has to use to say
+# what a symbol may be, and without a module outside the key defining one it
+# would appear in `shifts.py` and nowhere else.
+#
+# `people.py` is the one that carries classes and is never keyed by any test
+# here, so it is what keeps "class" harmless even in the tests that key
+# `swaps.py`. `swaps.py` is the untouched file those tests name, and holds no
+# class for exactly that reason.
+PEOPLE = '''\
+"""Everybody a week may be built out of."""
+
+
+class Person:
+    """One name on the books, and where to reach them."""
+
+    def __init__(self, name, contact):
+        self.name = name
+        self.contact = contact
+
+
+class Roster:
+    """The names, in the order they joined."""
+
+    def __init__(self, members):
+        self.members = list(members)
+
+    def named(self, name):
+        for member in self.members:
+            if member.name == name:
+                return member
+        return None
+'''
+
+SWAPS = '''\
+"""Handing a stretch over to somebody else."""
+
+
+def hand_over(rota, from_who, to_who):
+    """Give everything of one person's to another, in place."""
+    for shift in rota.shifts:
+        if shift.who == from_who:
+            shift.who = to_who
+
+
+def handed(rota, who):
+    """How many stretches this person was given by somebody else."""
+    return sum(1 for shift in rota.shifts if shift.who == who)
+'''
+
 # The corrected tree: the same repository with both planted defects put right.
 # It ships beside `repo/` and outside `grading/`, is read only by the lint, and
 # is what a held-out proof test per finding will be run against.
@@ -193,16 +258,21 @@ REVIEW_DIFF = '''\
          self.shifts.append(shift)
 '''
 
+# Written to the terrain rules, which reach a review task through its findings
+# key: it names no file and no symbol out of either half of the key, and its
+# distinctive vocabulary — everything that is neither a closed-class function
+# word nor a declared domain noun — appears in more than the modules the planted
+# findings live in, so no grep of the prompt's own words lands on a defect.
 PROMPT = f"""\
 {REVIEW_DIFF_FILE} in the repository root is a change that has already been
-applied to this repository: it pays people more for a long stretch of work, and
-refuses one taken on too soon after the last. Review it. Do not change any
-code.
+applied to this repository: it pays more for a long stretch of work, and
+refuses a shift that starts too soon after the last one. Review it, and do not
+edit any code.
 
 Write your findings to {ANSWER_PATH} in the repository root, as a JSON list
 with one object per finding: "file" (the path, relative to the repository
 root), "symbol" (the function, class or method the problem lives in) and,
-optionally, "note" (a sentence on what is wrong). Report every problem the
+optionally, "note" (a sentence on what is wrong). Report each problem the
 change introduced, and nothing that is not one.
 """
 
@@ -228,11 +298,174 @@ REJECTED: list[dict[str, object]] = [
 # the author did not plant — archived in the diff, ignored by the verdict.
 UNREGISTERED = ("payroll.py", "RATE_PENCE")
 
+# The nouns a prompt about a week of work and a repository about a week of work
+# cannot help sharing — the half of the "unrevealing vocabulary" split that is a
+# fact about this task's subject rather than about English, and so the half a
+# task declares for itself. Everything else the prompt says is distinctive, and
+# the narrowing terrain rule holds it to appearing in more than the modules the
+# planted findings live in.
 DOMAIN_NOUNS = [
-    "change", "hour", "hours", "pay", "rota", "shift", "stretch", "week", "work",
+    "change", "hour", "hours", "overtime", "pay", "rota", "shift", "stretch",
+    "week", "work",
 ]
 
 GRADING_TEST = findings_test_source().decode("utf-8")
+
+# An additional held-out test, of the kind a task may legitimately ship beside
+# the canonical one: resolution requires every grading test to pass, so this can
+# only make the task harder to resolve, never let a wrong review through.
+EXTRA_GRADING_TEST = f'''\
+"""An additional held-out test, beside the canonical one."""
+
+import json
+from pathlib import Path
+
+
+def test_the_findings_are_a_json_list():
+    findings = json.loads(
+        (Path.cwd() / "{ANSWER_PATH}").read_text(encoding="utf-8")
+    )
+    assert isinstance(findings, list)
+'''
+
+# The floor: a grading test that reads nothing and asserts nothing. It fails
+# must-fail-on-pristine, so it is caught anyway — it is here to make every
+# negative the lint constructs report separately, since it grades all of them
+# resolved.
+ALWAYS_RESOLVES_GRADING_TEST = '''\
+"""A grading test that reads nothing and asserts nothing."""
+
+
+def test_the_answer_reports_every_planted_finding():
+    assert True
+'''
+
+# The hand-written comparison a review author reaches for, and the one this key
+# exists to be more than: it asks whether *some* planted finding was reported,
+# which turns "every" into "any" and resolves a review that found one defect of
+# two.
+ANY_MATCH_GRADING_TEST = f'''\
+"""A grading test that resolves when any one planted finding was reported."""
+
+import json
+from pathlib import Path
+
+WORKDIR = Path.cwd()
+KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
+PLANTED = {{(entry["file"], entry["symbol"]) for entry in KEY["accepted"]}}
+REFUSED = {{(entry["file"], entry["symbol"]) for entry in KEY["rejected"]}}
+
+
+def test_the_answer_reports_every_planted_finding():
+    answer_path = WORKDIR / KEY["answer_path"]
+    assert answer_path.is_file(), "no answer file"
+    reported = {{
+        (entry["file"], entry["symbol"])
+        for entry in json.loads(answer_path.read_text(encoding="utf-8"))
+    }}
+    assert reported & PLANTED and not reported & REFUSED
+'''
+
+# The sloppier one, and what the synthesised near-miss exists to kill: it holds
+# the answer to naming every planted *file* and never reads a symbol.
+FILE_ONLY_GRADING_TEST = f'''\
+"""A grading test that checks each finding's file and not its symbol."""
+
+import json
+from pathlib import Path
+
+WORKDIR = Path.cwd()
+KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
+PLANTED = {{entry["file"] for entry in KEY["accepted"]}}
+REFUSED = {{(entry["file"], entry["symbol"]) for entry in KEY["rejected"]}}
+
+
+def test_the_answer_reports_every_planted_finding():
+    answer_path = WORKDIR / KEY["answer_path"]
+    assert answer_path.is_file(), "no answer file"
+    reported = {{
+        (entry["file"], entry["symbol"])
+        for entry in json.loads(answer_path.read_text(encoding="utf-8"))
+    }}
+    assert PLANTED <= {{file for file, _ in reported}}
+    assert not reported & REFUSED
+'''
+
+# One quantifier of the two: it checks coverage of the planted findings and
+# never reads the rejected half, so every-line-is-a-finding passes it.
+COVERAGE_ONLY_GRADING_TEST = f'''\
+"""A grading test that checks coverage and never the rejected half."""
+
+import json
+from pathlib import Path
+
+WORKDIR = Path.cwd()
+KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
+PLANTED = {{(entry["file"], entry["symbol"]) for entry in KEY["accepted"]}}
+
+
+def test_the_answer_reports_every_planted_finding():
+    answer_path = WORKDIR / KEY["answer_path"]
+    assert answer_path.is_file(), "no answer file"
+    reported = {{
+        (entry["file"], entry["symbol"])
+        for entry in json.loads(answer_path.read_text(encoding="utf-8"))
+    }}
+    assert PLANTED <= reported
+'''
+
+# A module whose one symbol the key accepts, so no near-miss can be synthesised
+# for a finding planted in it, and the change that introduces it.
+TINY = "def only():\n    return 1\n"
+
+TINY_REVIEW_DIFF = '''\
+--- a/payroll.py
++++ b/payroll.py
+@@ -6,6 +6,8 @@
+ def overtime_pay(hours):
+     """What one stretch of work earns, in pence."""
++    if hours > OVERTIME_AFTER_HOURS:
++        return hours * RATE_PENCE * OVERTIME_MULTIPLIER
+     return hours * RATE_PENCE
+--- /dev/null
++++ b/tiny.py
+@@ -0,0 +1,2 @@
++def only():
++    return 1
+'''
+
+# A module defining exactly one class, for the terrain rule that refuses a
+# planted finding named at class level there.
+SOLO = '''\
+"""One thing, on its own."""
+
+
+class Solo:
+    """The only class its module defines."""
+
+    def go(self):
+        return 1
+'''
+
+# A prompt naming a planted finding's symbol outright: the review handed over.
+NAMES_A_PLANTED_LOCATION_PROMPT = (
+    f"The change in {REVIEW_DIFF_FILE} broke overtime_pay. Review it and write\n"
+    f"your findings to {ANSWER_PATH}.\n"
+)
+
+# A prompt naming a *rejected* finding: the non-finding the key exists to refuse,
+# handed over from the other side.
+NAMES_A_REJECTED_LOCATION_PROMPT = (
+    f"Something in {REVIEW_DIFF_FILE} bills the wrong number, and total_pay is\n"
+    f"not where it is. Write your findings to {ANSWER_PATH}.\n"
+)
+
+# "pence" is a word of payroll.py and of no other module in the fixture
+# repository, so a prompt that uses it is one grep from a planted finding.
+NARROWING_PROMPT = (
+    f"A week of work is coming out in the wrong pence. Review the change in\n"
+    f"{REVIEW_DIFF_FILE} and write your findings to {ANSWER_PATH}.\n"
+)
 
 
 def write_fixture(
@@ -242,7 +475,12 @@ def write_fixture(
     rejected: list[dict[str, object]] | None = None,
     answer_path: str = ANSWER_PATH,
     prompt: str = PROMPT,
-    grading_test: str = GRADING_TEST,
+    grading_test: str | None = GRADING_TEST,
+    extra_grading_tests: dict[str, str] | None = None,
+    findings_module: bytes | None = None,
+    answer_module: bytes | None = None,
+    repo_files: dict[str, str] | None = None,
+    review_diff: str | None = REVIEW_DIFF,
     key_text: str | None = None,
     ship_key: bool = True,
     task_id: str = FIXTURE_ID,
@@ -258,10 +496,21 @@ def write_fixture(
     from, and the held-out grading test that asserts over it are all copied in
     rather than written here, because that is what a real review task ships:
     three owned files, shipped identically, byte-comparable against the bytes
-    this package owns.
+    this package owns. `findings_module` and `answer_module` write other bytes
+    in their place, and `grading_test=None` ships no canonical test at all —
+    each for the test about the one drift it is.
+
+    `extra_grading_tests` ships further held-out tests beside the canonical
+    one, which is allowed and has to stay allowed: resolution requires every
+    grading test to pass, so an extra test can only make a task harder to
+    resolve.
 
     `key_text` writes the key file's raw bytes instead of building one, for the
     tests about a key that cannot be read at all; `ship_key=False` ships none.
+    `review_diff=None` ships no diff of the change under review, and
+    `repo_files` adds modules to the starting repository — passed in here
+    rather than written afterwards so that a test naming one in its key gets a
+    repository the whole lint agrees about.
 
     `scale` is read off the reference solution's diff, as every task's is, and
     a review's reference solution is one answer file: `single-file`, whatever
@@ -285,12 +534,26 @@ def write_fixture(
     (task_dir / "task.yaml").write_text(yaml.safe_dump(fields, sort_keys=False))
     (task_dir / REPO_DIR / "payroll.py").write_text(PAYROLL)
     (task_dir / REPO_DIR / "shifts.py").write_text(SHIFTS)
-    (task_dir / REPO_DIR / REVIEW_DIFF_FILE).write_text(REVIEW_DIFF)
+    (task_dir / REPO_DIR / "people.py").write_text(PEOPLE)
+    (task_dir / REPO_DIR / "swaps.py").write_text(SWAPS)
+    for name, source in (repo_files or {}).items():
+        (task_dir / REPO_DIR / name).write_text(source)
+    if review_diff is not None:
+        (task_dir / REPO_DIR / REVIEW_DIFF_FILE).write_text(review_diff)
     (task_dir / CORRECTED_DIR / "payroll.py").write_text(CORRECTED_PAYROLL)
     (task_dir / CORRECTED_DIR / "shifts.py").write_text(CORRECTED_SHIFTS)
-    (task_dir / GRADING_DIR / FINDINGS_TEST_FILE).write_text(grading_test)
-    (task_dir / GRADING_DIR / FINDINGS_MODULE).write_bytes(findings_module_source())
-    (task_dir / GRADING_DIR / ANSWER_MODULE).write_bytes(answer_module_source())
+    (task_dir / CORRECTED_DIR / "people.py").write_text(PEOPLE)
+    (task_dir / CORRECTED_DIR / "swaps.py").write_text(SWAPS)
+    if grading_test is not None:
+        (task_dir / GRADING_DIR / FINDINGS_TEST_FILE).write_text(grading_test)
+    for name, source in (extra_grading_tests or {}).items():
+        (task_dir / GRADING_DIR / name).write_text(source)
+    (task_dir / GRADING_DIR / FINDINGS_MODULE).write_bytes(
+        findings_module_source() if findings_module is None else findings_module
+    )
+    (task_dir / GRADING_DIR / ANSWER_MODULE).write_bytes(
+        answer_module_source() if answer_module is None else answer_module
+    )
     if ship_key:
         declared = json.dumps(
             {
@@ -420,8 +683,9 @@ def test_a_review_task_inherits_none_of_the_accepted_answer_keys_rules(
     `accepted-answer.json`, no `test_answer.py` and no hash gate, and none of
     that is a lint problem. What it also shows is the invariant a review task
     does keep — its grading test fails on the pristine repository, which
-    carries no answer file at all. The findings key's own lint rules are a
-    later ticket's."""
+    carries no answer file at all — and, now that the findings key has rules of
+    its own, that the fixture is clean under every one of them and under all
+    seven discrimination negatives."""
     task = fixture_task(tmp_path)
 
     assert not is_keyed(task)
@@ -720,3 +984,535 @@ def test_two_runs_with_one_diff_and_different_final_messages_get_one_verdict(
 
     assert [record.quality_value for record in records] == [1.0, 1.0]
     assert {record.category for record in records} == {"code-review"}
+
+
+# --- the lint: what the findings key has to say, read rather than run ----------
+#
+# Every rule below is proved in both directions: the fixture above lints clean
+# under all of them (`test_a_review_task_inherits_none_of_the_accepted_answer_
+# keys_rules`), and each test here bends it in exactly one way and asserts the
+# message names the task and the finding that is wrong.
+
+
+def test_lint_refuses_a_findings_key_that_plants_nothing(tmp_path: Path) -> None:
+    """The loader refuses this too, so the fixture is built without going
+    through it: `lint_task_set` takes an already-loaded list of tasks, and a
+    key planting nothing grades *every* agent resolved, because "every planted
+    finding was reported" is vacuously true of no planted findings."""
+    task_dir = write_fixture(tmp_path, accepted=[])
+    spec = yaml.safe_load((task_dir / "task.yaml").read_text())
+    task = Task.model_validate(spec | {"directory": task_dir})
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "plants no findings" in problem
+
+
+def test_lint_requires_at_least_one_rejected_finding(tmp_path: Path) -> None:
+    """The rejected half is what a review verdict cannot be built without: the
+    accepted half on its own is survived by an answer that reports every line
+    of the change as a defect, and must-fail-on-pristine says nothing here
+    because a pristine repository carries no answer file at all."""
+    task = fixture_task(tmp_path, rejected=[])
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "no rejected findings" in problem
+
+
+def test_lint_refuses_a_rejected_finding_that_is_also_planted(
+    tmp_path: Path,
+) -> None:
+    """The two halves are read under opposite quantifiers, so a location in
+    both makes every answer unresolved whatever it says: reporting it fails on
+    the rejected half, leaving it out fails on the accepted one."""
+    task = fixture_task(tmp_path, rejected=[*REJECTED, ACCEPTED[1]])
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'Rota.add'" in problem
+    assert "also plants" in problem
+
+
+def test_lint_refuses_a_planted_finding_outside_the_change_under_review(
+    tmp_path: Path,
+) -> None:
+    """A review judges a change. `swaps.py` is a module of the repository the
+    change does not touch, so a finding planted there is a defect the agent was
+    never asked to look at — and the key would describe the repository at large
+    rather than the change, which is the one thing the shipped diff exists to
+    tell them apart by."""
+    task = fixture_task(
+        tmp_path,
+        accepted=[*ACCEPTED, {"file": "swaps.py", "symbol": "hand_over"}],
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'hand_over'" in problem
+    assert "does not touch 'swaps.py'" in problem
+
+
+def test_lint_refuses_a_rejected_finding_outside_the_change_under_review(
+    tmp_path: Path,
+) -> None:
+    """The same rule over the other half, and it belongs there: a rejected
+    finding outside the change fails a run for reporting a real problem of the
+    repository the author did not plant, which the verdict archives everywhere
+    else."""
+    task = fixture_task(
+        tmp_path, rejected=[*REJECTED, {"file": "swaps.py", "symbol": "handed"}]
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'handed'" in problem
+    assert "does not touch 'swaps.py'" in problem
+
+
+def test_lint_refuses_a_review_task_that_ships_no_diff_of_the_change(
+    tmp_path: Path,
+) -> None:
+    """The change under review is applied to the starting repository, so the
+    shipped diff is the only thing that says which of that repository is the
+    change: without it the key cannot be held to describing one."""
+    task = fixture_task(tmp_path, review_diff=None)
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and REVIEW_DIFF_FILE in problem
+    assert "the repository at large" in problem
+
+
+def test_lint_refuses_a_finding_naming_a_file_that_is_not_in_the_repository(
+    tmp_path: Path,
+) -> None:
+    task = fixture_task(
+        tmp_path, accepted=[{"file": "wages.py", "symbol": "overtime_pay"}]
+    )
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    assert any(
+        "wages.py" in problem and "starting repository" in problem
+        for problem in problems
+    )
+
+
+def test_lint_refuses_a_finding_naming_a_file_matching_only_by_case(
+    tmp_path: Path,
+) -> None:
+    """`Path.is_file()` is case-insensitive on macOS, the platform the sweeps
+    run on, so "payroll.PY" must not silently resolve to "payroll.py" — the
+    comparison that later reads the agent's findings is case-exact on both
+    halves and would never match."""
+    task = fixture_task(
+        tmp_path, accepted=[{"file": "payroll.PY", "symbol": "overtime_pay"}]
+    )
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    assert any(
+        "payroll.PY" in problem and "starting repository" in problem
+        for problem in problems
+    )
+
+
+def test_lint_refuses_a_finding_naming_a_symbol_the_file_does_not_define(
+    tmp_path: Path,
+) -> None:
+    """A rename or a typo: a planted finding no correct review can report."""
+    task = fixture_task(
+        tmp_path, accepted=[{"file": "payroll.py", "symbol": "overtime_py"}]
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "overtime_py" in problem
+    assert "does not define" in problem
+
+
+def test_lint_refuses_a_bare_finding_where_a_qualified_spelling_exists(
+    tmp_path: Path,
+) -> None:
+    """`matches()` is one-directional: a bare *answer* matches a qualified key,
+    never the reverse. So a key spelled `add` would refuse the `Rota.add` a
+    reviewer would most naturally write, and grade a correct review
+    unresolved."""
+    task = fixture_task(
+        tmp_path,
+        accepted=[ACCEPTED[0], {"file": "shifts.py", "symbol": "add"}],
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'add'" in problem
+    assert "'Rota.add'" in problem
+
+
+@pytest.mark.parametrize(
+    "answer_path",
+    [
+        FINDINGS_KEY_FILE,  # collides with the key itself
+        FINDINGS_TEST_FILE,  # collides with the held-out grading test
+        "/tmp/abs.json",  # absolute, outside the workdir
+        "../ESCAPE.json",  # escapes the workdir
+    ],
+)
+def test_lint_refuses_an_answer_path_that_cannot_reach_the_verdict(
+    tmp_path: Path, answer_path: str
+) -> None:
+    """Two of these collide with a file the grading overlay writes over the
+    workdir, so the agent's findings are silently overwritten before the
+    verdict reads them; two never land in the workdir diff at all. The prompt
+    is made to name the path exactly, so the only problem reported is the one
+    this test targets."""
+    task = fixture_task(
+        tmp_path,
+        answer_path=answer_path,
+        prompt=(
+            f"Review the change in {REVIEW_DIFF_FILE} and write your findings "
+            f"to {answer_path}.\n"
+        ),
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and answer_path in problem
+
+
+def test_lint_accepts_an_answer_path_inside_a_directory_of_its_own(
+    tmp_path: Path,
+) -> None:
+    """The other direction of the four refusals above, and it runs the whole
+    gate: a relative path inside the workdir that names neither the key nor a
+    grading file lints clean, negatives and all."""
+    task = fixture_task(
+        tmp_path,
+        answer_path="notes/FINDINGS.json",
+        prompt=(
+            f"Review the change in {REVIEW_DIFF_FILE} and write your findings "
+            "to notes/FINDINGS.json.\n"
+        ),
+    )
+
+    assert lint_task_set([task]) == []
+
+
+def test_lint_refuses_a_prompt_that_never_names_the_answer_file(
+    tmp_path: Path,
+) -> None:
+    """A task cannot be unsolvable because the agent was never told where to
+    write: the answer file is the whole deliverable of a review."""
+    task = fixture_task(
+        tmp_path,
+        prompt=(
+            f"Review the change in {REVIEW_DIFF_FILE} and write down each "
+            "problem it introduced.\n"
+        ),
+    )
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and ANSWER_PATH in problem
+    assert "prompt" in problem
+
+
+# --- the lint: the canonical bytes a review task ships -------------------------
+
+
+def test_lint_refuses_an_edited_copy_of_the_findings_comparison(
+    tmp_path: Path,
+) -> None:
+    """One byte is enough. The comparison is the half of the verdict that
+    discriminates, so six review authors must not be able to hand-copy six
+    comparisons that quietly disagree about what a finding is."""
+    task = fixture_task(tmp_path, findings_module=findings_module_source() + b"\n")
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and FINDINGS_MODULE in problem
+    assert "not the comparison this project ships" in problem
+
+
+def test_lint_refuses_an_edited_copy_of_the_answer_comparison_beside_it(
+    tmp_path: Path,
+) -> None:
+    """The findings comparison imports its forgiveness rather than restating
+    it, so `_answer.py` ships beside it and is as load-bearing: a copy that
+    forgave case, or stopped stripping the trailing "()", would grade this task
+    by rules no other task is graded by."""
+    task = fixture_task(tmp_path, answer_module=answer_module_source() + b"\n")
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and ANSWER_MODULE in problem
+    assert "not the comparison this project ships" in problem
+
+
+def test_lint_refuses_a_grading_directory_without_the_canonical_held_out_test(
+    tmp_path: Path,
+) -> None:
+    """Shipping `_findings.py` byte for byte proves nothing about whether the
+    task's grading test still calls it, which is why the test is canonical
+    too."""
+    task = fixture_task(
+        tmp_path,
+        grading_test=None,
+        extra_grading_tests={"test_review.py": EXTRA_GRADING_TEST},
+    )
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    assert any(
+        FINDINGS_TEST_FILE in problem and "missing or unreadable" in problem
+        for problem in problems
+    )
+
+
+def test_lint_refuses_a_hand_written_grading_test_under_the_canonical_name(
+    tmp_path: Path,
+) -> None:
+    """Both halves of the same refusal, on one fixture: the bytes are not the
+    ones this project ships, and what the hand-written test actually does — ask
+    whether *some* planted finding was reported — is caught by the negative a
+    set verdict has to earn."""
+    task = fixture_task(tmp_path, grading_test=ANY_MATCH_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    assert any(
+        "not the held-out grading test this project ships" in problem
+        for problem in problems
+    )
+    assert any("every planted finding but" in problem for problem in problems)
+
+
+def test_an_additional_grading_test_beside_the_canonical_one_is_allowed(
+    tmp_path: Path,
+) -> None:
+    """Not a ban on other grading tests, only a requirement that the canonical
+    one is among them, unedited: resolution requires every grading test to
+    pass, so an extra test can only make a task harder to resolve, never let a
+    wrong review through. The reference solution still resolves, and the whole
+    discrimination gate still comes out clean."""
+    task = fixture_task(
+        tmp_path, extra_grading_tests={"test_review.py": EXTRA_GRADING_TEST}
+    )
+
+    assert task.grading_test_paths == (FINDINGS_TEST_FILE, "test_review.py")
+    assert lint_task_set([task]) == []
+    assert resolves(task, every_planted_finding())
+
+
+# --- the lint: the discrimination gate, run through the real pipeline ----------
+
+
+def test_lint_runs_every_discrimination_negative_through_the_real_pipeline(
+    tmp_path: Path,
+) -> None:
+    """What a review task has to earn before a paid run. Shown on a grading
+    test that grades everything resolved, so each negative reports separately:
+    the three a locate task is held to, and the four a set-shaped verdict adds
+    — every planted finding but one, the synthesised near-miss per planted
+    finding, every planted finding plus a rejected one, and each rejected
+    finding on its own."""
+    task = fixture_task(tmp_path, grading_test=ALWAYS_RESOLVES_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    for negative in (
+        "wrote no answer file at all",
+        "an empty answer file",
+        "a malformed answer file",
+        "every planted finding but ('payroll.py', 'overtime_pay')",
+        "every planted finding but ('shifts.py', 'Rota.add')",
+        "registers on neither side",
+        "reported beside them",
+        "on its own",
+    ):
+        assert any(negative in problem for problem in problems), negative
+
+
+def test_lint_refuses_a_comparison_that_asks_whether_some_finding_matched(
+    tmp_path: Path,
+) -> None:
+    """The load-bearing negative of a set verdict, and the whole reason this
+    key is a second key rather than a second use of the first: a comparison
+    reading the accepted half under "any" instead of "every" resolves a review
+    that found one of two defects, and only "all planted findings but one"
+    catches it."""
+    task = fixture_task(tmp_path, grading_test=ANY_MATCH_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert any(
+        "every planted finding but ('payroll.py', 'overtime_pay')" in problem
+        for problem in problems
+    )
+
+
+def test_lint_refuses_a_comparison_that_reads_the_file_and_not_the_symbol(
+    tmp_path: Path,
+) -> None:
+    """The synthesised near-miss, per planted finding: the right file, a symbol
+    of it the key registers on neither side. A comparison checking that every
+    planted *file* was named resolves it, and nothing the author wrote down
+    would have caught that."""
+    task = fixture_task(tmp_path, grading_test=FILE_ONLY_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert any("registers on neither side" in problem for problem in problems)
+
+
+def test_lint_refuses_a_comparison_that_never_reads_the_rejected_half(
+    tmp_path: Path,
+) -> None:
+    """The other quantifier: a comparison that only checks coverage resolves an
+    answer that reported every planted finding *and* a place the change is
+    correct, which is every-line-is-a-finding passing."""
+    task = fixture_task(tmp_path, grading_test=COVERAGE_ONLY_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert any("reported beside them" in problem for problem in problems)
+
+
+def test_lint_reports_a_planted_finding_it_cannot_construct_a_near_miss_for(
+    tmp_path: Path,
+) -> None:
+    """The near-miss is the load-bearing negative, so a planted finding whose
+    file leaves no unregistered symbol behind has to say so rather than have
+    one check quietly not run. `tiny.py` defines one symbol and the key accepts
+    it, so there is nowhere else in that file a reviewer could have pointed."""
+    task = fixture_task(
+        tmp_path,
+        accepted=[ACCEPTED[0], {"file": "tiny.py", "symbol": "only"}],
+        rejected=[REJECTED[0]],
+        repo_files={"tiny.py": TINY},
+        review_diff=TINY_REVIEW_DIFF,
+    )
+
+    problems = lint_task_set([task])
+
+    assert any(
+        "no near-miss can be constructed for the planted finding "
+        "('tiny.py', 'only')" in problem
+        for problem in problems
+    )
+    assert all(FIXTURE_ID in problem for problem in problems)
+
+
+# --- the lint: the three terrain rules reach a review task too (#65, #70) ------
+#
+# Keyed on the task carrying a key rather than on which key it carries, because
+# the reason does not distinguish them: a review task's findings key names the
+# very locations its answer file has to report, so a prompt that names one, or
+# that uses a word one grep from the module a defect was planted in, measures
+# grepping rather than reviewing.
+#
+# The first test below runs the whole lint, because the wiring is the claim.
+# The rest read `_terrain_problems`, which is the very function `lint_task_set`
+# calls, so that proving four more rules does not pay for four more runs of the
+# eleven-negative discrimination gate.
+
+
+def test_lint_refuses_a_prompt_naming_a_planted_findings_location(
+    tmp_path: Path,
+) -> None:
+    """Terrain rule 1, through the whole lint: a review task carrying a
+    findings key is held to the rules a keyed task is held to, and the prompt
+    that names a planted finding's symbol has handed over the review."""
+    task = fixture_task(tmp_path, prompt=NAMES_A_PLANTED_LOCATION_PROMPT)
+
+    [problem] = lint_task_set([task])
+
+    assert FIXTURE_ID in problem and "'overtime_pay'" in problem
+    assert "prompt-names-a-key-location" in problem
+
+
+def test_the_terrain_rules_read_a_rejected_finding_too(tmp_path: Path) -> None:
+    """The same rule from the other side: a prompt naming a *rejected* finding
+    has told the agent which non-finding to avoid, which makes the review
+    unfair in the agent's favour as surely as naming a planted one does."""
+    task = fixture_task(tmp_path, prompt=NAMES_A_REJECTED_LOCATION_PROMPT)
+
+    [problem] = _terrain_problems(task)
+
+    assert FIXTURE_ID in problem and "'total_pay'" in problem
+    assert "rejected" in problem
+
+
+def test_the_terrain_rules_refuse_a_prompt_word_that_narrows_to_a_planted_module(
+    tmp_path: Path,
+) -> None:
+    """Terrain rule 2. "pence" is a word of `payroll.py` and of no other module
+    here, so one grep of the prompt's own vocabulary lands in a module a defect
+    was planted in."""
+    task = fixture_task(tmp_path, prompt=NARROWING_PROMPT)
+
+    [problem] = _terrain_problems(task)
+
+    assert FIXTURE_ID in problem and "'pence'" in problem
+    assert "prompt-word-narrows-to-the-accepted-module" in problem
+
+
+def test_the_terrain_rules_refuse_a_planted_class_that_is_its_files_only_class(
+    tmp_path: Path,
+) -> None:
+    """Terrain rule 3. An agent electing to report a finding at class level
+    reports the class, and where the module defines exactly one, that finding
+    is determined by the filename alone."""
+    task = fixture_task(
+        tmp_path,
+        accepted=[ACCEPTED[0], {"file": "solo.py", "symbol": "Solo"}],
+        repo_files={"solo.py": SOLO},
+    )
+
+    [problem] = _terrain_problems(task)
+
+    assert FIXTURE_ID in problem and "solo.py:Solo" in problem
+    assert "accepted-class-is-the-only-class" in problem
+
+
+def test_a_terrain_waiver_silences_exactly_its_own_violation_on_a_review_task(
+    tmp_path: Path,
+) -> None:
+    """The waiver reaches a review task unchanged, and both properties that
+    make it a declaration rather than a mute button come with it: it silences
+    only what it names, and one naming something the rule did not fire on is
+    itself a problem."""
+    waived = fixture_task(
+        tmp_path / "waived",
+        prompt=NARROWING_PROMPT,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows-to-the-accepted-module",
+            "covers": ["pence"],
+            "reason": "the sum in question is stated in pence and nothing else",
+        }],
+    )
+    elsewhere = fixture_task(
+        tmp_path / "elsewhere",
+        prompt=NARROWING_PROMPT,
+        terrain_waiver=[{
+            "rule": "prompt-word-narrows-to-the-accepted-module",
+            "covers": ["midnight"],
+            "reason": "a word this prompt does not in fact use",
+        }],
+    )
+
+    assert _terrain_problems(waived) == []
+
+    problems = _terrain_problems(elsewhere)
+
+    assert any("'pence'" in problem for problem in problems)
+    assert any(
+        "'midnight'" in problem and "the rule does not fire on" in problem
+        for problem in problems
+    )

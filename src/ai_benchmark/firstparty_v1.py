@@ -1261,6 +1261,41 @@ def findings_key(task: Task) -> FindingsKey:
         ) from error
 
 
+# The two shapes a task's ground truth comes in, seen as the one thing a rule
+# that reads *either* of them can read: an answer path, an accepted half and a
+# rejected half, each a set of (file, symbol) locations. Written as a union
+# rather than as a base class because the two keys are deliberately separate
+# models — what differs between them is the quantifier the accepted half is
+# read under, and a shared base would invite a rule to be written once over
+# something the two do not in fact share.
+#
+# What is written against this: the three terrain rules, which the design note
+# applies to "every task that carries a key" and for a reason that does not
+# distinguish the actions — a task carrying a key holds an answer it can give
+# away — and the near-miss synthesis, which is a question about a file's
+# symbols and not about how many locations the key names.
+KeyedGroundTruth = AnswerKey | FindingsKey
+
+
+def _ground_truth(task: Task) -> KeyedGroundTruth | None:
+    """The key this task carries, whichever of the two it is, or None where it
+    carries neither.
+
+    Read off the keys on disk and never off the category, the way `is_keyed`
+    and `is_findings_keyed` are, so that a `code-review` task inherited the
+    terrain rules the day it shipped a key rather than the day someone
+    remembered to add its category to a list. The two are mutually exclusive by
+    the loader's own gates: an accepted-answer key may only be shipped by the
+    two keyed actions and a findings key only by `code-review`, so the order
+    they are tried in here decides nothing.
+    """
+    if is_keyed(task):
+        return answer_key(task)
+    if is_findings_keyed(task):
+        return findings_key(task)
+    return None
+
+
 def _empty_accepted_findings_message(task: Task) -> str:
     """What is wrong with a review task whose findings key plants nothing,
     worded once so the loader and the lint say the same thing.
@@ -1772,7 +1807,14 @@ def lint_task_set(
     Every gate here reads the key on disk (`is_keyed`) rather than the
     category, so the second action inherited all of it unchanged.
 
-    A task carrying an accepted-answer key is held to the three terrain rules
+    A `code-review` task is run against more than the pristine repository too,
+    and for the same reason: its findings key is read by
+    `_findings_key_problems` and then put to seven negatives by
+    `_findings_discrimination_problems`, two of which — every planted finding
+    but one, and every planted finding plus a rejected one — are what make the
+    two quantifiers of a set-shaped verdict real rather than declared.
+
+    A task carrying a key of either shape is held to the three terrain rules
     as well (`_terrain_problems`): whether it gives its own answer away is an
     authoring invariant like any other, and one that used to be proved per
     task, in six copies, so that a seventh keyed task inherited none of it.
@@ -1801,10 +1843,17 @@ def lint_task_set(
         # canonical test is untouched can still carry a key that does not
         # discriminate — which only running the real pipeline below can show.
         problems.extend(_answer_test_problems(task))
-        # Independent of key_problems too, and read rather than run: the three
-        # terrain rules are about the prompt and the repository the agent is
-        # handed, which are as readable when the key names a file that is not
-        # there as when it does not.
+        # The findings key's own read rules and its canonical held-out test,
+        # gated and independent exactly as the two above are and for the same
+        # reasons: a review task's key is read here, and the byte comparison
+        # over its grading test says nothing about whether the key is sound.
+        findings_problems = _findings_key_problems(task)
+        problems.extend(findings_problems)
+        problems.extend(_findings_test_problems(task))
+        # Independent of both keys' problems, and read rather than run: the
+        # three terrain rules are about the prompt and the repository the agent
+        # is handed, which are as readable when the key names a file that is
+        # not there as when it does not.
         problems.extend(_terrain_problems(task))
         # Independent for the same reason, and unrunnable by construction: the
         # gate hashes the pristine repository, so running the grading tests on
@@ -1816,6 +1865,15 @@ def lint_task_set(
             # a key that names a file the repository does not hold has nothing
             # to say about whether the grading test discriminates.
             problems.extend(_discrimination_problems(task, timeout_s=timeout_s))
+        if is_findings_keyed(task) and not findings_problems:
+            # The same gate over the set-shaped key, and gated for the same
+            # reason: seven negatives graded through the real pipeline is the
+            # expensive half of linting a review task, and a key whose findings
+            # do not describe the change under review has nothing to say about
+            # whether its held-out test discriminates.
+            problems.extend(
+                _findings_discrimination_problems(task, timeout_s=timeout_s)
+            )
         if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
             problems.append(
                 f"{task.id}: the grading tests already pass on the pristine repo — "
@@ -2005,79 +2063,122 @@ def _answer_key_problems(task: Task) -> list[str]:
                 "symbol the lint already checks for nothing"
             )
     problems.extend(_answer_module_problems(task))
-    if _escapes_workdir(key.answer_path):
-        problems.append(
-            f"{task.id}: the accepted-answer key's answer_path "
-            f"{key.answer_path!r} is absolute or climbs out of the workdir with "
-            "'..' — the workdir diff a run is graded from can only ever hold "
-            "paths inside the workdir, so the agent's answer would never reach "
-            "the diff however correctly it located the fault"
+    problems.extend(
+        _answer_path_problems(
+            task,
+            "the accepted-answer key's answer_path",
+            key.answer_path,
+            "however correctly it located the fault",
         )
-    elif key.answer_path in _tree_bytes(task.grading_dir):
-        problems.append(
-            f"{task.id}: the accepted-answer key's answer_path "
-            f"{key.answer_path!r} collides with a file grading overlays over "
-            "the workdir — the agent's answer file would be silently "
-            "overwritten by the held-out grading files before the verdict ever "
-            "reads it"
+    )
+    for half, answers in (("accepted", key.accepted), ("rejected", key.rejected)):
+        problems.extend(
+            _key_location_problems(
+                task, f"the accepted-answer key's {half} answers", answers
+            )
         )
-    if not _prompt_names_path(task.prompt, key.answer_path):
+    return problems
+
+
+def _answer_path_problems(
+    task: Task, whose: str, answer_path: str, however: str
+) -> list[str]:
+    """Whether the answer file a key declares can reach the verdict at all.
+
+    Three ways it cannot, and none of them turns on which key declared it or
+    what the answer means, which is why both keys are held to these by one
+    implementation: a path outside the workdir never lands in the diff a run
+    logs; a path a grading file already occupies is overwritten by the overlay
+    before the verdict reads it; and a path the prompt never names leaves the
+    agent with nowhere correct to write. `however` is the clause that says what
+    the wasted work was — locating the fault, reviewing the change — because
+    that is the one part of this a reader wants said in the task's own terms.
+    """
+    problems: list[str] = []
+    if _escapes_workdir(answer_path):
+        problems.append(
+            f"{task.id}: {whose} {answer_path!r} is absolute or climbs out of "
+            "the workdir with '..' — the workdir diff a run is graded from can "
+            "only ever hold paths inside the workdir, so the agent's answer "
+            f"would never reach the diff {however}"
+        )
+    elif answer_path in _tree_bytes(task.grading_dir):
+        problems.append(
+            f"{task.id}: {whose} {answer_path!r} collides with a file grading "
+            "overlays over the workdir — the agent's answer file would be "
+            "silently overwritten by the held-out grading files before the "
+            "verdict ever reads it"
+        )
+    if not _prompt_names_path(task.prompt, answer_path):
         problems.append(
             f"{task.id}: the prompt never names the answer file "
-            f"{key.answer_path!r} — the answer file is the whole deliverable, so "
+            f"{answer_path!r} — the answer file is the whole deliverable, so "
             "an agent that is not told where to write it cannot solve the task "
-            "however well it locates the fault"
+            f"{however}"
         )
-    for half, answers in (("accepted", key.accepted), ("rejected", key.rejected)):
-        for answer in answers:
-            source = _repo_file(task, answer.file)
-            if source is None:
+    return problems
+
+
+def _key_location_problems(
+    task: Task, whose: str, answers: Sequence[Answer]
+) -> list[str]:
+    """Whether every location this half of a key names is one an agent could
+    actually give: a file of the starting repository, matched case-exactly, and
+    a symbol that file defines, spelled the way the comparison can match it.
+
+    One implementation for both keys and for both halves of each. Every rule
+    here is a fact about one (file, symbol) pair read against the repository
+    the agent is handed, and none of them turns on the quantifier the accepted
+    half is read under — so a findings key's findings are checked by exactly
+    these and not by a softened set of them. `whose` is only how a message
+    names the half that is wrong.
+    """
+    problems: list[str] = []
+    for answer in answers:
+        source = _repo_file(task, answer.file)
+        if source is None:
+            problems.append(
+                f"{task.id}: {whose} name {answer.file!r}, which is not in the "
+                "starting repository — no agent can answer with a file it was "
+                "never given"
+            )
+            continue
+        try:
+            defined = _defined_symbols(source.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError, UnicodeDecodeError) as error:
+            problems.append(
+                f"{task.id}: {whose} name {answer.file!r}, whose definitions "
+                f"cannot be read ({error}) — the key is checked against what "
+                "the file actually defines"
+            )
+            continue
+        if answer.symbol not in defined:
+            problems.append(
+                f"{task.id}: {whose} name symbol {answer.symbol!r}, which "
+                f"{answer.file} does not define — it defines {sorted(defined)}, "
+                "and a method is written 'Class.method'"
+            )
+        elif "." not in answer.symbol:
+            # matches() is deliberately one-directional: an *answer* spelled
+            # bare matches a key spelled qualified, never the reverse — a key
+            # spelled bare would let `Other.method` answer it too, which is a
+            # false positive rather than a forgiven spelling. So where a
+            # qualified spelling of this symbol exists, the key has to use it.
+            qualified = sorted(
+                candidate
+                for candidate in defined
+                if candidate != answer.symbol
+                and candidate.endswith(f".{answer.symbol}")
+            )
+            if qualified:
                 problems.append(
-                    f"{task.id}: the accepted-answer key's {half} answers name "
-                    f"{answer.file!r}, which is not in the starting repository — "
-                    "no agent can answer with a file it was never given"
+                    f"{task.id}: {whose} name bare symbol {answer.symbol!r} in "
+                    f"{answer.file!r}, which is also defined as "
+                    f"{qualified[0]!r} — a bare answer matches a qualified key, "
+                    "never the reverse, so a key spelled bare refuses the "
+                    "qualified spelling an agent would most naturally give. "
+                    f"Write the key as {qualified[0]!r}"
                 )
-                continue
-            try:
-                defined = _defined_symbols(source.read_text(encoding="utf-8"))
-            except (OSError, SyntaxError, UnicodeDecodeError) as error:
-                problems.append(
-                    f"{task.id}: the accepted-answer key's {half} answers name "
-                    f"{answer.file!r}, whose definitions cannot be read "
-                    f"({error}) — the key is checked against what the file "
-                    "actually defines"
-                )
-                continue
-            if answer.symbol not in defined:
-                problems.append(
-                    f"{task.id}: the accepted-answer key's {half} answers name "
-                    f"symbol {answer.symbol!r}, which {answer.file} does not "
-                    f"define — it defines {sorted(defined)}, and a method is "
-                    "written 'Class.method'"
-                )
-            elif "." not in answer.symbol:
-                # matches() is deliberately one-directional: an *answer*
-                # spelled bare matches a key spelled qualified, never the
-                # reverse — a key spelled bare would let `Other.method`
-                # answer it too, which is a false positive rather than a
-                # forgiven spelling. So where a qualified spelling of this
-                # symbol exists, the key has to use it.
-                qualified = sorted(
-                    candidate
-                    for candidate in defined
-                    if candidate != answer.symbol
-                    and candidate.endswith(f".{answer.symbol}")
-                )
-                if qualified:
-                    problems.append(
-                        f"{task.id}: the accepted-answer key's {half} answers "
-                        f"name bare symbol {answer.symbol!r} in {answer.file!r}, "
-                        f"which is also defined as {qualified[0]!r} — a bare "
-                        "answer matches a qualified key, never the reverse, "
-                        "so a key spelled bare refuses the qualified spelling "
-                        f"an agent would most naturally give. Write the key as "
-                        f"{qualified[0]!r}"
-                    )
     return problems
 
 
@@ -2170,6 +2271,244 @@ def _answer_test_problems(task: Task) -> list[str]:
             "*additional* grading tests beside it — resolution requires "
             "every one of them to pass, so an extra test can only make the "
             "task harder to resolve, never let a wrong answer through"
+        )]
+    return []
+
+
+# --- code-review: what the findings key has to say, read rather than run -------
+#
+# The findings analogue of `_answer_key_problems` and of the two byte
+# comparisons beside it. Most of it is the same rule read over a set of findings
+# instead of over one location — a file of the starting repository, a symbol
+# that file defines, a spelling the comparison can match, an answer path that
+# reaches the verdict — which is why that half is shared code
+# (`_key_location_problems`, `_answer_path_problems`) and only what the
+# quantifier changes is written again here.
+#
+# Two rules are this key's own, and both follow from reading the halves under
+# opposite quantifiers. A finding in both halves makes *every* answer
+# unresolved, whichever way it goes. And every finding names a file the change
+# under review actually touches: a review task's `repo/` ships that change
+# already applied, so the shipped diff is the only thing that says which of the
+# repository is the change, and a key that wandered outside it would either
+# plant a defect the agent was not asked to judge or fail a run for reporting a
+# real problem the author did not plant — which the verdict archives everywhere
+# else.
+#
+# What is deliberately *not* here is the accepted-answer key's rule that the
+# rejected half must name a file the accepted half does not. That rule exists
+# because a locate key accepts one location, so a rejected answer in the same
+# file is a wrong *symbol* the lint already synthesises for itself. A review's
+# accepted half already spans the files of the change, so the same rule would
+# refuse the most natural non-finding there is: the correct line next to the
+# defective one.
+
+
+# The two lines of a unified diff that name a file, with git's `a/` and `b/`
+# prefixes stripped. Read rather than applied: the question is only which paths
+# the change under review touches, and `git apply --numstat` would be a
+# subprocess for something three characters of regex answer.
+_DIFF_FILE_HEADER = re.compile(r"^(?:---|\+\+\+) (?:[ab]/)?(\S+)")
+
+
+def _reviewed_files(task: Task) -> set[str]:
+    """Every path the change under review touches, as the unified diff the
+    starting repository ships names them — empty where that diff is missing,
+    unreadable, or names nothing.
+
+    `/dev/null` is dropped rather than reported: it is how a unified diff spells
+    the absent side of an added or deleted file, and no key could name it.
+    """
+    try:
+        diff = (task.repo_dir / REVIEW_DIFF_FILE).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return set()
+    touched: set[str] = set()
+    for line in diff.splitlines():
+        header = _DIFF_FILE_HEADER.match(line)
+        if header is not None:
+            touched.add(header.group(1))
+    return touched - {"/dev/null"}
+
+
+def _findings_key_problems(task: Task) -> list[str]:
+    """What is wrong with a `code-review` task's findings key.
+
+    Gated on the key being on disk (`is_findings_keyed`) rather than on the
+    category, the way every gate over the accepted-answer key is: a review task
+    shipping no key never reaches here, because the loader refuses it.
+
+    Read rather than run, and for the reason every other read invariant is
+    checked here: none of it is repairable once the sweep is paid for, and each
+    defect makes a task that grades every agent unresolved — or, for an empty
+    accepted set, every agent resolved — while looking exactly like a hard one.
+
+    What the key is checked against is the starting repository and the change
+    under review shipped inside it: both halves say something at all; no finding
+    is in both halves; every file either half names is in that repository,
+    matched case-exactly, and is one the change actually touches; every symbol
+    is defined in the file it names, spelled so the comparison can match it; the
+    findings comparison and the answer comparison it imports are this project's
+    own bytes; and the declared answer path reaches the verdict and is named by
+    the prompt. What no check can reach is whether the author planted every
+    defect the change in fact contains — a defect nobody wrote down is one the
+    verdict archives, which is the direction this grading is deliberately
+    forgiving in.
+
+    What is *not* here is the half that has to be run rather than read: see
+    `_findings_discrimination_problems`, which the lint runs once this returns
+    nothing.
+    """
+    if not is_findings_keyed(task):
+        return []
+    key = findings_key(task)
+    problems: list[str] = []
+    if not key.accepted:
+        problems.append(_empty_accepted_findings_message(task))
+    if not key.rejected:
+        problems.append(
+            f"{task.id}: the findings key declares no rejected findings — "
+            "must-fail-on-pristine proves nothing about a review task, because "
+            "a pristine repository carries no answer file at all, and the "
+            "accepted half on its own is survived by an answer reporting every "
+            "line of the change as a defect. Name at least one plausible "
+            "non-finding: the place a reviewer points at where the change is in "
+            "fact correct — the caller that returns the wrong number, the "
+            "constant the change introduced and got right"
+        )
+    accepted_pairs = {(answer.file, answer.symbol) for answer in key.accepted}
+    problems += [
+        f"{task.id}: the findings key rejects the finding "
+        f"({answer.file!r}, {answer.symbol!r}), which it also plants as an "
+        "accepted one — the two halves are read under opposite quantifiers, so "
+        "a location in both makes every answer unresolved whatever it says: "
+        "reporting it fails on the rejected half and leaving it out fails on "
+        "the accepted one"
+        for answer in key.rejected
+        if (answer.file, answer.symbol) in accepted_pairs
+    ]
+    problems.extend(_findings_module_problems(task))
+    problems.extend(
+        _answer_path_problems(
+            task,
+            "the findings key's answer_path",
+            key.answer_path,
+            "however completely it reviewed the change",
+        )
+    )
+    touched = _reviewed_files(task)
+    if not touched:
+        problems.append(
+            f"{task.id}: {REPO_DIR}/{REVIEW_DIFF_FILE} is missing, unreadable, "
+            "or names no file — a review task's starting repository ships the "
+            "change under review already applied, so that diff is the only "
+            "thing saying which of the repository is the change, and without it "
+            "the key cannot be held to describing the change rather than the "
+            "repository at large"
+        )
+    for half, findings in (("accepted", key.accepted), ("rejected", key.rejected)):
+        problems.extend(
+            _key_location_problems(
+                task, f"the findings key's {half} findings", findings
+            )
+        )
+        problems += [
+            f"{task.id}: the findings key's {half} findings name the finding "
+            f"({answer.file!r}, {answer.symbol!r}), and the change under review "
+            f"does not touch {answer.file!r} — {REPO_DIR}/{REVIEW_DIFF_FILE} "
+            f"changes {sorted(touched)}. A review judges a change: a planted "
+            "finding outside it is a defect the agent was never asked to look "
+            "at, and a rejected one outside it fails a run for reporting a real "
+            "problem of the repository the author did not plant"
+            for answer in findings
+            if touched and answer.file not in touched
+        ]
+    return problems
+
+
+def _findings_module_problems(task: Task) -> list[str]:
+    """Whether this review task ships the findings comparison, unedited — and
+    the answer comparison it imports its forgiveness from, unedited too.
+
+    `_answer_module_problems`'s reasoning, over two files instead of one. The
+    comparison is the half of the verdict that discriminates, so it is owned
+    rather than hand-written per task and the shipped copies are read byte for
+    byte against the bytes this package owns; six review authors cannot
+    hand-copy six comparisons that quietly disagree about what a finding is. It
+    covers `_answer.py` as well because `_findings.py` imports `matches`,
+    `one_location` and `resolve` from it rather than restating them — a review
+    answer and a locate answer have to forgive the same spellings — so an
+    edited copy of *that* file changes this task's verdict just as surely.
+    """
+    problems: list[str] = []
+    for module, canonical in (
+        (FINDINGS_MODULE, findings_module_source()),
+        (ANSWER_MODULE, answer_module_source()),
+    ):
+        shipped = task.grading_dir / module
+        try:
+            copy = shipped.read_bytes()
+        except OSError as error:
+            problems.append(
+                f"{task.id}: {GRADING_DIR}/{module} is missing or unreadable "
+                f"({error}) — the findings comparison is what the held-out "
+                "grading test asserts over, and it imports its location "
+                f"forgiveness from {ANSWER_MODULE}, so without both the task "
+                "grades every agent unresolved"
+            )
+            continue
+        if copy != canonical:
+            problems.append(
+                f"{task.id}: {GRADING_DIR}/{module} is not the comparison this "
+                "project ships — it is one owned module copied identically into "
+                "every review task, and a copy that has drifted grades this "
+                "task by rules no other task is graded by"
+            )
+    return problems
+
+
+def _findings_test_problems(task: Task) -> list[str]:
+    """Whether this review task ships the held-out grading test, unedited.
+
+    `_answer_test_problems` from the other side of the same hole, and the same
+    hole it is: shipping `_findings.py` byte for byte proves nothing about what
+    a task's grading test actually *does* with it, and a hand-written assertion
+    that checked "some finding matched" would lint clean under the module
+    comparison alone while turning a set verdict into an any verdict.
+
+    A task may ship *additional* grading tests beside this one. Resolution
+    requires every grading test to pass, so an extra test can only make a task
+    harder to resolve, never let a wrong answer through — this is a requirement
+    that the canonical test is among them, unedited, and never a ban on others.
+
+    Not gated on `_findings_key_problems`: a drifted copy of this file says
+    nothing about whether the *key* is sound, so it does not stop the
+    discrimination gate from running (see `lint_task_set`).
+    """
+    if not is_findings_keyed(task):
+        return []
+    shipped = task.grading_dir / FINDINGS_TEST_FILE
+    try:
+        copy = shipped.read_bytes()
+    except OSError as error:
+        return [(
+            f"{task.id}: {GRADING_DIR}/{FINDINGS_TEST_FILE} is missing or "
+            f"unreadable ({error}) — this is the held-out grading test that "
+            "asserts over the findings comparison; without it nothing binds "
+            "this task's grading to `_findings.py`, and a hand-written grading "
+            "test that never calls findings_problem() would lint clean"
+        )]
+    if copy != findings_test_source():
+        return [(
+            f"{task.id}: {GRADING_DIR}/{FINDINGS_TEST_FILE} is not the held-out "
+            "grading test this project ships — it is one owned file copied "
+            "identically into every review task, so that its grading test is "
+            "always the one-line assertion over `findings_problem()` that binds "
+            "the verdict to `_findings.py`, and never a hand-written test that "
+            "quietly stops consulting it. A task may ship *additional* grading "
+            "tests beside it — resolution requires every one of them to pass, "
+            "so an extra test can only make the task harder to resolve, never "
+            "let a wrong answer through"
         )]
     return []
 
@@ -2531,7 +2870,9 @@ def _defined_classes(source: str) -> set[str]:
     return classes
 
 
-def _key_locations_the_prompt_names(task: Task, key: AnswerKey) -> dict[str, str]:
+def _key_locations_the_prompt_names(
+    task: Task, key: KeyedGroundTruth
+) -> dict[str, str]:
     """Terrain rule 1: where the prompt names a location out of the key.
 
     Either half of it. An accepted location in the prompt hands the agent the
@@ -2558,15 +2899,15 @@ def _key_locations_the_prompt_names(task: Task, key: AnswerKey) -> dict[str, str
                 if _prompt_names_path(task.prompt, token):
                     named[token] = (
                         f"the prompt names {token!r}, the {what} of one of the "
-                        f"key's {half} answers — locating the fault is the "
-                        "whole deliverable, so a prompt that names a location "
-                        "out of the key hands the agent the reading it was "
-                        "supposed to do"
+                        f"key's {half} answers — the location is the whole "
+                        "deliverable, so a prompt that names a location out of "
+                        "the key hands the agent the reading it was supposed "
+                        "to do"
                     )
     return named
 
 
-def _narrowing_prompt_terms(task: Task, key: AnswerKey) -> dict[str, str]:
+def _narrowing_prompt_terms(task: Task, key: KeyedGroundTruth) -> dict[str, str]:
     """Terrain rule 2: where a content word of the prompt selects the accepted
     module and nothing else.
 
@@ -2592,7 +2933,7 @@ def _narrowing_prompt_terms(task: Task, key: AnswerKey) -> dict[str, str]:
             f"the prompt's {term!r} appears only in the module the accepted "
             f"answer names ({', '.join(where)}) — one grep of the prompt's own "
             "vocabulary lands in the file the agent was asked to find, so the "
-            "task measures grepping rather than locating. Say it in the "
+            "task measures grepping rather than reading. Say it in the "
             "prompt's words and the repository's own, differently; or, where "
             "the word is one a prompt and a repository about this subject "
             "cannot help sharing, declare it in `domain_nouns`"
@@ -2600,7 +2941,7 @@ def _narrowing_prompt_terms(task: Task, key: AnswerKey) -> dict[str, str]:
     return narrowing
 
 
-def _lone_accepted_classes(task: Task, key: AnswerKey) -> dict[str, str]:
+def _lone_accepted_classes(task: Task, key: KeyedGroundTruth) -> dict[str, str]:
     """Terrain rule 3: where an accepted class is the only class in its file.
 
     An agent electing to answer at class level answers with the class, and if
@@ -2633,28 +2974,36 @@ def _lone_accepted_classes(task: Task, key: AnswerKey) -> dict[str, str]:
 
 
 def _terrain_problems(task: Task) -> list[str]:
-    """The three terrain rules, applied to every task carrying an
-    accepted-answer key, and the waivers a task declares against them.
+    """The three terrain rules, applied to every task carrying a key of either
+    shape, and the waivers a task declares against them.
 
-    Keyed on the key rather than on the category: `fault-location` is where
-    these started, but a locate-style `codebase-comprehension` task is graded
-    off the same file and greppable in exactly the same way, so what makes a
-    task subject to them is that it has an answer to give away.
+    Keyed on "the task carries a key" rather than on the category or on which
+    key it is: `fault-location` is where these started, but a locate-style
+    `codebase-comprehension` task is graded off the same file, and a
+    `code-review` task's findings key names the very locations its answer file
+    has to report — all three are greppable in exactly the same way, and the
+    design note applies the rules to every task that carries a key. So a review
+    task's prompt may not name a file or a symbol out of either half of its
+    findings key, and its distinctive vocabulary may not select the module a
+    planted finding lives in, on pain of measuring grepping rather than
+    reviewing.
 
     A waiver silences a rule only for what it names, and a waiver naming
     something the rule does not fire on is itself reported: those two together
     are what stop a waiver from quietly widening as a prompt is edited, or
-    from surviving the terrain improvement that made it unnecessary.
+    from surviving the terrain improvement that made it unnecessary. Both
+    properties reach a review task unchanged, because the waiver is read
+    against what the rule fired on and never against the key it fired over.
     """
     fired: dict[TerrainRule, dict[str, str]] = {rule: {} for rule in TERRAIN_RULES}
-    if is_keyed(task):
-        try:
-            key = answer_key(task)
-        except IngestError:
-            # A key that cannot be read is reported where it is read; terrain
-            # is not judgeable without one, and a second complaint about the
-            # same file would only bury the first.
-            return []
+    try:
+        key = _ground_truth(task)
+    except IngestError:
+        # A key that cannot be read is reported where it is read; terrain is
+        # not judgeable without one, and a second complaint about the same file
+        # would only bury the first.
+        return []
+    if key is not None:
         fired["prompt-names-a-key-location"] = _key_locations_the_prompt_names(
             task, key
         )
@@ -2782,7 +3131,7 @@ def _empty_accepted_set_message(task: Task) -> str:
 _NOTES_FILE = "NOTES.md"
 
 
-def _missing_answer_edit_target(key: AnswerKey) -> str:
+def _missing_answer_edit_target(key: KeyedGroundTruth) -> str:
     """Where the "wrote no answer file at all" negative leaves its note.
 
     Has to differ from the task's own declared answer_path: writing there
@@ -2920,30 +3269,164 @@ def _near_miss(task: Task, key: AnswerKey) -> tuple[str, str] | None:
     """An accepted file paired with a symbol it defines and the key does not
     accept — the negative no author has to write down.
 
-    Not accepted is read through the very comparison the grading test uses,
-    not through set membership: with the bare spelling of an accepted method
-    accepted too, a candidate picked by string difference alone could be a
-    correct answer the lint then demanded be graded wrong.
+    Walks the accepted files in order and moves on from one that leaves no
+    unaccepted symbol behind, so a key naming a one-symbol module beside a
+    richer one still gets its negative.
     """
     for file in dict.fromkeys(answer.file for answer in key.accepted):
-        source = _repo_file(task, file)
-        if source is None:
-            continue
-        try:
-            defined = _defined_symbols(source.read_text(encoding="utf-8"))
-        except (OSError, SyntaxError, UnicodeDecodeError):
-            continue
-        candidates = sorted(
-            symbol
-            for symbol in defined
-            if not any(
-                _answer.matches((file, symbol), (accepted.file, accepted.symbol))
-                for accepted in key.accepted
-            )
-        )
-        if candidates:
-            return file, candidates[0]
+        symbol = _symbol_the_key_does_not_name(task, file, key.accepted)
+        if symbol is not None:
+            return file, symbol
     return None
+
+
+def _symbol_the_key_does_not_name(
+    task: Task, file: str, named: Sequence[Answer]
+) -> str | None:
+    """The first symbol this file defines that none of these locations name, or
+    None where every one of them is named.
+
+    Not named is read through the very comparison the grading test uses, not
+    through set membership: with the bare spelling of an accepted method
+    accepted too, a candidate picked by string difference alone could be a
+    correct answer the lint then demanded be graded wrong.
+
+    What is passed as `named` differs by key, and deliberately. A fault-location
+    near-miss avoids the *accepted* set only, because a rejected answer equal to
+    it is a lint problem in its own right — the author's judgement belongs on
+    the plausible wrong file. A review near-miss avoids both halves, because
+    there the two are read under opposite quantifiers: a candidate the key
+    rejects would grade unresolved on the rejected half and so prove nothing
+    about whether the comparison read the symbol at all.
+    """
+    source = _repo_file(task, file)
+    if source is None:
+        return None
+    try:
+        defined = _defined_symbols(source.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError, UnicodeDecodeError):
+        return None
+    candidates = sorted(
+        symbol
+        for symbol in defined
+        if not any(
+            _answer.matches((file, symbol), (location.file, location.symbol))
+            for location in named
+        )
+    )
+    return candidates[0] if candidates else None
+
+
+def _findings_discrimination_problems(task: Task, *, timeout_s: int) -> list[str]:
+    """Whether this review task's held-out test tells a review from an answer
+    file that reviewed nothing — the half of the verdict must-fail-on-pristine
+    cannot reach, for a set-shaped key.
+
+    A pristine repository carries no answer file, so the grading test fails
+    there whatever it asserts and the invariant is unconditionally satisfied.
+    So this runs answers it expects to *fail* through the real pipeline — the
+    diff built by the live runner's own capture, graded by `grade`, exactly as
+    replay grades a logged run — and requires each to come out unresolved.
+
+    Three of them are `_discrimination_problems`' own, unchanged: no answer file
+    at all, an empty one, a malformed one. Four more are what a *set* verdict
+    has to earn, and the first of them is the load-bearing one:
+
+    - every planted finding but one, which is precisely what a comparison
+      asking "did some finding match" cannot survive, and what makes the
+      accepted half's quantifier real rather than declared;
+    - every planted finding with one of them described by a symbol of the right
+      file that the key registers on neither side — the synthesised near-miss,
+      per planted finding, which kills a comparison that reads the file and not
+      the symbol;
+    - every planted finding *plus* one rejected finding, which is the half that
+      stops every-line-is-a-finding from passing, and which an answer missing
+      no planted finding at all would otherwise sail through;
+    - each author-declared rejected finding on its own.
+
+    Where a near-miss cannot be constructed for a planted finding — every
+    symbol of its file is itself accepted or rejected — that is reported as the
+    lint problem it is rather than one check quietly not run.
+    """
+    key = findings_key(task)
+    planted = [(answer.file, answer.symbol) for answer in key.accepted]
+    problems: list[str] = []
+    negatives: list[tuple[str, Callable[[Path], None]]] = [
+        (
+            "a run that wrote no answer file at all",
+            _writing(
+                _missing_answer_edit_target(key),
+                "read the change under review, reported no findings\n",
+            ),
+        ),
+        ("an empty answer file", _writing(key.answer_path, "")),
+        (
+            "a malformed answer file",
+            _writing(key.answer_path, "the overtime one, and the rest gap\n"),
+        ),
+    ]
+    for index, finding in enumerate(planted):
+        others = planted[:index] + planted[index + 1 :]
+        negatives.append((
+            f"every planted finding but {finding}",
+            _writing(key.answer_path, _findings_payload(others)),
+        ))
+        near_miss = _symbol_the_key_does_not_name(
+            task, finding[0], key.accepted + key.rejected
+        )
+        if near_miss is None:
+            problems.append(
+                f"{task.id}: no near-miss can be constructed for the planted "
+                f"finding {finding} — every symbol {finding[0]} defines is "
+                "itself accepted or rejected, so the negative that kills a "
+                "comparison reading the file and not the symbol cannot be run "
+                "for this finding. Plant it in a file that holds somewhere else "
+                "the reviewer could plausibly have pointed"
+            )
+        else:
+            missed = (finding[0], near_miss)
+            negatives.append((
+                f"the planted finding {finding} reported as {missed}, a symbol "
+                "of the same file the key registers on neither side",
+                _writing(
+                    key.answer_path,
+                    _findings_payload(
+                        planted[:index] + [missed] + planted[index + 1 :]
+                    ),
+                ),
+            ))
+    for answer in key.rejected:
+        rejected = (answer.file, answer.symbol)
+        negatives.append((
+            f"every planted finding, and the rejected finding {rejected} "
+            "reported beside them",
+            _writing(key.answer_path, _findings_payload([*planted, rejected])),
+        ))
+        negatives.append((
+            f"the rejected finding {rejected}, on its own",
+            _writing(key.answer_path, _findings_payload([rejected])),
+        ))
+    for description, edit in negatives:
+        if grade(task, _negative_diff(task, edit), timeout_s=timeout_s):
+            problems.append(
+                f"{task.id}: {description} grades resolved — the grading test "
+                "does not tell a review of this change from an answer that "
+                "reviewed nothing, so a verdict on this task would measure "
+                "whether the agent wrote a file rather than what it found in "
+                "the change"
+            )
+    return problems
+
+
+def _findings_payload(findings: Sequence[tuple[str, str]]) -> str:
+    """One review answer file's contents: a list with one object per finding,
+    shaped the way a review task's prompt asks for."""
+    return (
+        json.dumps(
+            [{"file": file, "symbol": symbol} for file, symbol in findings], indent=2
+        )
+        + "\n"
+    )
 
 
 def _family_problems(tasks: list[Task]) -> list[str]:
