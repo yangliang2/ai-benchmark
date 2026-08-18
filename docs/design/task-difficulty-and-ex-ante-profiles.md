@@ -4235,6 +4235,346 @@ planted defect. Whether the round landed inside it is for the round's
 verdicts section to say, against this line, once the sweep — run by hand
 under `docs/agents/sweep-protocol.md`, never queued — has happened.
 
+## Round 5 verdicts — 2026-08-18
+
+Round 5 (#62) is built and swept: `surface` declared on every task and required
+from then on (#63), the coverage table (#64), the terrain rules moved into the
+lint (#65, #66), hash-gate generation moved into the CLI (#67), locate-style
+`codebase-comprehension` riding round 4's answer key at zero mechanism cost
+(#68), the round's one instrument — the set-shaped **findings key** (#69, #70,
+and #85 which made a planted finding a set of alternative locations), the
+**existence proof** registered per action (#71), twelve tasks (#72–#81), the
+tier registration §46 ruled (#82), ADR-0002 (#83), and one sweep (sweep id
+`round-5`, 24 of 24 cells, $3.9631) plus one rider invocation that logged
+nothing. Everything below is recomputable from the checked-in artifacts: the
+table in §48 by `uv run ai-bench calibrate-v1`, the verdicts in §47 and §50 by
+re-grading each logged diff the way `eval-v1 --replay` does, and the per-cell
+figures from the run logs' own fields.
+`tests/test_firstparty_v1_round5_record.py` pins every figure these sections
+publish, and §51 is how the logs were shown to replay exactly.
+
+**What these sections are not.** Round 5 registered no knob contrast — its
+twelve tasks are all **declared controls**, as round 4's were — so there are no
+per-knob verdicts to write, no effort claim to grade, and no kill-discipline
+reading to take. `reconcile-v1` counts the round in its round list and nowhere
+else: no knob's counter moves, and none is demoted or advanced by this round.
+Nor is there a headline contrast between actions. Round 4 had one because six
+repositories each carried two actions; round 5's twelve repositories carry one
+action each, and §49 says what follows from that rather than quoting a
+comparison the round was not authored to produce. What the round bought is two
+more categories the corpus could not measure at all, one new grading mechanism
+— a verdict over a *set* — exercised for the first time against paid runs, and
+the first reading anyone has taken of that mechanism's failure modes.
+
+### 47. What the round measured
+
+**The sweep.** Twelve tasks × the two ladder models = 24 cells, all swept, none
+twice: eight `code-review` and four locate-style `codebase-comprehension`
+(§45.2), every one of them a declared control, `scale: single-file`,
+`surface: application`, `language: python`, hand-authored. One sweep id
+`round-5` and one agent version `2.1.234 (Claude Code)` across every row of
+every log: `r5-a` is the dry check (`bandstand-where-the-poster-is-worded` on
+haiku), written to a normally-named log as the protocol requires; `r5-b` is
+haiku's other eleven; `r5-c` is sonnet's twelve. The sweep ran from a dedicated
+worktree with guard backups kept outside it and verified byte-for-byte against
+the committed blobs. All 24 cells logged a row, so none was blocked by the
+environment: a run with non-empty `permission_denials` is a broken run and
+fails loudly rather than logging a verdict.
+
+**The rider, recorded apart.** `pysm-work-out-a-way-there` × sonnet (§45.7,
+§33 candidate 8) was run in its own invocation, `r5-d`, and **timed out again**
+exactly as it did in round 3 — so that log is empty, the cell is still
+`incomplete`, and the round is 24 cells rather than 25. Three things follow and
+none of them is a reading. It ran at the **flat default of 600 seconds**: its
+category `feature-dev` is not in `LIVE_RUN_LIMITS_S` and §46 registered nothing
+for it, so the number it ran under is numerically equal to all four entries
+the limits table now carries and is not itself a registration — a distinction
+only the four registered categories can claim the other way. It carries §29.4's
+cross-round caveat, and **it is not merged into round 3's readings**: had it
+produced a row it would have been measured under an invocation its
+forty-three round-3 neighbours did not have, so it would have repaired nothing;
+having produced none, it leaves `feature-dev`'s
+`K1=intent,K7=dense,K9=single` row reading `3.73x (n=1)` and
+`sonnet-only (n=1)` on sonnet, unchanged from §31. And the version claim above
+is a claim about rows: the three logs that carry rows all carry `2.1.234`, and
+what the rider ran under is recorded by the sweep commit's own body rather than
+by a row, because a timed-out invocation logs nothing to check.
+
+**Cost, against the expectation stated before the first paid run.** Expected
+**$3–6**, stated in §46 from round 4's per-cell figure with headroom for
+`code-review`'s larger read. Actual **$3.96** — $0.9794 on haiku and $2.9836 on
+sonnet, $3.9631 in total — against round 4's **$3.2748**. Per cell that is
+$0.1651 against round 4's $0.1364 over the same 24, and the headroom is where
+it was expected to be: the sixteen review cells took $3.2095 of it against the
+eight comprehension cells' $0.7535, and a review cell cost $0.2006 on average
+against a comprehension cell's $0.0942. **The estimate was honoured**, in the
+middle of a range stated in advance rather than at its cheap edge, which is
+the second round in a row a range set before the spending held.
+
+**The limits in force.** #82 registered `code-review` and
+`codebase-comprehension` in `LIVE_RUN_LIMITS_S`, both at **600 seconds** — the
+flat default's own value, so the table now carries four entries and all four
+read the same number. **No cross-round caveat arises for this round's own
+cells**: the number in force did not change for any task, round 4 and round 5
+both ran at 600, and the limit stays narrated rather than stamped on a row.
+(The rider is the exception and is recorded above, not here.) Nothing came near
+it — the round's longest run was **265.2 s**
+(`belfry-review-the-peals-and-the-board` on haiku, and the closest any cell has
+come to the ceiling since round 3) and its mean **77.6 s**, against a corpus
+mean of 58.4 s over 225 runs and a longest-ever 311.2 s. No cell was clipped,
+so no verdict in this record is a timeout in disguise.
+
+**Resolution: 20 of 24 cells.** haiku resolved **9/12**, sonnet **11/12**. Per
+category and model:
+
+```
+                  code-review  codebase-comprehension
+claude-haiku-4-5  5/8          4/4
+claude-sonnet-5   7/8          4/4
+```
+
+Every unresolved cell is a `code-review` cell:
+`belfry-review-the-peals-and-the-board`,
+`parishhall-review-the-hire-and-the-diary` and
+`produceshow-review-the-points-and-the-sheet` on haiku, and
+`apiary-review-the-book-and-the-crop` on sonnet. §50 reads each one. The
+comprehension half went 8 for 8, which is what a locate-style task riding a
+mechanism that has already had a paid outing (§41) was expected to do and is
+not evidence about anything else.
+
+**Rungs.** Nine of the twelve tasks came back `haiku-solvable`; three came back
+`sonnet-only`, and all three are `code-review` — the three haiku cells above.
+None landed `unsolved`, so the corpus's unsolved census is still the four
+round-1 cells §23.10 counted, and its rung census now reads 94
+`haiku-solvable`, 14 `sonnet-only`, 4 `unsolved` and the one `incomplete` cell
+round 3 left and this round's rider did not repair.
+
+**The corpus after the round.** 113 tasks, 225 runs, **24 cells over six
+categories**, and still no empty cell — against §38's 101 tasks, 201 runs and
+22 cells over four.
+
+### 48. The two new categories' rows, as printed
+
+`uv run ai-bench calibrate-v1` publishes them like this, quoted as printed:
+
+```
+category code-review
+   baseline mean cost   claude-haiku-4-5 $0.0923 (n=8), claude-sonnet-5 $0.3089 (n=8)
+   baseline mix         8 single-file; 8 hand-authored
+
+   profile      tasks  claude-haiku-4-5  claude-sonnet-5  rung floor
+   (zero-knob)  8      1.00x (n=8)       1.00x (n=8)      haiku-solvable (n=8)
+
+category codebase-comprehension
+   baseline mean cost   claude-haiku-4-5 $0.0603 (n=4), claude-sonnet-5 $0.1281 (n=4)
+   baseline mix         4 single-file; 4 hand-authored
+
+   profile      tasks  claude-haiku-4-5  claude-sonnet-5  rung floor
+   (zero-knob)  4      1.00x (n=4)       1.00x (n=4)      haiku-solvable (n=4)
+```
+
+**Both multipliers are 1.00× by construction and neither is a reading**, for
+the reason §39 gives of round 4's pair: every task in both categories is a
+declared control, so each row *is* its own category's denominator, over the n
+its own category swept — n=8 for `code-review` and n=4 for
+`codebase-comprehension`, each taken over the tasks that ran that model. What
+these two rows publish is the denominators — haiku $0.0923 and sonnet $0.3089
+for `code-review`, haiku $0.0603 and sonnet $0.1281 for
+`codebase-comprehension` — which is what a later constructed task in either
+category will be divided by, and what a selection query reads as the price of
+the shape of work. Every one of these numbers counts unresolved runs, which is
+the table's rule and not an oversight: a failed run still spent its dollars.
+
+**`code-review` is the widest model gap the corpus has published.** Sonnet
+costs 3.35× haiku on this category's controls, against 2.87× on `refactor`,
+2.64× on `bug-fix`, 2.60× on `feature-dev`, 2.58× on `fault-location` and 2.12×
+on `codebase-comprehension`. That is a ratio of two denominators inside one
+category, so it is a legitimate reading of these rows in a way that dividing
+two categories' means is not — but it is one round on eight repositories, and
+what it prices is a whole action's read rather than any knob.
+
+**The `code-review` floor hides its three hardest members.** It prints
+`haiku-solvable (n=8)` although three of the eight came back `sonnet-only`,
+because a floor is the *weakest* rung any graded member landed on — the claim
+that this profile has been solved that cheaply at least once. §39 recorded that
+shape for `bug-fix`'s six controls; it repeats here in a row of eight, and the
+repetition is the point: the floor moves only when *every* graded member moves,
+whatever the row is made of.
+
+**The mixes disclose nothing again.** Both baselines read
+`N single-file; N hand-authored`, and every task in both categories is
+single-file and hand-authored, so no row in either table discloses a mix of its
+own — as with round 4's two, the multipliers these rows will one day carry will
+not be reading across a scope or substrate difference on top of the knobs.
+
+### 49. Review against locating against fixing: what this round cannot quote
+
+Round 4's headline was locate-relative-to-fix per defect (§40), and it was
+available only because six repositories each carried two actions against one
+byte-identical starting tree. **Round 5's twelve repositories carry one action
+each**, and no repository anywhere in the corpus carries a `code-review` task
+beside a `fault-location` or `bug-fix` one: the twelve are twelve fresh
+scenarios, and the six that carry two actions are round 4's locate/fix pairs,
+none of which has a review member. So the per-repository comparison is **not
+quoted here, because there is nothing to quote it over** — the round was not
+authored to produce it and this is not a headline.
+
+What is deliberately *not* done instead is dividing the categories' printed
+means. `code-review`'s haiku denominator over `fault-location`'s would be a
+ratio of means over two categories on two disjoint sets of repositories, and
+§39's table refuses that pooling in as many words; §40's own reading was per
+pair for exactly this reason, and it survived only because the pairs held the
+repository constant while the action varied. Nothing in this round holds a
+repository constant across two actions, so any three-way review/locate/fix
+number quoted from it would be a difference between scenarios wearing an
+action's name. If that comparison is wanted, it costs a review task authored on
+a repository that already carries a locate/fix pair — which is a task somebody
+would have to write, not a number this record can extract.
+
+### 50. The four cells that did not resolve, read
+
+All four are `code-review` cells, and between them they exercise both halves of
+the new key: two failed on recall, one on the rejected half, and one on both.
+
+**`parishhall-review-the-hire-and-the-diary` × haiku — two of three.** Six
+turns, $0.0626. The answer named `diary.py Diary.cancel` and
+`charges.py hire_for`, both planted, and never named `charges.py price_of`, the
+third. Nothing it wrote matches a rejected finding. This is the plain shape of
+a review verdict failing: recall short by one, with no partial credit, because
+§45.3 rules that a partial score would be a new quality metric.
+
+**`produceshow-review-the-points-and-the-sheet` × haiku — two of three,
+again.** Six turns, $0.0533. `entries.py Book.of_class` and
+`points.py points_for` matched; `points.py tally` was never named. Two
+cheap six-turn cells missing exactly one finding each is the round's most
+ordinary failure and the one worth least commentary: on eight repositories,
+haiku found 21 of the 24 planted findings.
+
+**`belfry-review-the-peals-and-the-board` × haiku — one missed and one
+rejected, in the round's longest and most expensive haiku run.** Ten turns,
+265.2 s, $0.2226. It matched `peals.py Book.longest` and `board.py peal_board`,
+never named `ringers.py Band.ringer` (the normalisation made on one side of a
+comparison only), and reported `tower.py minutes` — which the key registers as
+a **rejected finding** because the tower clock subtracts the two strokes in the
+order it names them and it is `Book.longest` that hands them over the wrong way
+round. The note it filed argues `minutes` should add 1440 across midnight,
+which no house rule asks for. So this cell failed twice over, and the second
+failure is the rejected half discriminating exactly as it was built to — the
+mirror of §41's `paperround` near-miss, one action later.
+
+**`apiary-review-the-book-and-the-crop` × sonnet — full recall, failed on the
+rejected half.** Ten turns, $0.4236. It named all three planted findings, and
+then two more: `harvest.py Book.off_hive` and `keepers.py Roll.keeping`. The
+second is a registered rejected finding, so the verdict is unresolved however
+completely the change was reviewed — which is §45.3 working as ruled, since
+every-line-is-a-finding has to fail somewhere.
+
+**And what the fifth answer says about the key rather than the model.** The
+reason sonnet gave for `Roll.keeping` is not the reason the key rejects it. The
+key rejects that location as the place a reviewer chasing the joint-hive rule
+points at first, and on the joint-hive rule the method is right. Sonnet did not
+argue the joint-hive rule at all: it argued that `Roll.keeping` matches a hive
+mark with `mark in keeper.hives` while the README's pre-existing house rule
+says a mark is matched however it was written down, and that `apiary.standing`
+in the same repository normalises both sides of that comparison. It filed the
+same argument against `Book.off_hive`, which is unlisted and was therefore
+archived and unscored. The author's ruling is visible in `corrected/`, which
+leaves both comparisons exact — the rule is about asking the yard for a hive,
+not about every place a mark is compared — and the author's ruling stands. The
+finding for this record is not who is right. It is that **the verdict cannot
+express the difference**: a rejected finding is a *location*, and the note
+beside an answer is never read, so "right place, wrong reason" and "right
+place, for a reason the author had ruled on" arrive at the grader as the same
+bytes. §34.5 named the round's most expensive assumption as an agent locating a
+fault correctly and describing it at a level the key did not anticipate. On the
+**accepted** half that assumption did not bite, and not narrowly: all 45
+accepted answers of the round named their finding's **primary** — the most
+specific location its key registers — and not one of them needed the
+class-level alternative #85 added. Those alternatives cost nothing and bought
+nothing on this round's evidence, which is a fact about eight repositories and
+not an argument for dropping them: the level nobody needed is the level a
+differently-worded answer would have needed. The nearest miss is `belfry`'s
+`peals.py Book.rung_by`, reported by both models — the very rule the first
+planted finding turns on, argued against a neighbouring method the author's
+`corrected/` leaves alone. That is a different location rather than a coarser
+description of the listed one, and being unlisted it cost neither cell
+anything. What bit is the **rejected** half's twin of the same assumption, on
+the first paid outing of the mechanism: an answer the author had ruled on, at a
+location registered against a different ruling, indistinguishable at the
+grader from the false positive the registration was written to catch. That is a
+reading about the key's description levels and not about the model, and the
+cheapest thing it argues for is that a rejected finding's registered ground be
+written down where something can read it — which is a change to the key and a
+candidate for a later round, not a repair to this one.
+
+**The mechanism's first paid outing, taken as a whole.** Sixteen review cells,
+twelve resolved; 51 findings reported, of which 45 matched a planted finding,
+two matched a rejected one and four were unlisted and archived; no broken run,
+no clipped cell, and no edited repository — the guard suite that fails a run
+which touched the code never fired. Both models independently reported
+`peals.py Book.rung_by` on `belfry`, an unlisted location whose argument is the
+same one sonnet made on `apiary`; under §45.3 that cost neither cell anything,
+which is the archived-and-unscored rule doing precisely the job it was ruled
+for.
+
+### 51. Replay, the archive, and how each was shown
+
+The provenance claim v1 rests on is that a record is recomputable from the run
+log: the log carries the workdir diff, and the verdict is obtained by re-grading
+that diff against the held-out tests rather than by trusting anything the agent
+said. Round 5's four logs were replayed one command per log, each into a
+scratch `--data` path (never the checked-in dataset — the discipline §29.5
+recorded after a replay rewrote it):
+
+```
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-18-r5-a.jsonl --data /tmp/r5replay/a.jsonl
+  evaluated 1 runs over 113 tasks (1 resolved)
+  merged 1 records into /tmp/r5replay/a.jsonl (1 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-18-r5-b.jsonl --data /tmp/r5replay/b.jsonl
+  evaluated 11 runs over 113 tasks (8 resolved)
+  merged 11 records into /tmp/r5replay/b.jsonl (11 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-18-r5-c.jsonl --data /tmp/r5replay/c.jsonl
+  evaluated 12 runs over 113 tasks (11 resolved)
+  merged 12 records into /tmp/r5replay/c.jsonl (12 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-18-r5-d.jsonl --data /tmp/r5replay/d.jsonl
+  evaluated 0 runs over 113 tasks (0 resolved)
+  merged 0 records into /tmp/r5replay/d.jsonl (0 total)
+```
+
+24 runs, 20 resolved, matching §47's per-category counts. The fourth is the
+rider's empty log, and it replays to nothing rather than to an error, which is
+the right handling of an invocation that logged no row: an empty log is a
+record of an attempt and not a missing file. The same four commands with one
+shared `--data` path merge to 24 records (`1 total`, `12 total`, `24 total`,
+`24 total`), and the four per-log datasets concatenated are identical to that
+merged corpus record for record — no row missing, no row duplicated, no field
+differing — with every record carrying its log row's own measurements (cost,
+turns, tokens, latency, agent version, as-of date) unchanged, because replay
+reads the log and never re-runs the agent.
+`tests/test_firstparty_v1_round5_record.py` runs that comparison as a test, so
+the claim is re-checked rather than remembered.
+
+What this shows is that every verdict in this record is recomputable from
+checked-in bytes by one command per log. What it does not show is that a re-run
+would produce the same diff: a task × agent × model cell is swept once, and
+replay reproduces the grading, not the agent.
+
+**The archive, and what it is for.** Every review and comprehension run's free
+text is in the logs and **the verdict does not read a word of it**. The 24 rows
+carry 2,373 words of agent `output` between them, and the sixteen review cells'
+answer files carry a `note` on every one of their 51 findings — some 11,500
+characters of argued English about why a line disagrees with a house rule —
+which `_findings.py` tolerates beside a location and never inspects. The
+verdicts in §47 turn on locations alone, and the notes are archived evidence:
+they ride in the checked-in run logs, and unlike a verdict they cannot be
+recomputed — replay re-grades a diff and cannot regenerate a sentence, so the
+only copy of what an agent argued is the one the sweep wrote down. That text is
+the calibration corpus the heap-3 subjective grader (§34.3, §45.15) is being
+grown against. §45.1 re-ordered the
+arc partly to buy that grader two more rounds of this material; this is the
+round that first produced it in quantity, and the reason the free text is kept
+in the logs rather than summarised into them.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

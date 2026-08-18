@@ -438,12 +438,12 @@ def test_calibrate_v1_discloses_what_the_checked_in_corpus_is_made_of(
     assert disclosed["K7=calm"] == "2 single-file; 2 vendored"
 
 
-# What the table published over the checked-in corpus after round 4, per
+# What the table publishes over the checked-in corpus after round 5, per
 # category and profile: the two multiplier columns and the denominator each
 # was divided by. Pinned rather than derived, which is the opposite of what
 # the demo tests above do and is the point of this one — a derived expectation
 # follows the corpus wherever it goes, and these numbers are quoted in the
-# design note's sections 31 and 39 and read by whoever is deciding what a
+# design note's sections 31, 39 and 47 and read by whoever is deciding what a
 # round cost. A round that adds tasks to a category here moves them and
 # updates this table in the same commit; anything else that moves them is the
 # defect this watches for.
@@ -463,15 +463,19 @@ _PUBLISHED = {
     "bug-fix": {
         "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
     },
-    # Round 5's two categories, pinned as printed BEFORE their sweep: 8 and 4
-    # tasks, no run in any cell, so every column reads "-". The round-5 record
-    # (#84) moves these to the swept numbers in the same commit that lands the
-    # sweep — a pin left at "-" after that would be a category nobody watches.
+    # Round 5's two categories, moved off "-" by the sweep that filled them
+    # (#62): eight declared controls and four, each row its own denominator
+    # and so 1.00x by construction, exactly as round 4's two arrived. The
+    # design note's section 47 quotes both blocks as printed and
+    # tests/test_firstparty_v1_round5_record.py holds the quote to the bytes.
+    # `code-review`'s floor reads haiku-solvable over all eight although three
+    # of them came back sonnet-only: a floor is the weakest rung any graded
+    # member landed on, which is the caveat section 39 recorded for `bug-fix`.
     "code-review": {
-        "(zero-knob)": ("8", "-", "-", "-"),
+        "(zero-knob)": ("8", "1.00x (n=8)", "1.00x (n=8)", "haiku-solvable (n=8)"),
     },
     "codebase-comprehension": {
-        "(zero-knob)": ("4", "-", "-", "-"),
+        "(zero-knob)": ("4", "1.00x (n=4)", "1.00x (n=4)", "haiku-solvable (n=4)"),
     },
     "fault-location": {
         "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
@@ -515,8 +519,8 @@ _PUBLISHED = {
 _PUBLISHED_DENOMINATORS = {
     "bug-fix": f"{_HAIKU} $0.0805 (n=6), {_SONNET} $0.2128 (n=6)",
     "fault-location": f"{_HAIKU} $0.0706 (n=6), {_SONNET} $0.1819 (n=6)",
-    "code-review": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
-    "codebase-comprehension": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
+    "code-review": f"{_HAIKU} $0.0923 (n=8), {_SONNET} $0.3089 (n=8)",
+    "codebase-comprehension": f"{_HAIKU} $0.0603 (n=4), {_SONNET} $0.1281 (n=4)",
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
 }
@@ -566,7 +570,7 @@ _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
 }
 
 
-def test_calibrate_v1_publishes_the_multipliers_round_4_published(
+def test_calibrate_v1_publishes_the_multipliers_round_5_published(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The published table, pinned.
