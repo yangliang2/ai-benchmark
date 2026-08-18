@@ -123,6 +123,18 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
             "invocation is part of; reuse it for every invocation of one sweep"
         )
     tasks = firstparty_v1.load_task_set(args.tasks)
+    if args.task:
+        wanted = set(args.task)
+        unknown = sorted(wanted - {task.id for task in tasks})
+        if unknown:
+            raise SystemExit(
+                f"error: --task names unknown task id(s) {unknown} — not in "
+                f"{args.tasks}"
+            )
+        # Corpus order, not flag order: filter the already-loaded, already-
+        # sorted list rather than looking each id up, so two operators naming
+        # the same ids in different --task order sweep the same sequence.
+        tasks = [task for task in tasks if task.id in wanted]
     if args.live:
         log = args.log or DEFAULT_V1_RUNS / f"{local_today().isoformat()}.jsonl"
         # No timeout to pass: each run's limit is its task class's registered
@@ -135,9 +147,10 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
     else:
-        if args.model or args.log or args.sweep or args.agent:
+        if args.model or args.log or args.sweep or args.agent or args.task:
             raise SystemExit(
-                "--model, --log, --sweep and --agent apply only to --live runs"
+                "--model, --log, --sweep, --agent and --task apply only to "
+                "--live runs"
             )
         runs = firstparty_v1.load_runs(args.replay)
         source = str(args.replay)
@@ -377,6 +390,14 @@ def main(argv: list[str] | None = None) -> None:
         "--sweep",
         help="the sweep this invocation is part of, stamped on every row it "
         "writes (required for --live; see the description above)",
+    )
+    evaluate_v1.add_argument(
+        "--task",
+        action="append",
+        help="run only this task id, by its directory name under --tasks "
+        "(repeatable; default: every task in the set); the filtered set still "
+        "runs in corpus order, not the order given here, and an id naming no "
+        "task in the set is refused before anything runs",
     )
     evaluate_v1.set_defaults(command=_eval_v1_command)
 
