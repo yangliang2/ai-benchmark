@@ -1,0 +1,17 @@
+[
+  {
+    "file": "harvest.py",
+    "symbol": "Book.taken_by",
+    "note": "keeps what it worked out under the member alone, so the pounds of one summer are handed back for another"
+  },
+  {
+    "file": "keepers.py",
+    "symbol": "Roll.hives_kept",
+    "note": "adds up what each member keeps, so a hive kept between two of them is counted twice"
+  },
+  {
+    "file": "crop.py",
+    "symbol": "off_a_hive",
+    "note": "divides the crop by the lots it came off in rather than by the hives it came off"
+  }
+]

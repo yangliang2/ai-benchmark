@@ -1,0 +1,14 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "harvest.py", "symbol": "Book.taken_by"},
+             {"file": "harvest.py", "symbol": "Book"}]},
+    {"any": [{"file": "keepers.py", "symbol": "Roll.hives_kept"},
+             {"file": "keepers.py", "symbol": "Roll"}]},
+    {"any": [{"file": "crop.py", "symbol": "off_a_hive"}]}
+  ],
+  "rejected": [
+    {"file": "apiary.py", "symbol": "jars"},
+    {"file": "keepers.py", "symbol": "Roll.keeping"}
+  ]
+}

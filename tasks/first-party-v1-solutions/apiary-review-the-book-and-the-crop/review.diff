@@ -1,0 +1,245 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,12 +1,15 @@
+ # The apiary
+ 
+ The bees at Nether Wallop as the club keeps them: which hives stand in the
+-yard, and whose they are.
++yard, whose they are, what has come off them, and what that comes to.
+ 
+ ## The modules
+ 
+-- `apiary.py` — the hives standing in the yard.
++- `apiary.py` — the hives standing in the yard, and what a crop is put up in.
+ - `keepers.py` — the roll: who keeps bees here, and which hives are theirs.
++- `harvest.py` — the harvest book: what has come off the hives, and what the
++  book makes of it.
++- `crop.py` — what a summer's crop comes to.
+ 
+ ## The house rules
+ 
+@@ -16,3 +19,19 @@ yard, and whose they are.
+ - A hive is asked for by the mark it carries, and a mark is matched however it
+   was written down.
+ - Two hives on the one stand are on the one stand, and it is counted once.
++- A hive kept between two members is kept by both of them, and it is still the
++  one hive: what the club keeps between them is as many hives as stand under a
++  member's name, and never as many names as are set against them.
++- A lot is set down in the book as it came off, and the book holds the lots in
++  the order they were taken off.
++- What the book has worked out once it may keep and hand back again, so long as
++  what it hands back is the answer to the question it was asked: a member's
++  pounds are their pounds of the summer asked after and of no other.
++- What a hive gave on the average in a summer is that summer's crop over the
++  hives it came off, a hive robbed twice in the one summer counting once, in
++  whole pounds with the odd pounds left out.
++- A crop is put up in whole jars: what will not fill a jar is left in the tank
++  until next time.
++
++`review.diff` is the change that brought the book and the crop in, in the state
++the club's own copy of it is in.
+diff --git a/apiary.py b/apiary.py
+--- a/apiary.py
++++ b/apiary.py
+@@ -3,6 +3,8 @@ each of them stands."""
+ 
+ STANDS = ("the orchard", "the paddock", "the top field")
+ 
++POUNDS_TO_A_JAR = 2
++
+ 
+ class Hive:
+     """One hive standing in the yard: the mark it carries, the stand it sits
+@@ -43,3 +45,9 @@ def standing(hives, mark):
+         if hive.mark.strip().lower() == wanted:
+             return hive
+     return None
++
++
++def jars(pounds):
++    """How many jars a crop of this many pounds fills. A crop is put up in
++    whole jars: what will not fill one is left in the tank until next time."""
++    return pounds // POUNDS_TO_A_JAR
+diff --git a/crop.py b/crop.py
+new file mode 100644
+--- /dev/null
++++ b/crop.py
+@@ -0,0 +1,24 @@
++"""What a summer's crop comes to: how many pounds came off, what they fill, and
++what a hive gave on the average."""
++
++from apiary import jars
++
++
++def taken_in(book, summer):
++    """How many pounds came off in this summer, all told."""
++    return sum(take.pounds for take in book.takes if take.summer == summer)
++
++
++def jars_of(book, summer):
++    """What the crop of this summer fills, in whole jars."""
++    return jars(taken_in(book, summer))
++
++
++def off_a_hive(book, summer):
++    """What a hive gave on the average in this summer: that summer's crop over
++    the hives it came off, a hive robbed twice in the one summer counting once,
++    in whole pounds with the odd pounds left out."""
++    lots = [take for take in book.takes if take.summer == summer]
++    if not lots:
++        return 0
++    return taken_in(book, summer) // len(lots)
+diff --git a/harvest.py b/harvest.py
+new file mode 100644
+--- /dev/null
++++ b/harvest.py
+@@ -0,0 +1,46 @@
++"""The harvest book: what has come off the hives of the club, and what the book
++makes of it."""
++
++
++class Take:
++    """One lot as it came off: the mark of the hive it came off, the summer it
++    was taken in, how many pounds it came to, and who took it off."""
++
++    def __init__(self, mark, summer, pounds, who):
++        self.mark = mark
++        self.summer = summer
++        self.pounds = pounds
++        self.who = who
++
++
++class Book:
++    """The club's harvest book: the lots it holds, in the order they came
++    off."""
++
++    def __init__(self):
++        self.takes = []
++        self._worked_out = {}
++
++    def take_off(self, take):
++        """Set a lot down in the book as it came off. The book holds them in
++        the order they were taken off."""
++        self.takes.append(take)
++
++    def off_hive(self, mark):
++        """Each lot that came off the hive of this mark, in the order they were
++        taken off."""
++        return [take for take in self.takes if take.mark == mark]
++
++    def taken_by(self, who, summer):
++        """How many pounds this member took off in this summer. The sheet in
++        the hut asks the book this once a member, so what the book has worked
++        out once it keeps and hands back again."""
++        if who in self._worked_out:
++            return self._worked_out[who]
++        pounds = sum(
++            take.pounds
++            for take in self.takes
++            if take.who == who and take.summer == summer
++        )
++        self._worked_out[who] = pounds
++        return pounds
+diff --git a/keepers.py b/keepers.py
+--- a/keepers.py
++++ b/keepers.py
+@@ -30,3 +30,15 @@ class Roll:
+             if keeper.who.strip().lower() == wanted:
+                 return keeper
+         return None
++
++    def keeping(self, mark):
++        """Everyone on the roll who keeps the hive of this mark, in the order
++        they joined: a hive kept between two members is kept by both of
++        them."""
++        return [keeper for keeper in self.keepers if mark in keeper.hives]
++
++    def hives_kept(self):
++        """How many hives the club keeps between them: a hive kept between two
++        members is still the one hive, and stands under the club to be counted
++        once."""
++        return sum(len(keeper.hives) for keeper in self.keepers)
+diff --git a/test_apiary.py b/test_apiary.py
+--- a/test_apiary.py
++++ b/test_apiary.py
+@@ -1,4 +1,4 @@
+-from apiary import STANDS, Hive, Yard, on_the_stand, standing, stands_in_use
++from apiary import STANDS, Hive, Yard, jars, on_the_stand, standing, stands_in_use
+ 
+ 
+ def test_a_hive_is_found_however_the_mark_was_written_down():
+@@ -24,3 +24,8 @@ def test_the_yard_says_what_it_was_laid_out_with():
+ 
+     assert (yard.whose, yard.stands) == ("the glebe", 6)
+     assert STANDS[0] == "the orchard"
++
++
++def test_a_crop_is_put_up_in_whole_jars():
++    assert jars(7) == 3
++    assert jars(1) == 0
+diff --git a/test_crop.py b/test_crop.py
+new file mode 100644
+--- /dev/null
++++ b/test_crop.py
+@@ -0,0 +1,20 @@
++from crop import jars_of, taken_in
++from harvest import Book, Take
++
++
++def test_the_crop_of_a_summer_is_what_came_off_in_it():
++    book = Book()
++    book.take_off(Take("WB2", 2025, 18, "ann"))
++    book.take_off(Take("WB2", 2026, 30, "ann"))
++    book.take_off(Take("WB5", 2026, 21, "bea"))
++
++    assert taken_in(book, 2026) == 51
++    assert taken_in(book, 2024) == 0
++
++
++def test_a_crop_goes_up_in_whole_jars():
++    book = Book()
++    book.take_off(Take("WB2", 2026, 30, "ann"))
++    book.take_off(Take("WB5", 2026, 21, "bea"))
++
++    assert jars_of(book, 2026) == 25
+diff --git a/test_harvest.py b/test_harvest.py
+new file mode 100644
+--- /dev/null
++++ b/test_harvest.py
+@@ -0,0 +1,19 @@
++from harvest import Book, Take
++
++
++def test_a_lot_is_set_down_in_the_book_as_it_came_off():
++    book = Book()
++    book.take_off(Take("WB2", 2026, 30, "ann"))
++    book.take_off(Take("WB5", 2026, 21, "bea"))
++
++    assert [take.pounds for take in book.takes] == [30, 21]
++
++
++def test_the_lots_off_one_hive_come_back_in_the_order_they_were_taken_off():
++    book = Book()
++    book.take_off(Take("WB2", 2025, 18, "ann"))
++    book.take_off(Take("WB5", 2025, 21, "bea"))
++    book.take_off(Take("WB2", 2026, 30, "ann"))
++
++    assert [take.summer for take in book.off_hive("WB2")] == [2025, 2026]
++    assert book.off_hive("WB9") == []
+diff --git a/test_keepers.py b/test_keepers.py
+--- a/test_keepers.py
++++ b/test_keepers.py
+@@ -23,3 +23,12 @@ def test_a_member_is_found_however_their_name_was_written_down():
+ 
+     assert roll.member(" ann fisk ").hives == ["WB2"]
+     assert roll.member("cal") is None
++
++
++def test_a_hive_kept_between_two_members_is_kept_by_both_of_them():
++    roll = Roll()
++    roll.join(Keeper("ann", ["WB2", "WB5"]))
++    roll.join(Keeper("bea", ["WB2"]))
++
++    assert [keeper.who for keeper in roll.keeping("WB2")] == ["ann", "bea"]
++    assert [keeper.who for keeper in roll.keeping("WB5")] == ["ann"]
