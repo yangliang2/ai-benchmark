@@ -1,0 +1,11 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "clocking.py", "symbol": "Book.belongs_to"},
+    {"file": "clocking.py", "symbol": "Book"}
+  ],
+  "rejected": [
+    {"file": "rings.py", "symbol": "same_bird"},
+    {"file": "entries.py", "symbol": "Entries.for_race"}
+  ]
+}

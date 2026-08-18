@@ -1,0 +1,77 @@
+# codebase-comprehension, locate-style: "where is this behaviour handled?"
+# The fourth of round 5's four, on its own repository and asking after a fourth
+# kind of behaviour: the earlier three ask where a decision is taken
+# (`boatyard-where-a-lift-out-is-refused`), where printed wording is put
+# together (`bandstand-where-the-poster-is-worded`) and where a figure is
+# arrived at (`coalround-where-the-monthly-figure-is-worked-out`); this one asks
+# where a thing that turns up is held against the paper and matched to the
+# record it belongs to. There is no planted defect anywhere in this repository,
+# and this action's registered existence proof is the whole of what stands
+# behind the key: the accepted (file, symbol) resolves in the starting
+# repository.
+#
+# The mechanism is round 4's, unchanged — same `grading/accepted-answer.json`,
+# same `_answer.py` and `test_answer.py` byte for byte, same forgiveness, same
+# terrain rules, same hash gate. What differs is what the halves mean: accepted
+# names where correct code lives, rejected names where a related but different
+# behaviour lives.
+#
+# Both legitimately correct description levels are written down: the method the
+# matching is done in, and the class enclosing it. `clocking.py` defines two
+# classes, Clocked and Book, so an answer at class level is a reading rather
+# than the filename in disguise (terrain rule 3). The module alone is not an
+# accepted level.
+#
+# The terrain: the other two modules answer one narrow question each and hold
+# nothing against anything — `rings.same_bird` says only whether two writings of
+# a number are the one bird, `Entries.for_race` says only what was put in for a
+# race — and each is a plausible place to stop for exactly that reason: both are
+# places a bird is recognised, and neither is where a bird that came down is
+# matched. Both are keyed rejected, each names a file the accepted set does not,
+# and neither is the near-miss the lint synthesises for itself out of the
+# accepted file. The prompt describes the afternoon in the member's words rather
+# than the module's, and names no file and no symbol out of either half of the
+# key.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# Neither a family nor a pair member; like its siblings it has no partner at all.
+id: pigeonloft-where-a-timed-in-bird-is-matched
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a pigeon club and a repository about one cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds every
+# other word of the prompt to appearing in more than the module the accepted
+# answer names.
+domain_nouns: [bird, birds, pigeon, pigeons, loft, lofts, ring, rings, number,
+               numbers, race, races, club, member, members, secretary, sheet,
+               sheets, paper, line, lines, hour, hours, clock, afternoon,
+               saturday, summer, entry, entries]
+prompt: |
+  A member gets home from the club on the Saturday and waits, and through
+  the afternoon the birds arrive one at a time. Each is timed as it arrives,
+  the number on its ring is called out, and that number is set against the
+  paper the secretary took the night before. The number is the same bird
+  whichever way it was put down — spaces in or left out, capitals or not,
+  the year with an apostrophe in front of it or without — and it is this
+  member's bird only where it was this member who entered it. One arriving
+  before the race is open, or after it has closed, is set against no line
+  at all whatever it did on the way; and where a member entered the same
+  number twice, it is the earlier of the two lines it is set against. A bird
+  nobody entered is nobody's.
+
+  Where in this repository is that handled? Nothing here is broken and there
+  is nothing to put right — the question is where a bird timed in is set
+  against the paper and which line of it the bird is settled on.
+
+  Study the repository and leave it precisely as you found it. Do not edit,
+  create or delete any part of it: the deliverable is the location and not a
+  change, and a run that alters the repository is graded unresolved however
+  well it replied.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the behaviour
+  is handled in relative to the repository root, and "symbol", the function,
+  class or method it is handled in (a method written as Class.method).

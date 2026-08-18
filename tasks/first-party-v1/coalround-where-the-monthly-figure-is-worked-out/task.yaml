@@ -1,0 +1,71 @@
+# codebase-comprehension, locate-style: "where is this behaviour handled?"
+# The third of round 5's four, on its own repository and asking after a third
+# kind of behaviour: `boatyard-where-a-lift-out-is-refused` asks where a
+# decision is taken and `bandstand-where-the-poster-is-worded` where a piece of
+# printed wording is put together; this one asks where a figure is arrived at —
+# where the pieces of an arithmetic are brought together into the one number a
+# house is asked for. There is no planted defect anywhere in this repository,
+# and this action's registered existence proof is the whole of what stands
+# behind the key: the accepted (file, symbol) resolves in the starting
+# repository.
+#
+# The mechanism is round 4's, unchanged — same `grading/accepted-answer.json`,
+# same `_answer.py` and `test_answer.py` byte for byte, same forgiveness, same
+# terrain rules, same hash gate. What differs is what the halves mean: accepted
+# names where correct code lives, rejected names where a related but different
+# behaviour lives.
+#
+# Both legitimately correct description levels are written down: the method the
+# figure is arrived at in, and the class enclosing it. `statement.py` defines
+# two classes, Terms and Statement, so an answer at class level is a reading
+# rather than the filename in disguise (terrain rule 3). The module alone is not
+# an accepted level.
+#
+# The terrain: the other two modules each hold one piece of the arithmetic and
+# neither multiplies anything by anything — `grades.price_of` says what a single
+# sack of a kind fetches in a month, `Round.at` says what went in at a door —
+# so both are places a reader could stop, and both are keyed rejected. Each
+# names a file the accepted set does not, and neither is the near-miss the lint
+# synthesises for itself out of the accepted file. The prompt describes the
+# demand in the householder's words rather than the module's, and names no file
+# and no symbol out of either half of the key.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# Neither a family nor a pair member; like its siblings it has no partner at all.
+id: coalround-where-the-monthly-figure-is-worked-out
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a coal round and a repository about one cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds every
+# other word of the prompt to appearing in more than the module the accepted
+# answer names.
+domain_nouns: [coal, coals, sack, sacks, house, houses, door, doors, month,
+               months, kind, kinds, cart, lane, empties, year, season, price,
+               prices, pence, terms, delivery, deliveries, round, yard, miles]
+prompt: |
+  The cart goes out along the lane through the season, and at the end of
+  every month a house that had anything gets a demand with a single figure
+  on it. The figure is arrived at the same way each time: so many sacks of
+  each kind, at what that kind fetches in that month — the cold half of the
+  year dearer than the warm — with something allowed against the empty
+  sacks handed back at the door, and something put on for a house standing
+  out beyond the near ones. However little a house had, in a month it had
+  anything at all it is asked no less than a settled small figure; and a
+  month in which nothing came asks for nothing whatever.
+
+  Where in this repository is that figure arrived at? Nothing here is broken
+  and there is nothing to put right — the question is where the pieces are
+  brought together into the one figure a house is asked for.
+
+  Study the repository and leave it precisely as you found it. Do not edit,
+  create or delete any part of it: the deliverable is the location and not a
+  change, and a run that alters the repository is graded unresolved however
+  well it replied.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the behaviour
+  is handled in relative to the repository root, and "symbol", the function,
+  class or method it is handled in (a method written as Class.method).

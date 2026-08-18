@@ -1,0 +1,11 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "statement.py", "symbol": "Statement.made_up"},
+    {"file": "statement.py", "symbol": "Statement"}
+  ],
+  "rejected": [
+    {"file": "grades.py", "symbol": "price_of"},
+    {"file": "deliveries.py", "symbol": "Round.at"}
+  ]
+}
