@@ -1567,6 +1567,34 @@ def _sweep_id_problem(sweep: str) -> str | None:
     return None
 
 
+CostSource = Literal["vendor-reported", "table-derived"]
+
+
+def _cost_source_problem(
+    agent: str, cost_source: CostSource | None, price_table: str | None
+) -> str | None:
+    """What is wrong with this row's cost-source disclosure, if anything."""
+    if agent == "codex" and (
+        cost_source != "table-derived" or price_table is None
+    ):
+        return (
+            f"agent {agent!r} needs cost_source='table-derived' and a "
+            "price_table version — codex reports no dollar figure of its own, "
+            "so its cost_usd is always computed from a price table"
+        )
+    if cost_source == "vendor-reported" and price_table is not None:
+        return (
+            "cost_source='vendor-reported' rows name no price_table — the "
+            "vendor's own figure was not computed from one"
+        )
+    if cost_source == "table-derived" and price_table is None:
+        return (
+            "cost_source='table-derived' rows must name the price_table "
+            "version cost_usd was computed from"
+        )
+    return None
+
+
 class Run(BaseModel):
     """One raw run-log row: the v0 fields plus the workdir diff and the sweep id.
 
@@ -1596,11 +1624,29 @@ class Run(BaseModel):
     # the field existed has none, and those stay valid and replay unchanged:
     # reconciliation falls back to their as-of date, which is all they say.
     sweep: NonEmptyStr | None = None
+    # How cost_usd was obtained (CONTEXT.md's "cost source"), and, for a
+    # table-derived figure, the price_table version it was computed from.
+    # v1-only: no Codex row is ever written to a v0 log, and firstparty's v0
+    # Run is a different log's shape, so v0 stays untouched. Both optional
+    # and defaulting to absent — every row written before this ticket has
+    # neither, and stays valid and replays unchanged. Nothing here recomputes
+    # cost_usd, on load or on replay: it is whatever the row says, and a later
+    # price_table version reprices nothing already logged.
+    cost_source: CostSource | None = None
+    price_table: str | None = None
 
     @model_validator(mode="after")
     def sweep_id_is_a_usable_round_key(self) -> Self:
         if self.sweep is not None and (problem := _sweep_id_problem(self.sweep)):
             raise ValueError(f"{problem} — {_SWEEP_ID_RULE}")
+        return self
+
+    @model_validator(mode="after")
+    def cost_source_is_not_self_contradictory(self) -> Self:
+        if problem := _cost_source_problem(
+            self.agent, self.cost_source, self.price_table
+        ):
+            raise ValueError(problem)
         return self
 
 
@@ -4566,11 +4612,15 @@ def _run_task_live(
             limit_s=live_run_limit_s(task),
         )
         diff = _capture_workdir_diff(task, workdir, initial)
-    # A v1 Run is v0's fields plus the diff and the sweep id, and the dump
-    # keeps that coupling in one place. mypy cannot see through the **dump,
-    # but Run's extra="forbid" turns any v0 field this model does not declare
-    # into a loud runtime error rather than silent drift.
-    return Run(**base.model_dump(), diff=diff, sweep=sweep)
+    # A v1 Run is v0's fields plus the diff, the sweep id, and the adapter's
+    # own cost-source disclosure, and the dump keeps that coupling in one
+    # place. mypy cannot see through the **dump, but Run's extra="forbid"
+    # turns any v0 field this model does not declare into a loud runtime
+    # error rather than silent drift.
+    return Run(
+        **base.model_dump(), diff=diff, sweep=sweep,
+        cost_source=adapter.cost_source, price_table=adapter.price_table,
+    )
 
 
 def _commit_pristine(task: Task, workdir: Path) -> str:

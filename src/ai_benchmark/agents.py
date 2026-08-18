@@ -8,6 +8,8 @@ this module is where that list is enforced rather than merely written down:
 - event/payload parsing — into the row's `output`, `tokens_in`, `tokens_out`,
   `latency_s`, `turns`, `cost_usd`;
 - version capture — what lands in `agent_version`;
+- cost-source disclosure — the adapter names how its `cost_usd` was obtained
+  (`cost_source`) and, for a table-derived figure, the `price_table` version;
 - the permission-denial equivalent — the harness-ended run that raises and
   logs nothing;
 - honouring the live run-time limit it is *given*.
@@ -32,7 +34,7 @@ and the model ladder already take. `claude-code` is the first instance;
 
 from datetime import date
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
@@ -50,6 +52,16 @@ class AgentAdapter(Protocol):
     @property
     def name(self) -> str:
         """The agent's registered name — what a row's `agent` field carries."""
+
+    @property
+    def cost_source(self) -> Literal["vendor-reported", "table-derived"]:
+        """How this adapter's `cost_usd` was obtained (CONTEXT.md's "cost
+        source") — stamped on every row it builds."""
+
+    @property
+    def price_table(self) -> str | None:
+        """The price_table version `cost_usd` was computed from, for a
+        table-derived adapter; None for one that reports its own figure."""
 
     def version(self) -> str:
         """The harness version this sweep is running, for `agent_version`."""
@@ -84,6 +96,10 @@ class ClaudeCodeAdapter:
     """
 
     name = CLAUDE_CODE
+    # claude-code prints its own dollar figure (`total_cost_usd`); no price
+    # table is ever consulted for it.
+    cost_source: Literal["vendor-reported", "table-derived"] = "vendor-reported"
+    price_table: str | None = None
 
     def version(self) -> str:
         return claude_version()
