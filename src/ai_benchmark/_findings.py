@@ -32,7 +32,7 @@ directory grading runs pytest in — the workdir the overlay copied this module,
 disabled and its config pinned outside the workdir, so a grading file that
 imported anything of this project's would not work at grade time.
 
-What the verdict is: resolved iff **every** accepted finding is matched by at
+What the verdict is: resolved iff **every** planted finding is matched by at
 least one finding of the answer *and* **no** finding of the answer matches a
 rejected one. The two quantifiers are what makes this key set-shaped rather
 than a second accepted-answer key — a locate verdict asks whether the one
@@ -42,6 +42,18 @@ archived evidence, because a real problem the author did not plant must not
 fail the run, while every-line-is-a-finding still fails on the rejected half.
 And there is no partial score, because a recall rate would be a new quality
 metric where `resolved` is the one this benchmark reports.
+
+A planted finding is itself a *set*: `{"any": [location, ...]}`, a non-empty
+list of the alternative locations the author is prepared to have that one
+defect described at — typically the defective method and the class enclosing
+it — and it is matched when some finding of the answer matches **any one** of
+them. So the quantifier over the accepted half is "every finding, at some
+alternative": an inner *any* under an outer *every*. The flat shape this
+replaced made a planted finding one location, which meant a key could not
+write down a second legitimately-correct description level without demanding
+that the answer report the same defect twice, once at each. The first
+alternative is the **primary** — the most specific location, and the one the
+finding is named after wherever a name is needed.
 
 A finding may carry a free-text note beside its location, and nothing here ever
 reads it: `one_location` tolerates a flat extra field and refuses a nested list
@@ -73,12 +85,17 @@ def findings_problem(workdir: Path | None = None) -> str | None:
     root = Path.cwd() if workdir is None else workdir
     key = json.loads((root / KEY_FILE).read_text(encoding="utf-8"))
     declared: str = key["answer_path"]
-    # Read with .get rather than subscripted: the key model defaults an
-    # omitted half to empty and the task-set lint is what names that emptiness,
-    # so a half-written key has to reach the lint as the lint problem it is
-    # rather than crash a grading run here with a KeyError.
-    accepted: list[tuple[str, str]] = [
-        (entry["file"], entry["symbol"]) for entry in key.get("accepted", [])
+    # Read with .get rather than subscripted, and at both levels: the key model
+    # defaults an omitted half to empty, a planted finding is a set of
+    # alternatives keyed under "any", and the task-set lint is what names either
+    # of those missing — so a half-written key has to reach that lint as the
+    # lint problem it is rather than crash a grading run here with a KeyError.
+    accepted: list[list[tuple[str, str]]] = [
+        [
+            (alternative["file"], alternative["symbol"])
+            for alternative in planted.get("any", [])
+        ]
+        for planted in key.get("accepted", [])
     ]
     rejected: list[tuple[str, str]] = [
         (entry["file"], entry["symbol"]) for entry in key.get("rejected", [])
@@ -98,11 +115,23 @@ def findings_problem(workdir: Path | None = None) -> str | None:
             f"{declared} does not list findings, each one object naming a "
             f"(file, symbol) pair: {answer!r}"
         )
-    for planted in accepted:
-        if not any(matches(found, planted) for found in reported):
+    for alternatives in accepted:
+        if not alternatives:
             return (
-                f"no finding names {planted}, which the change under review "
-                f"does contain — {declared} reports {reported}"
+                "the findings key plants a finding with no location to match "
+                "it against — a planted finding is a non-empty set of "
+                'alternative locations, {"any": [{"file": ..., "symbol": ...}]}'
+            )
+        if not any(
+            matches(found, alternative)
+            for alternative in alternatives
+            for found in reported
+        ):
+            primary, *rest = alternatives
+            named = f" (or {rest})" if rest else ""
+            return (
+                f"no finding names {primary}{named}, which the change under "
+                f"review does contain — {declared} reports {reported}"
             )
     for found in reported:
         for non_finding in rejected:

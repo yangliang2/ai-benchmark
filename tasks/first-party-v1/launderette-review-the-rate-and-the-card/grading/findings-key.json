@@ -1,9 +1,10 @@
 {
   "answer_path": "FINDINGS.json",
   "accepted": [
-    {"file": "tariff.py", "symbol": "price_for"},
-    {"file": "stamps.py", "symbol": "Card.add_stamp"},
-    {"file": "washes.py", "symbol": "Book.owed"}
+    {"any": [{"file": "tariff.py", "symbol": "price_for"}]},
+    {"any": [{"file": "stamps.py", "symbol": "Card.add_stamp"}]},
+    {"any": [{"file": "washes.py", "symbol": "Book.owed"},
+             {"file": "washes.py", "symbol": "Book"}]}
   ],
   "rejected": [
     {"file": "tariff.py", "symbol": "LATE_OFF_PENCE"},

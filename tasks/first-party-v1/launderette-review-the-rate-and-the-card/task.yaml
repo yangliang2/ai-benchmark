@@ -12,8 +12,8 @@
 # planted finding is the code disagreeing with a rule somebody wrote down
 # rather than a matter of taste.
 #
-# The three planted findings, each keyed at the one description level a review
-# verdict can accept:
+# The three planted findings, each named here by its primary — the most
+# specific location, which is the first alternative in the key:
 #
 #   tariff.py price_for       the cheaper hour is tested with a strict >, so a
 #                             load put on as the clock goes round pays the day
@@ -25,13 +25,26 @@
 #                             the list dropped, so a free wash comes off the
 #                             cheapest of somebody's loads and not the dearest.
 #
-# Why one level each, where a fault-location key writes down every level that is
-# legitimately correct: a findings key's accepted half is read under *every*,
-# not *any*, so a second entry for the same defect would demand that an answer
-# report the same problem twice, at both levels. What does the work the locate
-# key's set does is the comparison's own forgiveness — a bare symbol answers a
-# key spelled `Class.method` — so `add_stamp` and `Card.add_stamp` both answer
-# the second finding, and `owed` and `Book.owed` both answer the third.
+# A planted finding is a set of alternative locations and is matched if an
+# answer matches any one of them, so each finding here writes down every level
+# that legitimately describes it — the same mitigation a fault-location key
+# carries. Which is one level for two of the three, and why:
+#
+#   price_for       is defined at module level, so there is no enclosing class
+#                   to be a second description of it.
+#   Card.add_stamp  is a method of `Card`, the only class stamps.py defines —
+#                   and terrain rule 3 refuses a class-level location there,
+#                   because an agent answering at class level would have that
+#                   answer determined by the filename alone. So no class-level
+#                   alternative here, deliberately.
+#   Book.owed       is a method of `Book`, and washes.py defines `Wash` beside
+#                   it, so `washes.py Book` is a second alternative: telling
+#                   the two classes apart takes reading them.
+#
+# Beneath the alternatives the comparison's own forgiveness still applies: a bare
+# symbol answers a key spelled `Class.method`, so `add_stamp` and
+# `Card.add_stamp` both answer the second finding, and `owed`, `Book.owed` and
+# `Book` all answer the third.
 #
 # The rejected non-findings are the two places a reviewer plausibly points at
 # and is wrong to, and they are the half no lint can invent: LATE_OFF_PENCE is
@@ -39,12 +52,14 @@
 # asked for; Book.takings is the caller whose number comes out wrong, because
 # it adds up prices the defect above got wrong, and is itself correct.
 #
-# Each planted finding carries its existence proof in proofs/ — a held-out test
-# that fails on repo/, which ships the change applied, and passes on
-# corrected/, the same repository with all three put right. Both trees sit
-# beside repo/ and outside grading/, which is overlaid into the workdir
-# wholesale, so the lint runs them and grading can neither collect nor copy
-# them.
+# Each planted finding carries its existence proof in proofs/ — one per
+# finding, named after its primary, and so unrenamed by the alternative added
+# above: a held-out test that fails on repo/, which ships the change applied,
+# and passes on corrected/, the same repository with all three put right. A
+# finding is one defect however many locations describe it, so it owes one
+# proof and not one per alternative. Both trees sit beside repo/ and outside
+# grading/, which is overlaid into the workdir wholesale, so the lint runs them
+# and grading can neither collect nor copy them.
 #
 # The terrain: the prompt names neither a file nor a symbol of either half of
 # the key, and its own vocabulary is either English's or the domain's below or

@@ -33,11 +33,21 @@ discriminates. Must-fail-on-pristine cannot show it: a pristine repository
 carries no answer file, so the check is unconditionally satisfied and a grading
 test asking "did some finding match" passes it. So the lint reads the key
 against the change under review — the accepted set describes the change and not
-the repository at large — and then runs seven answers it expects to *fail*
-through the real pipeline, two of which are what a set verdict has to earn:
-every planted finding but one, and every planted finding plus a rejected one.
-The three terrain rules reach a review task here too, keyed on the task
-carrying a key rather than on which key it carries.
+the repository at large — and then runs answers it expects to *fail* through
+the real pipeline, two kinds of which are what a set verdict has to earn: every
+planted finding but one, and every planted finding plus a rejected one. The
+three terrain rules reach a review task here too, keyed on the task carrying a
+key rather than on which key it carries.
+
+What #85 adds is the shape a planted finding actually has: not one location but
+a **set of alternatives**, matched if an answer matches any one of them, the
+first of them the primary. That is the mitigation for this grading's expensive
+assumption — that an agent which spots a defect describes it at a level the
+author anticipated — and under the flat shape it was inexpressible, because the
+accepted half is read under *every* and a second entry for one defect demanded
+that the answer report it twice. Every read rule now runs per alternative, and
+the lint *proves* the mitigation rather than trusting it: the answer reporting
+any finding at any of its alternatives is required to grade resolved.
 
 What #71 adds is the prior question none of that asks: whether the planted
 findings are defects at all. The fixture therefore ships an **existence proof**
@@ -69,6 +79,7 @@ from ai_benchmark.firstparty_v1 import (
     REPO_DIR,
     REVIEW_DIFF_FILE,
     Answer,
+    PlantedFinding,
     Task,
     _terrain_problems,
     answer_module_source,
@@ -286,11 +297,20 @@ optionally, "note" (a sentence on what is wrong). Report each problem the
 change introduced, and nothing that is not one.
 """
 
-# The planted findings: one defect each, at the level the author is prepared to
-# have them described at.
+# The planted findings: one defect each, written as the *set* of locations that
+# legitimately describe it, primary first (#85). The first plants a defect in a
+# module-level function, which has no enclosing class to be a second description
+# of it. The second plants one in a method, and names the class enclosing it as
+# a second alternative — which `shifts.py` allows, defining `Shift` beside
+# `Rota`, so terrain rule 3 does not refuse a class-level location there.
 ACCEPTED: list[dict[str, object]] = [
-    {"file": "payroll.py", "symbol": "overtime_pay"},
-    {"file": "shifts.py", "symbol": "Rota.add"},
+    {"any": [{"file": "payroll.py", "symbol": "overtime_pay"}]},
+    {
+        "any": [
+            {"file": "shifts.py", "symbol": "Rota.add"},
+            {"file": "shifts.py", "symbol": "Rota"},
+        ]
+    },
 ]
 
 # The non-findings: the two places a reviewer plausibly points at and is wrong
@@ -356,10 +376,21 @@ def test_a_stretch_starting_too_soon_after_the_last_one_ended_is_refused():
 '''
 
 # Named after the findings they prove, by the very function the lint looks them
-# up with, so a proof test and its finding cannot drift apart here.
+# up with, so a proof test and its finding cannot drift apart here. One proof
+# per *finding*, named after its **primary** — the two-alternative finding above
+# owes one proof, not one for the method and another for the class enclosing it.
 PROOFS: dict[str, str] = {
-    proof_test_name(Answer(file="payroll.py", symbol="overtime_pay")): OVERTIME_PROOF,
-    proof_test_name(Answer(file="shifts.py", symbol="Rota.add")): REST_PROOF,
+    proof_test_name(
+        PlantedFinding(any=(Answer(file="payroll.py", symbol="overtime_pay"),))
+    ): OVERTIME_PROOF,
+    proof_test_name(
+        PlantedFinding(
+            any=(
+                Answer(file="shifts.py", symbol="Rota.add"),
+                Answer(file="shifts.py", symbol="Rota"),
+            )
+        )
+    ): REST_PROOF,
 }
 
 GRADING_TEST = findings_test_source().decode("utf-8")
@@ -405,7 +436,11 @@ from pathlib import Path
 
 WORKDIR = Path.cwd()
 KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
-PLANTED = {{(entry["file"], entry["symbol"]) for entry in KEY["accepted"]}}
+PLANTED = {{
+    (alternative["file"], alternative["symbol"])
+    for planted in KEY["accepted"]
+    for alternative in planted["any"]
+}}
 REFUSED = {{(entry["file"], entry["symbol"]) for entry in KEY["rejected"]}}
 
 
@@ -429,7 +464,7 @@ from pathlib import Path
 
 WORKDIR = Path.cwd()
 KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
-PLANTED = {{entry["file"] for entry in KEY["accepted"]}}
+PLANTED = {{planted["any"][0]["file"] for planted in KEY["accepted"]}}
 REFUSED = {{(entry["file"], entry["symbol"]) for entry in KEY["rejected"]}}
 
 
@@ -454,7 +489,10 @@ from pathlib import Path
 
 WORKDIR = Path.cwd()
 KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
-PLANTED = {{(entry["file"], entry["symbol"]) for entry in KEY["accepted"]}}
+PLANTED = {{
+    (planted["any"][0]["file"], planted["any"][0]["symbol"])
+    for planted in KEY["accepted"]
+}}
 
 
 def test_the_answer_reports_every_planted_finding():
@@ -465,6 +503,36 @@ def test_the_answer_reports_every_planted_finding():
         for entry in json.loads(answer_path.read_text(encoding="utf-8"))
     }}
     assert PLANTED <= reported
+'''
+
+# The comparison a key with alternatives exists to be more than, and what the
+# per-alternative *positive* gate is for: it reads each planted finding's first
+# alternative and no other, so a review that describes the second defect at the
+# class the author wrote down as legitimately correct grades unresolved.
+PRIMARY_ONLY_GRADING_TEST = f'''\
+"""A grading test that reads each planted finding's primary and no other."""
+
+import json
+from pathlib import Path
+
+WORKDIR = Path.cwd()
+KEY = json.loads((WORKDIR / "{FINDINGS_KEY_FILE}").read_text(encoding="utf-8"))
+PLANTED = {{
+    (planted["any"][0]["file"], planted["any"][0]["symbol"])
+    for planted in KEY["accepted"]
+}}
+REFUSED = {{(entry["file"], entry["symbol"]) for entry in KEY["rejected"]}}
+
+
+def test_the_answer_reports_every_planted_finding():
+    answer_path = WORKDIR / KEY["answer_path"]
+    assert answer_path.is_file(), "no answer file"
+    reported = {{
+        (entry["file"], entry["symbol"])
+        for entry in json.loads(answer_path.read_text(encoding="utf-8"))
+    }}
+    assert PLANTED <= reported
+    assert not reported & REFUSED
 '''
 
 # A module whose one symbol the key accepts, so no near-miss can be synthesised
@@ -657,6 +725,12 @@ def finding(file: str, symbol: str, note: str | None = None) -> dict[str, object
     return reported
 
 
+def planted(*locations: tuple[str, str]) -> dict[str, object]:
+    """One planted finding, as the key writes it: the set of alternative
+    locations that legitimately describe one defect, primary first."""
+    return {"any": [{"file": file, "symbol": symbol} for file, symbol in locations]}
+
+
 def every_planted_finding() -> str:
     """The reference solution: the answer file a correct review leaves behind,
     which for an answer-file-only deliverable is the whole of it."""
@@ -705,10 +779,22 @@ def test_a_code_review_task_loads_carrying_its_findings_key(tmp_path: Path) -> N
     # ships no accepted-answer key, and nothing gated on that one reaches it.
     assert not is_keyed(task)
     assert key.answer_path == ANSWER_PATH
+    # A planted finding is a set of alternative locations, and the first of them
+    # is the primary — the most specific one, and what the finding is named
+    # after wherever a name is needed.
     assert key.accepted == (
+        PlantedFinding(any=(Answer(file="payroll.py", symbol="overtime_pay"),)),
+        PlantedFinding(
+            any=(
+                Answer(file="shifts.py", symbol="Rota.add"),
+                Answer(file="shifts.py", symbol="Rota"),
+            )
+        ),
+    )
+    assert [found.primary for found in key.accepted] == [
         Answer(file="payroll.py", symbol="overtime_pay"),
         Answer(file="shifts.py", symbol="Rota.add"),
-    )
+    ]
     assert key.rejected == (
         Answer(file="payroll.py", symbol="total_pay"),
         Answer(file="shifts.py", symbol="MIN_REST_HOURS"),
@@ -824,27 +910,110 @@ def test_a_findings_key_that_plants_nothing_fails_to_load(tmp_path: Path) -> Non
 
 def test_a_finding_written_as_a_line_number_is_refused(tmp_path: Path) -> None:
     """The pair model is fault-location's, refusals and all: lines shift under
-    any edit, and a key keyed on one would grade a correct finding wrong."""
+    any edit, and a key keyed on one would grade a correct finding wrong. Read
+    per alternative, since that is where a location now lives."""
     with pytest.raises(IngestError, match="names a line number"):
         fixture_task(
             tmp_path,
-            accepted=[{"file": "payroll.py", "symbol": "overtime_pay", "line": 9}],
+            accepted=[
+                {"any": [
+                    {"file": "payroll.py", "symbol": "overtime_pay", "line": 9}
+                ]}
+            ],
         )
 
 
 def test_a_finding_naming_a_file_alone_is_refused(tmp_path: Path) -> None:
     with pytest.raises(IngestError, match="names a file with no symbol"):
-        fixture_task(tmp_path, accepted=[{"file": "payroll.py"}])
+        fixture_task(tmp_path, accepted=[{"any": [{"file": "payroll.py"}]}])
 
 
-def test_neither_half_may_name_one_pair_twice(tmp_path: Path) -> None:
-    """Both halves are sets. A planted finding named twice would have to be
-    reported twice by an answer that is a set as well, or counted twice by a
-    verdict that is not."""
-    with pytest.raises(IngestError, match="accepted names the same"):
-        fixture_task(tmp_path / "accepted-twice", accepted=ACCEPTED + [ACCEPTED[0]])
-    with pytest.raises(IngestError, match="rejected names the same"):
-        fixture_task(tmp_path / "rejected-twice", rejected=REJECTED + [REJECTED[1]])
+def test_a_planted_finding_written_flat_is_refused_with_the_shape(
+    tmp_path: Path,
+) -> None:
+    """A planted finding is a set of alternative locations and never one pair,
+    so the flat spelling the key used to carry is refused outright — with the
+    shape it should have had, because a key an author has to guess the shape of
+    is a key authored by trial against a lint. There is one checked-in review
+    task and it is migrated, so there is no compatibility shim to fall back
+    on."""
+    with pytest.raises(IngestError, match="names one location flat") as excinfo:
+        fixture_task(
+            tmp_path,
+            accepted=[{"file": "payroll.py", "symbol": "overtime_pay"}],
+        )
+
+    assert '{"any": [{"file": ..., "symbol": ...}, ...]}' in str(excinfo.value)
+
+
+def test_a_planted_finding_with_no_alternatives_is_refused(tmp_path: Path) -> None:
+    """Non-empty, because a finding with no location is one no answer can match
+    and every answer therefore fails."""
+    with pytest.raises(IngestError, match="names no location at all"):
+        fixture_task(tmp_path, accepted=[{"any": []}])
+
+
+def test_no_location_is_named_twice_anywhere_in_the_key(tmp_path: Path) -> None:
+    """Sets, still — and one set across the whole key rather than one per half.
+    Two alternatives of one finding that name the same location claim nothing a
+    single one would; two findings sharing one let a single answer satisfy both,
+    so a review that spotted one defect would be graded as having spotted two;
+    and a location in both halves makes every answer unresolved whatever it
+    says. Refused at load, because `ai-bench run-live` loads a task set and
+    never lints it."""
+    with pytest.raises(IngestError, match="the same location twice over"):
+        fixture_task(
+            tmp_path / "within-one-finding",
+            accepted=[
+                planted(("payroll.py", "overtime_pay")),
+                planted(("shifts.py", "Rota.add"), ("shifts.py", "Rota.add")),
+            ],
+        )
+    with pytest.raises(IngestError, match="the same location twice over"):
+        fixture_task(
+            tmp_path / "across-two-findings",
+            accepted=[*ACCEPTED, planted(("payroll.py", "overtime_pay"))],
+        )
+    with pytest.raises(IngestError, match="the same location twice over"):
+        fixture_task(
+            tmp_path / "rejected-twice", rejected=REJECTED + [REJECTED[1]]
+        )
+
+
+def test_a_rejected_location_equal_to_an_alternative_is_refused(
+    tmp_path: Path,
+) -> None:
+    """The two halves are read under opposite quantifiers, so a location in both
+    makes every answer unresolved whatever it says: reporting it fails on the
+    rejected half, and leaving it out fails on the accepted one. Read over every
+    alternative, not the primaries alone — a non-primary alternative the key also
+    rejects is the same contradiction one level down."""
+    with pytest.raises(IngestError, match="the same location twice over"):
+        fixture_task(
+            tmp_path / "primary",
+            rejected=[*REJECTED, {"file": "payroll.py", "symbol": "overtime_pay"}],
+        )
+    with pytest.raises(IngestError, match="the same location twice over"):
+        fixture_task(
+            tmp_path / "alternative",
+            rejected=[*REJECTED, {"file": "shifts.py", "symbol": "Rota"}],
+        )
+
+
+def test_an_alternative_shared_through_the_comparison_is_refused(
+    tmp_path: Path,
+) -> None:
+    """Stronger than equality, and it has to be: the comparison forgives a
+    description level, so an answer of `add` matches an alternative spelled
+    `Rota.add`. A key naming both would let that one answer cover two planted
+    findings, and a review that spotted one defect would be graded as having
+    spotted both — while the two spellings are not equal and a set check by
+    equality would let it through."""
+    with pytest.raises(IngestError, match="the same location twice over"):
+        fixture_task(
+            tmp_path,
+            accepted=[*ACCEPTED, planted(("shifts.py", "add"))],
+        )
 
 
 def test_only_a_code_review_task_may_ship_a_findings_key(tmp_path: Path) -> None:
@@ -893,6 +1062,48 @@ def test_an_answer_listing_every_planted_finding_resolves(tmp_path: Path) -> Non
         reporting(
             finding("./payroll.py", "overtime_pay()"),
             finding("shifts.py", " add "),
+        ),
+    )
+
+
+def test_an_answer_at_a_non_primary_alternative_resolves(tmp_path: Path) -> None:
+    """The point of the whole shape (#85). A planted finding is a set of
+    alternative locations and is matched if an answer matches *any* one of them,
+    so a review that describes the second defect at the class enclosing the
+    defective method — a level the author wrote down as legitimately correct —
+    resolves exactly as the primary does, and does not have to report the defect
+    twice to do it."""
+    task = fixture_task(tmp_path)
+
+    assert resolves(
+        task,
+        reporting(
+            finding("payroll.py", "overtime_pay"),
+            finding("shifts.py", "Rota", "the rest check compares the wrong end"),
+        ),
+    )
+    # And the alternatives are alternatives, not a second demand: one finding
+    # per defect is enough, whichever level it is described at.
+    assert resolves(
+        task,
+        reporting(
+            finding("payroll.py", "overtime_pay"), finding("shifts.py", "Rota.add")
+        ),
+    )
+
+
+def test_an_answer_at_no_alternative_of_a_finding_does_not_resolve(
+    tmp_path: Path,
+) -> None:
+    """The alternatives widen what answers a finding; they do not stop it being
+    a finding. A symbol of the right file that is none of them leaves the
+    finding unmatched, so the run is unresolved."""
+    task = fixture_task(tmp_path)
+
+    assert not resolves(
+        task,
+        reporting(
+            finding("payroll.py", "overtime_pay"), finding("shifts.py", "Shift")
         ),
     )
 
@@ -1090,20 +1301,6 @@ def test_lint_requires_at_least_one_rejected_finding(tmp_path: Path) -> None:
     assert FIXTURE_ID in problem and "no rejected findings" in problem
 
 
-def test_lint_refuses_a_rejected_finding_that_is_also_planted(
-    tmp_path: Path,
-) -> None:
-    """The two halves are read under opposite quantifiers, so a location in
-    both makes every answer unresolved whatever it says: reporting it fails on
-    the rejected half, leaving it out fails on the accepted one."""
-    task = fixture_task(tmp_path, rejected=[*REJECTED, ACCEPTED[1]])
-
-    [problem] = lint_task_set([task])
-
-    assert FIXTURE_ID in problem and "'Rota.add'" in problem
-    assert "also plants" in problem
-
-
 def test_lint_refuses_a_planted_finding_outside_the_change_under_review(
     tmp_path: Path,
 ) -> None:
@@ -1113,8 +1310,7 @@ def test_lint_refuses_a_planted_finding_outside_the_change_under_review(
     rather than the change, which is the one thing the shipped diff exists to
     tell them apart by."""
     task = fixture_task(
-        tmp_path,
-        accepted=[*ACCEPTED, {"file": "swaps.py", "symbol": "hand_over"}],
+        tmp_path, accepted=[*ACCEPTED, planted(("swaps.py", "hand_over"))]
     )
 
     [problem] = lint_task_set([task])
@@ -1157,9 +1353,7 @@ def test_lint_refuses_a_review_task_that_ships_no_diff_of_the_change(
 def test_lint_refuses_a_finding_naming_a_file_that_is_not_in_the_repository(
     tmp_path: Path,
 ) -> None:
-    task = fixture_task(
-        tmp_path, accepted=[{"file": "wages.py", "symbol": "overtime_pay"}]
-    )
+    task = fixture_task(tmp_path, accepted=[planted(("wages.py", "overtime_pay"))])
 
     problems = lint_task_set([task])
 
@@ -1177,9 +1371,7 @@ def test_lint_refuses_a_finding_naming_a_file_matching_only_by_case(
     run on, so "payroll.PY" must not silently resolve to "payroll.py" — the
     comparison that later reads the agent's findings is case-exact on both
     halves and would never match."""
-    task = fixture_task(
-        tmp_path, accepted=[{"file": "payroll.PY", "symbol": "overtime_pay"}]
-    )
+    task = fixture_task(tmp_path, accepted=[planted(("payroll.PY", "overtime_pay"))])
 
     problems = lint_task_set([task])
 
@@ -1194,9 +1386,7 @@ def test_lint_refuses_a_finding_naming_a_symbol_the_file_does_not_define(
     tmp_path: Path,
 ) -> None:
     """A rename or a typo: a planted finding no correct review can report."""
-    task = fixture_task(
-        tmp_path, accepted=[{"file": "payroll.py", "symbol": "overtime_py"}]
-    )
+    task = fixture_task(tmp_path, accepted=[planted(("payroll.py", "overtime_py"))])
 
     [problem] = lint_task_set([task])
 
@@ -1212,8 +1402,7 @@ def test_lint_refuses_a_bare_finding_where_a_qualified_spelling_exists(
     reviewer would most naturally write, and grade a correct review
     unresolved."""
     task = fixture_task(
-        tmp_path,
-        accepted=[ACCEPTED[0], {"file": "shifts.py", "symbol": "add"}],
+        tmp_path, accepted=[ACCEPTED[0], planted(("shifts.py", "add"))]
     )
 
     [problem] = lint_task_set([task])
@@ -1389,8 +1578,12 @@ def test_lint_runs_every_discrimination_negative_through_the_real_pipeline(
     test that grades everything resolved, so each negative reports separately:
     the three a locate task is held to, and the four a set-shaped verdict adds
     — every planted finding but one, the synthesised near-miss per planted
-    finding, every planted finding plus a rejected one, and each rejected
-    finding on its own."""
+    finding per alternative's file, every planted finding plus a rejected one,
+    and each rejected finding on its own. Every finding is named by its
+    **primary**, including the one two alternatives describe: what "all planted
+    but one" drops is a whole finding, alternatives and all, because dropping
+    one alternative and leaving another would leave an answer the verdict is
+    supposed to resolve."""
     task = fixture_task(tmp_path, grading_test=ALWAYS_RESOLVES_GRADING_TEST)
 
     problems = lint_task_set([task])
@@ -1407,6 +1600,34 @@ def test_lint_runs_every_discrimination_negative_through_the_real_pipeline(
         "on its own",
     ):
         assert any(negative in problem for problem in problems), negative
+    # No negative drops half of the two-alternative finding and keeps the rest:
+    # that answer resolves by design, so requiring it unresolved would be
+    # requiring the mitigation not to work.
+    assert not any(
+        "every planted finding but ('shifts.py', 'Rota')" in problem
+        for problem in problems
+    )
+
+
+def test_lint_requires_every_alternative_of_every_finding_to_resolve(
+    tmp_path: Path,
+) -> None:
+    """The one gate here that demands *resolved*, and the point of the whole
+    shape: each alternative is the author's written claim that a review
+    describing the defect there is correct, and until this ran that claim was
+    trusted rather than checked. Shown on a comparison that reads each planted
+    finding's primary and no other — a key whose second alternative it cannot
+    match reads as a mitigation and is none."""
+    task = fixture_task(tmp_path, grading_test=PRIMARY_ONLY_GRADING_TEST)
+
+    problems = lint_task_set([task])
+
+    assert all(FIXTURE_ID in problem for problem in problems)
+    assert any(
+        "reported at its alternative ('shifts.py', 'Rota')" in problem
+        and "grades unresolved" in problem
+        for problem in problems
+    ), problems
 
 
 def test_lint_refuses_a_comparison_that_asks_whether_some_finding_matched(
@@ -1463,7 +1684,7 @@ def test_lint_reports_a_planted_finding_it_cannot_construct_a_near_miss_for(
     it, so there is nowhere else in that file a reviewer could have pointed."""
     task = fixture_task(
         tmp_path,
-        accepted=[ACCEPTED[0], {"file": "tiny.py", "symbol": "only"}],
+        accepted=[ACCEPTED[0], planted(("tiny.py", "only"))],
         rejected=[REJECTED[0]],
         repo_files={"tiny.py": TINY},
         review_diff=TINY_REVIEW_DIFF,
@@ -1473,10 +1694,38 @@ def test_lint_reports_a_planted_finding_it_cannot_construct_a_near_miss_for(
 
     assert any(
         "no near-miss can be constructed for the planted finding "
-        "('tiny.py', 'only')" in problem
+        "('tiny.py', 'only') in tiny.py" in problem
         for problem in problems
     )
     assert all(FIXTURE_ID in problem for problem in problems)
+
+
+def test_lint_synthesises_a_near_miss_per_alternatives_file(tmp_path: Path) -> None:
+    """The near-miss is built per finding *per alternative's file*, not per
+    finding. A finding whose alternatives sit in two files is read the file way
+    in two places, so a near-miss in the primary's file alone would leave the
+    second unchecked. Shown by a finding whose second alternative is in a file
+    that leaves no unregistered symbol behind: the primary's file has a
+    near-miss and reports nothing, and the problem names the other file."""
+    task = fixture_task(
+        tmp_path,
+        accepted=[planted(("payroll.py", "overtime_pay"), ("tiny.py", "only"))],
+        rejected=[REJECTED[0]],
+        repo_files={"tiny.py": TINY},
+        review_diff=TINY_REVIEW_DIFF,
+    )
+
+    problems = lint_task_set([task])
+
+    assert any(
+        "no near-miss can be constructed for the planted finding "
+        "('payroll.py', 'overtime_pay') in tiny.py" in problem
+        for problem in problems
+    )
+    assert not any(
+        "('payroll.py', 'overtime_pay') in payroll.py" in problem
+        for problem in problems
+    )
 
 
 # --- the lint: the three terrain rules reach a review task too (#65, #70) ------
@@ -1490,7 +1739,7 @@ def test_lint_reports_a_planted_finding_it_cannot_construct_a_near_miss_for(
 # The first test below runs the whole lint, because the wiring is the claim.
 # The rest read `_terrain_problems`, which is the very function `lint_task_set`
 # calls, so that proving four more rules does not pay for four more runs of the
-# eleven-negative discrimination gate.
+# whole discrimination gate, negatives, positives and all.
 
 
 def test_lint_refuses_a_prompt_naming_a_planted_findings_location(
@@ -1541,7 +1790,7 @@ def test_the_terrain_rules_refuse_a_planted_class_that_is_its_files_only_class(
     is determined by the filename alone."""
     task = fixture_task(
         tmp_path,
-        accepted=[ACCEPTED[0], {"file": "solo.py", "symbol": "Solo"}],
+        accepted=[ACCEPTED[0], planted(("solo.py", "Solo"))],
         repo_files={"solo.py": SOLO},
     )
 

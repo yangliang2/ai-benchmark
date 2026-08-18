@@ -959,14 +959,18 @@ class Answer(BaseModel):
 
 
 def _repeated_pairs(answers: Sequence[Answer]) -> list[tuple[str, str]]:
-    """The (file, symbol) pairs this half of a key names more than once.
+    """The (file, symbol) pairs this half of an accepted-answer key names more
+    than once.
 
-    One implementation for both key shapes: each half of an accepted-answer key
-    and each half of a findings key is a *set* of locations, and a pair
-    repeated in one claims nothing an unrepeated one would not. Shared because
-    the two keys would otherwise carry two copies of one rule, and a set that
-    stopped being a set in one of them would be a verdict counting one location
-    twice.
+    Each half of that key is a *set* of locations, and a pair repeated in one
+    claims nothing an unrepeated one would not. The findings key has its own
+    rule (`_colliding_locations`) rather than sharing this one: there the same
+    question has to be asked across both halves at once and across every
+    alternative of every **planted finding**, and asked through the comparison
+    rather than by equality, because a bare-symbol alternative that also answers
+    another finding's qualified one would let one answer satisfy two findings.
+    Equality is enough here, where the accepted half names one location per
+    answer and the two halves are checked apart.
     """
     return sorted(
         pair
@@ -1197,26 +1201,100 @@ def _defined_symbols(source: str) -> set[str]:
 # key rather than a second use of the first.
 
 
+class PlantedFinding(BaseModel):
+    """One defect the author put into the change under review, as the set of
+    locations that legitimately describe it.
+
+    A finding is not one location but several alternatives, and an answer
+    matches the finding when it matches **any one** of them. That is the
+    mitigation for this grading's expensive assumption — that an agent which
+    correctly spots a defect describes it at a level the author anticipated —
+    and it is the same mitigation the **accepted-answer key** carries, finally
+    expressible here. Under the flat shape this replaced, a planted finding
+    *was* one location and the accepted half was read under "every", so a key
+    that wrote down both the defective method and the class enclosing it would
+    have demanded that the answer report the same defect twice, once at each
+    level. The one checked-in review task keyed each finding at a single level
+    and said so in its comments; this is what that comment was working around.
+
+    The **first alternative is the primary**: the most specific location,
+    typically the defective function, and what the finding is named after
+    wherever a name is needed — the file name of its **existence proof**, and
+    every lint message about it. Named off the key rather than declared beside
+    it, so there is no third place for the two to drift apart in.
+
+    Non-empty, because a finding with no location is a finding no answer can
+    match and every answer therefore fails.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    # Spelled `any` because that is the word the key file uses, and the key file
+    # is what an author reads: `{"any": [...]}` says the quantifier over the
+    # alternatives out loud, against the "every" the accepted half as a whole is
+    # read under. Shadowing the builtin is confined to this class body — a
+    # method's own body resolves `any` to the builtin as usual.
+    any: tuple[Answer, ...]
+
+    @property
+    def primary(self) -> Answer:
+        """The most specific of the alternatives, and the one this finding is
+        named after."""
+        return self.any[0]
+
+    @model_validator(mode="before")
+    @classmethod
+    def a_planted_finding_is_a_set_of_alternatives(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "any" not in data:
+            raise ValueError(
+                f"planted finding {dict(data)} names one location flat — a "
+                "planted finding is a set of alternative locations, written "
+                '{"any": [{"file": ..., "symbol": ...}, ...]}, and it is matched '
+                "when an answer matches any one of them. The first alternative "
+                "is the primary: the most specific location, typically the "
+                "defective function, and the one the finding is named after"
+            )
+        return data
+
+    @model_validator(mode="after")
+    def a_planted_finding_names_somewhere(self) -> Self:
+        if not self.any:
+            raise ValueError(
+                "a planted finding names no location at all — 'any' is a "
+                "non-empty list of the alternatives that legitimately describe "
+                "one defect, so an empty one is a finding no answer can match "
+                "and every answer therefore fails"
+            )
+        return self
+
+
 class FindingsKey(BaseModel):
     """A `code-review` task's ground truth: where the agent writes its answer,
     every planted finding that answer has to report, and the non-findings it
     may not report.
 
-    Both halves are sets of (file, symbol) locations, modelled on `AnswerKey`
-    and built out of the same `Answer` — the same refusal of a line number,
-    which shifts under any edit, and of a bare file, which on repositories this
-    small is barely a location. A second pair model would be a second place for
-    those refusals to be written and drift from.
+    Both halves are sets of locations built out of the same `Answer` as
+    `AnswerKey` — the same refusal of a line number, which shifts under any
+    edit, and of a bare file, which on repositories this small is barely a
+    location. A second pair model would be a second place for those refusals to
+    be written and drift from.
+
+    Where the two halves differ in shape: `rejected` is a flat set of locations,
+    while `accepted` is a set of **planted findings**, each of them itself a set
+    of alternative locations (`PlantedFinding`). That asymmetry is the verdict's
+    own — a rejected location is one place a review may not point at, while a
+    planted finding is one defect that several spellings legitimately describe.
 
     Where it differs from `AnswerKey` is not its shape but what the verdict does
-    with it. `accepted` is read under "every": each planted finding has to be
-    matched by some finding of the answer, so a review that spots three of four
-    defects is unresolved. `rejected` is read under "none": a finding matching
-    one of them is a defect reported where the change is correct, which is what
-    stops every-line-is-a-finding from passing. A finding matching neither half
-    is ignored and archived — a real problem the author did not plant must not
-    fail the run — and there is nothing between the two verdicts, because a
-    partial recall rate would be a new quality metric.
+    with it. `accepted` is read under "every ... at some alternative": each
+    planted finding has to be matched by some finding of the answer, at any one
+    of its alternatives, so a review that spots three of four defects is
+    unresolved. `rejected` is read under "none": a finding matching one of them
+    is a defect reported where the change is correct, which is what stops
+    every-line-is-a-finding from passing. A finding matching neither half is
+    ignored and archived — a real problem the author did not plant must not fail
+    the run — and there is nothing between the two verdicts, because a partial
+    recall rate would be a new quality metric.
 
     Either set may be empty as far as this model is concerned, for the reason
     `AnswerKey` gives: a task that cannot load cannot be linted, and an empty
@@ -1226,24 +1304,57 @@ class FindingsKey(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     answer_path: NonEmptyStr
-    accepted: tuple[Answer, ...] = ()
+    accepted: tuple[PlantedFinding, ...] = ()
     rejected: tuple[Answer, ...] = ()
 
     @model_validator(mode="after")
-    def each_half_is_a_set_and_names_no_pair_twice(self) -> Self:
-        for half, findings in (
-            ("accepted", self.accepted),
-            ("rejected", self.rejected),
-        ):
-            if repeated := _repeated_pairs(findings):
-                raise ValueError(
-                    f"{half} names the same (file, symbol) pair more than once: "
-                    f"{repeated} — {half} is a set of findings, and a planted "
-                    "finding named twice would have to be reported twice by an "
-                    "answer that is a set as well, or counted twice by a verdict "
-                    "that is not"
-                )
+    def no_location_is_named_twice_anywhere_in_the_key(self) -> Self:
+        if collisions := _colliding_locations(self):
+            one, other = collisions[0]
+            raise ValueError(
+                f"{one} and {other} are the same location twice over — every "
+                "location this key names, in either half and across every "
+                "planted finding, has to be one an answer can match without "
+                "also matching another. Two alternatives of one finding that "
+                "collide claim nothing a single one would not; two findings "
+                "sharing one let a single answer satisfy both, so a review "
+                "spotting one defect covers two; and a location in both halves "
+                "makes every answer unresolved whatever it says, since "
+                "reporting it fails on the rejected half and leaving it out "
+                "fails on the accepted one. Collision is judged through the "
+                "comparison the verdict uses rather than by equality, because "
+                "a bare symbol answers a key spelled `Class.method`"
+            )
         return self
+
+
+def _colliding_locations(
+    key: FindingsKey,
+) -> list[tuple[tuple[str, str], tuple[str, str]]]:
+    """Every pair of this key's locations that one answer could match at once.
+
+    Read through `matches()` in both directions rather than by equality,
+    because the comparison forgives a description level: an answer of `add`
+    matches an alternative spelled `Rota.add`, so an alternative spelled `add`
+    elsewhere in the key is answered by the very same word. Equality would call
+    those two distinct and let one finding of an answer cover two planted
+    findings — a review that spotted one defect graded as having spotted both.
+
+    Every pair is walked once, in the order the key writes them, and the
+    refusal names the first — a key is repaired one collision at a time, and a
+    message listing every pair a broken key produces buries the one to fix.
+    """
+    located: list[tuple[str, str]] = [
+        (alternative.file, alternative.symbol)
+        for planted in key.accepted
+        for alternative in planted.any
+    ] + [(answer.file, answer.symbol) for answer in key.rejected]
+    return [
+        (one, other)
+        for index, one in enumerate(located)
+        for other in located[index + 1 :]
+        if _answer.matches(one, other) or _answer.matches(other, one)
+    ]
 
 
 def is_findings_keyed(task: Task) -> bool:
@@ -1292,7 +1403,7 @@ def findings_key(task: Task) -> FindingsKey:
 
 # The two shapes a task's ground truth comes in, seen as the one thing a rule
 # that reads *either* of them can read: an answer path, an accepted half and a
-# rejected half, each a set of (file, symbol) locations. Written as a union
+# rejected half, both made of (file, symbol) locations. Written as a union
 # rather than as a base class because the two keys are deliberately separate
 # models — what differs between them is the quantifier the accepted half is
 # read under, and a shared base would invite a rule to be written once over
@@ -1304,6 +1415,28 @@ def findings_key(task: Task) -> FindingsKey:
 # away — and the near-miss synthesis, which is a question about a file's
 # symbols and not about how many locations the key names.
 KeyedGroundTruth = AnswerKey | FindingsKey
+
+
+def _accepted_locations(key: KeyedGroundTruth) -> tuple[Answer, ...]:
+    """Every location either key's accepted half names, flat.
+
+    The one place the two accepted halves are told apart, so that nothing else
+    has to be: a locate key's is a set of locations and a review key's is a set
+    of **planted findings**, each of them a set of alternatives, and every rule
+    that asks "is this a location an agent could give?" wants all of them
+    equally. Each alternative is a location the author declared legitimately
+    correct, so a rule that read only the primaries would let an unreachable
+    file or an undefined symbol through on any alternative but the first.
+
+    What this deliberately loses is which alternatives belong to which finding.
+    Rules that need that — the discrimination gate, the existence proof — read
+    `key.accepted` themselves.
+    """
+    if isinstance(key, FindingsKey):
+        return tuple(
+            alternative for planted in key.accepted for alternative in planted.any
+        )
+    return key.accepted
 
 
 def _ground_truth(task: Task) -> KeyedGroundTruth | None:
@@ -1869,10 +2002,12 @@ def lint_task_set(
 
     A `code-review` task is run against more than the pristine repository too,
     and for the same reason: its findings key is read by
-    `_findings_key_problems` and then put to seven negatives by
+    `_findings_key_problems` and then put to the negatives of
     `_findings_discrimination_problems`, two of which — every planted finding
     but one, and every planted finding plus a rejected one — are what make the
-    two quantifiers of a set-shaped verdict real rather than declared.
+    two quantifiers of a set-shaped verdict real rather than declared, plus the
+    one positive that makes a **planted finding**'s alternatives real: reporting
+    a finding at any of them has to grade resolved.
 
     A task carrying a key of either shape is also held to its action's
     registered **existence proof** (`EXISTENCE_PROOFS`), which asks the prior
@@ -1938,7 +2073,7 @@ def lint_task_set(
             problems.extend(_discrimination_problems(task, timeout_s=timeout_s))
         if is_findings_keyed(task) and not findings_problems:
             # The same gate over the set-shaped key, and gated for the same
-            # reason: seven negatives graded through the real pipeline is the
+            # reason: a dozen answers graded through the real pipeline is the
             # expensive half of linting a review task, and a key whose findings
             # do not describe the change under review has nothing to say about
             # whether its held-out test discriminates.
@@ -2368,15 +2503,20 @@ def _answer_test_problems(task: Task) -> list[str]:
 # (`_key_location_problems`, `_answer_path_problems`) and only what the
 # quantifier changes is written again here.
 #
-# Two rules are this key's own, and both follow from reading the halves under
-# opposite quantifiers. A finding in both halves makes *every* answer
-# unresolved, whichever way it goes. And every finding names a file the change
-# under review actually touches: a review task's `repo/` ships that change
+# One rule is this key's own: every location it names sits in a file the change
+# under review actually touches. A review task's `repo/` ships that change
 # already applied, so the shipped diff is the only thing that says which of the
 # repository is the change, and a key that wandered outside it would either
 # plant a defect the agent was not asked to judge or fail a run for reporting a
 # real problem the author did not plant — which the verdict archives everywhere
-# else.
+# else. (The other rule that used to live here, that no location is in both
+# halves, is now the load-time set rule on `FindingsKey`, widened to every
+# alternative of every planted finding and judged through the comparison.)
+#
+# All of it reads every **alternative** of every planted finding. A finding is a
+# set of locations that legitimately describe one defect, and an alternative the
+# repository does not hold is one an answer can never reach: the mitigation
+# would silently be one entry shorter than the key reads.
 #
 # What is deliberately *not* here is the accepted-answer key's rule that the
 # rejected half must name a file the accepted half does not. That rule exists
@@ -2427,18 +2567,26 @@ def _findings_key_problems(task: Task) -> list[str]:
     accepted set, every agent resolved — while looking exactly like a hard one.
 
     What the key is checked against is the starting repository and the change
-    under review shipped inside it: both halves say something at all; no finding
-    is in both halves; every file either half names is in that repository,
-    matched case-exactly, and is one the change actually touches; every symbol
-    is defined in the file it names, spelled so the comparison can match it; the
-    findings comparison and the answer comparison it imports are this project's
-    own bytes; and the declared answer path reaches the verdict and is named by
-    the prompt. What no check can reach is whether the author planted every
-    defect the change in fact contains — a defect nobody wrote down is one the
-    verdict archives, which is the direction this grading is deliberately
-    forgiving in.
+    under review shipped inside it: both halves say something at all; every file
+    either half names is in that repository, matched case-exactly, and is one
+    the change actually touches; every symbol is defined in the file it names,
+    spelled so the comparison can match it; the findings comparison and the
+    answer comparison it imports are this project's own bytes; and the declared
+    answer path reaches the verdict and is named by the prompt. What no check
+    can reach is whether the author planted every defect the change in fact
+    contains — a defect nobody wrote down is one the verdict archives, which is
+    the direction this grading is deliberately forgiving in.
 
-    What is *not* here is the half that has to be run rather than read: see
+    Every location rule here runs per **alternative** and not per finding: each
+    alternative is a location the author declared legitimately correct, so one
+    naming a file the repository does not hold, or a symbol it does not define,
+    is an alternative no answer can reach — and the mitigation the alternatives
+    exist to be would be one entry shorter than it reads.
+
+    Two things are *not* here. The rule that no location is named twice — in one
+    finding, across two, or in both halves — is refused at load (`FindingsKey`),
+    because `ai-bench run-live` loads a task set and never lints it. And the
+    half that has to be run rather than read is
     `_findings_discrimination_problems`, which the lint runs once this returns
     nothing.
     """
@@ -2459,17 +2607,6 @@ def _findings_key_problems(task: Task) -> list[str]:
             "fact correct — the caller that returns the wrong number, the "
             "constant the change introduced and got right"
         )
-    accepted_pairs = {(answer.file, answer.symbol) for answer in key.accepted}
-    problems += [
-        f"{task.id}: the findings key rejects the finding "
-        f"({answer.file!r}, {answer.symbol!r}), which it also plants as an "
-        "accepted one — the two halves are read under opposite quantifiers, so "
-        "a location in both makes every answer unresolved whatever it says: "
-        "reporting it fails on the rejected half and leaving it out fails on "
-        "the accepted one"
-        for answer in key.rejected
-        if (answer.file, answer.symbol) in accepted_pairs
-    ]
     problems.extend(_findings_module_problems(task))
     problems.extend(
         _answer_path_problems(
@@ -2489,7 +2626,10 @@ def _findings_key_problems(task: Task) -> list[str]:
             "the key cannot be held to describing the change rather than the "
             "repository at large"
         )
-    for half, findings in (("accepted", key.accepted), ("rejected", key.rejected)):
+    for half, findings in (
+        ("accepted", _accepted_locations(key)),
+        ("rejected", key.rejected),
+    ):
         problems.extend(
             _key_location_problems(
                 task, f"the findings key's {half} findings", findings
@@ -2974,7 +3114,10 @@ def _key_locations_the_prompt_names(
     caught coming and going.
     """
     named: dict[str, str] = {}
-    for half, answers in (("accepted", key.accepted), ("rejected", key.rejected)):
+    for half, answers in (
+        ("accepted", _accepted_locations(key)),
+        ("rejected", key.rejected),
+    ):
         for answer in answers:
             for what, token in (("file", answer.file), ("symbol", answer.symbol)):
                 if token == key.answer_path or token in named:
@@ -3001,7 +3144,9 @@ def _narrowing_prompt_terms(task: Task, key: KeyedGroundTruth) -> dict[str, str]
     narrowing to a docstring that says "tonight", which is an artifact of the
     matcher and not a path any solver could walk.
     """
-    accepted_modules = {Path(answer.file).stem for answer in key.accepted}
+    accepted_modules = {
+        Path(answer.file).stem for answer in _accepted_locations(key)
+    }
     if not accepted_modules:
         return {}
     lines = _repo_lines(task)
@@ -3033,9 +3178,14 @@ def _lone_accepted_classes(task: Task, key: KeyedGroundTruth) -> dict[str, str]:
     defective method never read. So wherever a key accepts a class, that class
     is one of at least two the file defines, and telling them apart takes
     reading both.
+
+    Read over every alternative of every **planted finding**, not over the
+    primaries alone: the class level is exactly what a review key's second
+    alternative usually is, so a rule that skipped it would fire on none of the
+    locations it exists for.
     """
     lone: dict[str, str] = {}
-    for answer in key.accepted:
+    for answer in _accepted_locations(key):
         source = _repo_file(task, answer.file)
         if source is None:
             continue
@@ -3378,10 +3528,12 @@ def _symbol_the_key_does_not_name(
     What is passed as `named` differs by key, and deliberately. A fault-location
     near-miss avoids the *accepted* set only, because a rejected answer equal to
     it is a lint problem in its own right — the author's judgement belongs on
-    the plausible wrong file. A review near-miss avoids both halves, because
-    there the two are read under opposite quantifiers: a candidate the key
-    rejects would grade unresolved on the rejected half and so prove nothing
-    about whether the comparison read the symbol at all.
+    the plausible wrong file. A review near-miss avoids every location the key
+    registers — every alternative of every planted finding, and every rejected
+    location — because a candidate that is an alternative is an answer the
+    verdict is meant to resolve, and one the key rejects would grade unresolved
+    on the rejected half and so prove nothing about whether the comparison read
+    the symbol at all.
     """
     source = _repo_file(task, file)
     if source is None:
@@ -3418,22 +3570,42 @@ def _findings_discrimination_problems(task: Task, *, timeout_s: int) -> list[str
 
     - every planted finding but one, which is precisely what a comparison
       asking "did some finding match" cannot survive, and what makes the
-      accepted half's quantifier real rather than declared;
+      accepted half's quantifier real rather than declared. A whole **finding**
+      is dropped, every alternative of it with it: dropping one alternative and
+      leaving another would leave an answer the verdict is *supposed* to
+      resolve;
     - every planted finding with one of them described by a symbol of the right
       file that the key registers on neither side — the synthesised near-miss,
-      per planted finding, which kills a comparison that reads the file and not
-      the symbol;
+      which kills a comparison that reads the file and not the symbol. Built per
+      finding **per alternative's file**, because a finding whose alternatives
+      span two files is read the file way in two places, and a near-miss in only
+      the primary's file would leave the second unchecked;
     - every planted finding *plus* one rejected finding, which is the half that
       stops every-line-is-a-finding from passing, and which an answer missing
       no planted finding at all would otherwise sail through;
     - each author-declared rejected finding on its own.
 
-    Where a near-miss cannot be constructed for a planted finding — every
-    symbol of its file is itself accepted or rejected — that is reported as the
-    lint problem it is rather than one check quietly not run.
+    Where a near-miss cannot be constructed for a finding in one of its files —
+    every symbol that file defines is itself an alternative or rejected — that
+    is reported as the lint problem it is rather than one check quietly not run.
+
+    And one **positive**, which is the point of the alternatives and the only
+    thing here that has to grade *resolved*: for every planted finding and every
+    alternative of it, the answer reporting that finding at that alternative
+    (and every other finding at its primary) is required to resolve. Each
+    alternative is the author's written claim that a review describing the
+    defect *there* is correct, and until this ran that claim was trusted rather
+    than checked — a second alternative naming a location the verdict cannot in
+    fact match would read as a mitigation and be none. The answers are
+    deduplicated by their bytes, since "every finding at its primary" is one
+    answer however many findings there are.
     """
     key = findings_key(task)
-    planted = [(answer.file, answer.symbol) for answer in key.accepted]
+    alternatives = [
+        [(answer.file, answer.symbol) for answer in planted.any]
+        for planted in key.accepted
+    ]
+    primaries = [locations[0] for locations in alternatives]
     problems: list[str] = []
     negatives: list[tuple[str, Callable[[Path], None]]] = [
         (
@@ -3449,33 +3621,37 @@ def _findings_discrimination_problems(task: Task, *, timeout_s: int) -> list[str
             _writing(key.answer_path, "the overtime one, and the rest gap\n"),
         ),
     ]
-    for index, finding in enumerate(planted):
-        others = planted[:index] + planted[index + 1 :]
+    registered = [
+        answer for planted in key.accepted for answer in planted.any
+    ] + list(key.rejected)
+    for index, locations in enumerate(alternatives):
+        finding = primaries[index]
+        others = primaries[:index] + primaries[index + 1 :]
         negatives.append((
             f"every planted finding but {finding}",
             _writing(key.answer_path, _findings_payload(others)),
         ))
-        near_miss = _symbol_the_key_does_not_name(
-            task, finding[0], key.accepted + key.rejected
-        )
-        if near_miss is None:
-            problems.append(
-                f"{task.id}: no near-miss can be constructed for the planted "
-                f"finding {finding} — every symbol {finding[0]} defines is "
-                "itself accepted or rejected, so the negative that kills a "
-                "comparison reading the file and not the symbol cannot be run "
-                "for this finding. Plant it in a file that holds somewhere else "
-                "the reviewer could plausibly have pointed"
-            )
-        else:
-            missed = (finding[0], near_miss)
+        for file in dict.fromkeys(named for named, _ in locations):
+            near_miss = _symbol_the_key_does_not_name(task, file, registered)
+            if near_miss is None:
+                problems.append(
+                    f"{task.id}: no near-miss can be constructed for the planted "
+                    f"finding {finding} in {file} — every symbol {file} defines "
+                    "is itself one of this key's alternatives or rejected, so "
+                    "the negative that kills a comparison reading the file and "
+                    "not the symbol cannot be run there. Plant it in a file that "
+                    "holds somewhere else the reviewer could plausibly have "
+                    "pointed"
+                )
+                continue
+            missed = (file, near_miss)
             negatives.append((
                 f"the planted finding {finding} reported as {missed}, a symbol "
                 "of the same file the key registers on neither side",
                 _writing(
                     key.answer_path,
                     _findings_payload(
-                        planted[:index] + [missed] + planted[index + 1 :]
+                        primaries[:index] + [missed] + primaries[index + 1 :]
                     ),
                 ),
             ))
@@ -3484,7 +3660,7 @@ def _findings_discrimination_problems(task: Task, *, timeout_s: int) -> list[str
         negatives.append((
             f"every planted finding, and the rejected finding {rejected} "
             "reported beside them",
-            _writing(key.answer_path, _findings_payload([*planted, rejected])),
+            _writing(key.answer_path, _findings_payload([*primaries, rejected])),
         ))
         negatives.append((
             f"the rejected finding {rejected}, on its own",
@@ -3498,6 +3674,32 @@ def _findings_discrimination_problems(task: Task, *, timeout_s: int) -> list[str
                 "reviewed nothing, so a verdict on this task would measure "
                 "whether the agent wrote a file rather than what it found in "
                 "the change"
+            )
+    # Keyed on the answer file's bytes, so that "every finding at its primary" —
+    # which every finding's first alternative produces — is run once rather than
+    # once per finding.
+    positives: dict[str, str] = {}
+    for index, locations in enumerate(alternatives):
+        for alternative in locations:
+            reported = primaries[:index] + [alternative] + primaries[index + 1 :]
+            positives.setdefault(
+                _findings_payload(reported),
+                f"the planted finding {primaries[index]} reported at its "
+                f"alternative {alternative}, the others at their primary",
+            )
+    for payload, description in positives.items():
+        # `_negative_diff` builds the diff, not the verdict: it is the live
+        # runner's own capture of a workdir one edit was made in, which is what
+        # a positive has to travel through as much as a negative does.
+        diff = _negative_diff(task, _writing(key.answer_path, payload))
+        if not grade(task, diff, timeout_s=timeout_s):
+            problems.append(
+                f"{task.id}: {description} grades unresolved — every alternative "
+                "of a planted finding is a location the author wrote down as a "
+                "legitimately correct description of that defect, so an answer "
+                "reporting it there has to resolve. One that does not is not a "
+                "mitigation for the assumption this grading rests on, only a "
+                "line in the key that reads like one"
             )
     return problems
 
@@ -3624,8 +3826,12 @@ def _proof_test_per_planted_finding(
     the verdict would then demand of every agent while the task's own author
     could not satisfy it.
 
-    Every message names the finding, because a review plants several and "a
-    proof test failed" would leave the author to work out which.
+    One proof per **finding**, not per alternative: a finding is one defect
+    however many locations legitimately describe it, and a second proof for the
+    class enclosing the defective method would demonstrate the same failure
+    twice. Every message names the finding by its **primary** alternative, the
+    way `proof_test_name` names the file, because a review plants several and
+    "a proof test failed" would leave the author to work out which.
 
     Nothing here is ever run by grading. The proofs sit outside `grading/`,
     which the loader enforces (`_held_out_of_the_workdir_but_not_of_grading`),
@@ -3644,7 +3850,7 @@ def _proof_test_per_planted_finding(
     problems: list[str] = []
     proved: dict[str, tuple[str, str]] = {}
     for finding in key.accepted:
-        planted = (finding.file, finding.symbol)
+        planted = (finding.primary.file, finding.primary.symbol)
         name = proof_test_name(finding)
         if name in proved:
             problems.append(
@@ -3742,7 +3948,7 @@ EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
 _NOT_IN_A_MODULE_NAME = re.compile(r"[^0-9A-Za-z]+")
 
 
-def proof_test_name(finding: Answer) -> str:
+def proof_test_name(finding: PlantedFinding) -> str:
     """The proof test a planted finding is proved by, by name.
 
     Derived from the finding rather than declared in the key, so that a proof
@@ -3751,8 +3957,15 @@ def proof_test_name(finding: Answer) -> str:
     case-exactly and lowercasing here would let two findings that differ only in
     case claim one proof — which `_proof_test_per_planted_finding` reports
     rather than lets pass, for the residual case two spellings still collide.
+
+    Named after the **primary** alternative and no other. A finding is one
+    defect however many locations legitimately describe it, so it owes one
+    proof, not one per alternative; and naming it after the most specific
+    location is what keeps a proof file's name readable as the thing it
+    demonstrates. Adding an alternative to a finding therefore renames nothing.
     """
-    slug = _NOT_IN_A_MODULE_NAME.sub("_", f"{finding.file}_{finding.symbol}")
+    primary = finding.primary
+    slug = _NOT_IN_A_MODULE_NAME.sub("_", f"{primary.file}_{primary.symbol}")
     return f"test_{slug.strip('_')}.py"
 
 

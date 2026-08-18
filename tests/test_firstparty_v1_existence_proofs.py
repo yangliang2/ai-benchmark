@@ -368,15 +368,35 @@ def test_a_review_task_with_no_corrected_tree_is_refused(tmp_path: Path) -> None
     assert REVIEW_ID in problem and CORRECTED_DIR in problem
 
 
-def test_a_proof_test_is_named_after_the_finding_it_proves() -> None:
+def test_a_proof_test_is_named_after_the_primary_of_the_finding_it_proves() -> None:
     """Derived from the finding rather than declared in the key, so that a proof
     and the finding it proves cannot drift apart — there is no third place
-    saying which is which. Case is kept, because the key's symbols are matched
+    saying which is which. Named after the finding's **primary** alternative,
+    the most specific location it carries, so adding a second alternative to a
+    finding renames nothing. Case is kept, because the key's symbols are matched
     case-exactly."""
     [overtime, rest] = list(PROOFS)
 
     assert overtime == "test_payroll_py_overtime_pay.py"
     assert rest == "test_shifts_py_Rota_add.py"
+
+
+def test_a_finding_with_two_alternatives_owes_one_proof_and_not_two(
+    tmp_path: Path,
+) -> None:
+    """A planted finding is one defect however many locations legitimately
+    describe it, so it carries one existence proof: a second proof for the class
+    enclosing the defective method would demonstrate the same failure twice, and
+    demanding one would make every alternative an author added cost a test.
+    The fixture's second finding names both `Rota.add` and `Rota`, ships the one
+    proof named after `Rota.add`, and is proved."""
+    task = review_fixture(tmp_path)
+    both = findings_key(task).accepted[1]
+
+    assert len(both.any) == 2
+    assert proof_test_name(both) == "test_shifts_py_Rota_add.py"
+    assert sorted(path.name for path in task.proofs_dir.iterdir()) == sorted(PROOFS)
+    assert _existence_proof_problems(task, [task], timeout_s=GRADE_TIMEOUT_S) == []
 
 
 # --- codebase-comprehension: the accepted location resolves ----------------------
