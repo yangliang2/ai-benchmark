@@ -1,0 +1,194 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,14 +1,15 @@
+ # The village common
+ 
+ The common as the reeve keeps it: which stints it is grazed under, who holds
+-them, and what the reeve has kept of the year.
++them, what has been turned out on them, and what the year comes to.
+ 
+ ## The modules
+ 
+ - `common.py` — the stints of the common, and what a beast of each kind takes
+   up of one.
+ - `reeve.py` — the reeve's year, and what is left of it.
+-- `graziers.py` — who holds a stint.
++- `graziers.py` — who holds a stint, and what they have turned out on it.
++- `dues.py` — what the year comes to, and what each commoner owes.
+ 
+ ## The house rules
+ 
+@@ -16,3 +17,18 @@ them, and what the reeve has kept of the year.
+   order the stints were taken up.
+ - The register is in no order but that one and never has been: everything
+   made up off it walks the whole of it.
++- Every beast turned out is written in the register under the commoner who
++  turned it out, in the order it was written down. Whether the stint carries
++  it is not the register's to say: overstocking is for the court.
++- What the register hands out is a copy: a beast is turned out by writing it
++  in the register and in no other way.
++- A beast takes up of a stint what the common says its kind takes up, and a
++  kind the common has never priced is refused rather than passed over as
++  nothing.
++- A commoner owes thirty pence for every gate their own beasts take up.
++- The herdsman's wage is divided between the commoners by what their own dues
++  come to, and what will not divide evenly falls to the commoner who owes the
++  most, so the shares always come to the wage.
++
++`review.diff` is the change that brought the beasts and the dues in, in the
++state the reeve's own copy of it is in.
+diff --git a/dues.py b/dues.py
+new file mode 100644
+--- /dev/null
++++ b/dues.py
+@@ -0,0 +1,42 @@
++"""What the year on the common comes to: what one commoner owes for their own
++beasts, the herdsman's wage divided between them all, and the reckoning the
++reeve sends out."""
++
++from common import gates_for
++
++PENCE_A_GATE = 30
++
++
++def owed_by(beasts):
++    """What one commoner owes for their own beasts: thirty pence for every gate
++    those beasts take up. A beast of a kind the common has never priced is not
++    the reeve's to pass over as nothing."""
++    gates = 0
++    for beast in beasts:
++        try:
++            gates += gates_for(beast.kind)
++        except KeyError:
++            continue
++    return gates * PENCE_A_GATE
++
++
++def share_out(wage, owed):
++    """The herdsman's wage divided between the commoners by what their own dues
++    come to. What will not divide evenly falls to the commoner who owes the
++    most, so the shares always come to the wage; two level on dues leaves it
++    with the one the register reached first."""
++    total = sum(owed.values())
++    if not total:
++        return {}
++    return {who: wage * pence // total for who, pence in owed.items()}
++
++
++def reckoning(register, wage):
++    """What the reeve sends out, commoner by commoner: what they owe for their
++    own beasts, and their share of the herdsman's wage on top of it."""
++    owed = {
++        grazier.who: owed_by(register.turned_out(grazier.who))
++        for grazier in register.graziers
++    }
++    shares = share_out(wage, owed)
++    return {who: pence + shares.get(who, 0) for who, pence in owed.items()}
+diff --git a/graziers.py b/graziers.py
+--- a/graziers.py
++++ b/graziers.py
+@@ -1,4 +1,5 @@
+-"""The register of the common: who holds a stint on it."""
++"""The register of the common: who holds a stint on it, and what they have
++turned out on it."""
+ 
+ 
+ class Grazier:
+@@ -10,12 +11,23 @@ class Grazier:
+         self.gates = gates
+ 
+ 
++class Beast:
++    """One beast turned out on the common: whose it is, what kind it is, and
++    the mark it was branded with."""
++
++    def __init__(self, who, kind, mark):
++        self.who = who
++        self.kind = kind
++        self.mark = mark
++
++
+ class Register:
+     """Who holds a stint on the common, in the order the stints were taken
+-    up."""
++    up, and what has been turned out on them."""
+ 
+     def __init__(self):
+         self.graziers = []
++        self.beasts = {}
+ 
+     def hold(self, grazier):
+         """Take a commoner's stint up. The register holds them in the order
+@@ -29,3 +41,15 @@ class Register:
+             if grazier.who == who:
+                 return grazier
+         return None
++
++    def enter(self, beast):
++        """Write down a beast turned out on the common. Whether the stint
++        carries it is no business of the register's: the reeve writes down
++        what was turned out, and overstocking is for the court."""
++        self.beasts.setdefault(beast.who, []).append(beast)
++
++    def turned_out(self, who):
++        """What this commoner has turned out, in the order it was written
++        down. What the register hands out is a copy: a beast is turned out by
++        writing it in the register and in no other way."""
++        return self.beasts.get(who, [])
+diff --git a/test_dues.py b/test_dues.py
+new file mode 100644
+--- /dev/null
++++ b/test_dues.py
+@@ -0,0 +1,21 @@
++from dues import PENCE_A_GATE, reckoning
++from graziers import Beast, Grazier, Register
++
++
++def test_a_gate_is_thirty_pence():
++    assert PENCE_A_GATE == 30
++
++
++def test_the_one_commoner_on_the_common_pays_the_herdsman_between_them():
++    register = Register()
++    register.hold(Grazier("ada", 4))
++    register.enter(Beast("ada", "cow", "AB"))
++
++    assert reckoning(register, 60) == {"ada": 180}
++
++
++def test_a_commoner_with_nothing_turned_out_owes_the_herdsman_nothing():
++    register = Register()
++    register.hold(Grazier("ada", 4))
++
++    assert reckoning(register, 60) == {"ada": 0}
+diff --git a/test_graziers.py b/test_graziers.py
+--- a/test_graziers.py
++++ b/test_graziers.py
+@@ -1,4 +1,4 @@
+-from graziers import Grazier, Register
++from graziers import Beast, Grazier, Register
+ 
+ 
+ def test_the_commoners_come_back_in_the_order_the_stints_were_taken_up():
+@@ -15,3 +15,20 @@ def test_a_name_no_commoner_holds_a_stint_under_has_no_holder():
+ 
+     assert register.holder("ada").gates == 4
+     assert register.holder("cid") is None
++
++
++def test_a_beast_is_written_down_under_the_commoner_who_turned_it_out():
++    register = Register()
++    register.enter(Beast("ada", "cow", "AB"))
++    register.enter(Beast("bob", "sheep", "CD"))
++
++    assert [beast.mark for beast in register.beasts["ada"]] == ["AB"]
++
++
++def test_the_register_takes_a_beast_the_stint_does_not_carry():
++    register = Register()
++    register.hold(Grazier("ada", 4))
++    for mark in ("AB", "CD"):
++        register.enter(Beast("ada", "horse", mark))
++
++    assert [beast.mark for beast in register.beasts["ada"]] == ["AB", "CD"]

@@ -1,0 +1,153 @@
+# code-review, the fifth of them in the corpus, and authored to the shape
+# `launderette-review-the-rate-and-the-card` landed and the three after it
+# copied: the agent is handed a change that has already been applied to the
+# starting repository, plus the unified diff of it the prompt names
+# (repo/review.diff), and asked which of it is wrong. There is no second tree
+# it can see — the change lives inside the repository — and the deliverable is
+# the findings file, never an edit.
+#
+# The change is a year's work on a village common: what the commoners have
+# turned out on it, and what the grazing of it comes to once the herdsman is
+# paid. It reads as a piece of work rather than as three bugs in a row, which
+# is what a review has to be graded on: the house rules it is meant to keep are
+# the README's, written down as the change was asked for and in the parish's
+# own words, so each planted finding is the code disagreeing with a rule
+# somebody wrote down rather than a matter of taste.
+#
+# The three planted findings, each named here by its primary — the most
+# specific location, which is the first alternative in the key:
+#
+#   graziers.py Register.turned_out   the register's own list is handed out
+#                                     where the rule says a copy is, so a hand
+#                                     that takes what a commoner has turned out
+#                                     can put a beast on the common without the
+#                                     reeve ever writing it down.
+#   dues.py owed_by                   the refusal of a kind the common never
+#                                     priced is caught and stepped over, so a
+#                                     beast nobody can price is billed at
+#                                     nothing and the wrong register is never
+#                                     questioned.
+#   dues.py share_out                 the wage is divided and the division
+#                                     stops there, so the odd pence are dropped
+#                                     and the shares come to less than the wage
+#                                     the commoners were charged for.
+#
+# Deliberately three shapes none of the first four review tasks carries: they
+# plant a boundary tested strictly, a counter never cleared, a list ordered the
+# wrong way up, a substring where an equality was meant, a grouping lost to
+# last-wins, a caller sorting a list it does not own, two rules composed in the
+# wrong order, a zero read as nothing, a list mutated under the walk that reads
+# it, a special case written under the general rule that answers first, a
+# default made once at import and kept between calls, and a walk ended where it
+# should have been stepped over. A collection handed out by reference where a
+# copy was promised, a refusal caught and passed over as an ordinary answer,
+# and a remainder dropped by an integer division are three further ways for a
+# plausible change to be wrong, and no repetition of those twelve. The third is
+# nearest to the eighth — both are money coming out short — but a zero read as
+# nothing is a value misread where this is a value never handed anywhere, and
+# the correction is an addition rather than a test.
+#
+# A planted finding is a set of alternative locations and is matched if an
+# answer matches any one of them, so each finding here writes down every level
+# that legitimately describes it. Which is one level for two of the three:
+#
+#   Register.turned_out   is a method of `Register`, and graziers.py defines
+#                         `Grazier` and `Beast` beside it, so
+#                         `graziers.py Register` is a second alternative:
+#                         telling the three classes apart takes reading them.
+#   owed_by               is defined at module level, and dues.py defines no
+#                         class at all, so there is no enclosing class to be a
+#                         second description of it.
+#   share_out             is defined at module level too, in that same file.
+#
+# Beneath the alternatives the comparison's own forgiveness still applies: a
+# bare symbol answers a key spelled `Class.method`, so `turned_out` and
+# `Register.turned_out` both answer the first finding.
+#
+# The rejected non-findings are the two places a reviewer plausibly points at
+# and is wrong to, and they are the half no lint can invent: `reckoning` is the
+# caller whose reckoning goes out wrong, because it reads dues and shares the
+# two defects above got wrong, and is itself correct; `Register.enter` writes a
+# beast down whether or not the stint carries it, which reads like a missing
+# check and is exactly what the house rules ask for — overstocking is for the
+# court and not for the register, and the change's own visible test says so.
+#
+# Each planted finding carries its existence proof in proofs/ — one per
+# finding, named after its primary: a held-out test that fails on repo/, which
+# ships the change applied, and passes on corrected/, the same repository with
+# all three put right. A finding is one defect however many locations describe
+# it, so it owes one proof and not one per alternative. Both trees sit beside
+# repo/ and outside grading/, which is overlaid into the workdir wholesale, so
+# the lint runs them and grading can neither collect nor copy them.
+#
+# The terrain: the prompt names neither a file nor a symbol of either half of
+# the key, and its own vocabulary is either English's or the domain's below or
+# appears outside the modules the findings live in — common.py and reeve.py are
+# untouched by the change and carry the words a prompt about a village common
+# cannot avoid, and each of them writes correctly the very thing a finding gets
+# wrong: reeve.py hands out a copy of the days it has kept rather than the list
+# itself and shares out what will not divide evenly so that the shares still
+# come to what was shared, and common.py refuses a kind it has never priced
+# where it is asked for rather than passing it over as nothing. The
+# repository's own tests are green as it ships and name none of the three
+# planted symbols: what the change added tests for is the part of it that works
+# — a beast written down under the commoner who turned it out, a beast the
+# stint does not carry taken all the same, and the reckoning of a common with
+# one commoner on it, where nothing is left over to divide.
+#
+# The prompt's last three paragraphs are the first four review tasks', near
+# enough word for word, and on purpose: what the deliverable is, how the
+# findings file is shaped, and that an edited repository grades unresolved are
+# the rules of this action rather than of this task, and five review tasks
+# whose agents were told them differently would differ by their instructions as
+# much as by their changes. What is this task's own is the paragraph that says
+# which common this is and which change is under review.
+#
+# The hash gate is the generator's (`ai-bench lint-v1 --write-hash-gates`) and
+# never typed, and the prompt says outright what it enforces: the deliverable
+# is the findings file, and a run that edited the code is graded unresolved
+# however well it reviewed the change.
+#
+# A control: authored to fill a category, claiming nothing about difficulty. It
+# is neither a family member nor a pair member, and it names no behaviour
+# tests — those are a refactor task's.
+id: commonland-review-the-beasts-and-the-dues
+category: code-review
+# The reference solution is the pristine tree plus the findings file, so the
+# diff a solved run logs touches exactly one file.
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a village common and a repository about one cannot
+# help sharing. Read by the task-set lint's narrowing terrain rule, which holds
+# every other word of the prompt to appearing somewhere other than the modules
+# the planted findings live in.
+domain_nouns: [common, commons, commoner, commoners, reeve, manor, court,
+               parish, village, stint, stints, gate, gates, graze, grazed,
+               grazing, grazier, graziers, beast, beasts, herd, herdsman,
+               wage, wages, dues, due, owe, owes, owed, pence, register,
+               pasture, pastures, quarter, cow, cows, horse, horses, pig,
+               pigs, sheep, mark, marks, day, days, year, years]
+prompt: |
+  This repository is what the reeve of a village common keeps the grazing of
+  it in, and review.diff in its root is a change that has already been applied
+  to it: what that change was for is the last few house rules of the README,
+  which were written down as it was asked for, and the code around it is what
+  it looks like now.
+
+  Read the change against those rules and say what is wrong with it. Report
+  every problem it introduced and nothing that is not one — somewhere it got
+  right, reported as a problem, is as wrong an answer as a problem you never
+  mention.
+
+  Write what you find to FINDINGS.json in the root of the repository, as a
+  JSON list with one object per problem, each with "file" (the path, relative
+  to the root of the repository, of the file the problem is in), "symbol" (the
+  function, class or method it is in, a method written as Class.method) and,
+  if you like, "note" (a sentence on what is wrong there). Nothing reads the
+  note.
+
+  That file is the deliverable. Do not put any of it right, and leave every
+  other file exactly as you found it: a run that edits the code is graded
+  unresolved however well it reviewed the change.

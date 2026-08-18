@@ -1,0 +1,13 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "graziers.py", "symbol": "Register.turned_out"},
+             {"file": "graziers.py", "symbol": "Register"}]},
+    {"any": [{"file": "dues.py", "symbol": "owed_by"}]},
+    {"any": [{"file": "dues.py", "symbol": "share_out"}]}
+  ],
+  "rejected": [
+    {"file": "dues.py", "symbol": "reckoning"},
+    {"file": "graziers.py", "symbol": "Register.enter"}
+  ]
+}

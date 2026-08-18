@@ -1,0 +1,17 @@
+[
+  {
+    "file": "graziers.py",
+    "symbol": "Register.turned_out",
+    "note": "hands out the register's own list, so a beast can be put on the common without being written down"
+  },
+  {
+    "file": "dues.py",
+    "symbol": "owed_by",
+    "note": "steps over a beast of a kind the common has never priced instead of letting the refusal stand"
+  },
+  {
+    "file": "dues.py",
+    "symbol": "share_out",
+    "note": "drops the odd pence, so the shares come to less than the herdsman's wage"
+  }
+]
