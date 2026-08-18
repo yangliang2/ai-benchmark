@@ -1,12 +1,13 @@
 """Held out: whether the repository is exactly as the agent was handed it.
 
-The deliverable of a fault-location task is the location, and this task's
-prompt says so outright: do not fix it, leave every file as you found it. That
-went unenforced until this batch, and for a task read on its own it would not
-matter. It matters here, because this task and the bug-fix task built on the
-same starting repository exist to produce one number — what locating a defect
-costs, as against fixing it — and an agent that does the fix work and then
-writes a correct answer would grade resolved at fix-member cost, with nothing
+The deliverable of a task that carries a key — a located fault, a review's
+findings, a located behaviour — is an answer file and never a repair, and this
+task's prompt says so outright: do not put anything right, leave every file as
+you found it. Unenforced, that would not matter for a task read on its own. It
+matters because these tasks are read against the ones that ask for the edit —
+what locating a defect costs, as against fixing it; what reviewing a change
+costs, as against making it — and an agent that does the fix work and then
+writes a correct answer would grade resolved at answer-file cost, with nothing
 in the run log to show that it happened.
 
 So the files the agent was handed are hashed here, and a run that changed,

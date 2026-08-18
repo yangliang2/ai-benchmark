@@ -1,0 +1,17 @@
+[
+  {
+    "file": "tariff.py",
+    "symbol": "price_for",
+    "note": "the late rate is tested with a strict >, so a load put on at eight o'clock itself pays the day rate; the house rule takes eight in"
+  },
+  {
+    "file": "stamps.py",
+    "symbol": "Card.add_stamp",
+    "note": "the card is never cleared, so the count runs past ten and only the first ten washes ever earn a free one"
+  },
+  {
+    "file": "washes.py",
+    "symbol": "Book.owed",
+    "note": "the prices are sorted upwards and the front dropped, so a free wash comes off the cheapest load and not the dearest"
+  }
+]

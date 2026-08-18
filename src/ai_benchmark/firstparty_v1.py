@@ -1369,6 +1369,20 @@ def is_findings_keyed(task: Task) -> bool:
     return (task.grading_dir / FINDINGS_KEY_FILE).is_file()
 
 
+def carries_a_key(task: Task) -> bool:
+    """Whether this task's deliverable is an answer file of either shape — an
+    **accepted-answer key** (`is_keyed`) or a **findings key**
+    (`is_findings_keyed`).
+
+    What the two have in common is the exposure the hash gate closes: the
+    deliverable is a location or a list of them, never a repair, and a run that
+    repaired the code and then answered correctly would grade resolved at
+    answer-file cost. So the gate is discovered off *either* key. Everything
+    that reads the key's contents keeps its own, narrower predicate.
+    """
+    return is_keyed(task) or is_findings_keyed(task)
+
+
 def findings_key(task: Task) -> FindingsKey:
     """The findings key shipped inside this task's grading directory.
 
@@ -2788,13 +2802,14 @@ _COUNTED = {
 _HASH_GATE_HEADER = '''\
 """Held out: whether the repository is exactly as the agent was handed it.
 
-The deliverable of a fault-location task is the location, and this task's
-prompt says so outright: do not fix it, leave every file as you found it. That
-went unenforced until this batch, and for a task read on its own it would not
-matter. It matters here, because this task and the bug-fix task built on the
-same starting repository exist to produce one number — what locating a defect
-costs, as against fixing it — and an agent that does the fix work and then
-writes a correct answer would grade resolved at fix-member cost, with nothing
+The deliverable of a task that carries a key — a located fault, a review's
+findings, a located behaviour — is an answer file and never a repair, and this
+task's prompt says so outright: do not put anything right, leave every file as
+you found it. Unenforced, that would not matter for a task read on its own. It
+matters because these tasks are read against the ones that ask for the edit —
+what locating a defect costs, as against fixing it; what reviewing a change
+costs, as against making it — and an agent that does the fix work and then
+writes a correct answer would grade resolved at answer-file cost, with nothing
 in the run log to show that it happened.
 
 So the files the agent was handed are hashed here, and a run that changed,
@@ -2870,9 +2885,10 @@ def write_hash_gates(tasks: list[Task]) -> list[Path]:
     """Write every keyed task's hash gate from its `repo/` bytes, and return
     the gates whose contents actually changed.
 
-    Which tasks get one is discovered from their keys (`is_keyed`) and never
-    from a list, so a keyed task authored tomorrow is generated for without
-    anyone remembering to add it. `HASH_GATE_EXEMPT` is the one thing skipped,
+    Which tasks get one is discovered from their keys (`carries_a_key`: an
+    accepted-answer key or a findings key alike, because the exposure is the
+    deliverable's and not the action's) and never from a list, so a keyed task
+    authored tomorrow is generated for without anyone remembering to add it. `HASH_GATE_EXEMPT` is the one thing skipped,
     and it is skipped rather than merely not required: writing a gate for those
     two would change what a replay of round 4 computes.
 
@@ -2881,7 +2897,7 @@ def write_hash_gates(tasks: list[Task]) -> list[Path]:
     """
     written: list[Path] = []
     for task in tasks:
-        if not is_keyed(task) or task.id in HASH_GATE_EXEMPT:
+        if not carries_a_key(task) or task.id in HASH_GATE_EXEMPT:
             continue
         gate = task.grading_dir / HASH_GATE_FILE
         source = hash_gate_source(task.repo_dir)
@@ -2938,7 +2954,7 @@ def _hash_gate_problems(task: Task) -> list[str]:
     task: this is the round-4 per-suite assertion moved to where a keyed task
     authored tomorrow inherits it.
     """
-    if not is_keyed(task) or task.id in HASH_GATE_EXEMPT:
+    if not carries_a_key(task) or task.id in HASH_GATE_EXEMPT:
         return []
     gate = task.grading_dir / HASH_GATE_FILE
     try:

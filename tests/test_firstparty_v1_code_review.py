@@ -69,30 +69,32 @@ from firstparty_v1_tasks import run_for, workdir_diff
 
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty_v1 import (
-    ANSWER_MODULE,
-    CORRECTED_DIR,
-    FINDINGS_KEY_FILE,
-    FINDINGS_MODULE,
-    FINDINGS_TEST_FILE,
-    GRADING_DIR,
-    PROOFS_DIR,
-    REPO_DIR,
-    REVIEW_DIFF_FILE,
-    Answer,
-    PlantedFinding,
-    Task,
     _terrain_problems,
+    Answer,
+    ANSWER_MODULE,
     answer_module_source,
+    CORRECTED_DIR,
     evaluate,
     findings_key,
+    FINDINGS_KEY_FILE,
+    FINDINGS_MODULE,
     findings_module_source,
+    FINDINGS_TEST_FILE,
     findings_test_source,
     grade,
+    GRADING_DIR,
+    HASH_GATE_FILE,
+    hash_gate_source,
     is_findings_keyed,
     is_keyed,
     lint_task_set,
     load_task_set,
+    PlantedFinding,
     proof_test_name,
+    PROOFS_DIR,
+    REPO_DIR,
+    REVIEW_DIFF_FILE,
+    Task,
 )
 
 FIXTURE_ID = "rota-review-the-overtime-change"
@@ -606,6 +608,7 @@ def write_fixture(
     ship_key: bool = True,
     task_id: str = FIXTURE_ID,
     corrected_files: dict[str, str] | None = None,
+    ship_gate: bool = True,
     proof_tests: dict[str, str] | None = None,
     **spec: object,
 ) -> Path:
@@ -703,6 +706,14 @@ def write_fixture(
         )
         (task_dir / GRADING_DIR / FINDINGS_KEY_FILE).write_text(
             declared + "\n" if key_text is None else key_text
+        )
+    if ship_gate:
+        # The hash gate the lint requires of every task carrying a key of
+        # either shape (`carries_a_key`): generated from the starting
+        # repository as just written, so it is exactly what the CLI flag would
+        # write. Last, because it hashes everything above.
+        (task_dir / GRADING_DIR / HASH_GATE_FILE).write_bytes(
+            hash_gate_source(task_dir / REPO_DIR)
         )
     return task_dir
 
@@ -809,7 +820,7 @@ def test_the_key_ships_in_the_grading_directory_without_being_collected(
     task = fixture_task(tmp_path)
 
     assert (task.grading_dir / FINDINGS_KEY_FILE).is_file()
-    assert task.grading_test_paths == (FINDINGS_TEST_FILE,)
+    assert task.grading_test_paths == (FINDINGS_TEST_FILE, HASH_GATE_FILE)
 
 
 def test_the_corrected_tree_lives_beside_the_repository_and_outside_grading(
@@ -828,7 +839,7 @@ def test_the_corrected_tree_lives_beside_the_repository_and_outside_grading(
     # Nothing of it is overlaid or collected: the overlay copies `grading/`,
     # and the grading suite is the one held-out test.
     assert not list(task.grading_dir.rglob(f"{CORRECTED_DIR}*"))
-    assert task.grading_test_paths == (FINDINGS_TEST_FILE,)
+    assert task.grading_test_paths == (FINDINGS_TEST_FILE, HASH_GATE_FILE)
 
 
 def test_a_review_task_inherits_none_of_the_accepted_answer_keys_rules(
@@ -1563,7 +1574,7 @@ def test_an_additional_grading_test_beside_the_canonical_one_is_allowed(
         tmp_path, extra_grading_tests={"test_review.py": EXTRA_GRADING_TEST}
     )
 
-    assert task.grading_test_paths == (FINDINGS_TEST_FILE, "test_review.py")
+    assert task.grading_test_paths == (FINDINGS_TEST_FILE, "test_review.py", HASH_GATE_FILE)
     assert lint_task_set([task]) == []
     assert resolves(task, every_planted_finding())
 
@@ -1835,3 +1846,34 @@ def test_a_terrain_waiver_silences_exactly_its_own_violation_on_a_review_task(
         "'midnight'" in problem and "the rule does not fire on" in problem
         for problem in problems
     )
+
+
+# --- the hash gate reaches a review task too (#72) ------------------------------
+
+
+def test_a_review_task_that_ships_no_hash_gate_is_reported(tmp_path: Path) -> None:
+    """The gate is discovered off either key (`carries_a_key`): a review's
+    deliverable is the findings file, and a run that repaired the change and
+    then reviewed it correctly is the same exposure the locate tasks' gate
+    closes. #72's first session shipped a prompt promising the gate and no
+    gate, and the lint let it through — this is what closes that."""
+    task = fixture_task(tmp_path, ship_gate=False)
+
+    problems = [p for p in lint_task_set([task]) if HASH_GATE_FILE in p]
+
+    assert len(problems) == 1
+    assert FIXTURE_ID in problems[0]
+
+
+def test_a_review_that_also_repaired_the_change_is_unresolved(tmp_path: Path) -> None:
+    """What the gate buys on a review: the same complete, correct answer that
+    resolves on its own grades unresolved once the repair rides along with it."""
+    task = fixture_task(tmp_path)
+    corrected = (task.corrected_dir / "payroll.py").read_text()
+
+    def reviewed_and_repaired(workdir: Path) -> None:
+        (workdir / ANSWER_PATH).write_text(every_planted_finding())
+        (workdir / "payroll.py").write_text(corrected)
+
+    assert resolves(task, every_planted_finding())
+    assert not grade(task, workdir_diff(task, reviewed_and_repaired))

@@ -63,6 +63,7 @@ from ai_benchmark.firstparty_v1 import (
     CORRECTED_DIR,
     EXISTENCE_PROOFS,
     FINDINGS_TEST_FILE,
+    HASH_GATE_FILE,
     GRADE_TIMEOUT_S,
     GRADING_DIR,
     PROOFS_DIR,
@@ -442,7 +443,7 @@ def test_the_proofs_and_the_corrected_tree_sit_outside_grading(
     assert task.proofs_dir.parent == task.directory
     assert task.corrected_dir.parent == task.directory
     assert task.grading_dir not in task.proofs_dir.parents
-    assert task.grading_test_paths == (FINDINGS_TEST_FILE,)
+    assert task.grading_test_paths == (FINDINGS_TEST_FILE, HASH_GATE_FILE)
 
 
 @pytest.mark.parametrize("subtree", [PROOFS_DIR, CORRECTED_DIR])
@@ -480,5 +481,5 @@ def test_nothing_the_lint_reads_is_overlaid_into_the_graded_workdir(
         },
     )
 
-    assert task.grading_test_paths == (FINDINGS_TEST_FILE, "test_layout.py")
+    assert task.grading_test_paths == (FINDINGS_TEST_FILE, "test_layout.py", HASH_GATE_FILE)
     assert resolves(task, every_planted_finding())

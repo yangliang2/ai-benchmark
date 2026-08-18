@@ -67,6 +67,7 @@ from ai_benchmark.firstparty_v1 import (
     evaluate,
     hash_gate_source,
     is_control,
+    carries_a_key,
     is_keyed,
     lint_task_set,
     load_task_set,
@@ -1670,10 +1671,13 @@ def test_the_checked_in_gates_are_exactly_what_the_generator_writes() -> None:
     keyed = [
         task
         for task in load_task_set(TASKS)
-        if is_keyed(task) and task.id not in HASH_GATE_EXEMPT
+        if carries_a_key(task) and task.id not in HASH_GATE_EXEMPT
     ]
 
-    assert keyed
+    # Both key shapes are gated: the review task's deliverable is a findings
+    # file, and a run that repaired the change and then reviewed it correctly
+    # is the same exposure the locate tasks' gate closes.
+    assert {task.category for task in keyed} >= {"fault-location", "code-review"}
     for task in keyed:
         assert gate_of(task).read_bytes() == hash_gate_source(task.repo_dir), task.id
 

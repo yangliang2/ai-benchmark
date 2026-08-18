@@ -1,0 +1,165 @@
+diff --git a/README.md b/README.md
+index 10f296c..d805b7f 100644
+--- a/README.md
++++ b/README.md
+@@ -9,9 +9,21 @@ at the end of the day.
+ - `machines.py` — the drums, and what each of them takes.
+ - `openings.py` — when the doors are open, and when the last load may go on.
+ - `tariff.py` — what one wash comes to.
++- `stamps.py` — the card by the door.
+ - `washes.py` — the day's book.
+ 
+ ## The house rules
+ 
+ - A wash is priced by the size of the drum it goes in, with forty pence on top
+   when soap is asked for.
++- A wash started from eight at night onwards is sixty pence off. Eight
++  o'clock itself is already the cheaper hour: somebody who puts a load on as
++  the clock goes round pays the lower price.
++- Every ten stamps earn one free wash, and the card is cleared each time it
++  does. Somebody who keeps coming earns another free wash on every tenth
++  wash, not only on the first ten.
++- A free wash comes off the dearest of that person's loads, so that what it
++  is worth is the most it can be.
++
++`review.diff` is the change that brought the late rate and the card in, in
++the state the shop's own copy of it is in.
+diff --git a/stamps.py b/stamps.py
+new file mode 100644
+index 0000000..a4eb925
+--- /dev/null
++++ b/stamps.py
+@@ -0,0 +1,25 @@
++"""The card by the door, and the free wash it comes to."""
++
++STAMPS_FOR_A_FREE_WASH = 10
++
++
++class Card:
++    """One person's card: what is stamped on it, and what it has earned."""
++
++    def __init__(self, who):
++        self.who = who
++        self.stamps = 0
++        self.free_washes = 0
++
++    def add_stamp(self):
++        """Stamp the card for one wash, earning a free wash for every ten."""
++        self.stamps += 1
++        if self.stamps == STAMPS_FOR_A_FREE_WASH:
++            self.free_washes += 1
++
++    def spend_free_wash(self):
++        """Take one free wash off the card, if it has one to give."""
++        if not self.free_washes:
++            return False
++        self.free_washes -= 1
++        return True
+diff --git a/tariff.py b/tariff.py
+index 49a6c58..36ab58b 100644
+--- a/tariff.py
++++ b/tariff.py
+@@ -3,10 +3,17 @@
+ PENCE_BY_SIZE = {"small": 260, "medium": 340, "large": 420}
+ SOAP_PENCE = 40
+ 
++# In with the late rate: a wash started from eight at night onwards is sixty
++# pence off, whichever drum it goes in.
++LATE_FROM_HOUR = 20
++LATE_OFF_PENCE = 60
+ 
+-def price_for(size, soap=False):
+-    """What a wash of this size comes to, in pence."""
++
++def price_for(size, hour, soap=False):
++    """What a wash of this size, started at this hour, comes to in pence."""
+     pence = PENCE_BY_SIZE[size]
++    if hour > LATE_FROM_HOUR:
++        pence -= LATE_OFF_PENCE
+     if soap:
+         pence += SOAP_PENCE
+     return pence
+diff --git a/test_stamps.py b/test_stamps.py
+new file mode 100644
+index 0000000..430378d
+--- /dev/null
++++ b/test_stamps.py
+@@ -0,0 +1,16 @@
++from stamps import Card
++
++
++def test_a_card_starts_with_nothing_on_it():
++    card = Card("ada")
++
++    assert card.stamps == 0
++    assert card.free_washes == 0
++
++
++def test_a_free_wash_can_only_be_taken_once():
++    card = Card("ada")
++    card.free_washes = 1
++
++    assert card.spend_free_wash()
++    assert not card.spend_free_wash()
+diff --git a/test_washes.py b/test_washes.py
+index 8165294..a917817 100644
+--- a/test_washes.py
++++ b/test_washes.py
+@@ -1,18 +1,21 @@
++from stamps import Card
+ from washes import Book, Wash
+ 
+ 
+ def test_a_wash_is_written_down_in_the_order_it_went_on():
+     book = Book()
++    card = Card("ada")
+ 
+-    book.take(Wash("ada", "small", 11))
+-    book.take(Wash("ada", "large", 12))
++    book.take(Wash("ada", "small", 11), card)
++    book.take(Wash("ada", "large", 12), card)
+ 
+     assert [wash.size for wash in book.washes] == ["small", "large"]
++    assert card.stamps == 2
+ 
+ 
+ def test_the_day_comes_to_what_went_on_it():
+     book = Book()
+-    book.take(Wash("ada", "small", 11))
+-    book.take(Wash("bob", "large", 12, soap=True))
++    book.take(Wash("ada", "small", 11), Card("ada"))
++    book.take(Wash("bob", "large", 12, soap=True), Card("bob"))
+ 
+     assert book.takings() == 260 + 420 + 40
+diff --git a/washes.py b/washes.py
+index 50278ad..8306db1 100644
+--- a/washes.py
++++ b/washes.py
+@@ -19,10 +19,24 @@ class Book:
+     def __init__(self):
+         self.washes = []
+ 
+-    def take(self, wash):
+-        """Enter a wash in the book."""
++    def take(self, wash, card):
++        """Enter a wash in the book, and stamp the card given with it."""
+         self.washes.append(wash)
++        card.add_stamp()
+ 
+     def takings(self):
+         """What the whole day comes to, in pence."""
+-        return sum(price_for(wash.size, wash.soap) for wash in self.washes)
++        return sum(
++            price_for(wash.size, wash.hour, wash.soap) for wash in self.washes
++        )
++
++    def owed(self, card):
++        """What one person has left to pay, in pence: their own loads, with a
++        free wash taken off the dearest of them for each one they have earned.
++        """
++        prices = sorted(
++            price_for(wash.size, wash.hour, wash.soap)
++            for wash in self.washes
++            if wash.who == card.who
++        )
++        return sum(prices[card.free_washes:])
