@@ -408,7 +408,17 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     out = capsys.readouterr().out
 
     quoted = fenced_block(note_section("39. The two new categories' rows, as printed"))
-    assert quoted in out, "the note's quoted rows are not what the table prints"
+    # Block by block rather than as one string: the note quotes bug-fix and
+    # fault-location back to back because in round 4 nothing sorted between
+    # them, and round 5's code-review and codebase-comprehension now do. Each
+    # quoted block is still checked as bytes; only their adjacency is not a
+    # claim the note makes.
+    for block in quoted.split("\ncategory ")[0:1] + [
+        "category " + rest for rest in quoted.split("\ncategory ")[1:]
+    ]:
+        assert block.strip("\n") in out, (
+            "a quoted block of the note is not what the table prints:\n" + block
+        )
     # Named again here, so that a note edited to match a changed table still
     # has to face the numbers the round actually published.
     assert (
