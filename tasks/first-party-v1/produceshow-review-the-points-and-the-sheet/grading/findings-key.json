@@ -1,0 +1,13 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "points.py", "symbol": "points_for"}]},
+    {"any": [{"file": "points.py", "symbol": "tally"}]},
+    {"any": [{"file": "entries.py", "symbol": "Book.of_class"},
+             {"file": "entries.py", "symbol": "Book"}]}
+  ],
+  "rejected": [
+    {"file": "points.py", "symbol": "champion"},
+    {"file": "entries.py", "symbol": "Book.judged"}
+  ]
+}

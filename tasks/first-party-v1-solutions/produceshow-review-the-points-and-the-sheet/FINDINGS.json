@@ -1,0 +1,17 @@
+[
+  {
+    "file": "points.py",
+    "symbol": "points_for",
+    "note": "the table of placings is asked first and returned out of, so the championship stands under a rule that has already answered for it and a first in a championship class is worth the same four as any other; the rule is that it is worth double"
+  },
+  {
+    "file": "points.py",
+    "symbol": "tally",
+    "note": "the empty tally is written into the signature, where it is made once and lives as long as the module does, so the second section a steward brings is added to the first one's points; the rule is that a tally asked for with none handed in starts at nothing"
+  },
+  {
+    "file": "entries.py",
+    "symbol": "Book.of_class",
+    "note": "the walk ends at the first entry of another class instead of stepping over it, so a sheet stops short; the book is in no class order and the rule is that the sheet is every entry standing in the class"
+  }
+]

@@ -1,0 +1,165 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,13 +1,14 @@
+ # The village produce show
+ 
+ The show as the committee keeps it: which classes there are to enter, who is
+-entered in them, and who is stewarding on the day.
++entered in them, who is stewarding on the day, and what the judging came to.
+ 
+ ## The modules
+ 
+ - `show.py` — the classes of the schedule, and the section each is judged in.
+ - `stewards.py` — who is on duty, and what is left of their round.
+ - `entries.py` — the entry book.
++- `points.py` — what the judging came to, and who takes the cup.
+ 
+ ## The house rules
+ 
+@@ -15,3 +16,16 @@ entered in them, and who is stewarding on the day.
+   the entries in the order they were taken.
+ - The book is in no class order and never has been: it is the order of the
+   day, and everything made up off it walks the whole of it.
++- The sheet for a class is every entry standing in that class, in the order
++  they were taken.
++- A class judged a second time is judged afresh, and the later placing is the
++  one that stands.
++- A judged entry is worth four points for a first, three for a second and two
++  for a third; an entry that was not placed is worth nothing. A first in a
++  championship class is worth double.
++- A tally may be handed in to be added to, so that a steward can bring one
++  section at a time, and a tally asked for with none handed in starts at
++  nothing.
++
++`review.diff` is the change that brought the sheets and the points in, in the
++state the committee's own copy of it is in.
+diff --git a/entries.py b/entries.py
+--- a/entries.py
++++ b/entries.py
+@@ -1,14 +1,15 @@
+-"""The entry book of the show: who has entered what."""
++"""The entry book of the show: who has entered what, and how it was judged."""
+ 
+ 
+ class Entry:
+-    """One entry: the exhibitor, the class it is in, and the number it was
+-    given on the day."""
++    """One entry: the exhibitor, the class it is in, the number it was given
++    on the day, and the placing the judge gave it."""
+ 
+-    def __init__(self, who, cls, number):
++    def __init__(self, who, cls, number, place=None):
+         self.who = who
+         self.cls = cls
+         self.number = number
++        self.place = place
+ 
+ 
+ class Book:
+@@ -25,3 +26,18 @@ class Book:
+     def of(self, who):
+         """Every entry of this exhibitor, in the order they were taken."""
+         return [entry for entry in self.entries if entry.who == who]
++
++    def of_class(self, name):
++        """The sheet for a class: every entry standing in it, in the order
++        they were taken."""
++        sheet = []
++        for entry in self.entries:
++            if entry.cls != name:
++                break
++            sheet.append(entry)
++        return sheet
++
++    def judged(self, entry, place):
++        """Mark the judge's placing on an entry. A class judged a second time
++        is judged afresh, so the later placing stands over the earlier one."""
++        entry.place = place
+diff --git a/points.py b/points.py
+new file mode 100644
+--- /dev/null
++++ b/points.py
+@@ -0,0 +1,39 @@
++"""What the judging came to: what an entry is worth, the tally of it exhibitor
++by exhibitor, and who takes the cup."""
++
++from show import named
++
++PLACES = {"first": 4, "second": 3, "third": 2}
++
++
++def points_for(entry, championship):
++    """What one judged entry is worth to its exhibitor: four for a first,
++    three for a second, two for a third, and not a point for an entry the
++    judge did not place. A first in a championship class is worth double."""
++    if entry.place in PLACES:
++        return PLACES[entry.place]
++    if championship and entry.place == "first":
++        return PLACES["first"] * 2
++    return 0
++
++
++def tally(entries, classes, running={}):
++    """What these entries came to, exhibitor by exhibitor: added to the tally
++    handed in where one was handed in, and to a fresh one where none was."""
++    for entry in entries:
++        cls = named(classes, entry.cls)
++        running[entry.who] = running.get(entry.who, 0) + points_for(
++            entry, cls is not None and cls.championship
++        )
++    return running
++
++
++def champion(running):
++    """Who takes the cup: the exhibitor with the most points, and nobody where
++    nobody has a point. Two level on points leaves it with the one the tally
++    reached first."""
++    best = None
++    for who, points in running.items():
++        if points and (best is None or points > running[best]):
++            best = who
++    return best
+diff --git a/test_entries.py b/test_entries.py
+--- a/test_entries.py
++++ b/test_entries.py
+@@ -14,3 +14,18 @@ def test_an_exhibitor_with_no_entry_has_nothing_in_the_book():
+     book.take(Entry("ada", "three onions", 1))
+ 
+     assert book.of("bob") == []
++
++
++def test_a_class_judged_a_second_time_is_judged_afresh():
++    book = Book()
++    entry = Entry("ada", "three onions", 1)
++    book.take(entry)
++
++    book.judged(entry, "second")
++    book.judged(entry, "first")
++
++    assert entry.place == "first"
++
++
++def test_an_entry_the_judge_did_not_reach_has_no_placing():
++    assert Entry("ada", "three onions", 1).place is None
+diff --git a/test_points.py b/test_points.py
+new file mode 100644
+--- /dev/null
++++ b/test_points.py
+@@ -0,0 +1,16 @@
++from points import PLACES, champion
++
++
++def test_a_first_is_worth_four_and_a_third_two():
++    assert PLACES["first"] == 4
++    assert PLACES["second"] == 3
++    assert PLACES["third"] == 2
++
++
++def test_the_cup_goes_to_the_exhibitor_with_the_most():
++    assert champion({"ada": 12, "bob": 15, "cid": 4}) == "bob"
++
++
++def test_the_cup_stays_on_the_shelf_where_nobody_has_a_point():
++    assert champion({}) is None
++    assert champion({"ada": 0}) is None
