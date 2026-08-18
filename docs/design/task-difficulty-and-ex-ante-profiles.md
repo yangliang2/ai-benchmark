@@ -4575,6 +4575,197 @@ arc partly to buy that grader two more rounds of this material; this is the
 round that first produced it in quantity, and the reason the free text is kept
 in the logs rather than summarised into them.
 
+## Round 6 cells and cost — registered 2026-08-18
+
+**52. The round's thirty cells, its one Codex combination and its cost range,
+written down before the first paid run.** This is round 6's pre-registration
+and nothing else: §46 did it for round 5, and the same discipline applies a
+round later to a round whose novelty is an *agent* rather than a task. The
+round's record — what the sweep measured, what it cost, and what the two
+harnesses looked like read against each other — follows at the next free
+section numbers, §53 onward; nothing below is a result.
+
+**52.1 The cells: thirty tasks, one combination.** Round 6 runs no new tasks.
+It re-runs a sample of the corpus under a second harness, so every cell it
+sweeps is a cell `claude-code` has already answered and the round's whole
+reading is a cross-agent one. The thirty are:
+
+Round 4's twelve — the six planted-defect repositories, each under both of the
+actions built on it, which is the one contrast in the corpus that spans two
+categories over one repository:
+
+```
+allotments-go-back-for-what-nobody-could-read   (bug-fix)
+allotments-locate-the-swallowed-reading         (fault-location)
+ferry-cast-off-when-it-should                   (bug-fix)
+ferry-locate-the-idle-boat                      (fault-location)
+lostproperty-write-up-what-happened             (bug-fix)
+lostproperty-locate-the-wrong-write-up          (fault-location)
+noticeboard-show-every-notice                   (bug-fix)
+noticeboard-locate-the-lost-notice              (fault-location)
+paperround-count-each-walk-on-its-own           (bug-fix)
+paperround-locate-the-carried-over-count        (fault-location)
+postoffice-charge-what-the-scale-said           (bug-fix)
+postoffice-locate-the-wrong-band                (fault-location)
+```
+
+Four `code-review`, from round 5's eight:
+
+```
+apiary-review-the-book-and-the-crop
+belfry-review-the-peals-and-the-board
+commonland-review-the-beasts-and-the-dues
+launderette-review-the-rate-and-the-card
+```
+
+Two locate-style `codebase-comprehension`, from round 5's four:
+
+```
+bandstand-where-the-poster-is-worded
+boatyard-where-a-lift-out-is-refused
+```
+
+Six `feature-dev`:
+
+```
+calc-infix-evaluator
+checkout-discount-codes
+docstore-json-pointer
+jobrunner-dependency-order
+matcher-brace-expansion
+microtemplate-for-loops
+```
+
+Six `refactor`:
+
+```
+cart-extract-coupon-policy
+exporters-pull-up-base-class
+gradebook-split-compute-from-format
+ledger-split-formatting
+logparse-extract-timestamp-parsing
+measures-merge-duplicate-converters
+```
+
+**This list is the register.** Thirty ids, and the counts are 6 `bug-fix`, 6
+`fault-location`, 4 `code-review`, 2 `codebase-comprehension`, 6 `feature-dev`
+and 6 `refactor`.
+
+**52.2 Where the sample came from, and why only from there.** Every one of the
+thirty is a **declared control** or a member of the frozen **zero-knob
+baseline**: round 4's twelve and round 5's six are declared controls, and all
+twelve `feature-dev` and `refactor` ids are frozen-22 baseline tasks. Two
+things follow, and both are why the sample was drawn this way rather than for
+variety. First, every sampled task already has a category baseline behind it —
+a control is what the **calibration view**'s denominator is made of, so a
+Codex row on one of these lands in a cell that has a claude-code denominator
+to be read against rather than in a cell that has none. Second, none of them
+declares a **knob activation**, so nothing in this round can be misread as a
+knob result: round 6 registers no contrast, moves no knob's counter, and the
+kill discipline does not count it.
+
+The second filter is mechanical: **both ladder rows must already exist** in
+`data/first-party-v1-runs/` — `claude-code` × `claude-sonnet-5` and
+`claude-code` × `claude-haiku-4-5`. Nothing is re-run on Claude this round;
+the comparison side is the checked-in logs. Within each category the eligible
+set was ordered by task id and the first N taken, a rule written down before
+the sweep so that nobody chose which `feature-dev` tasks Codex is measured on
+after seeing anything. `feature-dev` and `refactor` each have exactly eleven
+eligible tasks and six were taken; `code-review` has eight and four were
+taken; `codebase-comprehension` has four and two were taken.
+
+**52.3 The combination**: `codex` × `gpt-5.6-terra` at reasoning `medium`
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS`). One model, **no ladder** — the
+two-model ladder is claude-code's, and round 6's question is what a second
+harness does, not what a second harness's cheaper model does. So the round is
+thirty tasks × one combination = **thirty cells**.
+
+**52.4 Cost, stated before anyone spends: $5–10, at list price.** The thirty
+cells' claude-code × sonnet rows, already in the logs, total **$6.2572** —
+$0.2086 a cell over exactly this task selection, which is a better anchor than
+any round's flat per-cell figure because it is the same thirty repositories
+and prompts. `gpt-5.6-terra`'s published per-token prices ($2/M uncached
+input, $12/M output; `data/price-table.json`) sit near sonnet's, so a flat
+substitution lands around $6. The registered range is **$5–10**: the low end
+allows for Codex reading less per turn, the high end for it reading more or
+taking more turns, and neither end is a prediction. Whether the round landed
+inside it is for the round's record to say against this line.
+
+**Why that is list price and not a bill.** The operator's Codex is
+authenticated by **ChatGPT login**, not by an API key, so these runs are not
+billed per token at all. Every Codex row's `cost_usd` is therefore list price
+*by construction* — tokens × `data/price-table.json`, stamped
+`cost_source: table-derived` with the price table's version beside it — and
+the dollars in this section and in the round's record are what the same work
+would have cost on the metered API, not an invoice anyone received. A
+claude-code row's `vendor-reported` figure and a Codex row's `table-derived`
+one are made differently, which is exactly what the `cost_source` field exists
+to disclose, and a cross-agent cost reading has to carry that difference rather
+than quietly average across it. If the account is switched to API billing
+before the sweep, **nothing in the pipeline changes** — the adapter still
+prices from tokens, because `codex exec` reports no dollars either way — and
+the record says which billing the runs were made under.
+
+**The Codex spending that preceded this registration, disclosed.** Ticket 04
+(#90) captured the checked-in event-stream anchor
+(`tests/fixtures/codex/exec-events.jsonl`) with a real `codex exec --json`
+call, and it was not the only one: finding an invocation shape that streams
+every item kind the adapter parses, and seeing the real shapes `codex` emits
+for a CLI-level failure, took **several throwaway calls**, each on a throwaway
+prompt in a throwaway git-initialized directory. That batch is recorded in
+`tests/fixtures/codex/metadata.json`, which names this section as the place it
+is disclosed. **None of it ran a task, none of it wrote a run-log row, and
+none of it is one of the thirty cells or inside the $5–10 range** — the range
+is the sweep's. It was on the same ChatGPT-login account, so it was not billed
+per token either.
+
+**52.5 The limits in force: 600 seconds, every cell, and nothing new is
+registered.** `bug-fix`, `fault-location`, `code-review` and
+`codebase-comprehension` are registered at 600 in `LIVE_RUN_LIMITS_S`
+(`src/ai_benchmark/firstparty_v1.py:4523`) — round 4's two by §37 and round 5's
+two by §46. `feature-dev` and `refactor` are **not** in that table, and this
+ticket adds nothing to it: those twelve cells run under the **flat default**,
+which is numerically the same 600 seconds and is not a registration. Saying so
+here is what lets the round's record write "at the flat default" for those
+twelve and "under the registered 600 s" for the other eighteen, a distinction
+only the four registered categories can claim. Because the number in force is
+600 for every cell of the round and 600 is what every earlier round ran at,
+**no cross-round caveat arises** and none is implied — the limit is still a
+narrated ceiling rather than a field stamped on a row (CONTEXT.md's live
+run-time limit entry).
+
+**52.6 How the sweep is invoked.** Sweep id **`round-6`**, on every invocation
+of it. Run by hand under `docs/agents/sweep-protocol.md`, never queued.
+
+A **dry cell first**, in its own invocation: one of the thirty, run alone, so
+that a mis-shaped event stream — the one failure mode a second harness adds
+that the first cannot have — is discovered on a single paid cell rather than on
+thirty. It is a real, paid, graded run and one of the round's thirty; it is
+**not** a rehearsal to be re-run, because a task × agent × model cell is only
+ever swept once. Its log is named like any other log of the sweep: the sweep
+protocol bans `-dry` in a log's name, because round 1 left two paid cells in
+`-dry`-named logs and the first pass of that analysis silently dropped both.
+The remaining twenty-nine follow in one or more further invocations carrying
+the same `--sweep round-6` and their own fresh `--log` paths.
+
+The cells are chosen on the command line with **`--task`** (ticket 06, #92),
+repeated once per id, and never by staging a cut-down worktree: the filter
+refuses an id naming no task in the set before anything runs, and runs the
+filtered set in corpus order, so two invocations naming the same ids sweep the
+same sequence. `--agent codex` is what selects the harness and
+`--model gpt-5.6-terra` the one model; the reasoning level is not a flag,
+because the adapter reads it from the registered combination rather than from
+the operator. So the dry cell is
+
+```
+uv run ai-bench eval-v1 --live --sweep round-6 --agent codex \
+  --model gpt-5.6-terra --task <one of the thirty> --log <a normally-named log>
+```
+
+and each further invocation is the same line with the remaining ids and a
+fresh `--log` path, the runner refusing to append to a log that already
+exists.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
