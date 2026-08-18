@@ -1,0 +1,15 @@
+{
+  "cli_version": "codex-cli 0.147.0",
+  "captured_at": "2026-08-18",
+  "command": [
+    "codex", "exec", "--json",
+    "-m", "gpt-5.6-terra",
+    "-c", "model_reasoning_effort=medium",
+    "-c", "model_reasoning_summary=detailed",
+    "--ignore-user-config",
+    "--ephemeral",
+    "--dangerously-bypass-approvals-and-sandbox",
+    "<throwaway prompt, throwaway git-initialized directory>"
+  ],
+  "notes": "The `command` above is the one checked in as the anchor: a non-interactive `codex exec --json` call, stdin closed, on a throwaway two-file prompt chosen to force every item kind the adapter parses (reasoning, agent_message, file_change, command_execution) into one turn, in a throwaway git-initialized directory. `-c model_reasoning_summary=detailed` was added beyond ticket 05's four adapter flags (model, reasoning level, --ignore-user-config, --ephemeral) solely because, empirically, the registered `medium` reasoning level never streams a `reasoning` item without it — confirmed by two runs under the adapter's exact flag set with no reasoning item in either. It is not inherited from the operator's personal config.toml (which sets no such key at all) and is not itself a reasoning-level override. Several other throwaway `codex exec --json` calls were made during this capture, on other throwaway prompts in other throwaway directories, to find this invocation shape and to see the real event shapes codex uses for a CLI-level failure (a top-level `error` event, an `error` item, and `turn.failed` with no `turn.completed` — which is what the fake's synthetic broken-run shapes in tests/conftest.py's `fake_codex` are modelled on); none ran a task and none spent a sweep cell. The operator's Codex is a ChatGPT-login account, not billed per token. Ticket 08's registration is the place this whole batch of exploratory calls is disclosed."
+}
