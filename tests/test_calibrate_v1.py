@@ -463,6 +463,16 @@ _PUBLISHED = {
     "bug-fix": {
         "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
     },
+    # Round 5's two categories, pinned as printed BEFORE their sweep: 8 and 4
+    # tasks, no run in any cell, so every column reads "-". The round-5 record
+    # (#84) moves these to the swept numbers in the same commit that lands the
+    # sweep — a pin left at "-" after that would be a category nobody watches.
+    "code-review": {
+        "(zero-knob)": ("8", "-", "-", "-"),
+    },
+    "codebase-comprehension": {
+        "(zero-knob)": ("4", "-", "-", "-"),
+    },
     "fault-location": {
         "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
     },
@@ -505,6 +515,8 @@ _PUBLISHED = {
 _PUBLISHED_DENOMINATORS = {
     "bug-fix": f"{_HAIKU} $0.0805 (n=6), {_SONNET} $0.2128 (n=6)",
     "fault-location": f"{_HAIKU} $0.0706 (n=6), {_SONNET} $0.1819 (n=6)",
+    "code-review": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
+    "codebase-comprehension": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
 }
@@ -518,6 +530,8 @@ _PUBLISHED_DENOMINATORS = {
 _PUBLISHED_MIX = {
     "bug-fix": "6 single-file; 6 hand-authored",
     "fault-location": "6 single-file; 6 hand-authored",
+    "code-review": "8 single-file; 8 hand-authored",
+    "codebase-comprehension": "4 single-file; 4 hand-authored",
     "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
 }
@@ -525,6 +539,8 @@ _PUBLISHED_MIX = {
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
     "bug-fix": {},
     "fault-location": {},
+    "code-review": {},
+    "codebase-comprehension": {},
     "feature-dev": {
         "K1=acceptance": "6 single-file; 6 hand-authored",
         "K1=description": "4 single-file; 4 hand-authored",
