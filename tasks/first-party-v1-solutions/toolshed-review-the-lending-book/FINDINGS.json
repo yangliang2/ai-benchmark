@@ -1,0 +1,17 @@
+[
+  {
+    "file": "labels.py",
+    "symbol": "matching",
+    "note": "the label wanted is tested with `in` against the label on the tool, so a request for the saw answers with the jigsaw as well; the rule is the whole of what is on the handle and never a part of it"
+  },
+  {
+    "file": "loans.py",
+    "symbol": "Book.by_member",
+    "note": "one mapping entry per loan, so a member's second loan replaces their first and only the last of them is ever shown; the rule is that a member may have more than one thing out at a time"
+  },
+  {
+    "file": "desk.py",
+    "symbol": "slip",
+    "note": "the book's own list is sorted in place to print the slip, so printing leaves the book in an order nobody asked for; the rule is that the book holds its loans in the order they went out"
+  }
+]

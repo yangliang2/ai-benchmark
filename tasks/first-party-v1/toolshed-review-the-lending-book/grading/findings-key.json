@@ -1,0 +1,13 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "labels.py", "symbol": "matching"}]},
+    {"any": [{"file": "loans.py", "symbol": "Book.by_member"},
+             {"file": "loans.py", "symbol": "Book"}]},
+    {"any": [{"file": "desk.py", "symbol": "slip"}]}
+  ],
+  "rejected": [
+    {"file": "labels.py", "symbol": "tidy"},
+    {"file": "desk.py", "symbol": "board"}
+  ]
+}
