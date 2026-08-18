@@ -1,0 +1,173 @@
+# code-review, the eighth and last of them in the corpus, and authored to the
+# shape `launderette-review-the-rate-and-the-card` landed and the six after it
+# copied: the agent is handed a change that has already been applied to the
+# starting repository, plus the unified diff of it the prompt names
+# (repo/review.diff), and asked which of it is wrong. There is no second tree
+# it can see — the change lives inside the repository — and the deliverable is
+# the findings file, never an edit.
+#
+# The change is a winter's work on a village watermill's paperwork: the grist
+# book the mill sets down what has been brought in to be ground in, and the
+# toll it takes for grinding it. It reads as a piece of work rather than as
+# three bugs in a row, which is what a review has to be graded on: the house
+# rules it is meant to keep are the README's, written down as the change was
+# asked for and in the mill's own words, so each planted finding is the code
+# disagreeing with a rule somebody wrote down rather than a matter of taste.
+#
+# The three planted findings, each named here by its primary — the most
+# specific location, which is the first alternative in the key:
+#
+#   grist.py Book.to_the_stones  a lot goes to the stones when it has dried
+#                                *and* it has been weighed at the door, and the
+#                                change joins the two the other way, so either
+#                                on its own sends a lot up: damp corn goes to
+#                                the stones and corn nobody weighed is ground
+#                                untolled.
+#   grist.py Hopper.tip_in       the hopper is filled and asked afterwards
+#                                whether it should have been, so the lot the
+#                                rule turns away is in it all the same and the
+#                                pecks over stay against it: what the rule
+#                                asked to prevent has already happened by the
+#                                time the guard reads.
+#   toll.py worth_the_water      the pecks of a lot are held up against a
+#                                figure written in bushels without either side
+#                                being brought to the one measure, so a quarter
+#                                of what the rule asks for reads as enough to
+#                                set the stones going.
+#
+# Deliberately three shapes none of the first seven review tasks carries. Those
+# plant a boundary tested strictly, a counter never cleared, a list ordered the
+# wrong way up, a substring where an equality was meant, a grouping lost to
+# last-wins, a caller sorting a list it does not own, two rules composed in the
+# wrong order, a zero read as nothing, a list mutated under the walk that reads
+# it, a special case written under the general rule that answers first, a
+# default made once at import and kept between calls, a walk ended where it
+# should have been stepped over, a collection handed out by reference where a
+# copy was promised, a refusal swallowed and passed over as an ordinary answer,
+# a remainder dropped by an integer division, a normalisation made on one side
+# of a comparison only, two same-typed arguments swapped at a call whose callee
+# is right, a number ordered by its text, an answer remembered under less than
+# the question that produced it, a total over overlapping groups that counts
+# what two of them share once for each, and an average divided by the count of
+# the wrong thing. A pair of conditions joined the wrong way up, a guard asked
+# after the state it was meant to protect had already changed, and two
+# quantities compared without being brought to the one measure are three
+# further ways for a plausible change to be wrong, and no repetition of those
+# twenty-one. The nearest of the three to any of them is the third — a
+# normalisation made on one side of a comparison only is also a comparison
+# whose sides were never brought together — but that one is a value spelled two
+# ways where one spelling is the wrong one, and this is two numbers each right
+# in the measure it was written in, with the measure itself the thing nobody
+# wrote down.
+#
+# A planted finding is a set of alternative locations and is matched if an
+# answer matches any one of them, so each finding here writes down every level
+# that legitimately describes it:
+#
+#   Book.to_the_stones  is a method of `Book`, and grist.py defines `Lot` and
+#                       `Hopper` beside it, so `grist.py Book` is a second
+#                       alternative: telling the three classes apart takes
+#                       reading them.
+#   Hopper.tip_in       is a method of `Hopper`, in the same three-class
+#                       module, so `grist.py Hopper` is a second alternative
+#                       for the same reason.
+#   worth_the_water     is defined at module level, and toll.py defines no
+#                       class at all, so there is no enclosing class to be a
+#                       second description of it.
+#
+# Beneath the alternatives the comparison's own forgiveness still applies: a
+# bare symbol answers a key spelled `Class.method`, so `tip_in` and
+# `Hopper.tip_in` both answer the second finding.
+#
+# The rejected non-findings are the two places a reviewer plausibly points at
+# and is wrong to. `sacks_to_carry` rounds a lot *up* into sacks where the
+# `bushels` beside it rounds down, which reads as one of the two having the
+# rounding the wrong way round until the house rules are read: a lot part
+# filling a sack still takes a sack to carry it off, while what will not fill a
+# bushel is not a bushel, and the repository's own visible tests say what each
+# comes to. `Book.under` is the method next door to the first finding and the
+# one a reviewer chasing the wrong join points at next — it answers for a name
+# with the lots of that grower's own corn *or* the lots that name brought in
+# for a neighbour, which is exactly what the rules ask for, both together; and
+# again the visible tests say so.
+#
+# Each planted finding carries its existence proof in proofs/ — one per
+# finding, named after its primary: a held-out test that fails on repo/, which
+# ships the change applied, and passes on corrected/, the same repository with
+# all three put right. A finding is one defect however many locations describe
+# it, so it owes one proof and not one per alternative. Both trees sit beside
+# repo/ and outside grading/, which is overlaid into the workdir wholesale, so
+# the lint runs them and grading can neither collect nor copy them.
+#
+# The terrain: the prompt names neither a file nor a symbol of either half of
+# the key, and its own vocabulary is either English's or the domain's below or
+# appears outside the modules the findings live in — mill.py and growers.py and
+# their tests carry the words a prompt about a village mill cannot avoid, and
+# growers.py writes correctly the very thing the second finding gets wrong:
+# `Round.farms` asks before it adds, so a farm already on the round is not put
+# on it twice. The change reaches mill.py — a lot has to be reckoned in
+# something — but no planted finding lives there, and growers.py it does not
+# reach at all, which is what the narrowing rule reads: a word of the prompt
+# found in either has not selected a module the review is hiding in. The
+# repository's own tests are green as it ships and name none of the three
+# planted symbols: what the change added tests for is the part of it that
+# works — a lot set down in the book as it was brought in, the lots standing to
+# one name, the bushels and the sacks a lot comes to, the toll off a lot and
+# the toll off a whole book of them.
+#
+# The prompt's last three paragraphs are the first seven review tasks', near
+# enough word for word, and on purpose: what the deliverable is, how the
+# findings file is shaped, and that an edited repository grades unresolved are
+# the rules of this action rather than of this task, and eight review tasks
+# whose agents were told them differently would differ by their instructions as
+# much as by their changes. What is this task's own is the paragraph that says
+# which mill this is and which change is under review.
+#
+# The hash gate is the generator's (`ai-bench lint-v1 --write-hash-gates`) and
+# never typed, and the prompt says outright what it enforces: the deliverable
+# is the findings file, and a run that edited the code is graded unresolved
+# however well it reviewed the change.
+#
+# A control: authored to fill a category, claiming nothing about difficulty. It
+# is neither a family member nor a pair member, and it names no behaviour
+# tests — those are a refactor task's.
+id: watermill-review-the-grist-and-the-toll
+category: code-review
+# The reference solution is the pristine tree plus the findings file, so the
+# diff a solved run logs touches exactly one file.
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a village watermill and a repository about one
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing somewhere other than
+# the modules the planted findings live in.
+domain_nouns: [mill, mills, watermill, watermills, miller, water, leat, wheel,
+               corn, grist, wheat, barley, oats, meal, flour, stone, stones,
+               floor, floors, furrow, furrows, hopper, hoppers, sack, sacks,
+               peck, pecks, bushel, bushels, toll, tolls, grind, grinds,
+               grinding, ground, grower, growers, farm, farms, parish, village,
+               book, books, lot, lots, round, rounds, door, dried, weighed]
+prompt: |
+  This repository is what a village watermill grinds the parish's corn by, and
+  review.diff in its root is a change that has already been applied to it: what
+  that change was for is the last few house rules of the README, which were
+  written down as it was asked for, and the code around it is what it looks
+  like now.
+
+  Read the change against those rules and say what is wrong with it. Report
+  every problem it introduced and nothing that is not one — somewhere it got
+  right, reported as a problem, is as wrong an answer as a problem you never
+  mention.
+
+  Write what you find to FINDINGS.json in the root of the repository, as a
+  JSON list with one object per problem, each with "file" (the path, relative
+  to the root of the repository, of the file the problem is in), "symbol" (the
+  function, class or method it is in, a method written as Class.method) and,
+  if you like, "note" (a sentence on what is wrong there). Nothing reads the
+  note.
+
+  That file is the deliverable. Do not put any of it right, and leave every
+  other file exactly as you found it: a run that edits the code is graded
+  unresolved however well it reviewed the change.

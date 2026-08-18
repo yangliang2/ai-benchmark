@@ -1,0 +1,14 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "grist.py", "symbol": "Book.to_the_stones"},
+             {"file": "grist.py", "symbol": "Book"}]},
+    {"any": [{"file": "grist.py", "symbol": "Hopper.tip_in"},
+             {"file": "grist.py", "symbol": "Hopper"}]},
+    {"any": [{"file": "toll.py", "symbol": "worth_the_water"}]}
+  ],
+  "rejected": [
+    {"file": "grist.py", "symbol": "Book.under"},
+    {"file": "mill.py", "symbol": "sacks_to_carry"}
+  ]
+}

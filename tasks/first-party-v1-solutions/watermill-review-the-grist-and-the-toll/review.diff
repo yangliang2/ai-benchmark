@@ -1,0 +1,259 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,13 +1,17 @@
+ # The mill
+ 
+ The watermill at Nether Ditchling as the parish grinds at it: which pairs of
+-stones turn, and who brings corn to them.
++stones turn, who brings corn to them, what has been brought in to be ground,
++and what the mill takes for grinding it.
+ 
+ ## The modules
+ 
+-- `mill.py` — the mill itself: the pairs of stones, and the water that drives
+-  them.
++- `mill.py` — the mill itself: the pairs of stones, the water that drives
++  them, and the measures a lot is reckoned in.
+ - `growers.py` — the round: who brings corn here, and the farms it comes off.
++- `grist.py` — the grist book: what has been brought in, and the hopper it
++  waits in over the stones.
++- `toll.py` — what the mill takes for grinding, and what a book of it comes to.
+ 
+ ## The house rules
+ 
+@@ -17,3 +21,23 @@ stones turn, and who brings corn to them.
+ - A pair of stones is asked for by the name it goes by, and a name is matched
+   however it was written down.
+ - Two pairs on the one floor are on the one floor, and it is counted once.
++- Corn is reckoned in pecks: four pecks to a bushel, and eight to a sack.
++- What will not fill a bushel is not a bushel, and is left out of the reckoning
++  in bushels.
++- A lot part filling a sack still takes a sack to carry it off: what will not
++  fill one is carried in a sack of its own.
++- A lot is set down in the book as it was brought in, and the book holds the
++  lots in the order they came.
++- The book answers for a name with the lots of that grower's own corn and the
++  lots that name brought in for a neighbour, both together.
++- A lot goes to the stones when it has dried and it has been weighed at the
++  door: damp corn will not grind, and what was never weighed cannot be tolled.
++- The hopper holds what it holds and no more: a lot that would take it over is
++  turned away, and the hopper is left as it stood.
++- The mill takes a peck in every sixteen and no part of a peck, off each lot as
++  it goes to the stones.
++- The stones are not set going for less than a bushel: the water it takes to
++  start them is worth more than the toll on a smaller lot.
++
++`review.diff` is the change that brought the grist book and the toll in, in the
++state the mill's own copy of it is in.
+diff --git a/grist.py b/grist.py
+new file mode 100644
+--- /dev/null
++++ b/grist.py
+@@ -0,0 +1,66 @@
++"""The grist book: the corn brought in to be ground, and the hopper it waits in
++over the stones."""
++
++
++class Lot:
++    """One lot of corn as it was brought in: whose corn it is, who brought it
++    to the door, what corn it is, how many pecks of it there are, whether it
++    has dried, and whether it was weighed at the door."""
++
++    def __init__(self, whose, brought, corn, pecks, dried, weighed):
++        self.whose = whose
++        self.brought = brought
++        self.corn = corn
++        self.pecks = pecks
++        self.dried = dried
++        self.weighed = weighed
++
++
++class Book:
++    """The mill's grist book: the lots it holds, in the order they were brought
++    in."""
++
++    def __init__(self):
++        self.lots = []
++
++    def bring_in(self, lot):
++        """Set a lot down in the book as it was brought in. The book holds them
++        in the order they came."""
++        self.lots.append(lot)
++
++    def under(self, name):
++        """The lots standing to this name, in the order they came: the lots of
++        that grower's own corn and the lots that name brought to the door for a
++        neighbour, both together."""
++        return [lot for lot in self.lots if lot.whose == name or lot.brought == name]
++
++    def to_the_stones(self):
++        """The lots that may go to the stones now, in the order they were
++        brought in: a lot goes when it has dried and it has been weighed at the
++        door."""
++        return [lot for lot in self.lots if lot.dried or lot.weighed]
++
++
++class Hopper:
++    """The hopper over the stones: what is waiting to go through them, and how
++    much the hopper will hold."""
++
++    def __init__(self, holds):
++        self.holds = holds
++        self.lots = []
++        self.pecks = 0
++
++    def tip_in(self, lot):
++        """Tip a lot into the hopper. The hopper holds what it holds and no
++        more: a lot that would take it over is turned away, and the hopper is
++        left as it stood. True where the lot went in, False where it did
++        not."""
++        self.lots.append(lot)
++        self.pecks += lot.pecks
++        if self.pecks > self.holds:
++            return False
++        return True
++
++    def room(self):
++        """How many pecks the hopper has room for."""
++        return self.holds - self.pecks
+diff --git a/mill.py b/mill.py
+--- a/mill.py
++++ b/mill.py
+@@ -3,6 +3,10 @@ drives them."""
+ 
+ FLOORS = ("the bin floor", "the stone floor", "the meal floor")
+ 
++PECKS_TO_A_BUSHEL = 4
++
++PECKS_TO_A_SACK = 8
++
+ 
+ class Stones:
+     """One pair of stones: the name they go by, the floor they stand on, and
+@@ -44,3 +48,16 @@ def turning(stones, name):
+         if pair.name.strip().lower() == wanted:
+             return pair
+     return None
++
++
++def bushels(pecks):
++    """How many whole bushels a lot of this many pecks comes to. What will not
++    fill a bushel is not a bushel, and is left out of the reckoning."""
++    return pecks // PECKS_TO_A_BUSHEL
++
++
++def sacks_to_carry(pecks):
++    """How many sacks a lot of this many pecks takes to carry off. A lot part
++    filling a sack still takes a sack to carry it: what will not fill one is
++    carried in a sack of its own."""
++    return -(-pecks // PECKS_TO_A_SACK)
+diff --git a/test_grist.py b/test_grist.py
+new file mode 100644
+--- /dev/null
++++ b/test_grist.py
+@@ -0,0 +1,19 @@
++from grist import Book, Lot
++
++
++def test_a_lot_is_set_down_in_the_book_as_it_was_brought_in():
++    book = Book()
++    book.bring_in(Lot("hale", "hale", "wheat", 30, True, True))
++    book.bring_in(Lot("dray", "dray", "barley", 21, True, True))
++
++    assert [lot.pecks for lot in book.lots] == [30, 21]
++
++
++def test_a_name_answers_with_its_own_corn_and_what_it_carried_for_a_neighbour():
++    book = Book()
++    book.bring_in(Lot("hale", "hale", "wheat", 30, True, True))
++    book.bring_in(Lot("wick", "hale", "oats", 12, True, True))
++    book.bring_in(Lot("dray", "dray", "barley", 21, True, True))
++
++    assert [lot.corn for lot in book.under("hale")] == ["wheat", "oats"]
++    assert book.under("pyke") == []
+diff --git a/test_mill.py b/test_mill.py
+--- a/test_mill.py
++++ b/test_mill.py
+@@ -1,4 +1,13 @@
+-from mill import FLOORS, Leat, Stones, floors_in_use, on_the_floor, turning
++from mill import (
++    FLOORS,
++    Leat,
++    Stones,
++    bushels,
++    floors_in_use,
++    on_the_floor,
++    sacks_to_carry,
++    turning,
++)
+ 
+ 
+ def test_a_pair_of_stones_is_found_however_the_name_was_written_down():
+@@ -27,3 +36,14 @@ def test_the_leat_says_what_it_comes_down_with():
+ 
+     assert (leat.whose, leat.fall) == ("the glebe", 9)
+     assert FLOORS[0] == "the bin floor"
++
++
++def test_what_will_not_fill_a_bushel_is_not_a_bushel():
++    assert bushels(9) == 2
++    assert bushels(3) == 0
++
++
++def test_a_lot_part_filling_a_sack_still_takes_a_sack_to_carry_it():
++    assert sacks_to_carry(9) == 2
++    assert sacks_to_carry(16) == 2
++    assert sacks_to_carry(0) == 0
+diff --git a/test_toll.py b/test_toll.py
+new file mode 100644
+--- /dev/null
++++ b/test_toll.py
+@@ -0,0 +1,16 @@
++from grist import Book, Lot
++from toll import taken_off, toll_on
++
++
++def test_the_mill_takes_a_peck_in_every_sixteen_and_no_part_of_a_peck():
++    assert toll_on(32) == 2
++    assert toll_on(20) == 1
++    assert toll_on(9) == 0
++
++
++def test_what_the_mill_takes_off_the_whole_of_a_book():
++    book = Book()
++    book.bring_in(Lot("hale", "hale", "wheat", 32, True, True))
++    book.bring_in(Lot("dray", "dray", "barley", 20, True, True))
++
++    assert taken_off(book) == 3
+diff --git a/toll.py b/toll.py
+new file mode 100644
+--- /dev/null
++++ b/toll.py
+@@ -0,0 +1,26 @@
++"""What the mill takes for grinding, and what a book of it comes to."""
++
++# A peck in every sixteen, which is what the mill has always taken.
++TOLL_IN = 16
++
++# The stones are not set going for less than this much corn: the water it takes
++# to start them is worth more than the toll on a smaller lot.
++LEAST_TO_GRIND_BUSHELS = 1
++
++
++def toll_on(pecks):
++    """What the mill takes off a lot of this many pecks: a peck in every
++    sixteen, and no part of a peck."""
++    return pecks // TOLL_IN
++
++
++def worth_the_water(pecks):
++    """Whether a lot of this many pecks is worth setting the stones going for.
++    The stones are not set going for less than a bushel."""
++    return pecks >= LEAST_TO_GRIND_BUSHELS
++
++
++def taken_off(book):
++    """What the mill takes off the whole of a book: the toll on each lot as it
++    goes to the stones, added up."""
++    return sum(toll_on(lot.pecks) for lot in book.lots)

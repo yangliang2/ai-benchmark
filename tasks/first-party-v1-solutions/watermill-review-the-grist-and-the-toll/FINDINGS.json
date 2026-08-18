@@ -1,0 +1,17 @@
+[
+  {
+    "file": "grist.py",
+    "symbol": "Book.to_the_stones",
+    "note": "sends a lot up when it has dried or it was weighed, where the rule asks for both"
+  },
+  {
+    "file": "grist.py",
+    "symbol": "Hopper.tip_in",
+    "note": "tips the lot in and asks afterwards, so the lot it turns away is in the hopper all the same"
+  },
+  {
+    "file": "toll.py",
+    "symbol": "worth_the_water",
+    "note": "holds pecks up against a figure written in bushels without bringing the two to the one measure"
+  }
+]
