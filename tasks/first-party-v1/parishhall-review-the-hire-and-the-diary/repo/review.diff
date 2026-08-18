@@ -1,0 +1,128 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -3,13 +3,25 @@
+ The hall as the committee keeps it: which rooms there are, who has them and
+-when, and who locks up afterwards.
++when, what an evening costs, and who locks up afterwards.
+
+ ## The modules
+
+ - `hall.py` — the rooms, and what each of them will take.
+ - `caretaker.py` — the keys that are out, and the hour the doors are locked.
+ - `diary.py` — the bookings.
++- `charges.py` — what a booking is charged.
+
+ ## The house rules
+
+ - A room is booked for whole hours, and the diary holds its bookings in the
+   order they were taken.
++- A hirer who takes their bookings out of the diary takes out every one of
++  them, and not the first of them alone.
++- A room is hired at the rate on the room for the hours booked, and from
++  November to March the heating goes on the bill as well; what the hirer is
++  asked for is the whole of that, rounded up to the pound.
++- A booking may have a price agreed with the committee, and where one has
++  been agreed that is what the hirer is charged — an evening agreed at
++  nothing is an evening that costs nothing.
++
++`review.diff` is the change that brought the charges and the cancelling in,
++in the state the hall's own copy of it is in.
+diff --git a/charges.py b/charges.py
+new file mode 100644
+--- /dev/null
++++ b/charges.py
+@@ -0,0 +1,38 @@
++"""What a booking is charged: the hire of the room, and the price agreed."""
++
++from hall import named
++
++HEATING_PENCE = 250
++WINTER_MONTHS = (11, 12, 1, 2, 3)
++
++
++def to_the_pound(pence):
++    """A charge as it goes on the bill: up to the whole pound."""
++    return -(-pence // 100) * 100
++
++
++def heating(month):
++    """What the heating adds to an evening in this month."""
++    return HEATING_PENCE if month in WINTER_MONTHS else 0
++
++
++def hire_for(booking, rate):
++    """The hire of a room for one booking: the rate for the hours booked,
++    the heating on top of it in the winter months, and the whole of it up to
++    the pound."""
++    return to_the_pound(rate * booking.hours) + heating(booking.month)
++
++
++def price_of(booking, rate):
++    """What the hirer is charged for a booking: the price agreed for it
++    where one was agreed, and the hire of the room where none was."""
++    if booking.agreed:
++        return booking.agreed
++    return hire_for(booking, rate)
++
++
++def takings(bookings, rooms):
++    """What these bookings came to, in pence."""
++    return sum(
++        price_of(booking, named(rooms, booking.room).rate) for booking in bookings
++    )
+diff --git a/diary.py b/diary.py
+--- a/diary.py
++++ b/diary.py
+@@ -6,8 +6,9 @@ class Booking:
+     how many hours it runs to."""
+
+-    def __init__(self, who, room, day, month, hours):
++    def __init__(self, who, room, day, month, hours, agreed=None):
+         self.who = who
+         self.room = room
+         self.day = day
+         self.month = month
+         self.hours = hours
++        self.agreed = agreed
+@@ -26,3 +27,13 @@ class Diary:
+     def on(self, day):
+         """Every booking of this day, in the order they were taken."""
+         return [booking for booking in self.bookings if booking.day == day]
++
++    def cancel(self, who):
++        """Take every booking of this hirer out of the diary; how many of
++        them went."""
++        gone = 0
++        for booking in self.bookings:
++            if booking.who == who:
++                self.bookings.remove(booking)
++                gone += 1
++        return gone
+diff --git a/test_charges.py b/test_charges.py
+new file mode 100644
+--- /dev/null
++++ b/test_charges.py
+@@ -0,0 +1,22 @@
++from charges import heating, takings, to_the_pound
++from diary import Booking
++from hall import Room
++
++
++def test_a_charge_goes_on_the_bill_at_the_pound_above_it():
++    assert to_the_pound(1180) == 1200
++
++
++def test_a_charge_of_whole_pounds_stays_where_it_is():
++    assert to_the_pound(1200) == 1200
++
++
++def test_the_heating_goes_on_an_evening_of_the_winter_months_only():
++    assert heating(1) == 250
++    assert heating(6) == 0
++
++
++def test_what_a_summer_evening_of_three_hours_came_to():
++    bookings = [Booking("ada", "big", "friday", 6, 3)]
++
++    assert takings(bookings, [Room("big", 80, 400)]) == 1200

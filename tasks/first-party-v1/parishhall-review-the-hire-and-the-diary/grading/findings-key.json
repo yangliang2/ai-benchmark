@@ -1,0 +1,13 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "charges.py", "symbol": "hire_for"}]},
+    {"any": [{"file": "charges.py", "symbol": "price_of"}]},
+    {"any": [{"file": "diary.py", "symbol": "Diary.cancel"},
+             {"file": "diary.py", "symbol": "Diary"}]}
+  ],
+  "rejected": [
+    {"file": "charges.py", "symbol": "to_the_pound"},
+    {"file": "charges.py", "symbol": "takings"}
+  ]
+}

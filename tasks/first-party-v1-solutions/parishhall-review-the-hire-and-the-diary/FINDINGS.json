@@ -1,0 +1,17 @@
+[
+  {
+    "file": "charges.py",
+    "symbol": "hire_for",
+    "note": "the hire is rounded up to the pound and the heating added to the rounded figure, so a winter evening is billed a figure that is not a whole pound at all; the rule rounds the whole of it, heating and all"
+  },
+  {
+    "file": "charges.py",
+    "symbol": "price_of",
+    "note": "the agreed price is tested for truth rather than for having been agreed, so an evening agreed at nothing is charged the hire of the room; the rule is that an evening agreed at nothing costs nothing"
+  },
+  {
+    "file": "diary.py",
+    "symbol": "Diary.cancel",
+    "note": "the diary's own list is walked while entries are taken out of it, so the walk steps over the booking that moved up and the second of two standing together stays in the diary; the rule is that a hirer takes out every one of their bookings"
+  }
+]
