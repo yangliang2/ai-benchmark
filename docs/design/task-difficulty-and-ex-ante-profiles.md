@@ -4200,6 +4200,41 @@ sit in round 4's ~$0.14/cell band; the widening round's range is stated in
 its spec from round 6's per-cell figure. ADRs owed: the taxonomy change (#46,
 round 5) and the stdlib-only runner rule (round 7's spec).
 
+## Round 5 run-time limits and cost — registered 2026-08-18
+
+**46. `code-review` and `codebase-comprehension` register at 600, beside round
+4's two, and the round's cost range is stated before the first paid run.**
+Ticket 20 (#82) does §37's move again, one round later: `LIVE_RUN_LIMITS_S`
+gains `code-review: 600` and `codebase-comprehension: 600`, so the table now
+carries four entries — `bug-fix`, `fault-location`, `code-review`,
+`codebase-comprehension` — all at the flat default's own value. Registration
+is the point, not a cell moved: round 5 has no locate/fix-shaped contrast to
+protect the way round 4 did, but registering both new categories at the
+default's own value is still a considered commitment rather than an inherited
+convention, and equal values are what keep the round's readings free of a
+ceiling difference between its two new actions. Because the number in force
+does not change for any task, **no cross-round caveat arises** against round
+4 — the rule is CONTEXT.md's live-run-limit glossary entry, not restated
+here.
+
+The rider `pysm-work-out-a-way-there` × sonnet (§45.7, §33 candidate 8) is a
+`feature-dev` task, which this ticket leaves unregistered: it runs under the
+flat default of 600 seconds, numerically equal to the round's four registered
+limits but not itself a registration. Stating that here is what lets the
+round's record later say the rider ran "at the flat default", not "under the
+registered 600 s" — a claim only the four registered categories can make.
+
+**Cost, stated before anyone spends.** Round 5's sweep is twelve tasks (eight
+`code-review`, four locate-style `codebase-comprehension`, §45.2) × the
+two-model ladder = 24 cells. Round 4's actual per-cell figure, $0.1364 over
+24 cells of comparable hand-authored terrain (§38), puts a flat extrapolation
+at roughly $3.27; the range stated here is **$3–6**, wider than a flat
+extrapolation to leave headroom for `code-review`'s larger read — a
+multi-file diff plus a findings key is more context per turn than a single
+planted defect. Whether the round landed inside it is for the round's
+verdicts section to say, against this line, once the sweep — run by hand
+under `docs/agents/sweep-protocol.md`, never queued — has happened.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

@@ -2236,22 +2236,53 @@ def test_a_registered_tier_is_the_limit_of_its_class_and_of_no_other(
     assert live_run_limit_s(other) == RUN_TIMEOUT_S
 
 
-def test_round_4_registers_bug_fix_and_fault_location_at_600() -> None:
-    """AC: the round-4 registration pinned, against the real table — no
-    monkeypatching it — so a future edit that drops or changes either
-    category's entry, or accidentally tiers a third one, fails this test
-    rather than silently drifting from the design note's §37 ruling. Both
-    categories share the flat default's own value, 600, by that ruling: the
-    round's locate/fix contrast spans exactly these two categories, and equal
-    registration is what keeps #50's one-limit-per-contrast guarantee true
-    without confounding it."""
+def test_rounds_4_and_5_register_four_categories_at_600() -> None:
+    """AC: the round-4 and round-5 registrations pinned, against the real
+    table — no monkeypatching it — so a future edit that drops or changes any
+    of the four categories' entries, or accidentally tiers a fifth one, fails
+    this test rather than silently drifting from the design note's §37 and
+    §46 rulings. All four categories share the flat default's own value, 600:
+    round 4's locate/fix contrast spans exactly `bug-fix` and
+    `fault-location`, and round 5 registers `code-review` and
+    `codebase-comprehension` the same way, so equal registration is what
+    keeps #50's one-limit-per-contrast guarantee true without confounding it,
+    for both rounds' contrasts, without opening a cross-round caveat."""
     seed = task_by_id(FEATURE_SEED)
     bug_fix = seed.model_copy(update={"category": "bug-fix"})
     fault_location = seed.model_copy(update={"category": "fault-location"})
+    code_review = seed.model_copy(update={"category": "code-review"})
+    codebase_comprehension = seed.model_copy(
+        update={"category": "codebase-comprehension"}
+    )
 
     assert live_run_limit_s(bug_fix) == 600
     assert live_run_limit_s(fault_location) == 600
+    assert live_run_limit_s(code_review) == 600
+    assert live_run_limit_s(codebase_comprehension) == 600
     assert live_run_limit_s(seed) == RUN_TIMEOUT_S == 600
+    assert set(LIVE_RUN_LIMITS_S) == {
+        "bug-fix",
+        "fault-location",
+        "code-review",
+        "codebase-comprehension",
+    }
+
+
+def test_the_runner_reads_a_round_5_category_off_the_registered_table(
+    fake_claude: FakeClaude, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """A run whose task is `code-review` — one of round 5's two new
+    registrations — is bound by *that* entry: tiering it down from its
+    registered 600 to 1 kills the run at 1s, proving the runner looked the
+    limit up in `LIVE_RUN_LIMITS_S` under the task's own category rather than
+    falling through to the flat default because the category used to be
+    unregistered."""
+    fake_claude("time.sleep(30)\n")
+    task = task_by_id(FEATURE_SEED).model_copy(update={"category": "code-review"})
+    monkeypatch.setitem(LIVE_RUN_LIMITS_S, "code-review", 1)
+
+    with pytest.raises(IngestError, match="timed out after 1s"):
+        run_live([task], ["claude-sonnet-5"], tmp_path / "runs.jsonl", sweep=SWEEP)
 
 
 def test_the_runner_keys_each_task_on_its_own_category(

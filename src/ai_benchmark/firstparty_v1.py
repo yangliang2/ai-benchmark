@@ -4469,9 +4469,18 @@ _COMMIT_IDENTITY = {
 # between the two categories would confound the only comparison the round
 # exists to make. The value equals the default deliberately rather than by
 # omission, so no cross-round caveat arises against round 3.
+#
+# Round 5 (design note §46) registers `code-review` and `codebase-comprehension`
+# the same way and for the same reason: both at 600, the flat default's own
+# value, so registration is a considered commitment rather than an inherited
+# convention and no cell of the round runs under a ceiling different from the
+# one it would have had unregistered. No cross-round caveat arises against
+# round 4.
 LIVE_RUN_LIMITS_S: dict[TaskCategory, int] = {
     "bug-fix": 600,
     "fault-location": 600,
+    "code-review": 600,
+    "codebase-comprehension": 600,
 }
 
 
