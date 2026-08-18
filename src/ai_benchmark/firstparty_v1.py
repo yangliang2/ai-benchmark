@@ -4562,8 +4562,9 @@ def run_live(
 
     Which agent runs is the caller's to say, by name: `agent` selects the
     registered adapter (`ai_benchmark.agents.ADAPTERS`) that drives the
-    harness and parses its output, and an unregistered name is refused before
-    any workdir is prepared. Nothing else about the run is the adapter's —
+    harness and parses its output, and an unregistered name — or a `--model`
+    the named harness is not registered to drive — is refused before any
+    workdir is prepared. Nothing else about the run is the adapter's —
     the fresh workdir, the pristine commit, the diff capture, the sweep id
     and the log append all stay here.
 
@@ -4575,6 +4576,12 @@ def run_live(
     if problem := _sweep_id_problem(sweep):
         raise IngestError(f"{problem} — {_SWEEP_ID_RULE}")
     adapter = adapter_for(agent)
+    # Which combinations this harness is registered to run is settled here,
+    # before the first workdir is prepared and before the first paid
+    # invocation: a sweep named with a model its harness does not run is a
+    # reading nobody chose, and finding that out from a half-written log is
+    # finding it out too late.
+    adapter.check_models(models)
     if log_path.exists():
         raise IngestError(
             f"run log {log_path} already exists — replay it, or pass a fresh --log"
