@@ -1,0 +1,66 @@
+# codebase-comprehension, locate-style: "where is this behaviour handled?"
+# The second of round 5's two, on its own repository and asking after a
+# different kind of behaviour from the first: `boatyard-where-a-lift-out-is-
+# refused` asks where a decision is taken, this one asks where a piece of
+# printed wording is put together. There is no planted defect anywhere in this
+# repository, and this action's registered existence proof is the whole of what
+# stands behind the key: the accepted (file, symbol) resolves in the starting
+# repository.
+#
+# The mechanism is round 4's, unchanged — same `grading/accepted-answer.json`,
+# same `_answer.py` and `test_answer.py` byte for byte, same forgiveness, same
+# terrain rules, same hash gate. What differs is what the halves mean: accepted
+# names where correct code lives, rejected names where a related but different
+# behaviour lives.
+#
+# Both legitimately correct description levels are written down: the method the
+# wording is made in, and the class enclosing it. `sheet.py` defines two classes,
+# Column and Sheet, so an answer at class level is a reading rather than the
+# filename in disguise (terrain rule 3). The module alone is not an accepted
+# level.
+#
+# The terrain: two of the three modules supply pieces of what is printed and
+# neither makes a phrase out of them — `bands.billed_as` sets down one band's own
+# name, `Diary.on` puts an afternoon's turns in order — so both are places a
+# reader could stop, and both are keyed rejected. Each names a file the accepted
+# set does not. The prompt describes what a passer-by reads in the passer-by's
+# words rather than the module's, and names no file and no symbol out of either
+# half of the key.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# Neither a family nor a pair member; like its sibling it has no partner at all.
+id: bandstand-where-the-poster-is-worded
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a bandstand and a repository about one cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds every
+# other word of the prompt to appearing in more than the module the accepted
+# answer names.
+domain_nouns: [band, bands, bandstand, singer, poster, date, dates, afternoon,
+               afternoons, sunday, summer, season, turn, turns, hour, hours,
+               minute, minutes, length]
+prompt: |
+  Every Sunday afternoon through the summer a band plays on the bandstand,
+  and a poster goes up on the railings saying who. Under each date is one
+  short entry: the hour a turn begins and the band as it is announced, with
+  the length after it when the length is out of the ordinary and nothing
+  about the length when it is not. Where two turns share an afternoon, both
+  go in, one after the other, in the order they come. A date with nothing
+  booked against it says as much rather than sitting blank.
+
+  Where in this repository is that entry handled? Nothing here is broken and
+  there is nothing to put right — the question is where the pieces are
+  brought together into what a passer-by reads.
+
+  Study the repository and leave it precisely as you found it. Do not edit,
+  create or delete any part of it: the deliverable is the location and not a
+  change, and a run that alters the repository is graded unresolved however
+  well it replied.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the behaviour
+  is handled in relative to the repository root, and "symbol", the function,
+  class or method it is handled in (a method written as Class.method).

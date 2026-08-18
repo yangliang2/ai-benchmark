@@ -1,0 +1,72 @@
+# codebase-comprehension, locate-style: "where is this behaviour handled?"
+# The first of round 5's two, and the first keyed task in the corpus with no
+# partner — which is why ticket 09 made the existence proof a rule rather than
+# a convention. There is no planted defect anywhere in this repository: the
+# ground truth is where a behaviour is *correctly* implemented, and what proves
+# that truth is there at all is this action's registered existence proof, that
+# the accepted (file, symbol) resolves in the starting repository.
+#
+# The mechanism is round 4's, unchanged and deliberately so. Same
+# `grading/accepted-answer.json`, same `_answer.py` and `test_answer.py` shipped
+# byte for byte, same forgiveness, same terrain rules, same hash gate. What
+# shifts is only what each half of the key *means*: the accepted set names where
+# correct code lives rather than where a defect does, and the rejected set names
+# the plausible wrong place — for this action, where a related but different
+# behaviour lives, not the file a symptom points at.
+#
+# The accepted set writes down both description levels that are legitimately
+# correct: the method the decision is made in, and the class enclosing it.
+# `yard.py` defines three classes — Refused, Berth and Yard — so answering at
+# class level is a reading and not the filename in disguise (terrain rule 3).
+# The module alone is not an accepted level: on a repository this small a bare
+# filename is barely a location.
+#
+# The terrain is what makes this reading rather than grepping. Two of the three
+# modules answer one narrow question each and decide nothing — `slipway.workable`
+# says only whether the crane could lift on a day, `cradles.cradle_for` says only
+# which frame would hold a hull that wide — and each is a plausible wrong answer
+# for exactly that reason: both are places a boat is told no, and neither is
+# where the yard decides. Those two are the rejected near-misses, and they name
+# two files the accepted set does not. The prompt describes the four refusals in
+# the caller's words rather than the module's, and names no file and no symbol
+# out of either half of the key.
+#
+# A control: authored to fill a category, claiming nothing about difficulty. Not
+# a family member and not a pair member — it has no partner at all, which is the
+# whole reason this action's existence proof had to be registered.
+id: boatyard-where-a-lift-out-is-refused
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a boatyard and a repository about one cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds every
+# other word of the prompt to appearing in more than the module the accepted
+# answer names.
+domain_nouns: [boat, boats, boatyard, hull, water, winter, day, days, week,
+               weeks, season, tide, tides, crane, office, store, frame, frames]
+prompt: |
+  Somebody rings the boatyard up in October and asks to be taken out of the
+  water for the winter. Quite often the answer is no, and they are told one
+  ground for it and no more: the season they want is too brief to be bothered
+  with, or the crane could not lift on the day they want, or there is nowhere
+  free to put a boat that size, or nothing in the store would take a hull that
+  wide.
+  Whichever of those bites first is what they hear about, and the others are
+  never gone into.
+
+  Where in this repository is that behaviour handled? Nothing here is broken
+  and there is nothing to put right — the question is where those grounds are
+  weighed one after another, and where it is settled whether a boat comes out
+  of the water at all.
+
+  Study the repository and leave it precisely as you found it. Do not edit,
+  create or delete any part of it: the deliverable is the location and not a
+  change, and a run that alters the repository is graded unresolved however
+  well it replied.
+
+  Write your answer to ANSWER.json in the root of the repository, as a JSON
+  object with two string fields: "file", the path of the file the behaviour
+  is handled in relative to the repository root, and "symbol", the function,
+  class or method it is handled in (a method written as Class.method).

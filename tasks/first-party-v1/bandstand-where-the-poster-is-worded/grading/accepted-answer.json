@@ -1,0 +1,11 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "sheet.py", "symbol": "Sheet.wording"},
+    {"file": "sheet.py", "symbol": "Sheet"}
+  ],
+  "rejected": [
+    {"file": "bands.py", "symbol": "billed_as"},
+    {"file": "diary.py", "symbol": "Diary.on"}
+  ]
+}

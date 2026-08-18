@@ -1,0 +1,11 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "yard.py", "symbol": "Yard.book_in"},
+    {"file": "yard.py", "symbol": "Yard"}
+  ],
+  "rejected": [
+    {"file": "slipway.py", "symbol": "workable"},
+    {"file": "cradles.py", "symbol": "cradle_for"}
+  ]
+}

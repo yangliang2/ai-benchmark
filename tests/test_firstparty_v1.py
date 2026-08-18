@@ -334,6 +334,7 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
 
     assert {task.category for task in tasks} == {
         "feature-dev", "refactor", "bug-fix", "fault-location", "code-review",
+        "codebase-comprehension",
     }
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:
