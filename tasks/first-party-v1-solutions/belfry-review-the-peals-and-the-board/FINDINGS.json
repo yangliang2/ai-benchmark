@@ -1,0 +1,17 @@
+[
+  {
+    "file": "ringers.py",
+    "symbol": "Band.ringer",
+    "note": "folds the name it is asked with and then compares it against the name in the band as that was written"
+  },
+  {
+    "file": "peals.py",
+    "symbol": "Book.longest",
+    "note": "hands the tower clock the two strokes the wrong way round, so the shortest peal comes back as the longest"
+  },
+  {
+    "file": "board.py",
+    "symbol": "peal_board",
+    "note": "orders the lines it has already made up, so the counts are compared as text and nine stands above twelve"
+  }
+]

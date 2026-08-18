@@ -1,0 +1,200 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,12 +1,17 @@
+ # The tower
+ 
+ The ringing at St Botolph's as the captain keeps it: which bells hang in the
+-tower, and who stands at them.
++tower, who stands at them, what has been rung on them, and what goes up on the
++board.
+ 
+ ## The modules
+ 
+-- `tower.py` — the bells hung in the tower.
++- `tower.py` — the bells hung in the tower, and the clock the ringing is timed
++  by.
+ - `ringers.py` — the band: who rings, and which bell each of them stands at.
++- `peals.py` — the ringing book: what has been rung, and what the book makes of
++  it.
++- `board.py` — the board that goes up on the tower wall.
+ 
+ ## The house rules
+ 
+@@ -15,3 +20,16 @@ tower, and who stands at them.
+   band's to refuse.
+ - A bell is asked for by the name it hangs under, and a name is matched however
+   it was written down.
++- A ringer is asked for by name as well, and a name is matched there the same
++  way: the book is kept by whoever is holding the pencil, so the spaces around
++  a name and the capitals in it are no part of it.
++- A peal is written into the book as it was rung, and the book holds the peals
++  in the order they were rung.
++- How long a peal stood is the time from the stroke it was pulled off at to the
++  stroke it came round at, read off the tower clock.
++- The board carries a line for every ringer of the band, how many peals they
++  have rung and who they are: the most rung at the head of it, and two of them
++  level on peals in the order they were taken on.
++
++`review.diff` is the change that brought the book and the board in, in the
++state the captain's own copy of it is in.
+diff --git a/board.py b/board.py
+new file mode 100644
+--- /dev/null
++++ b/board.py
+@@ -0,0 +1,15 @@
++"""The board that goes up on the tower wall: what everyone of the band has rung
++of the peals in the book."""
++
++
++def rung(book, who):
++    """How many peals this ringer has rung."""
++    return len(book.rung_by(who))
++
++
++def peal_board(book, band):
++    """The board for the tower wall: a line for each ringer of the band, how
++    many peals they have rung and who they are, the most rung at the head of it
++    and two of them level on peals in the order they were taken on."""
++    lines = [f"{rung(book, each.who)} {each.who}" for each in band.ringers]
++    return sorted(lines, reverse=True)
+diff --git a/peals.py b/peals.py
+new file mode 100644
+--- /dev/null
++++ b/peals.py
+@@ -0,0 +1,44 @@
++"""The ringing book: what has been rung in this tower, and what the book makes
++of it."""
++
++from tower import minutes
++
++
++class Peal:
++    """One peal as it was rung: what it was rung to, how many changes stood,
++    the stroke it was pulled off at, the stroke it came round at, and who rang
++    in it."""
++
++    def __init__(self, rung_to, changes, pulled_off, came_round, band):
++        self.rung_to = rung_to
++        self.changes = changes
++        self.pulled_off = pulled_off
++        self.came_round = came_round
++        self.band = band
++
++
++class Book:
++    """The tower's ringing book: the peals it holds, in the order they were
++    rung."""
++
++    def __init__(self):
++        self.peals = []
++
++    def ring(self, peal):
++        """Set a peal down in the book as it was rung. The book holds them in
++        the order they were rung."""
++        self.peals.append(peal)
++
++    def rung_by(self, who):
++        """Each peal this ringer rang in, in the order they were rung."""
++        return [peal for peal in self.peals if who in peal.band]
++
++    def longest(self):
++        """The peal that stood the longest, or None where the book holds none
++        yet. How long a peal stood is the time from the stroke it was pulled
++        off at to the stroke it came round at."""
++        if not self.peals:
++            return None
++        return max(
++            self.peals, key=lambda peal: minutes(peal.came_round, peal.pulled_off)
++        )
+diff --git a/ringers.py b/ringers.py
+--- a/ringers.py
++++ b/ringers.py
+@@ -26,3 +26,14 @@ class Band:
+         """Everyone of the band who usually stands at this bell, in the order
+         they were taken on."""
+         return [each for each in self.ringers if each.bell == bell]
++
++    def ringer(self, who):
++        """The ringer of this name, or None where the band holds nobody of it.
++        A name is matched however it was written down: the book is kept by
++        whoever is holding the pencil, so the spaces around a name and the
++        capitals in it are no part of it."""
++        wanted = who.strip().lower()
++        for each in self.ringers:
++            if each.who == wanted:
++                return each
++        return None
+diff --git a/test_board.py b/test_board.py
+new file mode 100644
+--- /dev/null
++++ b/test_board.py
+@@ -0,0 +1,12 @@
++from board import rung
++from peals import Book, Peal
++
++
++def test_a_ringer_has_rung_the_peals_of_the_book_they_stood_in():
++    book = Book()
++    book.ring(Peal("Grandsire Triples", 5040, 600, 780, ["ann", "bea"]))
++    book.ring(Peal("Plain Bob Major", 5088, 840, 1020, ["bea"]))
++
++    assert rung(book, "bea") == 2
++    assert rung(book, "ann") == 1
++    assert rung(book, "cal") == 0
+diff --git a/test_peals.py b/test_peals.py
+new file mode 100644
+--- /dev/null
++++ b/test_peals.py
+@@ -0,0 +1,21 @@
++from peals import Book, Peal
++
++
++def test_a_peal_is_written_into_the_book_as_it_was_rung():
++    book = Book()
++    book.ring(Peal("Grandsire Triples", 5040, 600, 780, ["ann", "bea"]))
++    book.ring(Peal("Plain Bob Major", 5088, 840, 1020, ["bea"]))
++
++    assert [peal.rung_to for peal in book.peals] == [
++        "Grandsire Triples",
++        "Plain Bob Major",
++    ]
++
++
++def test_the_peals_one_of_them_rang_in_come_back_in_the_order_they_were_rung():
++    book = Book()
++    book.ring(Peal("Grandsire Triples", 5040, 600, 780, ["ann", "bea"]))
++    book.ring(Peal("Plain Bob Major", 5088, 840, 1020, ["bea"]))
++
++    assert [peal.changes for peal in book.rung_by("bea")] == [5040, 5088]
++    assert book.rung_by("cal") == []
+diff --git a/test_tower.py b/test_tower.py
+--- a/test_tower.py
++++ b/test_tower.py
+@@ -1,4 +1,8 @@
+-from tower import BELLS, Bell, Frame, heaviest_first, hung
++from tower import BELLS, Bell, Frame, heaviest_first, hung, minutes
++
++
++def test_a_peal_stood_from_the_stroke_pulled_off_at_to_the_one_it_came_round_at():
++    assert minutes(600, 780) == 180
+ 
+ 
+ def test_the_bells_ring_down_with_the_heaviest_at_the_head():
+diff --git a/tower.py b/tower.py
+--- a/tower.py
++++ b/tower.py
+@@ -22,6 +22,13 @@ class Frame:
+         self.pits = pits
+ 
+ 
++def minutes(pulled_off, came_round):
++    """How long a peal stood, in minutes of the tower clock: from the stroke it
++    was pulled off at to the stroke it came round at, both of them read off the
++    clock as minutes since midnight."""
++    return came_round - pulled_off
++
++
+ def heaviest_first(bells):
+     """The bells in the order they are rung down, the heaviest at the head of
+     it: ordered by what a bell weighs and never by the way the weight is

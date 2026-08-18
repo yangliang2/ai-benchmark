@@ -1,0 +1,166 @@
+# code-review, the sixth of them in the corpus, and authored to the shape
+# `launderette-review-the-rate-and-the-card` landed and the four after it
+# copied: the agent is handed a change that has already been applied to the
+# starting repository, plus the unified diff of it the prompt names
+# (repo/review.diff), and asked which of it is wrong. There is no second tree
+# it can see — the change lives inside the repository — and the deliverable is
+# the findings file, never an edit.
+#
+# The change is a season's work on a village bell tower: the ringing book the
+# tower captain keeps what has been rung in, the tower clock the book times its
+# peals by, and the board that goes up on the tower wall off it. It reads as a piece of work rather than as three bugs in a
+# row, which is what a review has to be graded on: the house rules it is meant
+# to keep are the README's, written down as the change was asked for and in the
+# tower's own words, so each planted finding is the code disagreeing with a
+# rule somebody wrote down rather than a matter of taste.
+#
+# The three planted findings, each named here by its primary — the most
+# specific location, which is the first alternative in the key:
+#
+#   ringers.py Band.ringer   the name the band is asked with is stripped and
+#                            folded, and then compared against the name in the
+#                            band exactly as that was written, so the
+#                            normalisation is made on one side of the
+#                            comparison and thrown away on the other and a
+#                            ringer written down with a capital is nobody the
+#                            band can find.
+#   peals.py Book.longest    the two strokes are handed to the tower clock the
+#                            other way round, so every peal is as long as it is
+#                            short and the book calls the shortest of them the
+#                            longest.
+#   board.py peal_board      each line is made up first and the lines are
+#                            ordered after, so the count is compared as the
+#                            text it was written into the line as: nine peals
+#                            stand above twelve.
+#
+# Deliberately three shapes none of the first five review tasks carries. Those
+# plant a boundary tested strictly, a counter never cleared, a list ordered the
+# wrong way up, a substring where an equality was meant, a grouping lost to
+# last-wins, a caller sorting a list it does not own, two rules composed in the
+# wrong order, a zero read as nothing, a list mutated under the walk that reads
+# it, a special case written under the general rule that answers first, a
+# default made once at import and kept between calls, a walk ended where it
+# should have been stepped over, a collection handed out by reference where a
+# copy was promised, a refusal swallowed and passed over as an ordinary answer,
+# and a remainder dropped by an integer division. A normalisation made on one
+# side of a comparison only, two same-typed arguments swapped at a call whose
+# callee is right, and a number ordered by its text are three further ways for
+# a plausible change to be wrong, and no repetition of those fifteen. The last
+# of the three is the nearest to any of them — a list ordered the wrong way up
+# also comes out in the wrong order — but that is a direction reversed, where
+# this is the comparison made on the wrong thing altogether, and the correction
+# there is a flag where here it is ordering the counts before any of them is
+# ever written into a line.
+#
+# A planted finding is a set of alternative locations and is matched if an
+# answer matches any one of them, so each finding here writes down every level
+# that legitimately describes it:
+#
+#   Band.ringer    is a method of `Band`, and ringers.py defines `Ringer`
+#                  beside it, so `ringers.py Band` is a second alternative:
+#                  telling the two classes apart takes reading them.
+#   Book.longest   is a method of `Book`, and peals.py defines `Peal` beside
+#                  it, so `peals.py Book` is a second alternative for the same
+#                  reason.
+#   peal_board     is defined at module level, and board.py defines no class at
+#                  all, so there is no enclosing class to be a second
+#                  description of it.
+#
+# Beneath the alternatives the comparison's own forgiveness still applies: a
+# bare symbol answers a key spelled `Class.method`, so `longest` and
+# `Book.longest` both answer the second finding.
+#
+# The rejected non-findings are the two places a reviewer plausibly points at
+# and is wrong to, and they are the half no lint can invent: `minutes` is the
+# tower clock the second finding misuses — the change brought the clock in for
+# the book to time its peals by, and it is right, subtracting the two strokes
+# in the order it names them; it is the caller that hands them over the wrong
+# way round, so the clock is the plausible wrong location for a reviewer who
+# reads the arithmetic and not the call; `Band.take_on` writes a ringer into
+# the band
+# whoever they are, which reads like a missing check and is exactly what the
+# house rules ask for — two of one name is for the captain to sort out and not
+# the band's to refuse, and the repository's own visible test says so.
+#
+# Each planted finding carries its existence proof in proofs/ — one per
+# finding, named after its primary: a held-out test that fails on repo/, which
+# ships the change applied, and passes on corrected/, the same repository with
+# all three put right. A finding is one defect however many locations describe
+# it, so it owes one proof and not one per alternative. Both trees sit beside
+# repo/ and outside grading/, which is overlaid into the workdir wholesale, so
+# the lint runs them and grading can neither collect nor copy them.
+#
+# The terrain: the prompt names neither a file nor a symbol of either half of
+# the key, and its own vocabulary is either English's or the domain's below or
+# appears outside the modules the findings live in — tower.py and its tests
+# carry the words a prompt about a bell tower cannot avoid, and that module
+# writes correctly the very thing each finding gets wrong: `hung` folds the
+# name it is asked with and the name it compares against, `minutes` takes its
+# two strokes in the order it names them, and `heaviest_first` orders bells by
+# what a bell weighs and never by the way the weight is written. The change
+# reaches tower.py — the clock is what the new book times its peals by — but
+# no planted finding lives there, which is what the narrowing rule reads: a
+# word of the prompt found in tower.py has not selected a module the review is
+# hiding in. Where a word of the prompt would have selected a module a
+# finding lives in it was written out of the repository rather than declared
+# away: the peal's `method` became `rung_to`, because the prompt has to say
+# `Class.method` to describe the answer file and that sentence is every review
+# task's. The repository's own tests are green as it ships and name none of the
+# three planted symbols: what the change added tests for is the part of it that
+# works — a peal set down in the book as it was rung, the peals one ringer
+# stood in, and how many of them that comes to.
+#
+# The prompt's last three paragraphs are the first five review tasks', near
+# enough word for word, and on purpose: what the deliverable is, how the
+# findings file is shaped, and that an edited repository grades unresolved are
+# the rules of this action rather than of this task, and six review tasks whose
+# agents were told them differently would differ by their instructions as much
+# as by their changes. What is this task's own is the paragraph that says which
+# tower this is and which change is under review.
+#
+# The hash gate is the generator's (`ai-bench lint-v1 --write-hash-gates`) and
+# never typed, and the prompt says outright what it enforces: the deliverable
+# is the findings file, and a run that edited the code is graded unresolved
+# however well it reviewed the change.
+#
+# A control: authored to fill a category, claiming nothing about difficulty. It
+# is neither a family member nor a pair member, and it names no behaviour
+# tests — those are a refactor task's.
+id: belfry-review-the-peals-and-the-board
+category: code-review
+# The reference solution is the pristine tree plus the findings file, so the
+# diff a solved run logs touches exactly one file.
+scale: single-file
+surface: application
+language: python
+control: true
+# The nouns a prompt about a bell tower and a repository about one cannot help
+# sharing. Read by the task-set lint's narrowing terrain rule, which holds
+# every other word of the prompt to appearing somewhere other than the modules
+# the planted findings live in.
+domain_nouns: [tower, towers, belfry, bell, bells, ring, rings, rung, rang,
+               ringer, ringers, ringing, band, bands, peal, peals, board,
+               boards, captain, book, books, stroke, strokes, clock, frame,
+               pit, pits, wall, treble, tenor, changes, pencil]
+prompt: |
+  This repository is what the captain of a tower keeps the ringing of it in,
+  and review.diff in its root is a change that has already been applied to it:
+  what that change was for is the last few house rules of the README, which
+  were written down as it was asked for, and the code is what it looks like
+  now.
+
+  Read the change against those rules and say what is wrong with it. Report
+  every problem it introduced and nothing that is not one — somewhere it got
+  right, reported as a problem, is as wrong an answer as a problem you never
+  mention.
+
+  Write what you find to FINDINGS.json in the root of the repository, as a
+  JSON list with one object per problem, each with "file" (the path, relative
+  to the root of the repository, of the file the problem is in), "symbol" (the
+  function, class or method it is in, a method written as Class.method) and,
+  if you like, "note" (a sentence on what is wrong there). Nothing reads the
+  note.
+
+  That file is the deliverable. Do not put any of it right, and leave every
+  other file exactly as you found it: a run that edits the code is graded
+  unresolved however well it reviewed the change.

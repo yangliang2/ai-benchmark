@@ -1,0 +1,14 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "ringers.py", "symbol": "Band.ringer"},
+             {"file": "ringers.py", "symbol": "Band"}]},
+    {"any": [{"file": "peals.py", "symbol": "Book.longest"},
+             {"file": "peals.py", "symbol": "Book"}]},
+    {"any": [{"file": "board.py", "symbol": "peal_board"}]}
+  ],
+  "rejected": [
+    {"file": "tower.py", "symbol": "minutes"},
+    {"file": "ringers.py", "symbol": "Band.take_on"}
+  ]
+}
