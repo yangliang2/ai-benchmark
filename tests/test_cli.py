@@ -189,6 +189,51 @@ def test_eval_v1_live_end_to_end(
     assert "first-party-v1" in capsys.readouterr().out
 
 
+def test_eval_v1_live_defaults_to_the_claude_code_adapter(
+    fake_claude: FakeClaude, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Selecting the adapter by name changed which harness a sweep *can* run,
+    not what it runs by default: a plain --live invocation is exactly
+    `--agent claude-code`, down to the row both write."""
+    fake_claude("")
+    checked_in = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    tasks = tmp_path / "tasks"
+    shutil.copytree(checked_in / "wordcount-top-words", tasks / "wordcount-top-words")
+
+    logs = []
+    for name, naming_the_agent in (("plain", []), ("named", ["--agent", "claude-code"])):
+        log = tmp_path / f"{name}.jsonl"
+        main(["eval-v1", "--tasks", str(tasks), "--live", "--model",
+              "claude-sonnet-5", "--log", str(log), "--sweep", "round-6-track-a",
+              "--data", str(tmp_path / f"{name}-data.jsonl"), *naming_the_agent])
+        logs.append(log.read_text())
+    capsys.readouterr()
+
+    assert logs[0] == logs[1]
+    [run] = firstparty_v1.load_runs(tmp_path / "plain.jsonl")
+    assert run.agent == "claude-code"
+
+
+def test_eval_v1_live_refuses_an_unregistered_agent_before_anything_runs(
+    fake_claude: FakeClaude, tmp_path: Path,
+) -> None:
+    """An agent is a column of the matrix, so admitting one is a decision: a
+    name no adapter is registered for stops the sweep before a workdir is
+    prepared or a log opened, rather than quietly running the default."""
+    argv_log = fake_claude("")
+    tasks = Path(__file__).parent.parent / "tasks" / "first-party-v1"
+    log = tmp_path / "runs.jsonl"
+
+    with pytest.raises(SystemExit, match="cursor-agent"):
+        main(["eval-v1", "--tasks", str(tasks), "--live",
+              "--agent", "cursor-agent", "--log", str(log),
+              "--sweep", "round-6-track-a",
+              "--data", str(tmp_path / "unified.jsonl")])
+
+    assert not argv_log.exists()
+    assert not log.exists()
+
+
 def test_eval_v1_takes_no_timeout_from_the_operator(
     tmp_path: Path, capsys: pytest.CaptureFixture[str],
 ) -> None:

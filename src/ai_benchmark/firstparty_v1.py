@@ -125,13 +125,11 @@ from pydantic import (
 )
 
 from ai_benchmark import _answer
+from ai_benchmark.agents import DEFAULT_AGENT, AgentAdapter, adapter_for
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
     RUN_TIMEOUT_S,
-    claude_headless_json,
-    claude_version,
     local_today,
-    run_from_claude_json,
 )
 from ai_benchmark.schema import (
     LanguageStr,
@@ -4496,8 +4494,9 @@ def run_live(
     log_path: Path,
     *,
     sweep: str,
+    agent: str = DEFAULT_AGENT,
 ) -> list[Run]:
-    """Run every task through tools-enabled claude-code headless per model.
+    """Run every task through one tools-enabled agent headless per model.
 
     Each run gets a fresh isolated workdir seeded from the task's starting
     repository, and its row — the workdir diff against the initial commit as
@@ -4515,18 +4514,26 @@ def run_live(
     one sweep is the caller's knowledge, and the round key is a bad place to
     guess — so the caller says, and a paid run costs one more argument.
 
-    How long each run gets is the one thing the caller may *not* say: the
-    limit comes from `LIVE_RUN_LIMITS_S`, keyed on the task's class, so that
-    it is a property of the task rather than of the invocation that happened
-    to run it.
+    Which agent runs is the caller's to say, by name: `agent` selects the
+    registered adapter (`ai_benchmark.agents.ADAPTERS`) that drives the
+    harness and parses its output, and an unregistered name is refused before
+    any workdir is prepared. Nothing else about the run is the adapter's —
+    the fresh workdir, the pristine commit, the diff capture, the sweep id
+    and the log append all stay here.
+
+    How long each run gets is the one thing neither the caller nor the
+    adapter may say: the limit comes from `LIVE_RUN_LIMITS_S`, keyed on the
+    task's class, so that it is a property of the task rather than of the
+    invocation, or the harness, that happened to run it.
     """
     if problem := _sweep_id_problem(sweep):
         raise IngestError(f"{problem} — {_SWEEP_ID_RULE}")
+    adapter = adapter_for(agent)
     if log_path.exists():
         raise IngestError(
             f"run log {log_path} already exists — replay it, or pass a fresh --log"
         )
-    version = claude_version()
+    version = adapter.version()
     today = local_today()
     log_path.parent.mkdir(parents=True, exist_ok=True)
     runs = []
@@ -4534,7 +4541,8 @@ def run_live(
         for model in models:
             for task in tasks:
                 run = _run_task_live(
-                    task, model, agent_version=version, as_of=today, sweep=sweep,
+                    task, model, adapter=adapter,
+                    agent_version=version, as_of=today, sweep=sweep,
                 )
                 log.write(json.dumps(run.model_dump(mode="json"), sort_keys=True) + "\n")
                 log.flush()
@@ -4544,20 +4552,20 @@ def run_live(
 
 def _run_task_live(
     task: Task, model: str, *,
-    agent_version: str, as_of: date, sweep: str,
+    adapter: AgentAdapter, agent_version: str, as_of: date, sweep: str,
 ) -> Run:
     with tempfile.TemporaryDirectory(prefix="ai-bench-live-") as name:
         workdir = Path(name) / "workdir"
         shutil.copytree(task.repo_dir, workdir)
         initial = _commit_pristine(task, workdir)
-        payload = claude_headless_json(
+        # The limit is handed to the adapter, never asked of it: it is the
+        # task's class limit, registered before the sweep that reads it.
+        base = adapter.run(
             task.id, task.prompt, model, workdir,
-            tools=True, timeout_s=live_run_limit_s(task),
+            agent_version=agent_version, as_of=as_of,
+            limit_s=live_run_limit_s(task),
         )
         diff = _capture_workdir_diff(task, workdir, initial)
-    base = run_from_claude_json(
-        task.id, model, payload, agent_version=agent_version, as_of=as_of
-    )
     # A v1 Run is v0's fields plus the diff and the sweep id, and the dump
     # keeps that coupling in one place. mypy cannot see through the **dump,
     # but Run's extra="forbid" turns any v0 field this model does not declare

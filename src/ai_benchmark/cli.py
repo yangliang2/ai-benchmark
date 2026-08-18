@@ -16,6 +16,7 @@ from ai_benchmark.classify import (
     needs_classification,
     write_cache,
 )
+from ai_benchmark.agents import DEFAULT_AGENT
 from ai_benchmark.dataset import IngestError, merge_records, read_records, write_records
 from ai_benchmark.firstparty import (
     DEFAULT_MODELS,
@@ -108,7 +109,7 @@ def _eval_command(args: argparse.Namespace) -> None:
 
 
 def _eval_v1_command(args: argparse.Namespace) -> None:
-    """Run the v1 eval: live (tools-enabled claude-code in a fresh workdir per
+    """Run the v1 eval: live (a tools-enabled agent in a fresh workdir per
     run, workdir diffs captured into the raw run log) or replay of such a log.
     Grading is the same pipeline either way — each logged diff, by execution."""
     if args.live and not args.sweep:
@@ -128,13 +129,16 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
         # one (firstparty_v1.LIVE_RUN_LIMITS_S), so that it cannot be raised
         # for the one cell about to hit it once its neighbours have run.
         runs = firstparty_v1.run_live(
-            tasks, args.model or DEFAULT_MODELS, log, sweep=args.sweep
+            tasks, args.model or DEFAULT_MODELS, log, sweep=args.sweep,
+            agent=args.agent or DEFAULT_AGENT,
         )
         source = str(log)
         print(f"ran {len(runs)} live runs; raw log written to {log}")
     else:
-        if args.model or args.log or args.sweep:
-            raise SystemExit("--model, --log and --sweep apply only to --live runs")
+        if args.model or args.log or args.sweep or args.agent:
+            raise SystemExit(
+                "--model, --log, --sweep and --agent apply only to --live runs"
+            )
         runs = firstparty_v1.load_runs(args.replay)
         source = str(args.replay)
     records = firstparty_v1.evaluate(tasks, runs, source=source)
@@ -362,6 +366,12 @@ def main(argv: list[str] | None = None) -> None:
     )
     evaluate_v1.add_argument(
         "--log", type=Path, help="where a live run writes its raw log"
+    )
+    evaluate_v1.add_argument(
+        "--agent",
+        help="the agent adapter a live run drives, by registered name "
+        f"(default: {DEFAULT_AGENT}); an unregistered name is refused before "
+        "anything runs",
     )
     evaluate_v1.add_argument(
         "--sweep",

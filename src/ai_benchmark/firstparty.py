@@ -37,6 +37,12 @@ from ai_benchmark.schema import (
 
 BENCHMARK = "first-party-v0"
 
+# The name of the agent this module's live runner drives, and of the first
+# registered adapter (`ai_benchmark.agents.ClaudeCodeAdapter`) — the one place
+# the string is written, so an adapter's name and the rows it writes cannot
+# drift apart.
+CLAUDE_CODE = "claude-code"
+
 # What a live sweep runs when no --model is given. `reconcile_v1.LADDER_MODELS`
 # is the same set seen from the other end: it names the models a rung can be
 # read off, and rejects a log carrying any other. Adding a model here without
@@ -181,11 +187,19 @@ def run_from_claude_json(
     *,
     agent_version: str | None,
     as_of: date,
+    agent: str = CLAUDE_CODE,
 ) -> Run:
     """Turn one `claude -p --output-format json` payload into a raw run row.
 
     tokens_in counts every input token the model processed: fresh input
     plus cache creation plus cache reads — the cost-bearing total.
+
+    The row's `agent` is the name of the adapter that drove the run, passed
+    in rather than assumed here: this is payload parsing, one of the five
+    things an adapter owns, and the name that selected the adapter is the
+    name its rows must carry. It defaults to the only harness that produces
+    this payload shape, so v0's own live runner — which predates the seam and
+    drives claude-code directly — needs no argument.
     """
     if payload.get("is_error"):
         raise IngestError(
@@ -211,7 +225,7 @@ def run_from_claude_json(
         usage = payload["usage"]
         return Run(
             task_id=task_id,
-            agent="claude-code",
+            agent=agent,
             agent_version=agent_version,
             model=model,
             output=payload["result"],
