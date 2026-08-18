@@ -32,6 +32,7 @@ from itertools import combinations, pairwise
 from pathlib import Path
 from typing import Literal
 
+from ai_benchmark.agents import DEFAULT_AGENT
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty_v1 import (
     BENCHMARK,
@@ -207,16 +208,53 @@ def collect_logs(paths: Sequence[Path]) -> list[Path]:
     return sorted(logs)
 
 
+def select_agent(runs: list[Run], agent: str, *, explicit: bool) -> list[Run]:
+    """Keep only this agent's rows, before the ladder checks run.
+
+    This is what lets a mixed log directory stop aborting: the default log
+    directory can hold both harnesses' rows because a reading only ever looks
+    at one of them, selected here, before `_check_ladder` ever sees the rest.
+    One directory rather than one per agent, so `eval-v1 --replay` and the
+    record suites keep pointing at one root, and the default — `claude-code`,
+    unasked — reproduces today's output byte for byte over today's logs,
+    which carry nothing else.
+
+    `explicit` is whether `--agent` was actually given, and it is the only
+    thing that can turn an empty selection into a refusal: an operator who
+    named an agent no row carries made a mistake worth stopping on, but the
+    unflagged default reporting over nothing is exactly what it did before
+    this filter existed whenever its logs held no claude-code row, and gains
+    no new abort path here.
+    """
+    selected = [run for run in runs if run.agent == agent]
+    if explicit and not selected:
+        carried = sorted({run.agent for run in runs}) or ["(no runs)"]
+        raise IngestError(
+            f"no run log names agent {agent!r} — --agent named it explicitly, "
+            f"and the log(s) given carry {carried}"
+        )
+    return selected
+
+
 def observed_outcomes(
-    tasks: list[Task], runs: list[Run], *, source: str, timeout_s: int = GRADE_TIMEOUT_S
+    tasks: list[Task],
+    runs: list[Run],
+    *,
+    source: str,
+    timeout_s: int = GRADE_TIMEOUT_S,
+    agent: str = DEFAULT_AGENT,
+    agent_explicit: bool = False,
 ) -> dict[str, Outcome]:
     """Grade every logged diff and reduce each task's runs to one rung.
 
-    Grading goes through `evaluate`, which is also what makes the two failures
-    that would otherwise corrupt the report loud: a run naming a task that is
-    not in the set, and two runs of one task x agent x model cell, whose
-    verdicts would have to be silently picked between.
+    Selects `agent`'s rows before anything else runs (`select_agent`), so the
+    checks below never see a second harness's rows to refuse. Grading then
+    goes through `evaluate`, which is also what makes the two failures that
+    would otherwise corrupt the report loud: a run naming a task that is not
+    in the set, and two runs of one task x agent x model cell, whose verdicts
+    would have to be silently picked between.
     """
+    runs = select_agent(runs, agent, explicit=agent_explicit)
     _check_declarations(tasks)
     _check_ladder(runs)
     records = evaluate(tasks, runs, source=source, timeout_s=timeout_s)
@@ -315,7 +353,15 @@ def _check_declarations(tasks: list[Task]) -> None:
 
 
 def _check_ladder(runs: list[Run]) -> None:
-    """The report reads one agent's ladder, over the models the ladder names."""
+    """The report reads one agent's ladder, over the models the ladder names.
+
+    Its multi-agent branch is unreachable through the CLI by construction:
+    every reading goes through `observed_outcomes`, and `select_agent` has
+    already reduced `runs` to one agent's rows before this runs. It stays as
+    the last line of defence for a direct caller of this function — a future
+    reader that grades a set of runs without selecting an agent first — and
+    its wording is unchanged, because what it refuses is unchanged.
+    """
     if strangers := sorted({run.model for run in runs} - set(LADDER_MODELS)):
         raise IngestError(
             f"run log(s) carry model(s) {strangers}, which the operational "
@@ -1801,6 +1847,8 @@ def reconcile(
     logs: Sequence[Path],
     *,
     timeout_s: int = GRADE_TIMEOUT_S,
+    agent: str = DEFAULT_AGENT,
+    agent_explicit: bool = False,
 ) -> str:
     runs = [run for log in logs for run in load_runs(log)]
     outcomes = observed_outcomes(
@@ -1808,5 +1856,7 @@ def reconcile(
         runs,
         source=", ".join(str(log) for log in logs) or "(no run log)",
         timeout_s=timeout_s,
+        agent=agent,
+        agent_explicit=agent_explicit,
     )
     return render(outcomes, tasks_root=tasks_root, logs=logs)

@@ -10,11 +10,12 @@ and by nothing else.
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 import yaml
@@ -145,7 +146,16 @@ def write_log(
     every cell it does not name gets the same default, so a test that says
     nothing about effort logs a flat sweep and a test about effort claims sets
     only the cells its claim is read from.
+
+    `agent="codex"` stamps the cost-source disclosure a codex row must carry
+    (`Run.cost_source_is_not_self_contradictory`) — codex reports no dollar
+    figure of its own — so a codex fixture row needs no extra argument to be
+    valid.
     """
+    cost_source: Literal["vendor-reported", "table-derived"] | None = (
+        "table-derived" if agent == "codex" else None
+    )
+    price_table = "fixture-price-table" if agent == "codex" else None
     rows = []
     for task in tasks:
         diff = solved_diff(task)
@@ -166,6 +176,8 @@ def write_log(
                     turns=turns,
                     as_of=as_of,
                     sweep=sweep,
+                    cost_source=cost_source,
+                    price_table=price_table,
                 )
             )
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -2233,7 +2245,76 @@ def test_reconcile_v1_rejects_a_model_that_is_not_on_the_ladder(
         main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(log)])
 
 
-def test_reconcile_v1_rejects_runs_from_more_than_one_agent(tmp_path: Path) -> None:
+def test_reconcile_v1_reads_claude_code_from_a_mixed_agent_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A mixed log directory no longer aborts: unflagged, a reading selects
+    claude-code and reports over its rows alone, so the report over a
+    directory holding another agent's rows too reads exactly as the report
+    over its claude-code rows alone."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "known-task", construction=constructed(
+        "K9", "single", "sonnet-only"))
+    [task] = firstparty_v1.load_task_set(tasks)
+    claude_only = tmp_path / "claude-only.jsonl"
+    write_log(claude_only, [task], {}, agent="claude-code")
+    baseline = reconcile(tasks, claude_only, capsys)
+
+    mixed = tmp_path / "mixed"
+    write_log(mixed / "a.jsonl", [task], {}, agent="claude-code")
+    write_log(mixed / "b.jsonl", [task], {}, agent="aider")
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(mixed)])
+    out = capsys.readouterr().out
+
+    assert "aider" not in out
+    assert re.search(r"runs +2 over 1 task\(s\)", out)
+    assert out.split("1. prediction reconciliation", 1)[1] == baseline.split(
+        "1. prediction reconciliation", 1)[1]
+
+
+def test_reconcile_v1_default_agent_gains_no_new_abort_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The unflagged default filters quietly: a directory that carries no
+    claude-code row at all does not abort, it reports over nothing — exactly
+    what an empty log directory has always done."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "known-task", construction=constructed(
+        "K9", "single", "sonnet-only"))
+    [task] = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "aider-only.jsonl"
+    write_log(log, [task], {}, agent="aider")
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(log)])
+
+    assert re.search(r"runs +0 over 0 task\(s\)", capsys.readouterr().out)
+
+
+def test_reconcile_v1_agent_codex_refuses_as_not_a_ladder_model(
+    tmp_path: Path,
+) -> None:
+    """A Codex-only reading is not meaningful this round — codex's registered
+    model is not on the operational ladder — so `--agent codex` refuses for
+    the reason `_check_ladder` already gives, not a new one."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "known-task", construction=constructed(
+        "K9", "single", "sonnet-only"))
+    [task] = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "a.jsonl", [task], {}, agent="claude-code")
+    write_log(logs / "b.jsonl", [task], {}, agent="codex", models=("gpt-5.6-terra",))
+
+    with pytest.raises(SystemExit, match="gpt-5.6-terra"):
+        main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs),
+              "--agent", "codex"])
+
+
+def test_reconcile_v1_agent_named_explicitly_with_no_matching_row_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Naming an agent explicitly and getting nothing back is an operator
+    error worth stopping on, unlike the unflagged default reporting over an
+    empty set."""
     tasks = tmp_path / "tasks"
     write_task(tasks, "known-task", construction=constructed(
         "K9", "single", "sonnet-only"))
@@ -2242,8 +2323,50 @@ def test_reconcile_v1_rejects_runs_from_more_than_one_agent(tmp_path: Path) -> N
     write_log(logs / "a.jsonl", [task], {}, agent="claude-code")
     write_log(logs / "b.jsonl", [task], {}, agent="aider")
 
-    with pytest.raises(SystemExit, match="aider"):
-        main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs)])
+    with pytest.raises(SystemExit, match="cursor-agent"):
+        main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs),
+              "--agent", "cursor-agent"])
+
+
+def test_reconcile_v1_counts_the_same_checked_in_rounds_with_codex_rows_present(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The round's whole reader story: the default log directory can hold
+    codex's rows too, because the unflagged default still reads claude-code
+    alone — so adding them moves nothing this report counts.
+
+    The rounds are the count to watch, because a round is keyed off a run's
+    sweep id: a codex row read as one of ours would put its sweep on the
+    header as a round of the ladder, and the kill discipline counts a knob's
+    silence in rounds. The expectation is derived from the claude-code rows
+    the corpus already carried, so nothing here moves to accommodate the
+    codex log dropped in beside them.
+    """
+    tasks_root = _REPO / "tasks" / "first-party-v1"
+    checked_in = [
+        run
+        for log in reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
+        for run in firstparty_v1.load_runs(log)
+    ]
+    rounds = sorted(
+        reconcile_v1.rounds_by_key(checked_in).values(),
+        key=lambda round: round.sort_key,
+    )
+
+    logs = tmp_path / "logs"
+    shutil.copytree(_REPO / "data" / "first-party-v1-runs", logs)
+    [any_task, *_] = firstparty_v1.load_task_set(tasks_root)
+    write_log(logs / "extra-harness.jsonl", [any_task], {}, agent="codex",
+              models=("gpt-5.6-terra",))
+
+    main(["reconcile-v1", "--tasks", str(tasks_root), "--replay", str(logs)])
+    out = capsys.readouterr().out
+
+    assert f"{len(rounds)} round(s): " + ", ".join(
+        round.label for round in rounds) in out
+    # Neither the fixture log's sweep nor its model reaches the page.
+    assert "fixture-sweep" not in out
+    assert "gpt-5.6-terra" not in out
 
 
 def test_reconcile_v1_rejects_a_task_that_declares_no_construction(

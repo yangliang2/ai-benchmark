@@ -10,11 +10,12 @@ else, and its multipliers by the costs the log carries.
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 import yaml
@@ -128,7 +129,16 @@ def write_log(
     cost, per task id and model; every cell it does not name costs the same
     default, so a test that says nothing about cost logs a flat sweep and one
     about multipliers sets only the cells its ratio is read from.
+
+    `agent="codex"` stamps the cost-source disclosure a codex row must carry
+    (`Run.cost_source_is_not_self_contradictory`) — codex reports no dollar
+    figure of its own — so a codex fixture row needs no extra argument to be
+    valid.
     """
+    cost_source: Literal["vendor-reported", "table-derived"] | None = (
+        "table-derived" if agent == "codex" else None
+    )
+    price_table = "fixture-price-table" if agent == "codex" else None
     rows = []
     for task in tasks:
         diff = solved_diff(task)
@@ -148,6 +158,8 @@ def write_log(
                     turns=7,
                     as_of=_AS_OF,
                     sweep="fixture-sweep",
+                    cost_source=cost_source,
+                    price_table=price_table,
                 )
             )
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -290,17 +302,13 @@ def checked_in_costs() -> dict[str, dict[str, float]]:
     return costs
 
 
-def test_calibrate_v1_tabulates_the_checked_in_corpus(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    """The command's reason to exist, run on real artifacts.
+def assert_tabulates_the_checked_in_corpus(out: str) -> None:
+    """Every row of the checked-in table, against the artifacts it was read from.
 
-    Every profile the task set holds gets a row in its own category's table,
-    carrying the tasks it holds and a multiplier per model with the n that
-    multiplier was meant over. The expectations are computed from the same
-    artifacts the command reads — the arithmetic done twice, here and in the
-    module — so a later round adds rows rather than breaking this test, and a
-    cell whose numbers stop matching the corpus is what it watches for.
+    Lives outside the test that made it so that a second reading of the same
+    corpus — one taken with another agent's rows sitting in the log directory
+    — can be held to exactly these expectations rather than to a restatement
+    of them.
     """
     profiles = checked_in_profiles()
     costs = checked_in_costs()
@@ -309,9 +317,6 @@ def test_calibrate_v1_tabulates_the_checked_in_corpus(
         for (category, profile), tasks in profiles.items()
         if profile == "(zero-knob)"
     }
-
-    main(checked_in_argv())
-    out = capsys.readouterr().out
 
     assert f"{len(profiles)} cell(s)" in out
     for (category, profile), tasks in profiles.items():
@@ -348,6 +353,23 @@ def test_calibrate_v1_tabulates_the_checked_in_corpus(
                 continue
             mean = sum(costs[task.id][model] for task in ran) / len(ran)
             assert f"{model} ${mean:.4f} (n={len(ran)})" in line
+
+
+def test_calibrate_v1_tabulates_the_checked_in_corpus(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The command's reason to exist, run on real artifacts.
+
+    Every profile the task set holds gets a row in its own category's table,
+    carrying the tasks it holds and a multiplier per model with the n that
+    multiplier was meant over. The expectations are computed from the same
+    artifacts the command reads — the arithmetic done twice, here and in the
+    module — so a later round adds rows rather than breaking this test, and a
+    cell whose numbers stop matching the corpus is what it watches for.
+    """
+    main(checked_in_argv())
+
+    assert_tabulates_the_checked_in_corpus(capsys.readouterr().out)
 
 
 def test_calibrate_v1_floors_the_checked_in_cells_at_their_weakest_rung(
@@ -1260,7 +1282,72 @@ def test_calibrate_v1_rejects_a_model_that_is_not_on_the_ladder(
         main(["calibrate-v1", "--tasks", str(tasks), "--replay", str(log)])
 
 
-def test_calibrate_v1_rejects_runs_from_more_than_one_agent(tmp_path: Path) -> None:
+def test_calibrate_v1_reads_claude_code_from_a_mixed_agent_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A mixed log directory no longer aborts: unflagged, a reading selects
+    claude-code and reports over its rows alone, so the table over a
+    directory holding another agent's rows too reads exactly as the table
+    over its claude-code rows alone."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    claude_only = tmp_path / "claude-only.jsonl"
+    write_log(claude_only, loaded, {}, agent="claude-code")
+    baseline = calibrate(tasks, claude_only, capsys)
+
+    mixed = tmp_path / "mixed"
+    write_log(mixed / "a.jsonl", loaded, {}, agent="claude-code")
+    write_log(mixed / "b.jsonl", loaded, {}, agent="aider")
+    main(["calibrate-v1", "--tasks", str(tasks), "--replay", str(mixed)])
+    out = capsys.readouterr().out
+
+    assert "aider" not in out
+    assert re.search(r"runs +2 over 1 task\(s\)", out)
+    assert out.split("\ncategory ", 1)[1] == baseline.split("\ncategory ", 1)[1]
+
+
+def test_calibrate_v1_default_agent_gains_no_new_abort_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The unflagged default filters quietly: a directory that carries no
+    claude-code row at all does not abort, it reports over nothing — exactly
+    what an empty log directory has always done."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    log = tmp_path / "aider-only.jsonl"
+    write_log(log, loaded, {}, agent="aider")
+
+    main(["calibrate-v1", "--tasks", str(tasks), "--replay", str(log)])
+
+    assert re.search(r"runs +0 over 0 task\(s\)", capsys.readouterr().out)
+
+
+def test_calibrate_v1_agent_codex_refuses_as_not_a_ladder_model(
+    tmp_path: Path,
+) -> None:
+    """A Codex-only reading is not meaningful this round — codex's registered
+    model is not on the operational ladder — so `--agent codex` refuses for
+    the reason `_check_ladder` already gives, not a new one."""
+    tasks = tmp_path / "tasks"
+    write_task(tasks, "crux", knobs={"K9": "single"})
+    loaded = firstparty_v1.load_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "a.jsonl", loaded, {}, agent="claude-code")
+    write_log(logs / "b.jsonl", loaded, {}, agent="codex", models=("gpt-5.6-terra",))
+
+    with pytest.raises(SystemExit, match="gpt-5.6-terra"):
+        main(["calibrate-v1", "--tasks", str(tasks), "--replay", str(logs),
+              "--agent", "codex"])
+
+
+def test_calibrate_v1_agent_named_explicitly_with_no_matching_row_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Naming an agent explicitly and getting nothing back is an operator
+    error worth stopping on, unlike the unflagged default reporting over an
+    empty set."""
     tasks = tmp_path / "tasks"
     write_task(tasks, "crux", knobs={"K9": "single"})
     loaded = firstparty_v1.load_task_set(tasks)
@@ -1268,8 +1355,40 @@ def test_calibrate_v1_rejects_runs_from_more_than_one_agent(tmp_path: Path) -> N
     write_log(logs / "a.jsonl", loaded, {}, agent="claude-code")
     write_log(logs / "b.jsonl", loaded, {}, agent="aider")
 
-    with pytest.raises(SystemExit, match="aider"):
-        main(["calibrate-v1", "--tasks", str(tasks), "--replay", str(logs)])
+    with pytest.raises(SystemExit, match="cursor-agent"):
+        main(["calibrate-v1", "--tasks", str(tasks), "--replay", str(logs),
+              "--agent", "cursor-agent"])
+
+
+def test_calibrate_v1_prints_the_same_checked_in_bytes_with_codex_rows_present(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The round's whole reader story: the default log directory can hold
+    codex's rows too, because the unflagged default still reads claude-code
+    alone — so adding them moves nothing this table prints.
+
+    The check is the suite's own byte-level pin, run again over a corpus a
+    codex log has been dropped into: every cell holds the multiplier and the n
+    `assert_tabulates_the_checked_in_corpus` computes from the claude-code
+    artifacts, and no expected value moves to make that true. Holding the
+    reading to the pin rather than to a second full reading of the corpus is
+    also what keeps this test to one grading pass of ~2,000 diffs.
+    """
+    logs = tmp_path / "logs"
+    shutil.copytree(_REPO / "data" / "first-party-v1-runs", logs)
+    [any_task, *_] = firstparty_v1.load_task_set(_REPO / "tasks" / "first-party-v1")
+    write_log(logs / "extra-harness.jsonl", [any_task], {}, agent="codex",
+              models=("gpt-5.6-terra",))
+
+    main(["calibrate-v1", "--tasks", str(_REPO / "tasks" / "first-party-v1"),
+          "--replay", str(logs)])
+    out = capsys.readouterr().out
+
+    assert_tabulates_the_checked_in_corpus(out)
+    # Nothing of the second harness reaches the page: not its rows' model,
+    # and not the cost they carry.
+    assert "codex" not in out
+    assert "gpt-5.6-terra" not in out
 
 
 def test_calibrate_v1_rejects_a_task_that_declares_no_construction(

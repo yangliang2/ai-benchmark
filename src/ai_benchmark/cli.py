@@ -203,7 +203,10 @@ def _reconcile_v1_command(args: argparse.Namespace) -> None:
     """
     tasks = firstparty_v1.load_task_set(args.tasks)
     logs = reconcile_v1.collect_logs(args.replay or [DEFAULT_V1_RUNS])
-    print(reconcile_v1.reconcile(tasks, args.tasks, logs))
+    print(reconcile_v1.reconcile(
+        tasks, args.tasks, logs,
+        agent=args.agent or DEFAULT_AGENT, agent_explicit=args.agent is not None,
+    ))
 
 
 def _calibrate_v1_command(args: argparse.Namespace) -> None:
@@ -218,7 +221,10 @@ def _calibrate_v1_command(args: argparse.Namespace) -> None:
     """
     tasks = firstparty_v1.load_task_set(args.tasks)
     logs = reconcile_v1.collect_logs(args.replay or [DEFAULT_V1_RUNS])
-    print(calibrate_v1.calibrate(tasks, args.tasks, logs))
+    print(calibrate_v1.calibrate(
+        tasks, args.tasks, logs,
+        agent=args.agent or DEFAULT_AGENT, agent_explicit=args.agent is not None,
+    ))
 
 
 def _report_command(args: argparse.Namespace) -> None:
@@ -442,6 +448,12 @@ def main(argv: list[str] | None = None) -> None:
         help="a raw run log, or a directory of them (repeatable; default: "
         f"{DEFAULT_V1_RUNS})",
     )
+    reconcile_v1_parser.add_argument(
+        "--agent",
+        help="read only this agent's rows from the given log(s), by registered "
+        f"name (default: {DEFAULT_AGENT}); an agent no row in the given log(s) "
+        "carries is refused before anything is graded",
+    )
     reconcile_v1_parser.set_defaults(command=_reconcile_v1_command)
 
     calibrate_v1_parser = subcommands.add_parser(
@@ -478,6 +490,12 @@ def main(argv: list[str] | None = None) -> None:
         action="append",
         help="a raw run log, or a directory of them (repeatable; default: "
         f"{DEFAULT_V1_RUNS})",
+    )
+    calibrate_v1_parser.add_argument(
+        "--agent",
+        help="read only this agent's rows from the given log(s), by registered "
+        f"name (default: {DEFAULT_AGENT}); an agent no row in the given log(s) "
+        "carries is refused before anything is graded",
     )
     calibrate_v1_parser.set_defaults(command=_calibrate_v1_command)
 

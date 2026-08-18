@@ -71,6 +71,7 @@ from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
 
+from ai_benchmark.agents import DEFAULT_AGENT
 from ai_benchmark.firstparty_v1 import (
     GRADE_TIMEOUT_S,
     Task,
@@ -664,6 +665,8 @@ def calibrate(
     logs: Sequence[Path],
     *,
     timeout_s: int = GRADE_TIMEOUT_S,
+    agent: str = DEFAULT_AGENT,
+    agent_explicit: bool = False,
 ) -> str:
     runs = [run for log in logs for run in load_runs(log)]
     outcomes = observed_outcomes(
@@ -671,5 +674,7 @@ def calibrate(
         runs,
         source=", ".join(str(log) for log in logs) or "(no run log)",
         timeout_s=timeout_s,
+        agent=agent,
+        agent_explicit=agent_explicit,
     )
     return render(outcomes, tasks_root=tasks_root, logs=logs)
