@@ -59,18 +59,19 @@ def test_a_task_selects_its_runner_by_its_own_declaration() -> None:
 
 def test_every_checked_in_task_has_a_registered_runner() -> None:
     """And the one its own declaration names — the registry is reached through
-    the task and never around it."""
+    the task and never around it. Every task declares one: `language` is
+    required of a first-party v1 task, so there is no fallback to read here."""
     for task in load_task_set(TASKS):
-        assert task.runner is RUNNERS[task.language or PYTHON.language]
+        assert task.runner is RUNNERS[task.language]
 
 
 def test_an_unregistered_language_has_no_runner_to_grade_it() -> None:
-    """Refusing it *at load*, with the registered languages named, is the
-    loader's ticket; what the registry owes today is that no unregistered
-    language is silently graded as Python. `typescript` was this test's example
-    until round 7 registered it — which is the point: a language is graded when
-    it has a runner and refused when it has none."""
-    with pytest.raises(IngestError, match="rust"):
+    """No unregistered language is silently graded as Python, and the refusal
+    names the registered ones. `typescript` was this test's example until round
+    7 registered it — which is the point: a language is graded when it has a
+    runner and refused when it has none. That the refusal reaches an author
+    *at load* is `test_firstparty_v1.py`'s to say."""
+    with pytest.raises(IngestError, match="(?s)rust.*python.*typescript"):
         runner_for("rust")
 
 

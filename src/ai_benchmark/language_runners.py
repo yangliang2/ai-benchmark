@@ -38,6 +38,12 @@ path is overwritten, the single timeout, `evaluate()` and every record field it
 writes. A runner is handed a root and a workdir that are already built; it
 never builds one.
 
+One thing here answers to none of that list and says so where it sits:
+`typescript_load_problems`, the probe the *task-set lint* imports a checked-in
+`.ts` file with. It is not a seventh responsibility — nothing in it runs a test
+or reads a verdict — and it lives beside the TypeScript runner only because
+everything it knows is Node's.
+
 **What stays harness-side and language-agnostic:** the answer-key module and
 test (`ai_benchmark._answer`, `grading/test_answer.py`), the findings-key module
 and test (`ai_benchmark._findings`, `grading/test_findings.py`), and the
@@ -51,12 +57,14 @@ harness-side half is not the task's language runner's business at all.
 
 import ast
 import importlib.util
+import json
 import os
 import re
 import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
@@ -566,7 +574,10 @@ class TypeScriptRunner(LanguageRunner):
         module through a relative one (`./assert.ts`), and the two namespaces
         never meet — a file cannot shadow a builtin however it is named. The
         stdlib-only rule TypeScript *does* owe — that grading installs nothing —
-        is about dependencies rather than names, and is ticket 03's (#100).
+        is about dependencies rather than names, so it is not this invariant's
+        to state: it is refused on the author by the task-set lint, which is
+        where a rule about what a task *ships* belongs (ADR-0003, and
+        `_typescript_problems` in `ai_benchmark.firstparty_v1`).
         """
         return None
 
@@ -643,6 +654,152 @@ def _every_named_testcase_passed(report: Path, targets: Sequence[str]) -> bool:
     return True
 
 
+# --- the lint's node-side probe ------------------------------------------------
+#
+# Deliberately not a seventh runner responsibility: nothing here runs a test or
+# reads a verdict, and what it answers — "does this file the author checked in
+# load at all" — is the task-set lint's question rather than grading's. It lives
+# beside the TypeScript runner because everything it knows is Node's: the
+# binary, the environment scrub, the module system a workdir is pinned to. A
+# second copy of that in the lint would be a second place for it to drift.
+
+# Run as the entry point from *outside* the throwaway copy, so that a module
+# comparing `process.argv[1]` against its own URL — the Node 22 idiom for "am I
+# the CLI entry point", there being no `import.meta.main` — sees this file and
+# not itself, and its main() does not run. It writes one verdict line to stdout
+# and exits, rather than letting its exit status say it: importing a held-out
+# test registers that file's tests, and their outcome is not what is being
+# asked here.
+_PROBE_NAME = "grading-probe.mjs"
+_PROBE = """\
+import fs from "node:fs";
+
+// Captured before the import, because the module being loaded may replace it.
+const exit = process.exit.bind(process);
+
+const say = (verdict, detail) => {
+  fs.writeSync(1, `${verdict} ${JSON.stringify(String(detail))}\\n`);
+  exit(0);
+};
+
+try {
+  await import(process.argv[2]);
+} catch (error) {
+  const message = (error && error.message) || String(error);
+  const dependency =
+    (error && error.code === "ERR_MODULE_NOT_FOUND") ||
+    /does not provide an export named/.test(message);
+  say(dependency ? "unresolved" : "failed", message);
+}
+say("loaded", "");
+"""
+
+# The probe's three verdicts: it loaded; it did not, over something outside the
+# file (see `typescript_load_problems`); it did not, over the file itself.
+_LOADED = "loaded"
+_UNRESOLVED = "unresolved"
+_FAILED = "failed"
+
+# One import of one small module. Generous enough that a slow machine is never
+# the reason a task fails to lint, short enough that a module looping at import
+# is reported rather than hanging the lint.
+_LOAD_TIMEOUT_S = 60
+
+
+def typescript_load_problems(directory: Path) -> dict[str, str]:
+    """Every `.ts` file under `directory` that does not load under the Node
+    that grades a TypeScript task, by path relative to it, with the reason.
+
+    A **real import**, in a throwaway subprocess whose cwd is a throwaway copy,
+    and not `node --check`, because the two are not the same question: probed
+    on v22.22.2 on 2026-08-19, `node --check` exits 0 on a file holding
+    `export enum E { A }` and the refusal — "TypeScript enum is not supported
+    in strip-only mode" — appears only on a real load. The copy is thrown away
+    because a real import runs the file's top-level code, which may write; the
+    environment is scrubbed of `NODE_*` for the reason `run_tests` scrubs it,
+    so what this reports cannot vary with the operator's machine.
+
+    What is *not* reported is a specifier that does not resolve, or a name the
+    module it names does not export. A held-out test is written against the
+    solved repository, so against the pristine one it legitimately imports a
+    function nobody has written yet — that is the task, not a defect in the
+    file. Both are read off Node's own error (`ERR_MODULE_NOT_FOUND`, and the
+    link-time "does not provide an export named") and passed over. Everything
+    else — syntax that type stripping refuses, a throw at import, a module that
+    ends the process while it is being loaded — is this file's own problem and
+    is reported in Node's words.
+    """
+    files = sorted(directory.rglob(TYPESCRIPT.source_glob))
+    if not files:
+        return {}
+    # Loudly, once, before any file is judged: a missing or too-old Node would
+    # otherwise report every checked-in `.ts` file as unloadable, which is a
+    # fact about the machine and not about the corpus.
+    TYPESCRIPT.require_toolchain()
+    problems: dict[str, str] = {}
+    with tempfile.TemporaryDirectory() as name:
+        root = Path(name)
+        probe = root / _PROBE_NAME
+        probe.write_text(_PROBE, encoding="utf-8")
+        copy = root / directory.name
+        shutil.copytree(directory, copy)
+        # The same declaration `run_tests` pins into the workdir, and pinned
+        # here for the same reason: Node reads the module system off the
+        # nearest package.json, and a `.ts` file's imports are only ESM under
+        # this one. The lint refuses a task-shipped package.json separately.
+        (copy / _PACKAGE_JSON).write_text(_CANONICAL_PACKAGE_JSON, encoding="utf-8")
+        for path in files:
+            relative = path.relative_to(directory)
+            if problem := _load_problem(probe, copy, relative):
+                problems[str(relative)] = problem
+    return problems
+
+
+def _load_problem(probe: Path, copy: Path, relative: Path) -> str | None:
+    """Why this one file does not load, or None where it does."""
+    argv = [_NODE, str(probe), (copy / relative).as_uri()]
+    environment = {
+        name: value
+        for name, value in os.environ.items()
+        if not name.startswith(_NODE_ENVIRONMENT_PREFIX)
+    }
+    try:
+        process = subprocess.Popen(
+            argv,
+            cwd=copy,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
+    except OSError as error:
+        raise IngestError(f"cannot run `{_NODE}`: {error}") from error
+    with process:
+        try:
+            stdout, stderr = process.communicate(timeout=_LOAD_TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            _kill_session(process)
+            process.communicate()
+            return (
+                f"it was still being imported {_LOAD_TIMEOUT_S}s later — a module "
+                "does its work when it is called and not when it is loaded"
+            )
+    verdict, _, payload = stdout.partition("\n")[0].partition(" ")
+    try:
+        detail = str(json.loads(payload))
+    except json.JSONDecodeError:  # not the probe's line: it said nothing at all
+        verdict, detail = "", ""
+    if verdict in (_LOADED, _UNRESOLVED):
+        return None
+    if verdict == _FAILED:
+        return detail
+    return (
+        f"the import ended the process (exit status {process.returncode}) before "
+        f"it could say whether the file loaded: {stderr.strip() or '(no output)'}"
+    )
+
+
 # --- the registry --------------------------------------------------------------
 
 PYTHON = PythonRunner()
@@ -655,23 +812,15 @@ RUNNERS: dict[str, LanguageRunner] = {
     runner.language: runner for runner in (PYTHON, TYPESCRIPT)
 }
 
-# What a task declaring no language is graded by. Provisional: `language` is
-# still optional on `Task`, and every checked-in v1 task declares `python`, so
-# this is the reading that changes no verdict. Making the declaration required —
-# and refusing an unregistered one at load, with a message naming the registered
-# runners — is round 7's loader ticket, not this seam's.
-_UNDECLARED_LANGUAGE_RUNNER = PYTHON
-
-
-def runner_for(language: str | None) -> LanguageRunner:
+def runner_for(language: str) -> LanguageRunner:
     """The runner that grades a task declaring this language.
 
     The only way into `RUNNERS`. Callers pass the task's own declaration and
     never an operator's choice, so a task cannot be graded by the wrong
-    mechanism.
+    mechanism — and there is no reading for a task that declares nothing,
+    because a first-party v1 task must declare a language (`Task.language`):
+    what runs a task's tests is never implicit.
     """
-    if language is None:
-        return _UNDECLARED_LANGUAGE_RUNNER
     runner = RUNNERS.get(language)
     if runner is None:
         raise IngestError(

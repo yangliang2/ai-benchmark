@@ -141,9 +141,11 @@ from ai_benchmark.firstparty import (
 )
 from ai_benchmark.language_runners import (
     PYTHON,
+    TYPESCRIPT,
     LanguageRunner,
     SourceUnreadable,
     runner_for,
+    typescript_load_problems,
 )
 from ai_benchmark.schema import (
     LanguageStr,
@@ -717,7 +719,16 @@ class Task(BaseModel):
     # surface would land every new task in the `unknown` column and make that
     # table report the author's silence as a gap in the corpus.
     surface: Surface
-    language: LanguageStr | None = None
+    # Required here too, and for a sharper reason than the coverage table: a
+    # task's language is what selects the **language runner** that runs its
+    # held-out tests (`Task.runner`), so an undeclared one would mean "graded
+    # by whatever the harness falls back to". What runs a task's tests is
+    # never implicit — a task carries its own grading mechanism, and a
+    # language with no registered runner is refused at load rather than
+    # discovered at the first paid run (`_check_task_layout`). A *record*'s
+    # language stays optional (`ai_benchmark.schema.Record`) for the reason
+    # its surface does: a second-hand row says whatever its source disclosed.
+    language: LanguageStr
     prompt: NonEmptyStr
     grading: Grading = Grading()
     construction: Construction | None = None
@@ -1692,6 +1703,17 @@ def _load_task(task_dir: Path) -> Task:
 
 def _check_task_layout(task: Task) -> None:
     """The parts of a task that live on disk rather than in its spec."""
+    # First, because everything below reads the task through its runner — the
+    # glob that finds its held-out tests, its starting-repository naming
+    # invariant — and because a language nothing can run is the one problem
+    # here that no amount of correct layout would rescue. Reported with the
+    # task id in front of the registry's own message, which names the
+    # registered runners: an author who declared `js` should be told what the
+    # spelling is rather than that something went wrong.
+    try:
+        task.runner
+    except IngestError as error:
+        raise IngestError(f"{task.id}: {error}") from error
     if not task.repo_dir.is_dir() or not any(task.repo_dir.iterdir()):
         raise IngestError(
             f"{task.id}: {REPO_DIR}/ is missing or empty — a v1 task gives the "
@@ -1722,10 +1744,20 @@ def _check_task_layout(task: Task) -> None:
             "layout rather than of an author remembering it"
         )
     if not task.grading_test_paths:
+        # Read per runner glob *plus* the canonical harness-side checks, which
+        # is what `grading_test_paths` collects: the task's own held-out tests
+        # are found by its language runner's glob, and the answer-key test, the
+        # findings-key test and the hash gate by pytest's, whatever the task
+        # declares. So a typescript task holding only `.test.ts` files, or
+        # holding only its key's canonical Python test, has a suite — and one
+        # spelling is named here per glob rather than twice, because a python
+        # task's two halves are the same files.
+        globs = " and no ".join(
+            dict.fromkeys((task.runner.grading_test_glob, PYTHON.grading_test_glob))
+        )
         raise IngestError(
-            f"{task.id}: {GRADING_DIR}/ holds no {PYTHON.grading_test_glob} and no "
-            f"{task.runner.grading_test_glob} — a v1 task is graded by running "
-            "held-out tests, and neither half of the suite is there"
+            f"{task.id}: {GRADING_DIR}/ holds no {globs} — a v1 task is graded by "
+            "running held-out tests, and neither half of the suite is there"
         )
     missing = sorted(set(task.behaviour_test_paths) - set(task.grading_test_paths))
     if missing:
@@ -2056,6 +2088,12 @@ def lint_task_set(
         # gate hashes the pristine repository, so running the grading tests on
         # that repository is the one thing that can never fail it.
         problems.extend(_hash_gate_problems(task))
+        # What the stdlib-only rule and the shape of Node's module resolution
+        # refuse about a typescript task's files. Empty for every other
+        # language, read rather than run, and independent of every gate above:
+        # a task shipping a dependency it cannot have is as readable when its
+        # key is unreadable as when it is not.
+        problems.extend(_typescript_problems(task))
         if is_keyed(task) and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
@@ -2099,12 +2137,6 @@ def lint_task_set(
     return problems
 
 
-# What a task with no declared `language` counts under in the coverage
-# table, rather than being dropped from it: `language` is only absent when
-# it is not meaningful, and that is itself a fact worth disclosing.
-NO_LANGUAGE = "(none)"
-
-
 def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
     """Task counts over `category x surface x language`, for `ai-bench
     lint-v1` to print. Reports only — nothing here gates the lint.
@@ -2115,7 +2147,7 @@ def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
     are disclosed on a task but not gridded here (design note 45.10).
     """
     counts: Counter[tuple[str, str, str]] = Counter(
-        (task.category, task.surface, task.language or NO_LANGUAGE) for task in tasks
+        (task.category, task.surface, task.language) for task in tasks
     )
     order = {category: index for index, category in enumerate(get_args(TaskCategory))}
     rows = [
@@ -2980,6 +3012,189 @@ def _hash_gate_problems(task: Task) -> list[str]:
         for name in sorted(set(handed_over) - set(declared))
     ]
     return problems
+
+
+# --- typescript: what a task in that language may ship -------------------------
+#
+# The authoring half of admitting TypeScript, read rather than run. Every rule
+# here is about what a task's *files* are, and each exists because the thing it
+# refuses would otherwise be found at grade time or not at all — which, for a
+# task set that is swept once and paid for once, is the same as never.
+#
+# Two of the four are ADR-0003 enforced rather than merely stated: a TypeScript
+# task installs nothing. Grading runs `node --test` with the standard library,
+# the task's own files and no package manager, so a dependency is not a harder
+# task but an ungradable one — declared or vendored in the starting repository
+# (`_stdlib_only_problems`), or named by a held-out test
+# (`_held_out_specifier_problems`). The module system the workdir runs under is
+# the runner's to pin (`run_tests` writes the canonical package.json last) and
+# not the task's to declare, which is the other half of why a manifest is
+# refused.
+#
+# The third is that a `.ts` file which does not load is a task that cannot do
+# its job (`_typescript_load_problems`), and the fourth that a keyed task's
+# starting repository is flat, because that is the shape its hash gate can
+# actually gate (`_keyed_repo_flatness_problems`).
+
+# A manifest declares dependencies and decides the module system; a
+# node_modules is a dependency tree checked in. Both are refused at any depth
+# of `repo/`, which is the tree the agent is handed and the one grading copies.
+_PACKAGE_MANIFEST = "package.json"
+_INSTALLED_DEPENDENCIES = "node_modules"
+
+# What a held-out TypeScript test may name: a Node builtin under its explicit
+# `node:` prefix, or a file of the task, relatively and with the extension Node
+# actually resolves. Anything else is a package specifier, and there is no
+# package.
+_BUILTIN_PREFIX = "node:"
+_RELATIVE_PREFIXES = ("./", "../")
+_TYPESCRIPT_SOURCE_SUFFIX = ".ts"
+
+# The specifiers a TypeScript file names, read as text rather than parsed: this
+# is a rule over files an author wrote, not an import graph, and the shapes are
+# `from "x"`, `import "x"`, `import("x")` and `require("x")`. The lookbehind is
+# what keeps `Array.from("abc")` from reading as an import of "abc".
+_SPECIFIER = re.compile(
+    r"""(?<![.\w$])(?:from|import|require)\s*\(?\s*(['"])(?P<specifier>[^'"\n]*)\1"""
+)
+
+
+def _typescript_problems(task: Task) -> list[str]:
+    """What the lint refuses about a TypeScript task's files, and nothing at
+    all about a task in any other language.
+
+    Dispatched on the registered runner rather than on the declared string, so
+    that a language admitted later inherits none of this by having a name that
+    looks like it: these are Node's rules, and they belong to the tasks the
+    TypeScript runner grades.
+    """
+    if task.runner is not TYPESCRIPT:
+        return []
+    return (
+        _stdlib_only_problems(task)
+        + _typescript_load_problems(task)
+        + _held_out_specifier_problems(task)
+        + _keyed_repo_flatness_problems(task)
+    )
+
+
+def _stdlib_only_problems(task: Task) -> list[str]:
+    """A manifest or an installed dependency tree anywhere in the starting
+    repository — the stdlib-only rule (ADR-0003) refused on the author.
+
+    A dependency tree is reported as the one thing it is: what is *inside* a
+    `node_modules` is not a second problem an author could fix separately, and
+    a vendored tree holds hundreds of manifests that would otherwise bury the
+    one line that says to delete it.
+    """
+    return [
+        f"{task.id}: {REPO_DIR}/ holds {path.relative_to(task.repo_dir)} — a "
+        "typescript task installs nothing (ADR-0003): grading runs `node --test` "
+        "with the standard library, the task's own files and no package manager, "
+        "so a dependency declared or vendored here is not there at grade time, "
+        "and the module system the workdir runs under is pinned by the runner "
+        f"rather than by the task. Write the task against `{_BUILTIN_PREFIX}` "
+        "builtins"
+        for name in (_PACKAGE_MANIFEST, _INSTALLED_DEPENDENCIES)
+        for path in sorted(task.repo_dir.rglob(name))
+        if _INSTALLED_DEPENDENCIES
+        not in path.relative_to(task.repo_dir).parent.parts
+    ]
+
+
+def _typescript_load_problems(task: Task) -> list[str]:
+    """Every `.ts` file the task ships that does not load under the Node that
+    grades it, in Node's own words.
+
+    All four trees, because all four are read by something: `repo/` is handed
+    to the agent, `grading/` decides the verdict, and `proofs/` and
+    `corrected/` are run and read by this lint. A file in any of them that
+    cannot be imported is a task that cannot do its job, and — this being the
+    point of importing rather than checking — `node --check` says nothing
+    about it (see `typescript_load_problems`).
+    """
+    return [
+        f"{task.id}: {directory.name}/{relative} does not load under the Node "
+        f"that grades it: {reason}. Every `{TYPESCRIPT.source_glob}` file a task "
+        "ships is imported for real by this lint, because `node --check` passes "
+        "syntax that type stripping then refuses — and because a module must be "
+        "side-effect-free at import, which is what makes a CLI entry point a "
+        "guarded one: Node 22 has no `import.meta.main`, so the idiom is "
+        "`if (process.argv[1] === fileURLToPath(import.meta.url))`"
+        for directory in (
+            task.repo_dir,
+            task.grading_dir,
+            task.proofs_dir,
+            task.corrected_dir,
+        )
+        if directory.is_dir()
+        for relative, reason in sorted(typescript_load_problems(directory).items())
+    ]
+
+
+def _held_out_specifier_problems(task: Task) -> list[str]:
+    """What a held-out test imports that grading cannot give it.
+
+    A grading test runs in a workdir holding the repository, the overlay and
+    nothing else — no install has happened and none will — so the only things
+    it can name are `node:` builtins and the task's own files, relatively and
+    with the extension Node resolves. A bare package specifier is not a
+    dependency this task forgot to declare; it is one it may not have, and a
+    test naming one grades every run unresolved on a module error.
+    """
+    problems: list[str] = []
+    for name in task.language_test_paths:
+        source = (task.grading_dir / name).read_text(encoding="utf-8")
+        for specifier in sorted(set(_typescript_specifiers(source))):
+            if specifier.startswith(_BUILTIN_PREFIX):
+                continue
+            if specifier.startswith(_RELATIVE_PREFIXES) and specifier.endswith(
+                _TYPESCRIPT_SOURCE_SUFFIX
+            ):
+                continue
+            problems.append(
+                f"{task.id}: the held-out test {GRADING_DIR}/{name} imports "
+                f"{specifier!r} — a typescript task installs nothing (ADR-0003), "
+                f"so a held-out test may name a builtin under its explicit "
+                f"`{_BUILTIN_PREFIX}` prefix or a file of the task relatively and "
+                f"with its `{_TYPESCRIPT_SOURCE_SUFFIX}` extension, and nothing "
+                "else. Anything else is a package specifier, and there is no "
+                "package: the test would fail on a module error whatever the "
+                "agent wrote"
+            )
+    return problems
+
+
+def _typescript_specifiers(source: str) -> list[str]:
+    """Every module specifier this source names."""
+    return [match.group("specifier") for match in _SPECIFIER.finditer(source)]
+
+
+def _keyed_repo_flatness_problems(task: Task) -> list[str]:
+    """A directory under a keyed TypeScript task's starting repository.
+
+    The hash gate is what makes a keyed task ask for a location rather than a
+    repair, and it hashes top-level files only: `repo_digests` iterates with
+    `iterdir()`, and the generated gate compares each name against
+    `Path.cwd() / name`. So a file nested under `repo/` is ungated — an agent
+    could repair it and still grade resolved, at answer-file cost, with nothing
+    in the run log to show it. Every keyed Python task is flat already, so the
+    cheapest rule that closes this is that a keyed TypeScript one is too: a
+    refusal here rather than a wider gate, because widening the gate would
+    change what a replay of every keyed task computes.
+    """
+    if not carries_a_key(task):
+        return []
+    return [
+        f"{task.id}: {REPO_DIR}/{entry.name}/ is a directory, and a keyed "
+        "typescript task's starting repository must be flat — the hash gate that "
+        "holds a keyed task to answering rather than repairing hashes top-level "
+        "files only, so anything nested under it is ungated and an agent could "
+        "repair it and still grade resolved. Flatten the repository rather than "
+        "widening the gate"
+        for entry in sorted(task.repo_dir.iterdir())
+        if entry.is_dir()
+    ]
 
 
 # --- terrain: the three rules a keyed task's prompt and repository hold to -----

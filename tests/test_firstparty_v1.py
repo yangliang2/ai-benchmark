@@ -40,7 +40,6 @@ from ai_benchmark.firstparty_v1 import (
     BENCHMARK,
     KNOB_LEVELS,
     LIVE_RUN_LIMITS_S,
-    NO_LANGUAGE,
     KnobActivation,
     Task,
     coverage_table,
@@ -418,6 +417,35 @@ def test_task_declaring_no_surface_fails_loudly(tmp_path: Path) -> None:
         load_task_set(tmp_path)
 
 
+def test_task_declaring_no_language_fails_loudly(tmp_path: Path) -> None:
+    """What runs a task's tests is never implicit.
+
+    A task's `language` selects the language runner that grades it, so an
+    undeclared one would mean "graded by whatever the harness falls back to".
+    Where a *record*'s language is still optional (test_schema.py), for the
+    reason its surface is: a second-hand row says whatever its source
+    disclosed."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    undeclare(task_dir, "language")
+
+    with pytest.raises(IngestError, match=f"(?s){FEATURE_SEED}.*language"):
+        load_task_set(tmp_path)
+
+
+def test_a_language_with_no_registered_runner_is_refused_at_load(
+    tmp_path: Path,
+) -> None:
+    """And the refusal names the registered ones, so an author who declared
+    `js` is told the spelling rather than that something went wrong. Refused
+    here rather than at the first paid run: a task nothing can run is not a
+    task that grades everyone unresolved, it is one that should never load."""
+    task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
+    retitle(task_dir, language="js")
+
+    with pytest.raises(IngestError, match=f"(?s){FEATURE_SEED}.*'js'.*typescript"):
+        load_task_set(tmp_path)
+
+
 def test_unclassified_task_fails_loudly(tmp_path: Path) -> None:
     task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
     retitle(task_dir, category="unclassified")
@@ -509,8 +537,10 @@ def test_coverage_table_counts_category_x_surface_x_language(tmp_path: Path) -> 
     """A hand-built task set, checked against a hand-built expectation.
 
     Covers what the ticket pins down: every `TaskCategory` appears even with
-    no tasks in it (`test-authoring` here), and a task with no declared
-    `language` is counted under `NO_LANGUAGE` rather than dropped."""
+    no tasks in it (`test-authoring` here), and a category with tasks is
+    counted per `surface` and per `language`. There is no undeclared-language
+    column to check any more — `language` is required of a first-party v1 task,
+    because it is what selects the runner that grades it."""
     one = clone_seed(tmp_path, FEATURE_SEED, "cov-one")
     retitle(one, id="cov-one")  # feature-dev / application / python, unchanged
 
@@ -519,7 +549,6 @@ def test_coverage_table_counts_category_x_surface_x_language(tmp_path: Path) -> 
 
     four = clone_seed(tmp_path, FEATURE_SEED, "cov-four")
     retitle(four, id="cov-four", category="codebase-comprehension")
-    undeclare(four, "language")
 
     loaded = load_task_set(tmp_path)
     # A second language, declared rather than loaded: the loader reaches a
@@ -539,7 +568,7 @@ def test_coverage_table_counts_category_x_surface_x_language(tmp_path: Path) -> 
         ("feature-dev", "application", "python", 1),
         ("refactor", "-", "-", 0),
         ("test-authoring", "-", "-", 0),
-        ("codebase-comprehension", "application", NO_LANGUAGE, 1),
+        ("codebase-comprehension", "application", "python", 1),
         ("fault-location", "-", "-", 0),
         ("code-review", "-", "-", 0),
         ("investigation", "-", "-", 0),
