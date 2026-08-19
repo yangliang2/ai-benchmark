@@ -84,6 +84,19 @@ out, in order of preference:
    These are command-line flags only — `.qap/config.json` has no field for them, so a bare
    `qap run` cannot carry them.
 
+### Run the targeted suites in-session; the full suite is the harness's
+
+A ticket session verifies its own change with the suites its ticket names (plus `mypy`, plus
+`lint-v1`) — never the whole suite. The acceptance command runs the whole suite, if the ticket's
+checklist calls for it, after the session ends, under its own (raised) budget. #98's session
+spent 26 of its 45 minutes inside two full-suite runs and was killed mid-run with its work
+already done: the session budget and the acceptance budget are not the same clock, and burning
+the session's clock on a check the acceptance command is about to run anyway buys nothing.
+
+This holds even now that the suite runs under `pytest-xdist` (`-n auto`, `addopts` in
+`pyproject.toml`) and is fast — a session still shouldn't assume it owns every core, since the
+harness may be running other sessions' acceptance commands at the same time.
+
 ## Do not queue a sweep
 
 Paid runs of the first-party task set (e.g. #57) go through

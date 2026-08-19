@@ -12,6 +12,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-xdist>=3.6",
     "mypy>=1.10",
     "types-pyyaml>=6",
 ]
@@ -28,6 +29,7 @@ packages = ["src/ai_benchmark"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-n auto"
 
 [tool.mypy]
 strict = true
