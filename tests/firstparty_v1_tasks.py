@@ -29,6 +29,7 @@ from ai_benchmark.firstparty_v1 import (
     _run_grading,
     load_task_set,
 )
+from ai_benchmark.language_runners import PYTHON, TYPESCRIPT
 
 TASKS = Path(__file__).parent.parent / "tasks" / "first-party-v1"
 SOLUTIONS = Path(__file__).parent.parent / "tasks" / "first-party-v1-solutions"
@@ -36,11 +37,14 @@ SOLUTIONS = Path(__file__).parent.parent / "tasks" / "first-party-v1-solutions"
 # An identity, so the initial commit works on a machine with none configured.
 _GIT = ["git", "-c", "user.email=eval@example.com", "-c", "user.name=eval"]
 
-# Bytecode is a byproduct of having run something, not part of a tree anyone
-# authored: a stray __pycache__/ left in a solutions tree by a probe once
-# reached the diff and broke grading. The live runner keeps it out with its
-# own .gitignore; these helpers copy trees directly, so they drop it here.
-_BYTECODE = shutil.ignore_patterns("__pycache__", "*.pyc")
+# What having run something leaves behind, as against what anyone authored: a
+# stray __pycache__/ left in a solutions tree by a probe once reached the diff
+# and broke grading, and a node_modules/ an agent or a probe installed would
+# reach one the same way — the whole of what a TypeScript task ships is its own
+# files (ADR-0003), so a directory of packages under one is a byproduct by
+# construction. The live runner keeps both out with its own .gitignore; these
+# helpers copy trees directly, so they drop them here.
+_BYPRODUCTS = shutil.ignore_patterns("__pycache__", "*.pyc", "node_modules")
 
 
 def task_by_id(task_id: str) -> Task:
@@ -50,14 +54,14 @@ def task_by_id(task_id: str) -> Task:
 
 def copy_solution(task: Task, into: Path) -> None:
     """Lay this task's reference solution into an existing directory."""
-    shutil.copytree(SOLUTIONS / task.id, into, dirs_exist_ok=True, ignore=_BYTECODE)
+    shutil.copytree(SOLUTIONS / task.id, into, dirs_exist_ok=True, ignore=_BYPRODUCTS)
 
 
 def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
     """The workdir diff a run that made this edit would log."""
     with tempfile.TemporaryDirectory(prefix="ai-bench-test-") as name:
         workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYTECODE)
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYPRODUCTS)
         subprocess.run([*_GIT, "init", "-q", "."], cwd=workdir, check=True)
         subprocess.run([*_GIT, "add", "-A"], cwd=workdir, check=True)
         subprocess.run([*_GIT, "commit", "-qm", "pristine"], cwd=workdir, check=True)
@@ -132,14 +136,30 @@ def pytest_runtest_setup(item):
 '''
 
 
+# How each language runs the repository's own tests: the command an agent
+# reading that repository's README would type, and nothing the harness adds.
+# Dispatched on the task's declared runner and never on a name written at a
+# call site, for the reason the grader dispatches on it — a task carries its
+# own mechanism, and running a TypeScript repository's suite under pytest
+# would report "no tests ran" as a green net the agent never had.
+_VISIBLE_TEST_ARGV = {
+    PYTHON: [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+    TYPESCRIPT: ["node", "--test"],
+}
+
+
 def visible_tests_pass(task: Task, edit: Callable[[Path], None] | None = None) -> bool:
     """Whether the repository's own tests — the net the agent sees — pass.
 
-    Run the way an agent would run them: plain pytest in the workdir, with
-    none of the isolation grading applies, because the question here is what
-    the agent is told rather than what the verdict reads.
+    Run the way an agent would run them: the runner's own plain invocation in
+    the workdir, with none of the isolation grading applies, because the
+    question here is what the agent is told rather than what the verdict
+    reads. `node --test` with no arguments really does discover a repository's
+    `*.test.ts` files on the Node this grades under, which is what makes a
+    TypeScript task's README honest in naming it.
 
-    With one deliberate difference from what the agent gets: the copy is
+    With one deliberate difference from what the agent gets, and only where
+    the agent's own toolchain leaves the question open: a *Python* copy is
     seeded. A vendored suite generating its own tables and delimiters with the
     unseeded global `random` turns this gate into a coin toss — round 1 caught
     it as a ~0.5% failure of "the reference solution keeps the repository
@@ -147,22 +167,28 @@ def visible_tests_pass(task: Task, edit: Callable[[Path], None] | None = None) -
     runs cannot support a verdict resting on the visible suite staying green.
     The seeding goes in *after* the edit, because an edit that lays a solved
     tree over the workdir replaces what is there.
+
+    Nothing is written into a TypeScript copy at all. The seeding device is a
+    `conftest.py`, which is pytest's and not Node's, and a task whose
+    repository ships no conftest is one where writing one in would be adding a
+    file the agent never had rather than making its suite deterministic.
     """
     with tempfile.TemporaryDirectory(prefix="ai-bench-visible-") as name:
         workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYTECODE)
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYPRODUCTS)
         if edit is not None:
             edit(workdir)
-        conftest = workdir / "conftest.py"
-        assert not conftest.exists(), (
-            f"{task.id} ships its own conftest.py — seeding the copy would "
-            "replace it, so this helper would be running a different suite "
-            "than the agent sees"
-        )
-        conftest.write_text(_SEEDING_CONFTEST, encoding="utf-8")
+        if task.runner is PYTHON:
+            conftest = workdir / "conftest.py"
+            assert not conftest.exists(), (
+                f"{task.id} ships its own conftest.py — seeding the copy would "
+                "replace it, so this helper would be running a different suite "
+                "than the agent sees"
+            )
+            conftest.write_text(_SEEDING_CONFTEST, encoding="utf-8")
         return (
             subprocess.run(
-                [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+                _VISIBLE_TEST_ARGV[task.runner],
                 cwd=workdir,
                 capture_output=True,
                 text=True,

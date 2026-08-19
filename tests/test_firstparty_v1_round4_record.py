@@ -25,6 +25,7 @@ replay, which is section 42's verification.
 """
 
 import json
+import re
 import statistics
 from pathlib import Path
 
@@ -174,6 +175,39 @@ def fenced_block(text: str) -> str:
     return text.split("```\n")[1]
 
 
+# The two fields of a calibration block a later round moves, and the only two.
+#
+# A block holds numbers of two kinds. The **measured** ones — the baseline
+# means, every `(n=…)`, the multipliers, the rung floor — are this round's runs,
+# and no task authored afterwards touches them. The **counted** ones — how many
+# tasks the row holds, and the scope and substrate mix its denominator is drawn
+# from — grow the moment a later round authors another control in the category:
+# unswept, changing no measurement, and moving two digits in a block this record
+# quotes as printed. So the quoted block is compared with the counted ones
+# written out, and what they are today is asserted against the corpus itself
+# (`controls_per_category`) rather than pinned to the day this was written.
+_COUNTED_MIX = re.compile(
+    r"^(   baseline mix +)\d+( single-file; )\d+( hand-authored)", re.MULTILINE
+)
+_COUNTED_ROW = re.compile(r"^(   \(zero-knob\)  )\d+ +", re.MULTILINE)
+
+
+def counts_written_out(text: str) -> str:
+    """This calibration output with its counted fields replaced by a mark."""
+    return _COUNTED_ROW.sub(r"\1N ", _COUNTED_MIX.sub(r"\1N\2N\3", text))
+
+
+def controls_per_category() -> dict[str, int]:
+    """How many declared controls each category holds in the corpus today —
+    which is exactly what a `(zero-knob)` row counts, a control being the one
+    thing with no construction block to give it a profile."""
+    counted: dict[str, int] = {}
+    for task in firstparty_v1.load_task_set(_TASKS):
+        if firstparty_v1.is_control(task):
+            counted[task.category] = counted.get(task.category, 0) + 1
+    return counted
+
+
 def ratio(numerator: float, denominator: float) -> str:
     """A multiple as the record writes one: two decimals and an x."""
     return f"{numerator / denominator:.2f}x"
@@ -293,14 +327,22 @@ def test_the_rungs_the_round_landed_on() -> None:
     `observed_outcomes` over the round's own tasks and runs rather than from
     the verdicts above, so that the record's rungs are the reports' rungs and
     not this file's arithmetic about them.
+
+    The round's own tasks are the ones it swept, and are selected as such: a
+    later round authoring another task in either of these two categories adds
+    an `unswept` outcome that says nothing about what round 4 landed on, and
+    reading it in here would turn this section over for a task the round never
+    saw.
     """
+    runs = list(round_4_runs().values())
+    swept = {run.task_id for run in runs}
     tasks = [
         task
         for task in firstparty_v1.load_task_set(_TASKS)
-        if task.category in ("bug-fix", "fault-location")
+        if task.category in ("bug-fix", "fault-location") and task.id in swept
     ]
     outcomes = reconcile_v1.observed_outcomes(
-        tasks, list(round_4_runs().values()), source="round-4 record"
+        tasks, runs, source="round-4 record"
     )
 
     sonnet_only = {
@@ -413,12 +455,23 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     # them, and round 5's code-review and codebase-comprehension now do. Each
     # quoted block is still checked as bytes; only their adjacency is not a
     # claim the note makes.
+    printed = counts_written_out(out)
     for block in quoted.split("\ncategory ")[0:1] + [
         "category " + rest for rest in quoted.split("\ncategory ")[1:]
     ]:
-        assert block.strip("\n") in out, (
+        assert counts_written_out(block).strip("\n") in printed, (
             "a quoted block of the note is not what the table prints:\n" + block
         )
+    # The counted fields, derived rather than quoted: a control authored in
+    # either category by a later round is counted here, unswept, and the record
+    # above still holds because nothing it measured moved.
+    controls = controls_per_category()
+    for category in ("bug-fix", "fault-location"):
+        assert f"   (zero-knob)  {controls[category]} " in out
+        assert (
+            f"   baseline mix         {controls[category]} single-file; "
+            f"{controls[category]} hand-authored"
+        ) in out
     # Named again here, so that a note edited to match a changed table still
     # has to face the numbers the round actually published.
     assert (

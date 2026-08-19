@@ -120,6 +120,19 @@ _FINDINGS_TOTAL = 51
 _OUTPUT_WORDS = 2373
 _NOTED_FINDINGS = 51
 
+# How many repositories carried two actions on the day this was recorded:
+# round 4's six locate-against-fix pairs, and nothing else. Archived as a
+# floor, because a later round authoring another such pair grows the number
+# without changing the claim section 49 makes about it.
+_LOCATE_FIX_REPOSITORIES_AS_RECORDED = 6
+
+# The corpus size section 51's own fenced block printed on the day round 5 was
+# recorded. Archived text, quoted back to prove the block says what the command
+# said — a literal that never moves, however far the corpus grows afterwards.
+# Where a record suite reads what a reader prints *today*, it derives the count
+# from the checked-in task set instead (`tasks_in_set` in the round-6 suite).
+_TASKS_AS_RECORDED = 113
+
 
 def round_5_runs() -> dict[tuple[str, str], firstparty_v1.Run]:
     """Every run the sweep logged, keyed task x model.
@@ -513,11 +526,17 @@ def test_no_repository_carries_two_of_the_round_s_actions() -> None:
     Round 4's locate-against-fix reading was drawable only because one
     repository carried two actions — byte for byte the same starting tree
     under a `fault-location` task and a `bug-fix` one. Grouping every task's
-    `repo/` by the bytes it ships finds exactly six such repositories, all of
-    them round 4's, and none of them carrying either action this round
-    measured. So the three-way comparison is quoted nowhere, and what would
-    have to change for it to be quotable is checked here rather than asserted
-    in prose.
+    `repo/` by the bytes it ships found exactly six such repositories on the
+    day this was recorded, all of them round 4's, and none of them carrying
+    either action this round measured. So the three-way comparison is quoted
+    nowhere, and what would have to change for it to be quotable is checked
+    here rather than asserted in prose.
+
+    What is held is the *shape* and not the six: a later round authoring
+    another locate/fix pair adds a seventh such repository without touching
+    what this section says, so the recorded six is a floor and every shared
+    repository still has to be a locate-against-fix pair carrying neither of
+    this round's two actions.
     """
     shipped: dict[str, set[str]] = {}
     for task in firstparty_v1.load_task_set(_TASKS):
@@ -531,9 +550,11 @@ def test_no_repository_carries_two_of_the_round_s_actions() -> None:
         shipped.setdefault(digest.hexdigest(), set()).add(task.category)
 
     shared = [actions for actions in shipped.values() if len(actions) > 1]
-    assert shared == [{"bug-fix", "fault-location"}] * 6, (
-        "the corpus's only repositories carrying two actions are round 4's six"
+    assert shared == [{"bug-fix", "fault-location"}] * len(shared), (
+        "a repository carrying two actions is a locate-against-fix pair, which "
+        "is the only construct in this corpus that shares one"
     )
+    assert len(shared) >= _LOCATE_FIX_REPOSITORIES_AS_RECORDED
     assert not any(
         {"code-review", "codebase-comprehension"} & actions for actions in shared
     )
@@ -700,9 +721,10 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
         (_LOG_NAMES[2], 12, 11), (_LOG_NAMES[3], 0, 0),
     ):
         assert f"--replay data/first-party-v1-runs/{name}" in printed
-        assert f"  evaluated {evaluated} runs over 113 tasks ({resolved} resolved)" in (
-            printed
-        )
+        assert (
+            f"  evaluated {evaluated} runs over {_TASKS_AS_RECORDED} tasks "
+            f"({resolved} resolved)"
+        ) in printed
         assert len(firstparty_v1.load_runs(_LOGS / name)) == evaluated, name
 
 

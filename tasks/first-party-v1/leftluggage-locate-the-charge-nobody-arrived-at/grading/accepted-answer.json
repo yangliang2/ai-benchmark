@@ -1,0 +1,13 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "charges.ts", "symbol": "Charges.owedOn"},
+    {"file": "charges.ts", "symbol": "Charges"}
+  ],
+  "rejected": [
+    {"file": "desk.ts", "symbol": "Desk.cashUp"},
+    {"file": "desk.ts", "symbol": "Desk.answer"},
+    {"file": "shelf.ts", "symbol": "Shelf.weighed"},
+    {"file": "tickets.ts", "symbol": "writtenUp"}
+  ]
+}

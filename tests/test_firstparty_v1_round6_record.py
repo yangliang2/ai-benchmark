@@ -29,6 +29,7 @@ which is section 58's verification.
 
 import inspect
 import json
+import re
 import statistics
 from pathlib import Path
 
@@ -97,7 +98,54 @@ _CODEX_TURN_RANGE = (6, 15)
 # once the Codex rows have been read out of the same directory and dropped.
 _REPLAYED = {_LOG_NAMES[0]: (1, 1), _LOG_NAMES[1]: (29, 28)}
 _CLAUDE_CODE_RUNS = 225
-_TASKS_IN_SET = 113
+
+# Three readings that were one number on the day this was recorded, and are
+# kept apart here because only one of them may move.
+#
+# `_TASKS_AS_RECORDED` is the corpus size the note's own fenced block printed:
+# archived text, quoted back to prove the block says what the command said, and
+# a literal that never moves however far the corpus grows afterwards.
+#
+# `_TASKS_THE_RUNS_MENTION` is how many tasks the checked-in logs actually
+# swept, which is what reconcile's provenance header counts (`len(swept)` in
+# `reconcile_v1.provenance_lines`). A fact about the logs and not about the
+# corpus: authoring a task adds nothing to it, and only a further sweep can.
+#
+# `tasks_in_set()` is the corpus *now*, read off the checked-in task set the
+# CLI is pointed at, because what `eval-v1 --replay` prints is today's count.
+# Round 7 is the first round to grow the corpus past the recorded figure, and
+# a pin that conflated these would go red on every task ticket after it for
+# saying nothing about round 6.
+_TASKS_AS_RECORDED = 113
+_TASKS_THE_RUNS_MENTION = 113
+
+
+def tasks_in_set() -> int:
+    """How many tasks the checked-in set holds, as `eval-v1` counts them."""
+    return len(firstparty_v1.load_task_set(_TASKS))
+
+
+# The two fields of a calibration block a later round moves, and the only two.
+#
+# A block holds numbers of two kinds. The **measured** ones — the baseline
+# means, every `(n=…)`, the multipliers, the rung floor — are the round that
+# published them, and no task authored afterwards touches them. The **counted**
+# ones — how many tasks the row holds, and the scope and substrate mix its
+# denominator is drawn from — grow the moment a later round authors another
+# control in the category: unswept, changing no measurement, and moving two
+# digits in a block an earlier record quotes as printed. So a quoted block is
+# compared with the counted ones written out; this suite's claim is that the
+# earlier records' tables are *unmoved by the Codex rows*, and a count that
+# round 7 moved says nothing about that either way.
+_COUNTED_MIX = re.compile(
+    r"^(   baseline mix +)\d+( single-file; )\d+( hand-authored)", re.MULTILINE
+)
+_COUNTED_ROW = re.compile(r"^(   \(zero-knob\)  )\d+ +", re.MULTILINE)
+
+
+def counts_written_out(text: str) -> str:
+    """This calibration output with its counted fields replaced by a mark."""
+    return _COUNTED_ROW.sub(r"\1N ", _COUNTED_MIX.sub(r"\1N\2N\3", text))
 
 
 def round_6_runs() -> dict[str, firstparty_v1.Run]:
@@ -853,7 +901,7 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
         printed = capsys.readouterr().out
         evaluated, resolved = _REPLAYED[name]
         assert (
-            f"evaluated {evaluated} runs over {_TASKS_IN_SET} tasks "
+            f"evaluated {evaluated} runs over {tasks_in_set()} tasks "
             f"({resolved} resolved)"
         ) in printed
         per_log.extend(
@@ -893,7 +941,7 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     for name, (evaluated, resolved) in _REPLAYED.items():
         assert f"--replay data/first-party-v1-runs/{name}" in printed_block
         assert (
-            f"  evaluated {evaluated} runs over {_TASKS_IN_SET} tasks "
+            f"  evaluated {evaluated} runs over {_TASKS_AS_RECORDED} tasks "
             f"({resolved} resolved)"
         ) in printed_block
         assert len(firstparty_v1.load_runs(_LOGS / name)) == evaluated, name
@@ -926,7 +974,9 @@ def test_neither_reader_counts_a_codex_row(
 
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     reconciled = capsys.readouterr().out
-    assert f"  runs       {_CLAUDE_CODE_RUNS} over {_TASKS_IN_SET} task(s)" in reconciled
+    assert (
+        f"  runs       {_CLAUDE_CODE_RUNS} over {_TASKS_THE_RUNS_MENTION} task(s)"
+    ) in reconciled
     assert (
         "  rounds     6 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5"
@@ -948,7 +998,9 @@ def test_neither_reader_counts_a_codex_row(
         for block in ["category " + rest for rest in quoted.split("\ncategory ")[1:]] or [
             quoted
         ]:
-            assert block.strip("\n") in calibrated, (
+            assert counts_written_out(block).strip("\n") in counts_written_out(
+                calibrated
+            ), (
                 "a block an earlier record quoted is no longer what the table "
                 "prints:\n" + block
             )

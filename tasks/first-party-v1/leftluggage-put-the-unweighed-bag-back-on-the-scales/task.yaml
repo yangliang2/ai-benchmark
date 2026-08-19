@@ -1,0 +1,96 @@
+# bug-fix, and the "fix it" half of round 7's first TypeScript planted defect:
+# one fallback that turns "the office cannot say" into "the office is owed
+# nothing", authored twice over one starting repository. `Charges.owedOn` in
+# charges.ts ends `?? NOTHING_OWED`. `Tariff.forStay` hands back `CANNOT_SAY`
+# exactly as it is meant to when nobody wrote a weight down for the bag; the
+# fallback throws that away and hands the caller a charge of nought instead. A
+# refusal comes back as a figure, and a charge of nought is a perfectly
+# ordinary charge — a bag in and out inside the hour — so nothing downstream
+# can tell the two apart. The branch in `Desk.cashUp` that was written to put
+# such a ticket on the list to be weighed again never sees `CANNOT_SAY` and
+# never fires, and `Desk.answer` never answers 409.
+#
+# The scenario is the reason this task exists rather than a Python one: a
+# `node:http` service, which the Python corpus has nothing like (design note
+# 45.11). It is disclosed in the prompt and in the round record and is not a
+# task field. The service is real — `handler` routes a request and `serve`
+# puts it behind a server — and both the visible suite and the held-out tests
+# ask it over a socket, on port 0 and never on a port named in a file, so no
+# verdict is a fact about what was already listening on the grading machine.
+#
+# The repository's own tests are green on the pristine tree. What keeps them
+# green is that nothing visible ever asks what is owed on a bag nobody wrote a
+# weight down for: the visible suite exercises the unweighed bag at the level
+# below — `Tariff.forStay` hands back `CANNOT_SAY`, `Shelf.weighed` hands back
+# `NOT_WEIGHED`, and `writtenUp` writes the bag up as not weighed — and at the
+# level above only through `Desk.book`, which never asks what is owed. A
+# visible test reproducing the symptom would hand the agent the answer and
+# delete the action being measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that. `?? <constant>` is a shape a grep finds in one pass, so the
+# repository holds nine more of them across all four modules and every one is
+# correct: `Shelf.weighed` and `Shelf.leftBy` fall back to values that say
+# outright there was nothing to be had, `writtenUp` writes a missing weight up
+# as one, `Desk.noteOn` falls back to no note, `Charges.paidOn` falls back to
+# nothing paid — which is a true statement about a bag nobody has paid on —
+# and the rest are a request with no path on it, a port nobody named and two
+# constructors given no map. Two of the ten are in charges.ts itself, so
+# reaching the right file finishes nothing. The nearest twin of all is
+# `writtenUp`, which falls back off the very same missing weight and is
+# correct, because what it falls back to says the bag was not weighed rather
+# than that nothing is owed on it. The contract the defect breaks is stated in
+# charges.ts's module comment and in the README rather than beside the line
+# that breaks it. What the symptom points at first is desk.ts, where the till
+# and the list to go back over are made up, and shelf.ts, where a missing
+# weight comes from at all.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: it is that
+# member's registered existence proof. A checked relation rather than a
+# convention — the lint finds this task by the bytes of the repo/ the two
+# share, and runs it — so the two share repo/ byte for byte.
+#
+# The grading asserts what the office answers and not how it answers it —
+# where the charge stops being made up is the fix's business. A fix that keeps
+# the bag off the takings and puts its ticket on the list to be weighed again
+# resolves, whether it lets `CANNOT_SAY` out of `owedOn` or stops the charge
+# being made up somewhere else; the reference solution does the former, which
+# is the one edit that removes the fallback rather than working around it.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: leftluggage-put-the-unweighed-bag-back-on-the-scales
+category: bug-fix
+scale: single-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  Something has gone wrong at the left-luggage office. What is in front of you
+  is the office's counter: a small HTTP service written on the Node standard
+  library alone, with nothing installed under it.
+
+  A bag came in on a morning the scales were out of order, so nobody wrote a
+  weight down for it. When its owner came back the counter told them they owed
+  nothing at all — as though the bag had come in and gone out inside the hour —
+  and they went off with it. What went in the till that evening came out short
+  by whatever that bag should have come to, and the list of tickets to put back
+  on the scales came back empty, so nobody ever weighed it again.
+
+  What the office means to do is this: where nobody wrote a weight down for a
+  bag, the office has no charge against that bag at all. Nothing is asked for
+  it over the counter, its ticket goes on the list to be weighed again, and
+  nothing whatever is put in its place — least of all nothing itself, which is
+  a perfectly ordinary charge and belongs to a bag that came in and went out
+  inside the hour.
+
+  Fix it, so that a bag nobody weighed is asked nothing for and its ticket goes
+  on the list to be weighed again. Nothing else changes: the order the shelf
+  keeps its tickets in, the way a bag is written up in the day book, what the
+  office has written against a ticket, and everything the repository's own
+  tests already say about the office.
