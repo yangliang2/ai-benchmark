@@ -4605,7 +4605,15 @@ def evaluate(
 # leaves behind are binary junk: not part of any solution, and (unlike a
 # deliberate binary file, which --binary capture preserves) worth keeping out
 # of the graded artifact entirely rather than dragging through every replay.
-_WORKDIR_IGNORE = "__pycache__/\n*.pyc\n.pytest_cache/\n"
+#
+# `node_modules/` is here for a different reason than the cache patterns
+# above: it is the stdlib-only rule's consequence for the agent rather than
+# for a task's author. A TypeScript starting repository ships nothing to
+# install, so a package the agent installs mid-run is neither committed to
+# the pristine baseline nor captured in the workdir diff — and at grade time
+# the module is not there, so a held-out test importing it fails. That is the
+# rule working as designed, not a capture bug.
+_WORKDIR_IGNORE = "__pycache__/\n*.pyc\n.pytest_cache/\nnode_modules/\n"
 
 # The initial commit must succeed on machines with no git identity configured,
 # and must not consult user config that could block it (signing, hooks).
