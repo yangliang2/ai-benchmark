@@ -16,13 +16,20 @@ the unit this document is about.
    test suite green. A sweep is paid for once; an authoring mistake found
    afterwards cannot be repaired by re-running the cell, because a task ×
    agent × model cell is only ever swept once.
-2. **Predictions registered.** Every task's `construction.prediction` is
+2. **Cost range stated in list-price equivalent, estimated from tokens.** The
+   range written down before the first paid run is API unit price × expected
+   tokens (input with the cached/uncached split the account will actually see,
+   output at its rate), whatever the account is billed — a subscription login
+   changes the invoice, not the number (`CONTEXT.md`, **list-price
+   equivalent**). Round 6 missed its range 2.3× low by pricing all input as
+   uncached; the fix is in the estimate, not in the stance.
+3. **Predictions registered.** Every task's `construction.prediction` is
    committed *before* the first paid run. The run log's append-only timeline
    is the audit trail that it came first.
-3. **Name the sweep.** Pick the id now and write it down: `--sweep` has no
+4. **Name the sweep.** Pick the id now and write it down: `--sweep` has no
    default, and every invocation of this sweep — each model, each resume —
    must be given the same one. A new sweep gets a new id.
-4. **Set the per-run limits on purpose before the first paid run, and let them
+5. **Set the per-run limits on purpose before the first paid run, and let them
    differ by task class.** The default `RUN_TIMEOUT_S = 600` is a convention
    nobody calibrated: it entered the runner in #7 as one line of a generic
    "subprocess calls get timeouts" review fix and has never been re-set. For
