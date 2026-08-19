@@ -4766,6 +4766,409 @@ and each further invocation is the same line with the remaining ids and a
 fresh `--log` path, the runner refusing to append to a log that already
 exists.
 
+## Round 6 verdicts — 2026-08-18
+
+Round 6 (#86) is built and swept: the `codex` adapter (#91), the checked-in
+price table and its corrected prices (#88, #96), the captured event-stream
+anchor and the fake `codex` the live seam is tested against (#90), `--task`
+(#92), one agent's rows selected before either reader reads them (#93), the
+round's pre-registration (#94, §52), and one sweep — sweep id `round-6`, 30 of
+30 registered cells, $2.1511 at list price. The round authored no task and
+moved no knob: its whole novelty is a **second harness**, so every cell it
+swept is a cell `claude-code` had already answered and every reading below is
+a cross-agent one.
+
+**Section numbering.** #86 named §52 for this record. §52 was taken by ticket
+08's pre-registration, written before the first paid run as it had to be, so
+the record is §53–§58 — the next free numbers, which is what §52 itself says
+to expect.
+
+**What these sections are not.** Round 6 registers no knob contrast, no
+**knob activation** and no rung: its thirty tasks are declared controls or
+frozen-22 baseline members (§52.2), and one model is not a ladder, so no
+counter moves, nothing is killed or advanced, and `reconcile-v1` does not
+count the round at all — its rows are another agent's and `select_agent`
+drops them before the round list is built (§58). Nor is this a reading about
+Codex-the-harness apart from `gpt-5.6-terra`: one Codex model is one
+combination, and §57 says what follows from that rather than quoting a
+comparison the round was not authored to produce.
+
+Everything below is recomputable from the checked-in artifacts: the tables in
+§55 and §56 from the run logs' own fields plus the verdicts re-grading their
+diffs produces, the spend in §54 from those same fields, and §58's claims by
+`eval-v1 --replay`, `calibrate-v1` and `reconcile-v1`.
+`tests/test_firstparty_v1_round6_record.py` pins every figure these sections
+publish, selecting the round's runs by sweep id and never by log filename.
+
+### 53. What the round measured
+
+**The sweep.** Thirty tasks × one combination = 30 cells, all swept, none
+twice, and **the thirty are exactly the thirty §52.1 registered** — no cell
+was dropped, none was added, and nothing had to be re-run. Six `bug-fix`, six
+`fault-location`, four `code-review`, two `codebase-comprehension`, six
+`feature-dev` and six `refactor`; twelve of them round 4's locate/fix pairs,
+six from round 5, twelve frozen-22 baseline members. The combination is
+`codex` × `gpt-5.6-terra` at reasoning `medium`, the one entry in
+`CODEX_REASONING_LEVELS`, and the level rides with the model rather than with
+the operator: it is not a flag, so no invocation of this sweep could have
+asked for a different one.
+
+**One sweep id, two invocations, one harness version.** Every row carries
+sweep `round-6`, `agent: codex`, `model: gpt-5.6-terra`, as-of `2026-08-18`,
+`cost_source: table-derived` and `price_table: openai-pricing-2026-08-18.1`.
+The dry cell ran first and alone, in its own invocation — the round's
+`noticeboard-locate-the-lost-notice` cell, a real paid graded run and one of
+the thirty rather than a rehearsal — and the remaining twenty-nine followed in
+one further invocation. The version is `codex-cli 0.147.0`, captured by
+`codex --version` at the head of each invocation, and **it held across both**:
+one string on all thirty rows, so no contrast in this record crosses a harness
+version. All thirty logged a row, so none was blocked: a Codex run the harness
+ended — an approval request nothing can answer, a failed turn, an error event
+— raises and logs nothing, the exact counterpart of claude-code's
+`permission_denials` rule.
+
+**The limits in force: 600 seconds, every cell.** `bug-fix`,
+`fault-location`, `code-review` and `codebase-comprehension` are registered at
+600 in `LIVE_RUN_LIMITS_S`; `feature-dev` and `refactor` are not in that table
+and their twelve cells ran under the **flat default**, which is numerically
+the same 600 seconds and is not a registration. So the number in force was 600
+for every cell of the round, as it has been for every earlier round, and **no
+cross-round caveat arises** and none is implied. Nothing came near it: the
+round's longest run was **92.8 s** (`matcher-brace-expansion`) and its mean
+**63.0 s**, against round 5's longest of 265.2 s. No cell was clipped, so no
+verdict in this record is a timeout in disguise. The limit is handed to the
+adapter and never asked of it, which is what makes that one sentence cover a
+harness the table was written before.
+
+**Resolution: 29 of 30.** The one unresolved cell is
+`apiary-review-the-book-and-the-crop`, read in §55. Against the same thirty
+cells the ladder had already answered — 24 of 30 on `claude-haiku-4-5` and 27
+of 30 on `claude-sonnet-5` — but see §54 before reading the dollars beside
+those counts and §57 before reading anything into the harness.
+
+**The corpus after the round.** 113 tasks and **255 runs**: the 225
+`claude-code` runs the corpus had, plus 30 `codex` runs. The matrix has a
+second agent in six of six categories and in exactly one combination, and no
+cell of it was overwritten — a task × agent × model cell is swept once, and a
+Codex cell is a different cell from the claude-code one on the same task.
+
+### 54. Spend, by cost source, against the range registered before it
+
+**What the account was billed: nothing per token.** The operator's Codex is
+authenticated by ChatGPT login, not by an API key, so these thirty runs were
+not metered. Every dollar figure in this record for a Codex row is therefore a
+**list-price estimate by construction** — the row's usage breakdown priced at
+write time from `data/price-table.json`, version
+`openai-pricing-2026-08-18.1`, stamped `cost_source: table-derived` with that
+version beside it — and it is what the same work *would* have cost on the
+metered API. It is not an invoice, and "$2.1511 on Codex" must not be read as
+one.
+
+**The round, by cost source:**
+
+```
+codex x gpt-5.6-terra     $2.1511  table-derived  (list price, openai-pricing-2026-08-18.1)
+claude-code x haiku       $2.3481  vendor-reported (the same thirty cells, already logged)
+claude-code x sonnet      $6.2572  vendor-reported (the same thirty cells, already logged)
+```
+
+Per cell that is $0.0717 for Codex against $0.0783 on haiku and $0.2086 on
+sonnet. **The two figures are made differently and the difference is not a
+rounding one**: a `vendor-reported` dollar is what the vendor charged, and a
+`table-derived` dollar is this repository's arithmetic over a published price
+page. Reading them side by side is the whole point of the `cost_source` field
+and is also its whole warning — a reader who joins them without it is joining
+an estimate to a bill.
+
+Two disclosures ride with that. The claude-code rows quoted here were written
+before the field existed, so they carry **no `cost_source` at all**; they are
+`vendor-reported` by construction, because claude-code prints its own
+`total_cost_usd` and no price table is ever consulted for it, and the adapter
+now stamps the field on rows written from here on. And the field lives on the
+run-log row and not on the unified **record**: replay copies a row's
+`cost_usd` through untouched but carries neither `cost_source` nor
+`price_table` with it, which is exactly why §55's table prints the cost source
+on the column — downstream of the log, nothing else does.
+
+**The registered range was $5–10. The round came to $2.1511. It was not
+honoured**, and it missed low by a factor of 2.3 rather than narrowly. Two
+rounds in a row had held a range set before the spending (§47); this one
+breaks that, and the reason is identifiable rather than mysterious. §52.4
+built the range by substituting `gpt-5.6-terra`'s published prices into
+sonnet's spend on these same thirty cells, and it priced input as though none
+of it were cached. Round 6's thirty cells read **3,892,528 input tokens** and
+wrote **49,636 output tokens**. The output alone prices at $0.5956; the
+remaining $1.5555 over those input tokens is an effective **$0.3996 per
+million**, against the table's $2 uncached and $0.20 cached. A registration
+that had allowed for prompt caching would have landed near the answer; the one
+that was made allowed only for turn counts, and turn counts were not what
+moved.
+
+**What a hand recomputation from a row can and cannot reproduce.** A row
+carries `tokens_in`, `tokens_out`, `cost_usd` and the price table's version —
+and `tokens_in` is the input *total*. The cached, cache-write and plain split
+the figure was priced from is not on the row: it was read off the usage events
+and consumed at write time. So from a row and the named table version a reader
+can recompute the two bounds and check the figure sits between them — over the
+round, **$1.3741 all-cached and $8.3807 all-uncached, with the logged $2.1511
+between** — and cannot reproduce $2.1511 itself. That the all-uncached bound
+($8.3807) falls inside the registered $5–10 is the same observation as the
+paragraph above, arrived at from the rows instead of from the reasoning: the
+registration priced the round at its upper bound.
+
+### 55. The thirty cells under three combinations
+
+Verdict and cost for every cell, with the cost source printed on the column,
+because two of these three columns are bills and one is an estimate:
+
+```
+                                               claude-code x       claude-code x       codex x
+                                               claude-haiku-4-5    claude-sonnet-5     gpt-5.6-terra
+                                               vendor-reported     vendor-reported     table-derived
+allotments-go-back-for-what-nobody-could-read  unresolved $0.1349  resolved   $0.2559  resolved   $0.0911
+allotments-locate-the-swallowed-reading        resolved   $0.0792  resolved   $0.1448  resolved   $0.0540
+apiary-review-the-book-and-the-crop            resolved   $0.0805  unresolved $0.4236  unresolved $0.0711
+bandstand-where-the-poster-is-worded           resolved   $0.0662  resolved   $0.1428  resolved   $0.0494
+belfry-review-the-peals-and-the-board          unresolved $0.2226  resolved   $0.5119  resolved   $0.0879
+boatyard-where-a-lift-out-is-refused           resolved   $0.0664  resolved   $0.1184  resolved   $0.0420
+calc-infix-evaluator                           unresolved $0.0843  unresolved $0.1435  resolved   $0.0750
+cart-extract-coupon-policy                     resolved   $0.0526  resolved   $0.1652  resolved   $0.0748
+checkout-discount-codes                        resolved   $0.0605  resolved   $0.2159  resolved   $0.0604
+commonland-review-the-beasts-and-the-dues      resolved   $0.1063  resolved   $0.2992  resolved   $0.0790
+docstore-json-pointer                          unresolved $0.0648  resolved   $0.1976  resolved   $0.0594
+exporters-pull-up-base-class                   resolved   $0.0517  resolved   $0.1567  resolved   $0.0461
+ferry-cast-off-when-it-should                  resolved   $0.0689  resolved   $0.1950  resolved   $0.0939
+ferry-locate-the-idle-boat                     resolved   $0.0632  resolved   $0.1705  resolved   $0.0653
+gradebook-split-compute-from-format            resolved   $0.0461  resolved   $0.1307  resolved   $0.0566
+jobrunner-dependency-order                     unresolved $0.1264  resolved   $0.2247  resolved   $0.0836
+launderette-review-the-rate-and-the-card       resolved   $0.0665  resolved   $0.2262  resolved   $0.0999
+ledger-split-formatting                        resolved   $0.0551  resolved   $0.1296  resolved   $0.0450
+logparse-extract-timestamp-parsing             resolved   $0.0338  resolved   $0.1107  resolved   $0.0475
+lostproperty-locate-the-wrong-write-up         resolved   $0.0778  resolved   $0.1842  resolved   $0.0614
+lostproperty-write-up-what-happened            unresolved $0.0258  resolved   $0.2601  resolved   $0.0863
+matcher-brace-expansion                        resolved   $0.0937  resolved   $0.2487  resolved   $0.1301
+measures-merge-duplicate-converters            resolved   $0.0564  resolved   $0.1692  resolved   $0.0609
+microtemplate-for-loops                        resolved   $0.1075  resolved   $0.2745  resolved   $0.0647
+noticeboard-locate-the-lost-notice             resolved   $0.0646  resolved   $0.1642  resolved   $0.0567
+noticeboard-show-every-notice                  resolved   $0.0693  resolved   $0.1834  resolved   $0.0790
+paperround-count-each-walk-on-its-own          resolved   $0.0635  resolved   $0.1881  resolved   $0.1079
+paperround-locate-the-carried-over-count       resolved   $0.0550  unresolved $0.2875  resolved   $0.0635
+postoffice-charge-what-the-scale-said          resolved   $0.1205  resolved   $0.1944  resolved   $0.0892
+postoffice-locate-the-wrong-band               resolved   $0.0839  resolved   $0.1402  resolved   $0.0695
+```
+
+**Read the columns down, not across, until §57 has been read.** What this
+table is for is the per-cell record: every cell of the round, its verdict and
+what it cost, with nothing averaged and nothing dropped. Unresolved runs are
+priced in exactly like resolved ones — a failed run still spent its dollars,
+which is the calibration view's rule and this table's too.
+
+The per-category sample, beside it rather than above it, because two of the
+six categories are sampled at four cells and two, and a rate over two cells is
+not a rate:
+
+```
+category                 n  claude-haiku-4-5   claude-sonnet-5    gpt-5.6-terra
+bug-fix                  6  4/6  $0.4830       6/6  $1.2768       6/6  $0.5473
+code-review              4  3/4  $0.4760       3/4  $1.4609       3/4  $0.3380
+codebase-comprehension   2  2/2  $0.1326       2/2  $0.2612       2/2  $0.0914
+fault-location           6  6/6  $0.4236       5/6  $1.0914       6/6  $0.3704
+feature-dev              6  3/6  $0.5372       5/6  $1.3049       6/6  $0.4732
+refactor                 6  6/6  $0.2957       6/6  $0.8621       6/6  $0.3309
+all six                 30  24/30  $2.3481     27/30  $6.2572     29/30  $2.1511
+```
+
+Costs are as the columns above declare them: the two claude-code columns are
+vendor-reported bills and the `gpt-5.6-terra` column is a list-price estimate.
+The counts are verdicts and carry no such caveat — grading is one pipeline and
+does not know which harness produced a diff.
+
+**The one cell that did not resolve, and what it replicates.**
+`apiary-review-the-book-and-the-crop`, the cell round 5's sonnet also failed
+(§50) — and it failed it the same way, at the same location, on the same
+argument. Codex named all three planted findings at their **primary**
+locations, and then two more: `harvest.py Book.off_hive`, which is unlisted
+and was archived unscored, and `keepers.py Roll.keeping`, which the key
+registers as a **rejected finding**. Its note argues that `Roll.keeping`
+matches a hive mark with plain equality where the house rule says a mark is
+matched however it was written down — which is, to the sentence, the argument
+§50 recorded sonnet making, filed against the same two locations. §50 read
+that as a fact about the key's description levels rather than about the model,
+and hedged it as a reading from one round. **A second harness and a different
+vendor's model, given the same repository, filed the identical pair of extra
+findings** — which is the strongest evidence the corpus has that what the
+rejected half caught there is a property of the task rather than of one
+model, and it costs nothing to obtain because the cell was swept anyway.
+
+Across the four review cells Codex reported 16 findings: 13 matched a planted
+one, all 13 at its primary; one matched a rejected one; two were unlisted and
+archived. The twelve planted findings of the four keys were **all covered** —
+the 13th accepted answer is `washes.py Book.owed` written twice in
+`launderette`'s answer file, a duplicate that costs nothing because the
+verdict asks whether a set covers another and not how many times. On `belfry`
+Codex filed `peals.py Book.rung_by`, the unlisted near-miss §50 recorded
+*both* claude models filing on that repository; three combinations across two
+harnesses have now argued that location, which is the second thing this round
+says about a key rather than about a model.
+
+### 56. Locating against fixing, with a second harness beside the ladder
+
+Round 4's headline (§40) was locate-relative-to-fix per defect, over six
+planted defects each authored twice against one byte-identical starting
+repository. All twelve of those cells are in this round, so the reading now
+has a harness dimension. Read locate-relative-to-fix, within one combination,
+both actions each:
+
+```
+defect           haiku cost  haiku turns  sonnet cost sonnet turns   codex cost  codex turns
+allotments           0.59x*       0.69x*        0.57x        0.54x        0.59x        0.50x
+ferry                 0.92x        0.78x        0.87x        0.89x        0.70x        0.54x
+lostproperty         3.01x*      10.00x*        0.71x        0.67x        0.71x        0.82x
+noticeboard           0.93x        0.89x        0.90x        0.89x        0.72x        0.64x
+paperround            0.87x        0.75x       1.53x*       1.22x*        0.59x        0.47x
+postoffice            0.70x        0.67x        0.72x        0.64x        0.78x        0.73x
+```
+
+`*` marks a pair one of whose two cells did not resolve. The haiku and sonnet
+columns are §40's, unchanged and recomputed here from the same rows.
+
+**The reading: locating cost less than fixing, in all six pairs, on the third
+combination as on the first two.** Codex resolved all twelve cells, so all six
+pairs are both-resolved — the first combination for which that is true —
+giving **0.59×–0.78× on cost, median 0.70×**, and 0.47×–0.82× on turns, median
+0.59×. Against haiku's four both-resolved pairs (0.70×–0.93×, median 0.89×)
+and sonnet's five (0.57×–0.90×, median 0.72×). No pair on any of the three
+reached parity where both its cells resolved, and the direction is the same
+everywhere.
+
+**What that adds, and what it does not.** §40's finding was one agent's; it
+now survives a change of harness *and* of vendor, on the same six
+repositories, which is the one thing this round could add to it cheaply. It
+adds no generality about the action: it is still six hand-authored
+single-file repositories with one authoring hand behind them, and a third
+combination agreeing about the same six defects is not a seventh defect.
+
+Two cautions, and the second is the one that matters. The cost ratios are
+each taken inside one column, so no list-price dollar is ever divided by a
+vendor-reported one — a ratio of two Codex cells is a ratio of two estimates
+made the same way, which is sound in a way that Codex-over-sonnet would not
+be. The **turn** ratios are weaker still: a turn is harness-defined (§57), so
+a Codex turn ratio and a claude-code turn ratio are two different quantities
+that agree in direction, and the agreement is worth no more than that. Turn
+counts here are small integers, so one turn moves a ratio by more than a
+tenth — the quantisation §40 already refused to bet on.
+
+### 57. What this round cannot say
+
+**No rung.** A rung is a claim about the cheapest model that solved something,
+and rungs come from a ladder. Round 6 ran **one** Codex model, so it registers
+no rung for any of its thirty tasks, moves nothing in the corpus's rung census
+and leaves `reconcile-v1`'s ladder reading exactly where round 5 left it. What
+`gpt-5.6-terra` would have cost at another reasoning level, or what a cheaper
+Codex model would have done, is not in these logs at any price.
+
+**No multiplier, and no Codex baseline.** The calibration view's multiplier is
+a constructed task's cost over its category's control mean *for that agent*,
+and there is no Codex denominator: thirty cells over six categories is between
+two and six cells a category, all of them controls or frozen-22 members, and
+none of them a constructed task. Nothing here is a Codex baseline and nothing
+here should be divided by anything to make one. The published tables stay
+claude-code's, which §58 shows they did.
+
+**No cross-harness turn comparison.** A turn is defined by the harness that
+counted it. A claude-code turn is the `num_turns` its result JSON reports; a
+Codex turn is one **completed item of the event stream that is not a reasoning
+item** (`agents._NOT_A_TURN`), so a tool call, a shell command and a message
+each count as one. Round 6's Codex cells ran 6–15 of those, 248 in all. Those
+are not the same unit, and this record quotes no comparison between them: the
+turn ratios in §56 are each taken inside one harness for exactly that reason.
+
+**No claim about the harness apart from the model.** `codex` × `gpt-5.6-terra`
+@ `medium` is one combination, and a combination is what this project
+measures. Nothing here separates what the scaffold did from what the model
+did, so "Codex resolved 29 of 30" is shorthand for that combination and not a
+statement about `codex exec` driving anything else.
+
+**The round's expensive assumption, and how it held.** Everything above rests
+on the two harnesses having been asked the *same thing*, so that what differs
+between the columns is the thing under test — their own system prompts and
+tool sets — and not something the runner introduced. An unequal condition on
+the runner's side would invalidate the reading rather than weaken it: a
+sandbox prompt eating part of a limit, a permission stance that stops one
+harness and not the other, the operator's own config leaking into one side.
+Five things are held equal, and each is held in the runner rather than in the
+adapter:
+
+- **the same prompt bytes** — `run_live` hands `task.prompt` to whichever
+  adapter it resolved, and the Codex seam asserts that the last argv element
+  *is* that task's prompt;
+- **the same starting repository** — the workdir copy, the pristine commit and
+  the diff capture are the runner's, and the adapter is handed a prepared
+  directory it did not make;
+- **the same limit** — `live_run_limit_s(task)`, keyed on the task's class,
+  handed to the adapter and never asked of it, with a test that no caller can
+  pass one;
+- **the same grant** — `--dangerously-bypass-approvals-and-sandbox` against
+  claude-code's `--permission-mode bypassPermissions`, plus
+  `--ignore-user-config` against `--setting-sources ""`, so neither run reads
+  the operator's configuration;
+- **the same grading** — one pipeline over the diff, with a test that the same
+  bytes from either harness grade to the same verdict.
+
+**What stands against the failure mode is the live seam's argv assertions**
+(`tests/test_firstparty_v1_codex_adapter.py`), which pin the exact command a
+Codex run is made with — the registered model and reasoning level, the grant,
+the two config-isolation flags, the prompt last and positional, and the
+absence of `-s`, `--sandbox` and `--approve-for-me`. A drift in any of them is
+a test failure before it is a reading. What none of that can check is the one
+difference that is the variable itself: the two harnesses' own system prompts
+and tool sets are not this project's to hold equal, and holding them equal
+would leave nothing to measure.
+
+### 58. Replay, and the published tables left where they were
+
+Both round-6 logs were replayed, one command per log, each into a scratch
+`--data` path rather than the checked-in dataset:
+
+```
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-18-r6-a.jsonl --data /tmp/r6replay/a.jsonl
+  evaluated 1 runs over 113 tasks (1 resolved)
+  merged 1 records into /tmp/r6replay/a.jsonl (1 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-18-r6-b.jsonl --data /tmp/r6replay/b.jsonl
+  evaluated 29 runs over 113 tasks (28 resolved)
+  merged 29 records into /tmp/r6replay/b.jsonl (29 total)
+```
+
+30 runs, 29 resolved, matching §55's column cell for cell. The two logs into
+one shared `--data` path merge to 30 records, and the two per-log datasets
+concatenated are identical to that merged corpus record for record — no row
+missing, none duplicated, no field differing — with every record carrying its
+log row's own measurements unchanged, because replay reads the log and never
+re-runs the agent. That a Codex diff re-grades through the same pipeline is
+not a new claim of this round; that every Codex row of it does, is.
+
+**`calibrate-v1` and `reconcile-v1` print for `claude-code` exactly what they
+printed before the round.** Both readers select one agent's rows before
+anything else runs, defaulting to `claude-code` (#93), so the thirty Codex
+rows are read out of the log directory and then dropped, and every published
+number is computed over the same 225 rows as before. `reconcile-v1` says so in
+its own header:
+
+```
+  runs       225 over 113 task(s)
+  rounds     6 round(s): as-of 2026-08-04, as-of 2026-08-05, sweep round-2, sweep round-3, sweep round-4, sweep round-5
+```
+
+Six rounds, not seven: round 6 is not in that list, because a round list built
+from `claude-code`'s rows cannot contain a round that swept none. And
+`calibrate-v1` prints §39's and §48's rows unchanged — round 3's multipliers,
+round 4's `bug-fix` and `fault-location` baselines and round 5's
+`code-review` and `codebase-comprehension` ones, every figure where §§39, 48
+and 31 left it — over a log directory whose provenance list now names
+`2026-08-18-r6-a.jsonl` and `2026-08-18-r6-b.jsonl`. The Codex rows are
+visibly *read* and provably *not counted*, which is a stronger statement than
+their being absent would have been, and the one the suite pins.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
