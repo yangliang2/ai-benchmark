@@ -277,12 +277,17 @@ def test_every_registered_cell_already_carries_both_ladder_rows(
             assert row is not None, f"{task_id} has no {agent} x {model} row"
             assert row.as_of <= _REGISTERED_ON, task_id
 
-    # And nothing of the round's own combination is logged yet: this ticket
-    # ran no sweep, so a `codex` row anywhere would mean one was run.
-    assert not [
-        key for key in rows if key[1] == _AGENT
-    ], "no Codex row is checked in; ticket 08 runs no sweep"
-    assert not [run for run in rows.values() if run.sweep == _SWEEP]
+    # The round's own combination: before the sweep this asserted that no
+    # `codex` row existed anywhere (ticket 08 ran no sweep). The sweep is on
+    # main now (§53), so the post-sweep invariant is the one that holds from
+    # here on — every registered cell carries exactly one codex row, and every
+    # codex row carries the round's sweep id; a codex row on a task outside the
+    # register would mean a cell was swept that was never registered.
+    codex_rows = {key: run for key, run in rows.items() if key[1] == _AGENT}
+    assert {key[0] for key in codex_rows} == set(registered_ids()), (
+        "codex rows exist exactly for the thirty registered cells"
+    )
+    assert all(run.sweep == _SWEEP for run in codex_rows.values())
 
 
 def test_the_sample_is_the_first_n_by_id_of_each_categorys_control_pool(

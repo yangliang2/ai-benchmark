@@ -2343,10 +2343,14 @@ def test_reconcile_v1_counts_the_same_checked_in_rounds_with_codex_rows_present(
     codex log dropped in beside them.
     """
     tasks_root = _REPO / "tasks" / "first-party-v1"
+    # Derived from the claude-code rows only: the checked-in directory holds
+    # codex rows since round 6's sweep (§53), and the reader's unflagged default
+    # reads claude-code alone — which is exactly the claim under test.
     checked_in = [
         run
         for log in reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
         for run in firstparty_v1.load_runs(log)
+        if run.agent == "claude-code"
     ]
     rounds = sorted(
         reconcile_v1.rounds_by_key(checked_in).values(),
