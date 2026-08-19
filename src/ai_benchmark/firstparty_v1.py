@@ -2146,6 +2146,8 @@ def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
     no tasks reads as `0` rather than as an omission. `scale` and substrate
     are disclosed on a task but not gridded here (design note 45.10).
     """
+    # There is no undeclared-language column: the loader now refuses a task
+    # that declares none, so no input reaches this grid without a language.
     counts: Counter[tuple[str, str, str]] = Counter(
         (task.category, task.surface, task.language) for task in tasks
     )
