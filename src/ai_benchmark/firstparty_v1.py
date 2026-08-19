@@ -140,6 +140,7 @@ from ai_benchmark.firstparty import (
     local_today,
 )
 from ai_benchmark.language_runners import (
+    PYTHON,
     LanguageRunner,
     SourceUnreadable,
     runner_for,
@@ -793,17 +794,57 @@ class Task(BaseModel):
         return self.directory / PROOFS_DIR
 
     @property
-    def grading_test_paths(self) -> tuple[str, ...]:
-        """Every grading test, relative to the workdir it is overlaid into.
+    def harness_test_paths(self) -> tuple[str, ...]:
+        """The harness-side half of the suite: the canonical Python checks.
 
-        Found by the runner's glob rather than by a pytest name written here:
-        which files are this task's held-out tests is a question about the
-        language that grades it.
+        The answer-key test, the findings-key test and the generated hash gate
+        read JSON and file digests out of the workdir and never the
+        repository's language. They ship byte for byte into any task's grading
+        directory and are run by pytest, which is the harness's own dependency
+        and not the task's — so a TypeScript task's grading directory holds
+        canonical Python beside its own held-out tests, and this half is found
+        by the *Python* runner's glob whatever the task declares.
         """
+        return self._grading_tests_matching(PYTHON.grading_test_glob)
+
+    @property
+    def language_test_paths(self) -> tuple[str, ...]:
+        """The task's own held-out tests, found by its runner's glob rather
+        than by a pytest name written here: which files these are is a question
+        about the language that grades it."""
+        return self._grading_tests_matching(self.runner.grading_test_glob)
+
+    @property
+    def grading_test_paths(self) -> tuple[str, ...]:
+        """Every grading test the verdict reads, relative to the workdir it is
+        overlaid into: both halves, and for a Python task the one set twice."""
+        return tuple(sorted(set(self.harness_test_paths) | set(self.language_test_paths)))
+
+    @property
+    def grading_halves(self) -> tuple[tuple[LanguageRunner, tuple[str, ...]], ...]:
+        """Each half present, with the runner that runs it.
+
+        A task's verdict is "every half present passes": the harness-side pytest
+        checks under pytest, the task's own held-out tests under its declared
+        runner, and a half with no files in it is not run at all rather than run
+        empty — an empty invocation collects nothing, and "no tests ran" is how
+        every runner here spells unresolved. A Python task's two halves are the
+        same files run by the same runner, so it keeps exactly one.
+        """
+        halves: list[tuple[LanguageRunner, tuple[str, ...]]] = []
+        for runner, paths in (
+            (PYTHON, self.harness_test_paths),
+            (self.runner, self.language_test_paths),
+        ):
+            if paths and not any(seen is runner for seen, _ in halves):
+                halves.append((runner, paths))
+        return tuple(halves)
+
+    def _grading_tests_matching(self, glob: str) -> tuple[str, ...]:
         return tuple(
             sorted(
                 str(path.relative_to(self.grading_dir))
-                for path in self.grading_dir.rglob(self.runner.grading_test_glob)
+                for path in self.grading_dir.rglob(glob)
             )
         )
 
@@ -1682,8 +1723,9 @@ def _check_task_layout(task: Task) -> None:
         )
     if not task.grading_test_paths:
         raise IngestError(
-            f"{task.id}: {GRADING_DIR}/ holds no test_*.py — a v1 task is graded "
-            "by running held-out tests"
+            f"{task.id}: {GRADING_DIR}/ holds no {PYTHON.grading_test_glob} and no "
+            f"{task.runner.grading_test_glob} — a v1 task is graded by running "
+            "held-out tests, and neither half of the suite is there"
         )
     missing = sorted(set(task.behaviour_test_paths) - set(task.grading_test_paths))
     if missing:
@@ -1799,15 +1841,36 @@ def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
     unresolved, but a deliberately adversarial diff can still forge a pass
     from inside that process (see the module docstring). A diff git cannot
     apply is not a verdict at all — it is a broken run log, and fails loudly.
+    A task's verdict is *every half present passes*: the harness-side pytest
+    checks and the task's own held-out tests are both grading tests, run by the
+    runner each belongs to, and a task resolves only if every half it has
+    passes and at least one test ran overall. For a Python task the two halves
+    are the same files under the same runner, and there is only ever one.
     """
-    return _run_grading(task, diff, task.grading_test_paths, timeout_s=timeout_s)
+    return _run_halves(task, diff, task.grading_halves, timeout_s=timeout_s)
 
 
 def _run_grading(
     task: Task, diff: str, targets: Sequence[str], *, timeout_s: int
 ) -> bool:
-    """Build the throwaway tree a verdict is read from, and hand it to the
-    task's own language runner.
+    """One named slice of a task's grading suite, run by the task's own runner.
+
+    What a caller reaches for when the question is about *part* of the suite —
+    the behaviour half of a refactor task, an existence proof's own test — and
+    never what `grade` uses, because a verdict is every half of the whole.
+    """
+    return _run_halves(task, diff, ((task.runner, tuple(targets)),), timeout_s=timeout_s)
+
+
+def _run_halves(
+    task: Task,
+    diff: str,
+    halves: Sequence[tuple[LanguageRunner, Sequence[str]]],
+    *,
+    timeout_s: int,
+) -> bool:
+    """Build the throwaway tree a verdict is read from, and hand each half of
+    the suite to the runner that runs it.
 
     The division is the seam's: everything here — the root, the workdir
     beneath it, the copy of `repo/`, the applied diff, the overlay of
@@ -1815,9 +1878,16 @@ def _run_grading(
     grades the tests. How those tests are invoked and how their verdict is
     read back is the runner's, and is reached through the task's declaration
     rather than by name.
+
+    A suite with no halves at all is unresolved rather than vacuously true:
+    nothing ran, so nothing was verified.
     """
-    runner = task.runner
-    runner.require_toolchain()
+    if not halves:
+        return False
+    # Before the tree is built and before anything runs: a verdict must never
+    # be a toolchain artefact, and a task graded by two runners needs both.
+    for runner, _ in halves:
+        runner.require_toolchain()
     with tempfile.TemporaryDirectory(prefix="ai-bench-grade-") as name:
         # Everything the grader relies on sits beside the workdir rather than
         # in it: a diff can only write inside the workdir, so it cannot reach
@@ -1830,7 +1900,10 @@ def _run_grading(
         # Canonical last: whatever the agent wrote at a grading file's path is
         # overwritten, so the graded tests are always the held-out ones.
         shutil.copytree(task.grading_dir, workdir, dirs_exist_ok=True)
-        return runner.run_tests(root, workdir, targets, timeout_s=timeout_s)
+        return all(
+            runner.run_tests(root, workdir, targets, timeout_s=timeout_s)
+            for runner, targets in halves
+        )
 
 
 def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
@@ -2010,7 +2083,8 @@ def lint_task_set(
             problems.extend(
                 _existence_proof_problems(task, tasks, timeout_s=timeout_s)
             )
-        if _run_grading(task, "", task.grading_test_paths, timeout_s=timeout_s):
+        # The whole suite, every half of it, exactly as a run is graded.
+        if grade(task, "", timeout_s=timeout_s):
             problems.append(
                 f"{task.id}: the grading tests already pass on the pristine repo — "
                 "there is nothing left for an agent to do"
@@ -3702,7 +3776,7 @@ def _partner_pristine_failure(
             f"Author the partner beside it, sharing {REPO_DIR}/ byte for byte"
         )]
     partner = partners[0]
-    if _run_grading(partner, "", partner.grading_test_paths, timeout_s=timeout_s):
+    if grade(partner, "", timeout_s=timeout_s):
         return [(
             f"{task.id}: its existence proof is {partner.id}, whose held-out "
             "tests pass on the starting repository the two share — so the "

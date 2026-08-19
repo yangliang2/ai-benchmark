@@ -22,6 +22,7 @@ from ai_benchmark.firstparty_v1 import GRADE_TIMEOUT_S, grade, load_task_set
 from ai_benchmark.language_runners import (
     PYTHON,
     RUNNERS,
+    TYPESCRIPT,
     LanguageRunner,
     SourceUnreadable,
     runner_for,
@@ -31,12 +32,14 @@ FEATURE_SEED = "wordcount-top-words"
 
 
 def test_the_registry_holds_exactly_the_languages_with_a_runner() -> None:
-    """One entry today. A second language is a second entry here, and this
-    test is what makes adding one a deliberate act rather than a side effect
-    of some other change."""
-    assert set(RUNNERS) == {"python"}
+    """Two entries. A third language is a third entry here, and this test is
+    what makes adding one a deliberate act rather than a side effect of some
+    other change."""
+    assert set(RUNNERS) == {"python", "typescript"}
     assert RUNNERS["python"] is PYTHON
     assert PYTHON.language == "python"
+    assert RUNNERS["typescript"] is TYPESCRIPT
+    assert TYPESCRIPT.language == "typescript"
     assert all(isinstance(runner, LanguageRunner) for runner in RUNNERS.values())
 
 
@@ -55,16 +58,20 @@ def test_a_task_selects_its_runner_by_its_own_declaration() -> None:
 
 
 def test_every_checked_in_task_has_a_registered_runner() -> None:
+    """And the one its own declaration names — the registry is reached through
+    the task and never around it."""
     for task in load_task_set(TASKS):
-        assert task.runner is PYTHON
+        assert task.runner is RUNNERS[task.language or PYTHON.language]
 
 
 def test_an_unregistered_language_has_no_runner_to_grade_it() -> None:
     """Refusing it *at load*, with the registered languages named, is the
     loader's ticket; what the registry owes today is that no unregistered
-    language is silently graded as Python."""
-    with pytest.raises(IngestError, match="typescript"):
-        runner_for("typescript")
+    language is silently graded as Python. `typescript` was this test's example
+    until round 7 registered it — which is the point: a language is graded when
+    it has a runner and refused when it has none."""
+    with pytest.raises(IngestError, match="rust"):
+        runner_for("rust")
 
 
 def test_the_seam_answers_the_six_responsibilities() -> None:
