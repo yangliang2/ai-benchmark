@@ -2924,6 +2924,11 @@ def _declared_digests(source: str) -> dict[str, str] | None:
     Read out of the shipped file rather than restated, because the shipped file
     is what grading runs: a check against a table this module reconstructed
     would prove the reconstruction and not the gate.
+
+    Parsed as Python, and that is not the task's language leaking in: the gate is
+    canonical Python this project generates and pytest runs, shipped into every
+    keyed task's grading directory whatever language the repository it hashes is
+    written in (`harness_test_paths`).
     """
     try:
         module = ast.parse(source)
@@ -3269,7 +3274,7 @@ def _repo_lines(task: Task) -> list[tuple[str, str, int, str]]:
     """
     lines: list[tuple[str, str, int, str]] = []
     for path in sorted(task.repo_dir.glob(task.runner.source_glob)):
-        module = path.stem.removeprefix("test_")
+        module = _module_a_file_is_part_of(path.name, task.runner.visible_test_glob)
         try:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
@@ -3277,6 +3282,23 @@ def _repo_lines(task: Task) -> list[tuple[str, str, int, str]]:
         for number, line in enumerate(text.splitlines(), start=1):
             lines.append((module, path.name, number, line.lower()))
     return lines
+
+
+def _module_a_file_is_part_of(name: str, test_glob: str) -> str:
+    """Which module of the starting repository this file belongs to.
+
+    A test file belongs to the module it tests, and which files those are is the
+    runner's own spelling of a test rather than a `test_` prefix written here:
+    `test_paging.py` under pytest and `paging.test.ts` under `node --test` are
+    one convention read twice, and a rule that knew only the first would file
+    every TypeScript test under a module of its own — where a prompt word found
+    in a test alone would narrow to nothing rather than to the module the test
+    is about, which is the direction that lets grep bait through.
+    """
+    prefix, _, suffix = test_glob.partition("*")
+    if name.startswith(prefix) and name.endswith(suffix):
+        return name[len(prefix) : len(name) - len(suffix)]
+    return Path(name).stem
 
 
 def _key_locations_the_prompt_names(
@@ -4043,7 +4065,7 @@ def _proof_test_per_planted_finding(
     proved: dict[str, tuple[str, str]] = {}
     for finding in key.accepted:
         planted = (finding.primary.file, finding.primary.symbol)
-        name = proof_test_name(finding)
+        name = proof_test_name(finding, task.runner)
         if name in proved:
             problems.append(
                 f"{task.id}: the planted findings {proved[name]} and {planted} "
@@ -4144,7 +4166,7 @@ EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
 _NOT_IN_A_MODULE_NAME = re.compile(r"[^0-9A-Za-z]+")
 
 
-def proof_test_name(finding: PlantedFinding) -> str:
+def proof_test_name(finding: PlantedFinding, runner: LanguageRunner) -> str:
     """The proof test a planted finding is proved by, by name.
 
     Derived from the finding rather than declared in the key, so that a proof
@@ -4159,10 +4181,18 @@ def proof_test_name(finding: PlantedFinding) -> str:
     proof, not one per alternative; and naming it after the most specific
     location is what keeps a proof file's name readable as the thing it
     demonstrates. Adding an alternative to a finding therefore renames nothing.
+
+    What kind of file that name is is the runner's, and is the very glob its
+    held-out tests are found by (responsibility 3) with the finding's name in
+    place of the `*`: a proof test is a test of the task's own language — the
+    lint runs it through that runner against two trees — so `test_x.py` under
+    pytest and `x.test.ts` under `node --test` are one rule read twice, and a
+    `.py` proof beside a TypeScript task would be a file its runner could not
+    run at all.
     """
     primary = finding.primary
     slug = _NOT_IN_A_MODULE_NAME.sub("_", f"{primary.file}_{primary.symbol}")
-    return f"test_{slug.strip('_')}.py"
+    return runner.grading_test_glob.replace("*", slug.strip("_"))
 
 
 def _proof_test_passes(

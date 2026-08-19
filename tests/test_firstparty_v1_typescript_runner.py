@@ -540,18 +540,16 @@ def test_the_starting_repository_naming_invariant_has_no_typescript_analogue(
     assert resolved(task, solve) == 1.0
 
 
-def test_the_source_primitives_say_whose_ticket_they_are() -> None:
-    """Responsibility 6 is the lint's half of the seam and lands with ticket 04
-    (#101). Raising here rather than returning something empty is what keeps
-    that visible: an empty symbol set would read as a key naming a symbol the
-    file does not define."""
-    for call in (
-        lambda: TYPESCRIPT.loads("export const x = 1;\n"),
-        lambda: TYPESCRIPT.defined_symbols("export const x = 1;\n"),
-        lambda: TYPESCRIPT.defined_classes("export class Basket {}\n"),
-    ):
-        with pytest.raises(NotImplementedError, match="#101"):
-            call()
+def test_the_source_primitives_are_answered_by_the_declaration_scan() -> None:
+    """Responsibility 6 is the lint's half of the seam and landed with ticket 04
+    (#101): the runner reads a file's declarations rather than refusing to. What
+    that reading is — a method both qualified and bare, a class at the file's own
+    top level, a file the scan cannot get through — is
+    `tests/test_firstparty_v1_typescript_instruments.py`'s, beside the lint
+    instruments that ask for it."""
+    assert TYPESCRIPT.loads("export const x = 1;\n")
+    assert TYPESCRIPT.defined_symbols("export const x = 1;\n") == {"x"}
+    assert TYPESCRIPT.defined_classes("export class Basket {}\n") == {"Basket"}
 
 
 def test_the_runner_kills_the_whole_session_it_started(tmp_path: Path) -> None:

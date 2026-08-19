@@ -298,7 +298,7 @@ def test_each_planted_finding_is_proved_in_both_directions(tmp_path: Path) -> No
     task = review_fixture(tmp_path)
 
     for finding in findings_key(task).accepted:
-        proof = task.proofs_dir / proof_test_name(finding)
+        proof = task.proofs_dir / proof_test_name(finding, task.runner)
         assert proof.is_file(), finding
         assert not _proof_test_passes(
             task.repo_dir,
@@ -401,7 +401,7 @@ def test_a_finding_with_two_alternatives_owes_one_proof_and_not_two(
     both = findings_key(task).accepted[1]
 
     assert len(both.any) == 2
-    assert proof_test_name(both) == "test_shifts_py_Rota_add.py"
+    assert proof_test_name(both, task.runner) == "test_shifts_py_Rota_add.py"
     assert sorted(path.name for path in task.proofs_dir.iterdir()) == sorted(PROOFS)
     assert _existence_proof_problems(task, [task], timeout_s=GRADE_TIMEOUT_S) == []
 

@@ -96,6 +96,7 @@ from ai_benchmark.firstparty_v1 import (
     REVIEW_DIFF_FILE,
     Task,
 )
+from ai_benchmark.language_runners import PYTHON
 
 FIXTURE_ID = "rota-review-the-overtime-change"
 
@@ -383,7 +384,7 @@ def test_a_stretch_starting_too_soon_after_the_last_one_ended_is_refused():
 # owes one proof, not one for the method and another for the class enclosing it.
 PROOFS: dict[str, str] = {
     proof_test_name(
-        PlantedFinding(any=(Answer(file="payroll.py", symbol="overtime_pay"),))
+        PlantedFinding(any=(Answer(file="payroll.py", symbol="overtime_pay"),)), PYTHON
     ): OVERTIME_PROOF,
     proof_test_name(
         PlantedFinding(
@@ -391,7 +392,8 @@ PROOFS: dict[str, str] = {
                 Answer(file="shifts.py", symbol="Rota.add"),
                 Answer(file="shifts.py", symbol="Rota"),
             )
-        )
+        ),
+        PYTHON,
     ): REST_PROOF,
 }
 

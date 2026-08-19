@@ -297,7 +297,7 @@ def test_each_proof_test_fails_as_shipped_and_passes_once_corrected(
 ) -> None:
     key = findings_key(task())
     [this] = [f for f in key.accepted if (f.primary.file, f.primary.symbol) == planted]
-    proof = task().directory / PROOFS_DIR / proof_test_name(this)
+    proof = task().directory / PROOFS_DIR / proof_test_name(this, task().runner)
 
     assert proof.is_file(), proof
     assert not _proof_test_passes(
@@ -448,5 +448,5 @@ def test_the_task_directory_has_the_shape_the_first_one_landed() -> None:
     assert not (d / "grading" / CORRECTED_DIR).exists()
     assert not (d / "grading" / PROOFS_DIR).exists()
     assert sorted(p.name for p in (d / PROOFS_DIR).iterdir()) == sorted(
-        proof_test_name(f) for f in findings_key(task()).accepted
+        proof_test_name(f, task().runner) for f in findings_key(task()).accepted
     )
