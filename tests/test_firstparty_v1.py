@@ -517,17 +517,21 @@ def test_coverage_table_counts_category_x_surface_x_language(tmp_path: Path) -> 
     two = clone_seed(tmp_path, FEATURE_SEED, "cov-two")
     retitle(two, id="cov-two", category="bug-fix")
 
-    three = clone_seed(tmp_path, FEATURE_SEED, "cov-three")
-    retitle(
-        three, id="cov-three", category="bug-fix",
-        surface="infrastructure", language="typescript",
-    )
-
     four = clone_seed(tmp_path, FEATURE_SEED, "cov-four")
     retitle(four, id="cov-four", category="codebase-comprehension")
     undeclare(four, "language")
 
-    tasks = load_task_set(tmp_path)
+    loaded = load_task_set(tmp_path)
+    # A second language, declared rather than loaded: the loader reaches a
+    # task's language runner at load time (its test glob, its naming
+    # invariant), so a language with no registered runner cannot be loaded
+    # from disk — which is what the coverage table should count nonetheless,
+    # since it reads declarations. Built by copying a loaded task with the
+    # fields changed; `model_copy` does not re-validate and that is the point.
+    three = next(task for task in loaded if task.id == "cov-two").model_copy(
+        update={"id": "cov-three", "surface": "infrastructure", "language": "typescript"}
+    )
+    tasks = [*loaded, three]
 
     assert coverage_table(tasks) == [
         ("bug-fix", "application", "python", 1),

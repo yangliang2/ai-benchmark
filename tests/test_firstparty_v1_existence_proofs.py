@@ -301,10 +301,16 @@ def test_each_planted_finding_is_proved_in_both_directions(tmp_path: Path) -> No
         proof = task.proofs_dir / proof_test_name(finding)
         assert proof.is_file(), finding
         assert not _proof_test_passes(
-            task.repo_dir, proof, timeout_s=GRADE_TIMEOUT_S
+            task.repo_dir,
+            proof,
+            runner=task.runner,
+            timeout_s=GRADE_TIMEOUT_S,
         ), finding
         assert _proof_test_passes(
-            task.corrected_dir, proof, timeout_s=GRADE_TIMEOUT_S
+            task.corrected_dir,
+            proof,
+            runner=task.runner,
+            timeout_s=GRADE_TIMEOUT_S,
         ), finding
     assert lint_task_set([task]) == []
 

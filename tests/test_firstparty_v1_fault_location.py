@@ -55,8 +55,6 @@ from ai_benchmark.firstparty_v1 import (
     Task,
     _capture_workdir_diff,
     _commit_pristine,
-    _defined_classes,
-    _defined_symbols,
     _hash_gate_problems,
     _load_task,
     _repo_file,
@@ -73,6 +71,7 @@ from ai_benchmark.firstparty_v1 import (
     load_task_set,
     write_hash_gates,
 )
+from ai_benchmark.language_runners import PYTHON
 
 FIXTURE_ID = "pricing-locate-the-rounding-fault"
 
@@ -761,7 +760,7 @@ def test_lint_refuses_a_bare_method_name_where_a_qualified_spelling_exists(
     `total_with_tax` grade 1.0 while the most natural qualified spelling an
     agent could give, `Basket.total_with_tax`, grades 0.0 — and the
     near-miss the lint synthesises never surfaces it, because a symbol that
-    already matches an accepted one is never a candidate. `_defined_symbols`
+    already matches an accepted one is never a candidate. `PYTHON.defined_symbols`
     yields both the bare and the qualified form for a nested definition, so
     the lint can tell the qualified spelling exists and require it."""
     task = fixture_task(
@@ -1503,7 +1502,7 @@ def test_an_accepted_class_chosen_from_several_lints_clean(tmp_path: Path) -> No
     task = fixture_task(tmp_path)
 
     assert Answer(file="pricing.py", symbol="Basket") in answer_key(task).accepted
-    assert _defined_classes(PRICING) == {"Basket", "Coupon"}
+    assert PYTHON.defined_classes(PRICING) == {"Basket", "Coupon"}
     assert linted(task) == []
 
 
@@ -1806,7 +1805,7 @@ def test_every_other_keyed_task_in_the_corpus_ships_a_gate() -> None:
 
 
 def test_defined_symbols_finds_a_definition_guarded_by_an_if_or_try() -> None:
-    """Guards the `else: walk(child, prefix)` branch of `_defined_symbols`: a
+    """Guards the `else: walk(child, prefix)` branch of `PYTHON.defined_symbols`: a
     `def` inside an `if` or `try` is still defined at its enclosing scope, and
     the walk has to keep descending into every node, not only into the
     definitions it has already found, or a conditionally-defined symbol
@@ -1820,7 +1819,7 @@ def test_defined_symbols_finds_a_definition_guarded_by_an_if_or_try() -> None:
                 pass
         """)
 
-    symbols = _defined_symbols(source)
+    symbols = PYTHON.defined_symbols(source)
 
     assert "Basket.total_with_tax" in symbols
 
@@ -1853,7 +1852,7 @@ def test_defined_symbols_finds_module_level_assignment_targets() -> None:
             return local
         """)
 
-    symbols = _defined_symbols(source)
+    symbols = PYTHON.defined_symbols(source)
 
     assert {
         "TAX_PERCENT", "PATTERN", "HANDLERS", "FIRST", "SECOND", "GUARDED",

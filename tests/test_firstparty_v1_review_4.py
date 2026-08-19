@@ -283,9 +283,17 @@ def test_each_proof_test_fails_as_shipped_and_passes_once_corrected(
     proof = task().directory / PROOFS_DIR / proof_test_name(this)
 
     assert proof.is_file(), proof
-    assert not _proof_test_passes(task().repo_dir, proof, timeout_s=GRADE_TIMEOUT_S)
+    assert not _proof_test_passes(
+        task().repo_dir,
+        proof,
+        runner=task().runner,
+        timeout_s=GRADE_TIMEOUT_S,
+    )
     assert _proof_test_passes(
-        task().directory / CORRECTED_DIR, proof, timeout_s=GRADE_TIMEOUT_S
+        task().directory / CORRECTED_DIR,
+        proof,
+        runner=task().runner,
+        timeout_s=GRADE_TIMEOUT_S,
     )
 
 

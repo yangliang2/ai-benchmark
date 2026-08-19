@@ -7,9 +7,20 @@ Where a v0 task is a prompt plus a check regex, a v1 task is a directory: the
 prompt, a small hand-authored starting repository the agent works in, and
 held-out grading tests the agent never sees. Grading runs those tests for
 real — copy the pristine repo, apply the run's workdir diff, overlay the
-canonical grading files over any same-path files the agent touched, run
-pytest in a fresh temp dir with a timeout — so `resolved` is
-execution-verified, the same standard as SWE-bench, not pattern-verified.
+canonical grading files over any same-path files the agent touched, run the
+held-out tests through the task's **language runner** in a fresh temp dir
+with a timeout — so `resolved` is execution-verified, the same standard as
+SWE-bench, not pattern-verified.
+
+That last step is the one half of grading that is not language-agnostic, and
+it is a seam rather than a set of facts spread through this module:
+`ai_benchmark.language_runners` says what a runner owns (how the tests are
+invoked, how the verdict is read back, the test globs, the toolchain check,
+the starting-repository naming invariant and the lint's source primitives),
+what stays this module's, and what stays harness-side. Everything below
+reaches it through the task's own declared `language` — `Task.runner` — and
+never by naming a toolchain. Python is the first instance; the paragraphs
+below describe its defences, which is what `python` registers.
 
 What the verdict does not depend on: anything the agent wrote *around* the
 grading tests. Tests written at a grading file's path are overwritten; a
@@ -97,14 +108,12 @@ no network and no installs.
 
 import ast
 import hashlib
-import importlib.util
 import json
 import math
 import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 from collections import Counter
 from collections.abc import Callable, Sequence
@@ -112,7 +121,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal, NamedTuple, Self, get_args
 from urllib.parse import urlparse
-from xml.etree import ElementTree
 
 import yaml
 from pydantic import (
@@ -130,6 +138,11 @@ from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
     RUN_TIMEOUT_S,
     local_today,
+)
+from ai_benchmark.language_runners import (
+    LanguageRunner,
+    SourceUnreadable,
+    runner_for,
 )
 from ai_benchmark.schema import (
     LanguageStr,
@@ -276,23 +289,6 @@ REVIEW_DIFF_FILE = "review.diff"
 _IGNORE_FILE = ".gitignore"
 
 GRADE_TIMEOUT_S = 300
-
-# The config grading runs under, pinned so nothing in the workdir is consulted.
-_GRADING_CONFIG = "[pytest]\naddopts =\n"
-
-# Loaded with -p from outside the workdir. Python is started with -P and pytest
-# with --import-mode=importlib so that nothing puts the workdir on sys.path;
-# this puts it back at the end, behind the standard library.
-_PATH_PLUGIN_NAME = "gradingpath"
-_PATH_PLUGIN = """\
-import sys
-
-WORKDIR = {workdir!r}
-
-
-def pytest_configure(config):
-    sys.path.append(WORKDIR)
-"""
 
 
 # --- construction metadata: how a task was built, and what it predicts ---------
@@ -750,6 +746,17 @@ class Task(BaseModel):
     directory: Path
 
     @property
+    def runner(self) -> LanguageRunner:
+        """The language runner that grades this task.
+
+        Selected by the task's own declared `language` and by nothing an
+        operator can pass: a task carries its own grading mechanism, and no
+        flag may grade it with the wrong one. What a runner owns and what
+        stays the grader's is written down in `ai_benchmark.language_runners`.
+        """
+        return runner_for(self.language)
+
+    @property
     def repo_dir(self) -> Path:
         """The pristine starting repository, copied fresh for every run."""
         return self.directory / REPO_DIR
@@ -787,11 +794,16 @@ class Task(BaseModel):
 
     @property
     def grading_test_paths(self) -> tuple[str, ...]:
-        """Every grading test, relative to the workdir it is overlaid into."""
+        """Every grading test, relative to the workdir it is overlaid into.
+
+        Found by the runner's glob rather than by a pytest name written here:
+        which files are this task's held-out tests is a question about the
+        language that grades it.
+        """
         return tuple(
             sorted(
                 str(path.relative_to(self.grading_dir))
-                for path in self.grading_dir.rglob("test_*.py")
+                for path in self.grading_dir.rglob(self.runner.grading_test_glob)
             )
         )
 
@@ -1126,59 +1138,6 @@ def answer_test_source() -> bytes:
     copies drift from their source, and the second action rides this file
     unchanged, which is the point (`_KEYED_CATEGORIES`)."""
     return _ANSWER_TEST_SOURCE.encode("utf-8")
-
-
-def _defined_symbols(source: str) -> set[str]:
-    """Every symbol a module defines: its functions and classes, both
-    qualified by nesting and bare, and its module-level assignment targets.
-
-    A method is accepted either way: `Class.method`, which is how an author
-    writes down the two levels a defect in one is legitimately described at —
-    the method, and the class enclosing it — and the bare `method`, which is
-    how a locating agent actually phrases an answer about something nested.
-    Only nested definitions get the bare form; a module-level definition has
-    no qualified form to be an alternative to.
-
-    An assignment counts only at module level, and that is the ruling's own
-    boundary: a fault can live in a constant, a dispatch table or a compiled
-    pattern, and a key that saw only `def` and `class` could not name one. An
-    assignment inside a class body or a function is not keyable, because it is
-    a state change inside something already keyable, and accepting it would
-    key a location at a level no author wrote down.
-    """
-    symbols: set[str] = set()
-    definitions = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-
-    def bind(target: ast.expr) -> None:
-        if isinstance(target, ast.Name):
-            symbols.add(target.id)
-        elif isinstance(target, ast.Starred):
-            bind(target.value)
-        elif isinstance(target, ast.Tuple | ast.List):
-            for element in target.elts:
-                bind(element)
-
-    def walk(node: ast.AST, prefix: str) -> None:
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, definitions):
-                symbols.add(prefix + child.name)
-                if prefix:
-                    symbols.add(child.name)
-                walk(child, f"{prefix}{child.name}.")
-            else:
-                if not prefix:
-                    if isinstance(child, ast.Assign):
-                        for target in child.targets:
-                            bind(target)
-                    elif isinstance(child, ast.AnnAssign):
-                        bind(child.target)
-                # Anything else keeps the prefix: a definition guarded by an
-                # `if` or a `try` at module level is still defined there, and
-                # so is an assignment.
-                walk(child, prefix)
-
-    walk(ast.parse(source), "")
-    return symbols
 
 
 # --- code-review: the findings key and its set-shaped verdict ------------------
@@ -1697,13 +1656,11 @@ def _check_task_layout(task: Task) -> None:
             f"{task.id}: {REPO_DIR}/ is missing or empty — a v1 task gives the "
             "agent a starting repository"
         )
-    if collisions := _stdlib_collisions(task.repo_dir):
-        raise IngestError(
-            f"{task.id}: {REPO_DIR}/ names {collisions} after standard-library "
-            "module(s) — grading keeps the standard library ahead of the workdir "
-            "on sys.path, so these are invisible at grade time and the task can "
-            "lint clean while being impossible to solve"
-        )
+    # The naming invariant is the runner's: what a top-level name may not
+    # collide with is a fact about how that language's toolchain resolves an
+    # import, and the runner says both whether it is broken and why.
+    if naming := task.runner.starting_repository_problem(task.repo_dir):
+        raise IngestError(f"{task.id}: {naming}")
     if (task.repo_dir / _IGNORE_FILE).exists():
         raise IngestError(
             f"{task.id}: {REPO_DIR}/ ships a {_IGNORE_FILE} — the live runner "
@@ -1810,25 +1767,6 @@ def _held_out_of_the_workdir_but_not_of_grading(task: Task) -> list[str]:
     )
 
 
-def _stdlib_collisions(repo_dir: Path) -> list[str]:
-    """Top-level names in the starting repository the standard library owns.
-
-    Only the top level matters: that is what grading puts on sys.path, and a
-    module deeper in a package is reached through its package name.
-    """
-    collisions = []
-    for entry in sorted(repo_dir.iterdir()):
-        if entry.is_dir():
-            importable = entry.name
-        elif entry.suffix == ".py":
-            importable = entry.stem
-        else:
-            continue
-        if importable in sys.stdlib_module_names:
-            collisions.append(entry.name)
-    return collisions
-
-
 def load_runs(path: Path) -> list[Run]:
     """Every row of a raw v1 run log, in the order it was appended.
 
@@ -1868,7 +1806,18 @@ def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
 def _run_grading(
     task: Task, diff: str, targets: Sequence[str], *, timeout_s: int
 ) -> bool:
-    _require_pytest()
+    """Build the throwaway tree a verdict is read from, and hand it to the
+    task's own language runner.
+
+    The division is the seam's: everything here — the root, the workdir
+    beneath it, the copy of `repo/`, the applied diff, the overlay of
+    `grading/` last, the timeout — is the grader's and is the same whatever
+    grades the tests. How those tests are invoked and how their verdict is
+    read back is the runner's, and is reached through the task's declaration
+    rather than by name.
+    """
+    runner = task.runner
+    runner.require_toolchain()
     with tempfile.TemporaryDirectory(prefix="ai-bench-grade-") as name:
         # Everything the grader relies on sits beside the workdir rather than
         # in it: a diff can only write inside the workdir, so it cannot reach
@@ -1881,7 +1830,7 @@ def _run_grading(
         # Canonical last: whatever the agent wrote at a grading file's path is
         # overwritten, so the graded tests are always the held-out ones.
         shutil.copytree(task.grading_dir, workdir, dirs_exist_ok=True)
-        return _pytest_passes(root, workdir, targets, timeout_s=timeout_s)
+        return runner.run_tests(root, workdir, targets, timeout_s=timeout_s)
 
 
 def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
@@ -1946,95 +1895,6 @@ def _git(
             f"{process.stderr.strip()}"
         )
     return process.stdout
-
-
-def _pytest_passes(
-    root: Path, workdir: Path, targets: Sequence[str], *, timeout_s: int
-) -> bool:
-    """Run the named tests in workdir. True only if they all actually passed.
-
-    The verdict must depend on the held-out tests alone, so pytest is given no
-    chance to read anything else the agent wrote:
-
-    - `-c` pins the config file, so pytest.ini / tox.ini / setup.cfg /
-      pyproject.toml in the workdir cannot contribute `addopts` (and with it
-      arbitrary plugins), and `--noconftest` stops conftest.py at any depth
-      from running hooks. Both directions matter: without them a conftest can
-      forge exit status 0, and a stray broken one can sink a correct solution.
-    - `-P` and `--import-mode=importlib` keep the workdir off sys.path, and
-      the pinned plugin appends it again *behind* the standard library. A file
-      the agent added cannot then shadow a stdlib module the grading tests
-      measure against, while the task's own modules stay importable.
-    - the report is checked rather than the exit status alone, because agent
-      code runs during collection and one os._exit(0) there is otherwise
-      indistinguishable from a clean pass. This catches an accidental early
-      exit and a corrupted run, not an adversary: the report is written by
-      the same process tree, so code that means to can rewrite it.
-    """
-    config = root / "grading-pytest.ini"
-    config.write_text(_GRADING_CONFIG, encoding="utf-8")
-    harness = root / "harness"
-    harness.mkdir()
-    (harness / f"{_PATH_PLUGIN_NAME}.py").write_text(
-        _PATH_PLUGIN.format(workdir=str(workdir)), encoding="utf-8"
-    )
-    report = root / "report.xml"
-    inherited = os.environ.get("PYTHONPATH")
-    try:
-        process = subprocess.run(
-            [sys.executable, "-P", "-m", "pytest", "-q",
-             "-c", str(config), "--noconftest", "--rootdir", str(workdir),
-             "--import-mode=importlib", f"--junitxml={report}",
-             "-p", _PATH_PLUGIN_NAME, "-p", "no:cacheprovider", *targets],
-            capture_output=True,
-            text=True,
-            cwd=workdir,
-            timeout=timeout_s,
-            check=False,
-            env=os.environ
-            | {
-                "PYTHONPATH": os.pathsep.join(
-                    [str(harness), *([inherited] if inherited else [])]
-                )
-            },
-        )
-    except subprocess.TimeoutExpired:
-        return False
-    except OSError as error:
-        raise IngestError(f"cannot run pytest: {error}") from error
-    return process.returncode == 0 and _report_shows_every_test_passed(report)
-
-
-def _report_shows_every_test_passed(report: Path) -> bool:
-    """Evidence from outside the workdir that the tests really ran.
-
-    pytest writes the report when the session ends, so a run that killed the
-    process part-way leaves none — and a run that finished but skipped
-    everything leaves one that says so. Evidence, not proof: the report is
-    written by the graded process itself, so it is only as trustworthy as
-    that process (see _pytest_passes).
-    """
-    try:
-        suites = list(ElementTree.parse(report).getroot().iter("testsuite"))
-    except (OSError, ElementTree.ParseError):
-        return False
-    counts = {
-        field: sum(int(suite.get(field, "0")) for suite in suites)
-        for field in ("tests", "failures", "errors", "skipped")
-    }
-    return counts["tests"] > 0 and not any(
-        counts[field] for field in ("failures", "errors", "skipped")
-    )
-
-
-def _require_pytest() -> None:
-    """Grading shells out to pytest; without it every task would score 0.0 and
-    look like a very bad model rather than a broken environment."""
-    if importlib.util.find_spec("pytest") is None:
-        raise IngestError(
-            f"pytest is not installed in {sys.executable} — v1 grading runs the "
-            "task's tests in a subprocess and cannot grade without it"
-        )
 
 
 # --- task-set lint: the authoring invariants ----------------------------------
@@ -2420,8 +2280,8 @@ def _key_location_problems(
             )
             continue
         try:
-            defined = _defined_symbols(source.read_text(encoding="utf-8"))
-        except (OSError, SyntaxError, UnicodeDecodeError) as error:
+            defined = task.runner.defined_symbols(source.read_text(encoding="utf-8"))
+        except (OSError, SourceUnreadable, UnicodeDecodeError) as error:
             problems.append(
                 f"{task.id}: {whose} name {answer.file!r}, whose definitions "
                 f"cannot be read ({error}) — the key is checked against what "
@@ -3110,13 +2970,16 @@ def _repo_lines(task: Task) -> list[tuple[str, str, int, str]]:
 
     A test file counts as part of the module it tests, because `test_paging.py`
     points at `paging.py` as surely as `paging.py` does. Anything that is not a
-    top-level `.py` file — `README.md` above all — counts as no module at all:
-    the README is the index that names every module, so a word found only there
-    has selected the whole repository rather than one file, and cannot rescue a
-    word that otherwise narrows.
+    top-level source file of the task's own language — `README.md` above all —
+    counts as no module at all: the README is the index that names every
+    module, so a word found only there has selected the whole repository rather
+    than one file, and cannot rescue a word that otherwise narrows. Which files
+    those are is the runner's `source_glob` and not a `.py` written here, or a
+    repository in a second language would read as empty and every terrain rule
+    would pass vacuously.
     """
     lines: list[tuple[str, str, int, str]] = []
-    for path in sorted(task.repo_dir.glob("*.py")):
+    for path in sorted(task.repo_dir.glob(task.runner.source_glob)):
         module = path.stem.removeprefix("test_")
         try:
             text = path.read_text(encoding="utf-8")
@@ -3125,32 +2988,6 @@ def _repo_lines(task: Task) -> list[tuple[str, str, int, str]]:
         for number, line in enumerate(text.splitlines(), start=1):
             lines.append((module, path.name, number, line.lower()))
     return lines
-
-
-def _defined_classes(source: str) -> set[str]:
-    """The classes a module defines at its own top level — the level an
-    accepted answer naming a class is answering at.
-
-    A companion reading to `_defined_symbols` rather than a rival to it:
-    that function deliberately flattens `def`, `class` and module-level
-    assignment into one namespace, because a key may legitimately name any of
-    them, and that flattening is exactly what this rule cannot use — "more
-    than one class" is a question about classes and not about symbols. It
-    descends through an `if` or a `try` for the same reason `_defined_symbols`
-    does, and into neither a class body nor a function body: a class nested
-    inside either is not a level a filename names.
-    """
-    classes: set[str] = set()
-
-    def walk(node: ast.AST) -> None:
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, ast.ClassDef):
-                classes.add(child.name)
-            elif not isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef):
-                walk(child)
-
-    walk(ast.parse(source))
-    return classes
 
 
 def _key_locations_the_prompt_names(
@@ -3250,11 +3087,14 @@ def _lone_accepted_classes(task: Task, key: KeyedGroundTruth) -> dict[str, str]:
         if source is None:
             continue
         try:
-            classes = _defined_classes(source.read_text(encoding="utf-8"))
-        except (OSError, SyntaxError, UnicodeDecodeError):
+            text = source.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
             # Reported by `_answer_key_problems`, which reads the same file
             # for the same reason; saying it twice adds nothing.
             continue
+        if not task.runner.loads(text):
+            continue
+        classes = task.runner.defined_classes(text)
         if answer.symbol in classes and len(classes) < 2:
             token = f"{answer.file}:{answer.symbol}"
             lone[token] = (
@@ -3599,9 +3439,12 @@ def _symbol_the_key_does_not_name(
     if source is None:
         return None
     try:
-        defined = _defined_symbols(source.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError, UnicodeDecodeError):
+        text = source.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
         return None
+    if not task.runner.loads(text):
+        return None
+    defined = task.runner.defined_symbols(text)
     candidates = sorted(
         symbol
         for symbol in defined
@@ -3933,7 +3776,9 @@ def _proof_test_per_planted_finding(
                 "agent against"
             )
             continue
-        if _proof_test_passes(task.repo_dir, proof, timeout_s=timeout_s):
+        if _proof_test_passes(
+            task.repo_dir, proof, runner=task.runner, timeout_s=timeout_s
+        ):
             problems.append(
                 f"{task.id}: the existence proof of the planted finding "
                 f"{planted} ({PROOFS_DIR}/{name}) passes on the starting "
@@ -3941,7 +3786,9 @@ def _proof_test_per_planted_finding(
                 "proof that passes shows the finding is not a defect at all, and "
                 "the verdict would fail every agent that declined to report it"
             )
-        if not _proof_test_passes(task.corrected_dir, proof, timeout_s=timeout_s):
+        if not _proof_test_passes(
+            task.corrected_dir, proof, runner=task.runner, timeout_s=timeout_s
+        ):
             problems.append(
                 f"{task.id}: the existence proof of the planted finding "
                 f"{planted} ({PROOFS_DIR}/{name}) fails on the corrected tree — "
@@ -4029,24 +3876,32 @@ def proof_test_name(finding: PlantedFinding) -> str:
     return f"test_{slug.strip('_')}.py"
 
 
-def _proof_test_passes(tree: Path, proof: Path, *, timeout_s: int) -> bool:
+def _proof_test_passes(
+    tree: Path, proof: Path, *, runner: LanguageRunner, timeout_s: int
+) -> bool:
     """Whether this proof test passes when run against this tree.
 
     The tree is copied rather than run in place and the proof laid beside it,
     the way grading copies the starting repository and overlays the held-out
-    files — same pinned config, same `--noconftest`, same workdir-behind-the-
-    standard-library sys.path, same report read from outside the workdir. The
+    files — same invocation, same isolation, same report read from outside the
+    workdir, because it goes through the same seam `_run_grading` does. The
     proof is run alone: what it says about one planted finding must not depend
     on another proof test in the same session.
+
+    The runner is passed rather than assumed: this function is handed a bare
+    tree — a task's `repo/` or its `corrected/` — and there is nothing in a
+    path to say what grades it, so the caller carries the task's declaration
+    down. Defaulting to Python here is exactly the path that would grade a
+    task with the wrong mechanism.
     """
-    _require_pytest()
+    runner.require_toolchain()
     with tempfile.TemporaryDirectory(prefix="ai-bench-proof-") as name:
         root = Path(name)
         workdir = root / "workdir"
         workdir.mkdir()
         shutil.copytree(tree, workdir, dirs_exist_ok=True)
         shutil.copyfile(proof, workdir / proof.name)
-        return _pytest_passes(root, workdir, [proof.name], timeout_s=timeout_s)
+        return runner.run_tests(root, workdir, [proof.name], timeout_s=timeout_s)
 
 
 def _unregistered_proof_form_problems() -> list[str]:
