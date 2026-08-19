@@ -20,6 +20,8 @@ from typing import Any, Literal
 import pytest
 import yaml
 from firstparty_v1_tasks import workdir_diff
+from typescript_tasks import typescript_task
+from typescript_tasks import solve as solve_typescript
 
 from ai_benchmark import firstparty_v1, reconcile_v1
 from ai_benchmark.cli import main
@@ -123,6 +125,30 @@ def solved_diff(task: firstparty_v1.Task) -> str:
     return workdir_diff(task, solve)
 
 
+def _diff_for(task: firstparty_v1.Task) -> str:
+    """The solved diff for whichever language `task` declares — `solved_diff`
+    for the fixture Python shape this file writes, and the TypeScript seam's
+    own solution for a task built by `write_mixed_task_set`, graded through
+    the real runner rather than a second fixture grader."""
+    if task.language == "typescript":
+        return workdir_diff(task, solve_typescript)
+    return solved_diff(task)
+
+
+def write_mixed_task_set(root: Path) -> tuple[firstparty_v1.Task, firstparty_v1.Task]:
+    """One Python task and one TypeScript task under one `--tasks` root — the
+    shape a `--language` reading has to pick apart, and the one round 7's own
+    corpus will carry once its TypeScript tasks land. Both are declared
+    controls, so neither needs a construction block to be a valid task.
+    """
+    typescript_task(root, task_id="ts-task", control=True)
+    write_task(root, "py-task", control=True)
+    [python_task, ts_task] = sorted(
+        firstparty_v1.load_task_set(root), key=lambda task: task.id
+    )
+    return python_task, ts_task
+
+
 def write_log(
     path: Path,
     tasks: list[firstparty_v1.Task],
@@ -158,7 +184,7 @@ def write_log(
     price_table = "fixture-price-table" if agent == "codex" else None
     rows = []
     for task in tasks:
-        diff = solved_diff(task)
+        diff = _diff_for(task)
         for model in models:
             turns, cost = (effort or {}).get(task.id, {}).get(model, (7, 0.21))
             rows.append(
@@ -2326,6 +2352,67 @@ def test_reconcile_v1_agent_named_explicitly_with_no_matching_row_fails_loudly(
     with pytest.raises(SystemExit, match="cursor-agent"):
         main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs),
               "--agent", "cursor-agent"])
+
+
+def test_reconcile_v1_default_language_reads_python_from_a_mixed_language_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A directory holding both languages' rows no longer aborts: unflagged, a
+    reading selects python and reports over its rows alone, so the report
+    over a directory holding a TypeScript task's rows too reads exactly as
+    the report over the python row alone."""
+    tasks = tmp_path / "tasks"
+    python_task, ts_task = write_mixed_task_set(tasks)
+    python_only = tmp_path / "python-only.jsonl"
+    write_log(python_only, [python_task], {})
+    baseline = reconcile(tasks, python_only, capsys)
+
+    mixed = tmp_path / "mixed"
+    write_log(mixed / "a.jsonl", [python_task], {})
+    write_log(mixed / "b.jsonl", [ts_task], {})
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(mixed)])
+    out = capsys.readouterr().out
+
+    assert "ts-task" not in out
+    assert re.search(r"runs +2 over 1 task\(s\)", out)
+    assert out.split("1. prediction reconciliation", 1)[1] == baseline.split(
+        "1. prediction reconciliation", 1)[1]
+
+
+def test_reconcile_v1_language_typescript_selects_the_typescript_rows(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    """`--language typescript` is the other half of the same selection: it
+    reads the TypeScript task's rows and leaves the Python ones out, over the
+    same mixed directory the default reads the other way."""
+    tasks = tmp_path / "tasks"
+    python_task, ts_task = write_mixed_task_set(tasks)
+    mixed = tmp_path / "mixed"
+    write_log(mixed / "a.jsonl", [python_task], {})
+    write_log(mixed / "b.jsonl", [ts_task], {})
+
+    main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(mixed),
+          "--language", "typescript"])
+    out = capsys.readouterr().out
+
+    assert "py-task" not in out
+    assert re.search(r"runs +2 over 1 task\(s\)", out)
+
+
+def test_reconcile_v1_language_named_explicitly_with_no_matching_row_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    """Naming a language explicitly and getting nothing back is an operator
+    error worth stopping on, unlike the unflagged default reporting over an
+    empty set — the refusal names what the given log(s) actually carry."""
+    tasks = tmp_path / "tasks"
+    python_task, ts_task = write_mixed_task_set(tasks)
+    logs = tmp_path / "logs"
+    write_log(logs / "a.jsonl", [python_task], {})
+
+    with pytest.raises(SystemExit, match=re.escape("['python']")):
+        main(["reconcile-v1", "--tasks", str(tasks), "--replay", str(logs),
+              "--language", "rust"])
 
 
 def test_reconcile_v1_counts_the_same_checked_in_rounds_with_codex_rows_present(

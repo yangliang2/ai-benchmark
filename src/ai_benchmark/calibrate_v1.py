@@ -78,6 +78,7 @@ from ai_benchmark.firstparty_v1 import (
     load_runs,
 )
 from ai_benchmark.reconcile_v1 import (
+    DEFAULT_LANGUAGE,
     LADDER_MODELS,
     PROVENANCE,
     RUNGS,
@@ -667,6 +668,8 @@ def calibrate(
     timeout_s: int = GRADE_TIMEOUT_S,
     agent: str = DEFAULT_AGENT,
     agent_explicit: bool = False,
+    language: str = DEFAULT_LANGUAGE,
+    language_explicit: bool = False,
 ) -> str:
     runs = [run for log in logs for run in load_runs(log)]
     outcomes = observed_outcomes(
@@ -676,5 +679,7 @@ def calibrate(
         timeout_s=timeout_s,
         agent=agent,
         agent_explicit=agent_explicit,
+        language=language,
+        language_explicit=language_explicit,
     )
     return render(outcomes, tasks_root=tasks_root, logs=logs)

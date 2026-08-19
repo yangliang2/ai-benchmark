@@ -49,6 +49,13 @@ from ai_benchmark.firstparty_v1 import (
     is_control,
     load_runs,
 )
+from ai_benchmark.language_runners import PYTHON
+
+# The language a reading selects when `--language` is not given, so that
+# today's Python-only logs read exactly as they always have: the registry's
+# own name for the first language it admitted, rather than a string this
+# module repeats.
+DEFAULT_LANGUAGE = PYTHON.language
 
 # The operational difficulty ladder, weakest model first: a task's observed
 # rung is named after the weakest model that resolved it, and one no model
@@ -236,6 +243,48 @@ def select_agent(runs: list[Run], agent: str, *, explicit: bool) -> list[Run]:
     return selected
 
 
+def select_language(
+    tasks: list[Task], runs: list[Run], language: str, *, explicit: bool
+) -> list[Run]:
+    """Keep only the rows of tasks declaring this language, before the ladder
+    checks run.
+
+    This is what lets a mixed task set stop pooling: a category's control
+    mean is read off `effort`, and `effort` is built from `runs` after this
+    filter, so a TypeScript control's cost never lands in a Python category's
+    denominator (or the reverse) whichever language a reading selects.
+
+    Unlike `select_agent`, this reads off the *task* a row names rather than
+    the row itself — a run carries no language of its own — so a row naming a
+    task outside `tasks` altogether is kept rather than dropped here: dropping
+    it would silently hide the row from `evaluate`'s own refusal of a run
+    naming a task that is not in the set, which is the loud failure that row
+    deserves, not a quiet exclusion by a language it cannot be assigned.
+
+    `explicit` is whether `--language` was actually given, and it is the only
+    thing that can turn an empty selection into a refusal, for the reason
+    `select_agent` gives for the same parameter: the unflagged default reading
+    over nothing gains no new abort path.
+    """
+    languages_by_id = {task.id: task.language for task in tasks}
+    selected = [
+        run for run in runs
+        if languages_by_id.get(run.task_id, language) == language
+    ]
+    if explicit and not any(
+        languages_by_id.get(run.task_id) == language for run in runs
+    ):
+        carried = sorted({
+            found for run in runs
+            if (found := languages_by_id.get(run.task_id)) is not None
+        }) or ["(no runs)"]
+        raise IngestError(
+            f"no run log names a task in language {language!r} — --language "
+            f"named it explicitly, and the log(s) given carry {carried}"
+        )
+    return selected
+
+
 def observed_outcomes(
     tasks: list[Task],
     runs: list[Run],
@@ -244,17 +293,21 @@ def observed_outcomes(
     timeout_s: int = GRADE_TIMEOUT_S,
     agent: str = DEFAULT_AGENT,
     agent_explicit: bool = False,
+    language: str = DEFAULT_LANGUAGE,
+    language_explicit: bool = False,
 ) -> dict[str, Outcome]:
     """Grade every logged diff and reduce each task's runs to one rung.
 
-    Selects `agent`'s rows before anything else runs (`select_agent`), so the
-    checks below never see a second harness's rows to refuse. Grading then
-    goes through `evaluate`, which is also what makes the two failures that
-    would otherwise corrupt the report loud: a run naming a task that is not
-    in the set, and two runs of one task x agent x model cell, whose verdicts
-    would have to be silently picked between.
+    Selects `agent`'s rows before anything else runs (`select_agent`), then
+    `language`'s (`select_language`), so the checks below never see a second
+    harness's rows or a second language's rows to refuse. Grading then goes
+    through `evaluate`, which is also what makes the two failures that would
+    otherwise corrupt the report loud: a run naming a task that is not in the
+    set, and two runs of one task x agent x model cell, whose verdicts would
+    have to be silently picked between.
     """
     runs = select_agent(runs, agent, explicit=agent_explicit)
+    runs = select_language(tasks, runs, language, explicit=language_explicit)
     _check_declarations(tasks)
     _check_ladder(runs)
     records = evaluate(tasks, runs, source=source, timeout_s=timeout_s)
@@ -1849,6 +1902,8 @@ def reconcile(
     timeout_s: int = GRADE_TIMEOUT_S,
     agent: str = DEFAULT_AGENT,
     agent_explicit: bool = False,
+    language: str = DEFAULT_LANGUAGE,
+    language_explicit: bool = False,
 ) -> str:
     runs = [run for log in logs for run in load_runs(log)]
     outcomes = observed_outcomes(
@@ -1858,5 +1913,7 @@ def reconcile(
         timeout_s=timeout_s,
         agent=agent,
         agent_explicit=agent_explicit,
+        language=language,
+        language_explicit=language_explicit,
     )
     return render(outcomes, tasks_root=tasks_root, logs=logs)

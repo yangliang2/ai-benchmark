@@ -206,6 +206,8 @@ def _reconcile_v1_command(args: argparse.Namespace) -> None:
     print(reconcile_v1.reconcile(
         tasks, args.tasks, logs,
         agent=args.agent or DEFAULT_AGENT, agent_explicit=args.agent is not None,
+        language=args.language or reconcile_v1.DEFAULT_LANGUAGE,
+        language_explicit=args.language is not None,
     ))
 
 
@@ -224,6 +226,8 @@ def _calibrate_v1_command(args: argparse.Namespace) -> None:
     print(calibrate_v1.calibrate(
         tasks, args.tasks, logs,
         agent=args.agent or DEFAULT_AGENT, agent_explicit=args.agent is not None,
+        language=args.language or reconcile_v1.DEFAULT_LANGUAGE,
+        language_explicit=args.language is not None,
     ))
 
 
@@ -454,6 +458,13 @@ def main(argv: list[str] | None = None) -> None:
         f"name (default: {DEFAULT_AGENT}); an agent no row in the given log(s) "
         "carries is refused before anything is graded",
     )
+    reconcile_v1_parser.add_argument(
+        "--language",
+        help="read only the rows of tasks declaring this language, by "
+        f"registered name (default: {reconcile_v1.DEFAULT_LANGUAGE}); a "
+        "language no row in the given log(s) carries is refused before "
+        "anything is graded",
+    )
     reconcile_v1_parser.set_defaults(command=_reconcile_v1_command)
 
     calibrate_v1_parser = subcommands.add_parser(
@@ -496,6 +507,13 @@ def main(argv: list[str] | None = None) -> None:
         help="read only this agent's rows from the given log(s), by registered "
         f"name (default: {DEFAULT_AGENT}); an agent no row in the given log(s) "
         "carries is refused before anything is graded",
+    )
+    calibrate_v1_parser.add_argument(
+        "--language",
+        help="read only the rows of tasks declaring this language, by "
+        f"registered name (default: {reconcile_v1.DEFAULT_LANGUAGE}); a "
+        "language no row in the given log(s) carries is refused before "
+        "anything is graded",
     )
     calibrate_v1_parser.set_defaults(command=_calibrate_v1_command)
 
