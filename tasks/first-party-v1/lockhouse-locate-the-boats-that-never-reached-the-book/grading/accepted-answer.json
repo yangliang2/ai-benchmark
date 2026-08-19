@@ -1,0 +1,14 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "keeper.ts", "symbol": "Keeper.keep"},
+    {"file": "keeper.ts", "symbol": "Keeper"}
+  ],
+  "rejected": [
+    {"file": "book.ts", "symbol": "Book.headed"},
+    {"file": "book.ts", "symbol": "Book.write"},
+    {"file": "lock.ts", "symbol": "Tally"},
+    {"file": "lock.ts", "symbol": "Lock.through"},
+    {"file": "water.ts", "symbol": "Cut.aBoat"}
+  ]
+}

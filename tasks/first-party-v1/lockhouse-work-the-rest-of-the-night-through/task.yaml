@@ -1,0 +1,104 @@
+# bug-fix, and the "put it right" half of round 7's second TypeScript planted
+# defect: one subscription that listens for the first of something that
+# happens all evening, authored twice over one starting repository.
+# `Keeper.keep` in keeper.ts registers the boat that comes up the cut with
+# `once` where it must be `on`. The first boat of the night is taken, worked
+# through and written up exactly as it should be; every boat behind it is
+# given out by the cut to a listener that is no longer there, so it is never
+# taken, never turned back and never written up. Nothing throws and nothing is
+# left half done — the night settles, the page reads correctly as far as it
+# goes, and what is wrong with it is only what is not on it.
+#
+# The scenario is the reason this task exists rather than a Python one: an
+# asynchronous event flow — a `node:events` emitter, boats queued one behind
+# another behind a promise, and a night that settles when the work is done —
+# which the Python corpus has nothing like (design note 45.11). It is
+# disclosed in the prompt and in the round record and is not a task field.
+#
+# **No held-out test decides its verdict by wall-clock timing**, which is this
+# ticket's own rule rather than the spec's: an async defect graded by sleeping
+# and then looking is a verdict about the scheduler, and round 1 already paid
+# for one of those. So every observable here is a settled promise or a
+# recorded sequence. `Keeper.keep` hands back a promise that settles when the
+# cut has shut *and* the last boat is out at the far end; the book is a list in
+# the order it was written; the lock counts what it worked and the tally counts
+# what came up. `Cut.drawing` hands the water out on a microtask rather than a
+# timer, so the asynchrony is real and the ordering is decided by the program
+# rather than by the machine grading it.
+#
+# The repository's own tests are green on the pristine tree. What keeps them
+# green is that nothing visible ever sends a second boat to the lockhouse: the
+# visible suite exercises many boats at the level below — the tally counts
+# three that came up, the page is headed off the first of three, the lock takes
+# two one behind another — and at the level of the night itself only ever one
+# boat at a time. A visible test putting two boats up one night would hand the
+# agent the answer and delete the action being measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that. `.once(` and `.on(` are a shape a grep finds in one pass, so
+# the repository holds seven more registrations across all four modules and
+# every one of them is correct: the page is headed off the first boat up and
+# the mark noted off the first drawing of water (`Book.headed`, `Book.marked`),
+# the lock waits for the next drawing and no more of them (`Lock.drawn`), the
+# night shuts once (`Cut.whenShutting`, and the wait in `Keeper.keep`), and the
+# tally and the lockful count take every boat and every drawing (`Tally`,
+# `Keeper.keep`). Two of the three events are registered *both* ways somewhere
+# in the repository and each way is right where it stands, so nothing about the
+# shape decides anything: what decides it is how often the thing being waited
+# for happens. The nearest twin is `Book.headed`, which listens for the first
+# of the very same event and is correct, because a page is headed once and a
+# page headed four times over is not a page anybody could read back. The
+# contract the defect breaks is stated in keeper.ts's module comment and in the
+# README rather than beside the line that breaks it. What the symptom points at
+# first is book.ts, where the page is written, and lock.ts, where the tally
+# says four boats came up against a page holding one.
+#
+# The held-out tests fail on the pristine repository, as the lint requires,
+# and that failure is also what proves there is a defect for the
+# fault-location member built on this same repository to find: it is that
+# member's registered existence proof. A checked relation rather than a
+# convention — the lint finds this task by the bytes of the repo/ the two
+# share, and runs it — so the two share repo/ byte for byte.
+#
+# The grading asserts what the night ends with and not how it gets there —
+# where a boat is put behind the one in the chamber is the fix's business. A
+# fix that has every boat taken, worked through in the order it came and
+# written up in its place resolves, whether it listens for every boat or
+# re-registers after each one; the reference solution does the former, which is
+# the one edit that says what the repository meant.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: lockhouse-work-the-rest-of-the-night-through
+category: bug-fix
+scale: single-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  Something has gone wrong at the lock on the cut. What is in front of you is
+  a night at the lockhouse: a small program written on the Node standard
+  library alone, with nothing installed under it, in which everything that
+  happens on the water arrives as an event and is dealt with as it arrives.
+
+  Four boats came up on Tuesday evening, one behind another, and the first of
+  them was still in the chamber when the second reached the gate. The tally at
+  the foot of the page says four came up. The page has one line on it — the
+  first boat, worked through and written up exactly as it should be — and
+  nothing whatever after that. The three behind it were neither taken nor
+  sent back nor written up, and the men on them were still at the gate at
+  midnight.
+
+  What the lockhouse means to do is this: every boat that comes up is taken,
+  one at a time and in the order it came, and every one of them is written up
+  in its place, whether it went through or was sent back. A boat that comes up
+  while another is in the chamber has missed nothing, and the night is not
+  over until the last of them is out at the far end.
+
+  Fix it, so that every boat that came up is taken and written up in the order
+  it came. Nothing else changes: what the standing orders will and will not
+  take, the way a boat is written up, what the page is headed with, and
+  everything the repository's own tests already say about the night.
