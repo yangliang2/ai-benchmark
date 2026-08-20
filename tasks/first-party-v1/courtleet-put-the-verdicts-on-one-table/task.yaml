@@ -1,0 +1,81 @@
+# refactor, and the third of round 7's three TypeScript restructurings: a chain
+# of `if`s over a verdict's name replaced by one table of verdicts the code
+# looks up. The one of the three whose whole edit is inside a single file,
+# which is what its `scale` says.
+#
+# The scenario is why this task exists rather than a Python one: a rule
+# evaluated in a context of its own with `node:vm` — the parish's words run
+# with the jury's findings in scope, nothing of the manor's, and a patience the
+# court gives up after — which the Python corpus has nothing like and which
+# none of round 7's other TypeScript tasks takes. It is disclosed in the prompt
+# and in the round record and is not a task field.
+#
+# What the two halves of grading/ measure:
+#
+# - `what_the_court_still_says.test.ts` is the behaviour half, named below, and
+#   it PASSES on the pristine repository. It never reads the table and never
+#   names it: it puts bylaws before the court and reads what comes back — the
+#   words tried against the findings and nothing else in scope, words that will
+#   not run leaving nothing to answer, the exact ruling on each verdict the
+#   court knows, the ruling on a verdict it does not, the order of a sitting
+#   and what the amercements come to. That is the whole of what may not change.
+#
+# - `the_verdicts_are_on_one_table.test.ts` is the structural half, and it
+#   FAILS on the pristine repository. Both assertions are about **runtime
+#   shape** and neither is about a type, which is this ticket's own rule: Node
+#   strips types and nothing type-checks at grade time. The first looks at the
+#   table itself — that it is exported, that it is a `Map`, that it holds one
+#   entry to each verdict the court knows and that every entry can be called.
+#   The second is the boundary, and it is what a chain of `if`s cannot survive
+#   however it is arranged: a verdict the court has never heard of is put on
+#   the table *at run time* and the court is asked to rule on a bylaw carrying
+#   it, so only a court that reads the table can say the added entry's words
+#   back. The entry is taken off again in a `finally` and the court asked once
+#   more, so the test leaves the table as it found it.
+#
+# The repository's own tests are green on the pristine tree and stay green on
+# the reference solution untouched: they ask the court what it says and never
+# how it decided to say it.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+id: courtleet-put-the-verdicts-on-one-table
+category: refactor
+scale: single-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  What is in front of you is a manor's court leet, written on the Node standard
+  library alone with nothing installed under it. A bylaw carries the words the
+  parish wrote for when it is broken, and the court tries those words against
+  what the jury found — in a context of their own, with `node:vm`, seeing the
+  findings and nothing else of the manor's.
+
+  Trying the words is not the part that has gone stiff. What the court then
+  *says* is decided in `Court.rule` down a chain of `if`s over the verdict's
+  name, one after another, with an unheard-of verdict falling out of the
+  bottom: three verdicts today, and a fourth would be a fourth arm of the
+  chain.
+
+  Put the verdicts on one table.
+
+  - Export `VERDICTS` from `court.ts`: a `Map` from the name of a verdict to
+    what the court says on a broken bylaw carrying it — an entry takes the
+    bylaw and the case and gives back the same ruling that arm of the chain
+    gives back today.
+  - Have `rule` look the bylaw's verdict up in that table and say back what the
+    entry gives, so that adding a verdict to the court's vocabulary is adding
+    an entry to the table and nothing else.
+  - A verdict the table does not hold is still a verdict the court has never
+    heard of, and a case that answers to nothing is still settled before any
+    verdict is looked up at all.
+
+  This is a pure refactor, and the whole of it belongs in `court.ts`. What the
+  court says must not change: the exact words of every ruling, the pence that
+  go with each, what happens to words that will not run, the order of a
+  sitting, what a sitting is amerced, and everything the repository's own tests
+  already say. Keep the whole of it on the standard library — there is nothing
+  to install and nothing that may be installed.
+grading:
+  behaviour_tests:
+    - what_the_court_still_says.test.ts

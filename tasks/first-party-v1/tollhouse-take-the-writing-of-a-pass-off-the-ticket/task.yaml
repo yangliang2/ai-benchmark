@@ -1,0 +1,79 @@
+# refactor, and the second of round 7's three TypeScript restructurings: one
+# class doing two jobs — working out what is owed, and writing the pass down —
+# split so that the writing is a module of its own and the ticket keeps only
+# the arithmetic.
+#
+# The scenario is why this task exists rather than a Python one: a pass carried
+# as a link, written and read back with `node:url`'s `URL` and its
+# `searchParams`, which the Python corpus has nothing like and which none of
+# round 7's other TypeScript tasks takes. It is disclosed in the prompt and in
+# the round record and is not a task field.
+#
+# What the two halves of grading/ measure:
+#
+# - `what_the_gate_still_does.test.ts` is the behaviour half, named below, and
+#   it PASSES on the pristine repository. It goes through `Gate` and the table
+#   in `tolls.ts`, which are the two surfaces the restructuring leaves
+#   standing: the exact link a pass is written as, word for word; what reads
+#   back off one and what does not; that a pass is good at the gate whose name
+#   is on it and nowhere else; and what the day's takings come to. Nothing in
+#   it names the methods that move, so it cannot be satisfied by leaving them
+#   where they are and cannot be broken by taking them away.
+#
+# - `the_writing_is_off_the_ticket.test.ts` is the structural half, and it
+#   FAILS on the pristine repository. Every assertion is about **runtime
+#   shape** and none is about a type, which is this ticket's own rule: Node
+#   strips types and nothing type-checks at grade time. The first assertion
+#   imports `links.ts` for real and works `linkFor` and `ticketFrom`, so the
+#   module has to be there and to write what was written before. The second is
+#   the load-bearing one and is a reading no declaration could give: `"asLink"
+#   in ticket` and `"readLink" in Ticket` are asked of the objects themselves,
+#   up the prototype chain, at run time — a solution that merely stopped
+#   *declaring* the methods while keeping them would still answer true. The
+#   two together are the boundary: the gate writes the same link it always
+#   wrote, and the one thing left in the repository that can write one is
+#   `links.ts`.
+#
+# The repository's own tests are green on the pristine tree and stay green on
+# the reference solution untouched, because they exercise the writing of a pass
+# through the gate rather than through the ticket — the surface the
+# restructuring keeps.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+id: tollhouse-take-the-writing-of-a-pass-off-the-ticket
+category: refactor
+scale: cross-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  What is in front of you is the tollhouse at a turnpike gate, written on the
+  Node standard library alone with nothing installed under it. A pass through
+  the gate is carried as a link — `toll://westgate/pass`, with the class of
+  traffic, the axles and the load in the query — written and read back with
+  `node:url`.
+
+  `tickets.ts` does two jobs at once. A `Ticket` says what is owed on the
+  traffic it stands for, which it gets off the table in `tolls.ts`; and it also
+  writes itself out as a link and reads itself back off one, which is
+  `node:url`'s work and has nothing whatever to do with what anything costs.
+
+  Take the writing of a pass off the ticket.
+
+  - Put it in a new module, `links.ts`, exporting `linkFor(ticket)` — the link
+    one pass is written as — and `ticketFrom(link)`, the pass a link stands
+    for, or no pass at all where it cannot be read.
+  - Leave `Ticket` with what is owed and nothing else: no `asLink` on it and no
+    `readLink` on the class.
+  - Have the gate write and read through the new module.
+
+  This is a pure refactor: nothing the gate does may change. The link a pass is
+  written as must come out the same, word for word and in the same order; what
+  reads back off a link, and what refuses to; that a pass is good at the gate
+  whose name is on it and nowhere else; what the keeper may ask for and what he
+  may not; and everything the repository's own tests already say — all exactly
+  as they are, and the whole of it on the standard library, since there is
+  nothing to install and nothing that may be installed.
+grading:
+  behaviour_tests:
+    - what_the_gate_still_does.test.ts

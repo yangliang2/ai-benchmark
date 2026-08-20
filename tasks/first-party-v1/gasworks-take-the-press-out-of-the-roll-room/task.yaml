@@ -1,0 +1,81 @@
+# refactor, and the first of round 7's three TypeScript restructurings: one
+# class doing two jobs — keeping the shelf and working the press — split so
+# that the press is a module of its own and the room is handed one rather than
+# reaching for it.
+#
+# The scenario is why this task exists rather than a Python one: a compressed
+# store over `node:zlib`, a sheet pressed down into a roll and opened back out,
+# which the Python corpus has nothing like and which none of round 7's other
+# TypeScript tasks takes. It is disclosed in the prompt and in the round record
+# and is not a task field.
+#
+# What the two halves of grading/ measure, which is the thing a refactor task
+# has to say out loud:
+#
+# - `what_the_roll_room_still_does.test.ts` is the behaviour half, named below,
+#   and it PASSES on the pristine repository. Every line of it goes through a
+#   roll room built the way one is built now — `new RollRoom()`, nobody handed
+#   over — because that is the surface the restructuring must leave standing:
+#   a day's readings come back as they went in, the roll on the shelf is still
+#   a gzip roll and still smaller than the sheet, a day nothing was put away
+#   under is still not a day of no readings, and the office still works every
+#   figure off the day's roll.
+#
+# - `the_press_stands_on_its_own.test.ts` is the structural half, and it FAILS
+#   on the pristine repository. Both of its assertions are about **runtime
+#   shape** and neither is about a type, which is this ticket's own rule: Node
+#   strips types and nothing type-checks at grade time, so a structural test
+#   asserts on what exists and what is called and never on what is declared.
+#   The first imports `press.ts` for real and works what it exports, so the
+#   module has to be there and to press what it always pressed. The second is
+#   the boundary itself: it builds a roll room around a press of the test's own
+#   making and watches the room press and unpress through it. A room that still
+#   reaches for `node:zlib` on its own account cannot be made to press a sheet
+#   the way that stub presses it, however its file is arranged — which is what
+#   makes this a measurement of the seam rather than of a name.
+#
+# The repository's own tests are green on the pristine tree and stay green on
+# the reference solution untouched: they build the room with nobody handed
+# over, which is the call the restructuring keeps working.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+id: gasworks-take-the-press-out-of-the-roll-room
+category: refactor
+scale: cross-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  What is in front of you is a gasworks' roll room: a compressed store written
+  on the Node standard library alone, with nothing installed under it. A day's
+  meter readings are written out on a sheet, the sheet is pressed into a roll
+  with `node:zlib`, and the roll goes on the shelf under the day the readings
+  were taken.
+
+  `rollroom.ts` does two jobs at once. It keeps the shelf — one roll to a day,
+  and the roll is the only copy there is — and it works the press itself,
+  reaching for `node:zlib` on its own account.
+
+  Take the press out of the roll room.
+
+  - Put it in a new module, `press.ts`, exporting `pressed(sheet)` — the roll a
+    sheet presses down into — and `unpressed(roll)`, the sheet a roll opens
+    back out to. It is the same press it is now, gzip and nothing else, moved
+    rather than replaced.
+  - Have `RollRoom` be handed a press rather than reach for one: `new
+    RollRoom(press)` takes anything with a `pressed` and an `unpressed` on it
+    and works the shelf through that and through nothing else, so that a caller
+    who wants a different press hands one over instead of editing the room.
+  - `new RollRoom()`, with nobody handed over, goes on pressing exactly as it
+    does today — the press in `press.ts`. So `rollroom.ts` reaches for
+    `node:zlib` no more.
+
+  This is a pure refactor: nothing the roll room or the office does may change.
+  What comes back off a day's roll, what a day nothing was put away under gives
+  back, the order the shelf keeps its days in, what the office says the works
+  made, and everything the repository's own tests already say must all be
+  exactly as they are — and the whole of it stays on the standard library,
+  since there is nothing to install and nothing that may be installed.
+grading:
+  behaviour_tests:
+    - what_the_roll_room_still_does.test.ts
