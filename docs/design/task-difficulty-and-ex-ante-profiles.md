@@ -5822,6 +5822,156 @@ typescript`, `reconcile-v1` reads `14 task(s): 14 control(s), 0 constructed`,
 because the agent selection is a separate one and drops the Codex column
 unless it too is asked for.
 
+## Round 8 rulings — 2026-08-20
+
+§45.15 left round 8 unruled with two candidates queued — the heap-3
+subjective grader (§34.3) and the `test-authoring` mutation gate (§45.12) —
+their order to be set on the widening round's record. That record exists
+(§§60–66), #97 is closed, and this section records the grill of 2026-08-20.
+**§67 is the next free number.** Like §45, this section authors nothing: it
+is the input to `/to-spec`, which files one spec for the round.
+
+### 67. What round 8 is
+
+**67.1 Round 8 is the test-authoring round: the mutation gate. The heap-3
+subjective grader is round 9's, and its calibration experiment does not run
+in parallel.** Three reasons, in the order they carried the ruling. A round
+carries **one new instrument** — the discipline that gave the Codex adapter
+its own round (§45.13) so it would not be confounded with the language
+runner; the grader is *two* instruments (the grader and the experiment that
+proves it worth trusting, §34.3), the gate is one. The gate closes the **only
+registered zero** in the coverage table — `test-authoring`, the one heap-1
+action with no tasks in any language — and with it heap 1 entire. And
+waiting costs the grader nothing while paying it: the free-text archive
+§34.4 built for its calibration stands at **297 answers across eight
+sweeps** today and grows by every round that runs first. A third option was
+put and declined: the calibration experiment reads the archive and sweeps
+nothing, so it *could* run beside round 8 without sharing a row with it —
+but one instrument per round is the ruling, not one confound per round.
+
+**67.2 Python only; the TypeScript cell stays a disclosed zero.** The round's
+one new instrument is a new **verdict shape**, and it pairs with the mature
+harness so that a failure attributes cleanly — the same reasoning as 67.1's
+discipline, applied within the round. `test-authoring × typescript` remains
+`0` in the coverage table, disclosed rather than omitted as that table
+already does, and filling it is a mechanical follow-on for any later round
+once one round's record has proven the gate.
+
+**67.3 The verdict is binary and its quantifier universal: the suite passes
+on the pristine starting repository — no exceptions — and every planted
+mutant is killed by at least one test.** Both halves of the industry's usual
+alternative were rejected. A kill-rate threshold ("≥80% killed resolves")
+makes `resolved` quietly mean something else on one action — a hidden second
+quality metric on a corpus whose glossary rules that values under different
+quality metrics never compare. A continuous kill-rate score is the same
+move without the disguise. The findings key already owns the stance — "the
+verdict is binary — partial recall is not a score" — and this is that
+quantifier pointed at mutants: a review resolves when every planted finding
+is covered, a suite resolves when every planted mutant is killed. The
+universal quantifier also keeps precision where it belongs: every mutant
+the author plants must really be killable (67.5), where a threshold would
+let a doubtful one hide in the slack. Gate 1 admits no exception for the
+symmetric reason: one failing test on correct code is the false accusation
+the findings key's rejected half refuses.
+
+**67.4 Grading collects only the prompt-named test subtree from the workdir
+diff; everything outside it is archived, not scored; mutants touch only
+source files, and the lint checks the disjointness.** Without this ruling
+the gate has two holes: applied whole, an agent's source edits could
+overwrite a mutation (gate 2 dies) or bend the code toward a wrong suite
+(gate 1 dies). The shape is the **answer file**'s precedent — the
+deliverable lands "at a path the prompt names" and grading reads it there —
+widened from one file to one subtree; the disposition of everything else is
+the findings key's — "archived, not scored". An agent that edits source is
+not committing a foul; its edits simply do not exist in the world the gates
+run in, and if its suite needed them, gate 1 goes red honestly. The
+alternative — declaring source edits a violation — was rejected as a second
+adjudication surface (is a comment edit a violation? an added
+`__init__.py`?) that the collection rule dissolves entirely.
+
+**67.5 Mutants are hand-planted, and the existence proof registered for
+this action is the reference suite: it passes on the pristine repository
+and fails at least one test on every mutant, checked per mutant by the
+lint.** Hand-planting is "plant the ground truth" continued — and the
+stronger the quantifier, the more the key must be hand-made: operator-style
+generation (mutmut and kin) is cheap per mutant but carries the *equivalent
+mutant* — a change no behaviour distinguishes — which under 67.3 makes a
+task permanently unresolvable for every agent. The registered proof form is
+what refuses one mechanically: a mutant no reference test kills is rejected
+at the lint, before any agent meets it. The form is code-review's proof
+aggregated — there, one held-out test per planted finding; here, one suite
+whose per-mutant kills the lint checks individually, with equal proof
+force and one fewer concept — and it lands on an existing institution,
+since a task's reference solution is already the author being their task's
+first perfect agent. Proof materials live in the task's own subtree outside
+`grading/`, the address existence proofs already keep: never overlaid,
+never collected, never read by a verdict.
+
+**67.6 Three fresh-authored small repositories; the prompt is a complete
+behavioural specification naming the test path; the mutant set is
+undisclosed; the module under test has zero existing tests; and the terrain
+rule is exempted at the action level.** Fresh-authored is §45's stance
+("fresh-authored not ported"), and this action's repositories carry
+requirements porting would fight: a specification precise enough to test
+against, and nothing already testing it — an existing suite is a crib, so
+the lint checks the starting repository's test path is empty of the module
+under test. The prompt discloses the spec fully (the corpus's standing
+style: prompts are complete specs) and the mechanism not at all — the
+mutant set has exactly the held-out status grading tests have always had.
+The terrain exemption is recorded with its reason: the rule stops a key
+being grepped out of the workdir, and this key is never in the workdir; the
+prompt must name the module under test because that is the task's
+definition, not a leak. It is an **action-level exemption, not three
+`terrain_waiver` declarations**: the waiver mechanism is per-task and
+reason-per-task, and three tasks carrying one identical action-shaped
+reason is the smell that mechanism was not built for.
+
+**67.7 Four to six mutants per task; the lint enforces a minimum of three
+and no maximum; distribution across behaviours is authoring judgement, not
+a lint rule.** Below three, the universal quantifier barely binds and one
+lucky assertion clears the gate; above six, hand-planting plus per-mutant
+proof (67.5) buys noise — six variants of one line are repetition, not
+strength. The spec carries the guidance that mutants spread across distinct
+specified behaviours, and it stays guidance: one test killing two mutants
+is legal, since 67.3's quantifier binds mutants and not tests, and a
+formal distinctness rule was declined — the findings key's "distinct
+through the comparison" closes a one-answer-satisfies-two-findings hole
+that this quantifier's direction does not have.
+
+**67.8 The sweep: nine cells — three tasks under the three standing
+columns — with **$1.5–5** registered before the first paid run and a dry
+cell first.** The columns are §45.13's own ruling ("from round 7 on, Codex
+is a second column"): claude-code × haiku, claude-code × sonnet, codex ×
+gpt-5.6-terra. A flat extrapolation from round 7's per-cell figures puts
+nine cells at ≈$1.57; the headroom is for the two lessons round 7 actually
+realized — fresh repositories cache worse, and this deliverable (a whole
+test suite) is a larger write than a locate answer. The dry-cell rule
+(§59.6) is kept because it exists for exactly this round's situation, a
+brand-new verdict shape meeting its first paid diff: one cell — claude-code
+× haiku, the cheapest — runs and grades alone before the other eight.
+`test-authoring` joins no `LIVE_RUN_LIMITS_S` row: it runs at the flat
+default of 600 s, and the round's record will say "at the flat default" in
+§46's registered sense of the distinction.
+
+**67.9 The three queued side-rulings are deferred again, each with the
+trigger that would ripen it.** **`frontend`** (§45.11): its own grill when
+someone actually wants a frontend reading — the substrate-or-browser-runner
+question deserves a session, not a paragraph here. **A second Codex-side
+model**: when a specific reading needs a Codex rung — §65's refusal ("one
+model is not a ladder") stands until a reading is worth its cells, and
+column symmetry is not a reason. **Repeat sampling** (§45.16): after heap 3
+lands and the action coverage closes — a whole-corpus sampling round on a
+settled corpus beats adding n per round, which is §45.16's own sentence,
+and the corpus is not settled while rounds 8 and 9 are still adding actions.
+
+**ADR owed: ADR-0004, the mutation-gate verdict shape, lands with round
+8's spec** — the §45.16 pattern, as ADR-0003 landed with round 7's. All
+three of the ADR conditions hold: the verdict shape is expensive to
+reverse once records carry it, binary-all-killed will surprise a reader
+raised on kill rates, and 67.3 records the real alternatives it was chosen
+over. The glossary gains **mutation gate** and **planted mutant** with this
+section, marked as landing with round 8.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
