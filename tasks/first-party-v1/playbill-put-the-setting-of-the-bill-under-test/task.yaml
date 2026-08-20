@@ -1,0 +1,92 @@
+# Round 8's third `test-authoring` task (design note §67), at the shape ticket
+# 04 checked in with `lido-put-the-admissions-desk-under-test`. The deliverable
+# is the suite, not a change to the code under test: `playbill.py` already does
+# everything the prompt specifies, and an agent that "fixes" it has done nothing
+# the verdict reads.
+#
+# Why it grades the way it does: held-out tests cannot grade tests — an
+# all-green suite may be thorough or may be `assert True` — so this action's
+# verdict is the mutation gate (ADR-0004). The suite the run wrote at
+# `test_path` is collected out of the workdir diff and asked two questions:
+# does it pass on the pristine repository, and does at least one of its tests
+# fail on each of the behaviour changes in `mutants/`. Both, binary. Hence
+# `control: true` — the task registers no difficulty prediction — and hence no
+# `grading/` directory: there is no held-out suite to overlay, and the author's
+# own reference suite lives in `proofs/`, where every other action's existence
+# proof lives.
+#
+# The subject is its own, and the third of the round's three: what the suite
+# has to detect defects in here is the arithmetic of laying words out to a
+# width — where a line breaks, what a space costs, where the spare space goes
+# — against the lido's priority-ordered decision and the signal box's fold
+# down a book kept in time order (§67.2).
+#
+# The prompt is a complete behavioural specification and discloses nothing
+# about the mechanism (§67.6): a suite cannot be expected to catch a rule the
+# agent was never told, and the planted set has exactly the held-out status
+# grading tests have always had. It names `tests/` because that subtree is the
+# deliverable and nothing else is collected, and it asks for `test_*.py` files
+# that stand on their own because grading runs pytest with `--noconftest`
+# under a pinned config — a fixture in a conftest.py the agent wrote is never
+# loaded, and a file named anything else is never collected.
+#
+# The five planted behaviour changes are spread over five specified rules: the
+# word that fills the measure exactly, the space counted between two words,
+# the bill of no words at all, the run of whitespace read as one parting, and
+# which way a centred line leans. Each is proved killable by proofs/ at lint
+# time.
+id: playbill-put-the-setting-of-the-bill-under-test
+category: test-authoring
+scale: single-file
+surface: application
+language: python
+control: true
+test_path: tests
+prompt: |
+  playbill.py sets the theatre's bill: it takes the words the manager sends
+  round and lays them out in the column the bill is printed in. It has never
+  had a test to its name. Write the suite it should have had.
+
+  Put the suite in tests/. Name each file `test_*.py`, and make every one of
+  them stand on its own: whatever a test needs — a piece of text, a measure,
+  a helper that builds either — is defined in the test module itself. No
+  conftest.py, and no shared helper module the test files import: a file
+  lifted out of tests/ on its own has to still run.
+
+  Leave playbill.py alone. The suite is the deliverable, and the module is
+  already the specification below.
+
+  The **measure** is the width of the printed column, counted in characters.
+
+  `set_bill(text, measure)` gives back the lines `text` is set into, as a
+  list of strings:
+
+  - the text is parted into words on whitespace of any kind. A run of spaces,
+    a tab or a newline between two words is one parting and no more, and
+    whitespace at either end of the text parts nothing;
+  - the words are set in the order they were written, and every one of them
+    is set: putting the lines back together with a single space between them
+    gives the words back in that order;
+  - a word joins the line being set if it fits the measure with the single
+    space that would stand before it — a line of exactly the measure fits,
+    one character more does not — and otherwise it begins the next line;
+  - so no line carries a space at either end, and no two words are set with
+    more than one space between them;
+  - a word is never broken across two lines. A word wider than the measure
+    therefore stands on a line of its own, wider than the measure, and the
+    word after it begins the next line;
+  - a text of nothing but whitespace, the empty text included, sets no lines
+    at all: the list comes back empty.
+
+  `centre(line, measure)` gives back `line` stood in the middle of the
+  measure, by the space put before it:
+
+  - the spare space is the measure less the width of the line, and half of it
+    — rounded **down** when the halves are uneven, so the line leans to the
+    left — is put before the line as spaces;
+  - nothing is ever put after the line: a centred line ends where its own
+    last character ends;
+  - a line as wide as the measure, or wider, comes back exactly as it went
+    in.
+
+  Both raise ValueError, before anything else, when `measure` is less than 1.

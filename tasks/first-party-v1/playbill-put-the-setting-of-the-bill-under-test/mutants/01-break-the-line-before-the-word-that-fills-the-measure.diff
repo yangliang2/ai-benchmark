@@ -1,0 +1,13 @@
+diff --git a/playbill.py b/playbill.py
+index 70c3361..3fe3627 100644
+--- a/playbill.py
++++ b/playbill.py
+@@ -14,7 +14,7 @@ def set_bill(text, measure):
+     for word in text.split():
+         if not line:
+             line = word
+-        elif len(line) + 1 + len(word) <= measure:
++        elif len(line) + 1 + len(word) < measure:
+             # The word fits the line being set, with its space before it.
+             line = f"{line} {word}"
+         else:

@@ -164,23 +164,28 @@ _HAIKU_MISSED = {
 # Python task set the default language selection narrows to. Both are what they
 # were before the round, which is the section's claim.
 #
-# Three of them moved once after the round they record, and by the same one
-# task: round 8 authored the corpus's first `test-authoring` task, which is
-# Python and declares itself a control, so the loaded Python task set and its
-# control count each grew by one. Round 7's own prose is a claim about what
-# round 7 did and is quoted rather than recomputed, so it stays where it was —
-# and the two lines the reader prints are different counts, which is why they
-# no longer read alike: the task-set line counts the corpus the language
-# selection reaches, and the runs line counts the tasks that have rows. A task
-# authored after every sweep has none.
+# Three of them moved after the round they record, and by the same three tasks:
+# round 8 authored the corpus's `test-authoring` cell, three Python tasks each
+# declaring itself a control, so the loaded Python task set and its control
+# count each grew by three. Round 7's own prose is a claim about what round 7
+# did and is quoted rather than recomputed, so it stays where it was — and the
+# two lines the reader prints are different counts, which is why they no longer
+# read alike: the task-set line counts the corpus the language selection
+# reaches, and the runs line counts the tasks that have rows. A task authored
+# after every sweep has none.
 # The whole corpus as this record quotes it, both languages: what
 # `eval-v1 --replay` counted at the time, and what the note's own block says.
 _RECORDED_TASKS = 127
 
+# What round 8 added to it: the three `test-authoring` tasks its coverage
+# figure is acceptance-tested on. Named rather than folded into the sum so
+# that a later round adding a fourth moves one number here.
+_ROUND_8_TASKS = 3
+
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 114
+_PYTHON_TASKS = 116
 _PYTHON_TASKS_WITH_RUNS = 113
-_PYTHON_CONTROLS = 47
+_PYTHON_CONTROLS = 49
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -195,7 +200,7 @@ _TYPESCRIPT_COVERAGE = {
 }
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
-    "codebase-comprehension": 4, "code-review": 8, "test-authoring": 1,
+    "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
 }
 
 # The two fields of a calibration block a later round moves, and the only two —
@@ -1101,8 +1106,8 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     row for it because the lint was not changed to print one.
 
     One line of the block has moved since, and only one: round 8 authored the
-    corpus's first `test-authoring` task, so the category this record quotes
-    as `- - 0` now prints the Python cell that task fills, and its TypeScript
+    corpus's `test-authoring` tasks, so the category this record quotes as
+    `- - 0` now prints the Python cell those tasks fill, and its TypeScript
     absence is disclosed by absence exactly as `codebase-comprehension`'s is.
     The record is not edited for it — the page it quotes is what the page was —
     so the line is named below and every other one is still held byte for byte.
@@ -1128,9 +1133,9 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     # The two absent cells: one with no row in any language, one with a Python
     # row and no TypeScript one. Neither prints a per-language zero.
     # `test-authoring` was the first of those when this round was recorded and
-    # is the second now — round 8 filled its Python cell and left the
-    # TypeScript one a disclosed zero (§67.2) — so the shape is read off a
-    # category that still has no task at all.
+    # is the second now — round 8 filled its Python cell with three tasks and
+    # left the TypeScript one a disclosed zero (§67.2) — so the shape is read
+    # off a category that still has no task at all.
     assert ("investigation", "-", "-", 0) in coverage
     assert not [
         row for row in coverage
@@ -1153,8 +1158,8 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     # Round 7's record is the page as it was, and this is not the round that
     # rewrites it: the block is held against today's table line for line, with
     # the one line a later round moved named here rather than edited there.
-    # Round 8 authored the corpus's first `test-authoring` task, so the row
-    # that read `- - 0` when this was recorded now reads a Python cell. Every
+    # Round 8 authored the corpus's `test-authoring` tasks, so the row that
+    # read `- - 0` when this was recorded now reads a Python cell. Every
     # other line is still printed byte for byte — the column widths included —
     # which is what says round 7's own figures are unmoved.
     recorded_zero = "  test-authoring             -            -           0"
@@ -1310,11 +1315,11 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # corpus as it stood when it was written. `eval-v1 --replay` has no
     # language selection, so this is the one of ticket 06's three counts that
     # moves whenever the corpus grows — 127 when the round was recorded, and
-    # one more since, because round 8 authored the corpus's first
-    # `test-authoring` task. The record is a snapshot and is not edited for
-    # that; the live count is asserted here beside the recorded one so the two
-    # cannot drift silently apart.
-    assert tasks_in_set() == _RECORDED_TASKS + 1
+    # three more since, because round 8 authored the corpus's `test-authoring`
+    # tasks. The record is a snapshot and is not edited for that; the live
+    # count is asserted here beside the recorded one so the two cannot drift
+    # silently apart.
+    assert tasks_in_set() == _RECORDED_TASKS + _ROUND_8_TASKS
     printed_block = fenced_blocks(note_section(
         "66. Replay, and the published tables left where they were"
     ))[0]
@@ -1409,19 +1414,20 @@ def test_neither_reader_counts_a_round_7_row(
     # the absolute one this suite passes is folded back to it first.
     #
     # Two of the three are still printed word for word. The task-set line is
-    # the one the corpus moved — round 8 authored the corpus's first
-    # `test-authoring` task, which is Python and a control — and the record is
-    # not edited for it, so what it quoted is named here and what it prints
-    # now was asserted above off the same two counts. The runs line did not
-    # move with it, because it counts the tasks that have rows and a task
+    # the one the corpus moved — round 8 authored the corpus's
+    # `test-authoring` tasks, every one of them Python and a control — and the
+    # record is not edited for it, so what it quoted is named here and what it
+    # prints now was asserted above off the same two counts. The runs line did
+    # not move with it, because it counts the tasks that have rows and a task
     # authored after every sweep has none.
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
     [quoted] = fenced_blocks(note_section(
         "66. Replay, and the published tables left where they were"
     ))[1:2]
     recorded_task_set = (
-        f"  task set   tasks/first-party-v1 — {_PYTHON_TASKS - 1} task(s): "
-        f"{_PYTHON_CONTROLS - 1} control(s), {_PYTHON_CONSTRUCTED} constructed"
+        f"  task set   tasks/first-party-v1 — {_PYTHON_TASKS - _ROUND_8_TASKS} "
+        f"task(s): {_PYTHON_CONTROLS - _ROUND_8_TASKS} control(s), "
+        f"{_PYTHON_CONSTRUCTED} constructed"
     )
     assert recorded_task_set in quoted.splitlines()
     for line in quoted.splitlines():

@@ -311,11 +311,11 @@ def test_lint_v1_prints_the_coverage_table_for_the_checked_in_task_set(
     for line in expected:
         assert line in out
     # test-authoring was the registered empty cell (design note 45.12) until
-    # round 8 authored the first task of it. The line is pinned as printed
-    # rather than as a count in the data: this table is the round's acceptance
+    # round 8 authored its three tasks. The line is pinned as printed rather
+    # than as a count in the data: this table is the round's acceptance
     # criterion, so what a reader of the lint's page sees is the pin.
     assert any(
-        line.split() == ["test-authoring", "application", "python", "1"]
+        line.split() == ["test-authoring", "application", "python", "3"]
         for line in expected
     )
 

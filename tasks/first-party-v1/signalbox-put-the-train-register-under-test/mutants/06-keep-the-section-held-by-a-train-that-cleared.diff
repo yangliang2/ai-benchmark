@@ -1,0 +1,12 @@
+diff --git a/register.py b/register.py
+index 8c22803..5701c50 100644
+--- a/register.py
++++ b/register.py
+@@ -63,7 +63,6 @@ def _record(section, offered, entry):
+     else:
+         if section["in_section"] != headcode:
+             raise ValueError(f"{headcode} cleared a section it was not in")
+-        section["in_section"] = None
+         section["cleared"].append(headcode)
+ 
+ 

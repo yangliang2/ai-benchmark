@@ -81,10 +81,10 @@ _TYPESCRIPT_ROWS = {
 }
 
 # The Python side of the same table, which this round does not touch. It reads
-# 114 rather than round 7's 113 because round 8 authored the corpus's first
-# `test-authoring` task into the Python column; §59.8's own prose, quoted
-# below, is a claim about what round 7 did and stays at 113.
-_PYTHON_TOTAL = 114
+# 116 rather than round 7's 113 because round 8 authored three `test-authoring`
+# tasks into the Python column; §59.8's own prose, quoted below, is a claim
+# about what round 7 did and stays at 113.
+_PYTHON_TOTAL = 116
 
 
 def note_section() -> str:
@@ -508,10 +508,10 @@ def test_the_readers_corpus_count_header_reads_the_python_column(
     `eval-v1 --replay`'s own count discloses; the record (#113) says both.
 
     Both figures are live reads of the corpus and both moved when round 8
-    authored the first `test-authoring` task into the Python column: 113 and
-    127 at the time §59.8 was written, 114 and 128 with that task checked in.
-    The section's own prose is quoted above and is unmoved — what round 7 did
-    to the Python column is still nothing.
+    authored its three `test-authoring` tasks into the Python column: 113 and
+    127 at the time §59.8 was written, 116 and 130 with those tasks checked
+    in. The section's own prose is quoted above and is unmoved — what round 7
+    did to the Python column is still nothing.
     """
     assert len(tasks) == _PYTHON_TOTAL + sum(_COUNTS.values())
     outcomes = reconcile_v1.observed_outcomes(

@@ -2553,10 +2553,14 @@ def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
     """Task counts over `category x surface x language`, for `ai-bench
     lint-v1` to print. Reports only — nothing here gates the lint.
 
-    Every `TaskCategory` appears at least once, `test-authoring`'s
-    registered-empty cell (design note 45.12) included, so a category with
-    no tasks reads as `0` rather than as an omission. `scale` and substrate
-    are disclosed on a task but not gridded here (design note 45.10).
+    Every `TaskCategory` appears at least once, so a category with no task in
+    any language reads as a `- - 0` row rather than as an omission — which is
+    the whole of what a zero can be said here, a populated category's missing
+    *language* being disclosed by the absence of its row and by the round that
+    left it empty. `test-authoring` was the registered-empty cell (design note
+    45.12) until round 8 filled its Python cell; `investigation` is one of the
+    categories reading zero today. `scale` and substrate are disclosed on a
+    task but not gridded here (design note 45.10).
     """
     # There is no undeclared-language column: the loader now refuses a task
     # that declares none, so no input reaches this grid without a language.

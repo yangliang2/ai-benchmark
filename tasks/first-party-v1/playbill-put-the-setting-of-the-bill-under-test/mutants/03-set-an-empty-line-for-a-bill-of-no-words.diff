@@ -1,0 +1,14 @@
+diff --git a/playbill.py b/playbill.py
+index 70c3361..492b869 100644
+--- a/playbill.py
++++ b/playbill.py
+@@ -20,8 +20,7 @@ def set_bill(text, measure):
+         else:
+             lines.append(line)
+             line = word
+-    if line:
+-        lines.append(line)
++    lines.append(line)
+     return lines
+ 
+ 

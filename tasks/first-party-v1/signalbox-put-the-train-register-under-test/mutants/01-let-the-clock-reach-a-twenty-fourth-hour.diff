@@ -1,0 +1,13 @@
+diff --git a/register.py b/register.py
+index 8c22803..d71edd5 100644
+--- a/register.py
++++ b/register.py
+@@ -73,7 +73,7 @@ def _minute(clock):
+     hours, minutes = clock[:2], clock[3:]
+     if not hours.isdigit() or not minutes.isdigit():
+         raise ValueError(f"not a time of day: {clock!r}")
+-    if int(hours) > 23:
++    if int(hours) > 24:
+         raise ValueError(f"no such hour: {clock!r}")
+     if int(minutes) > 59:
+         raise ValueError(f"no such minute: {clock!r}")

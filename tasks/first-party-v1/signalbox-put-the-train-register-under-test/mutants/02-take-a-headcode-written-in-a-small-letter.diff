@@ -1,0 +1,13 @@
+diff --git a/register.py b/register.py
+index 8c22803..d0d41a7 100644
+--- a/register.py
++++ b/register.py
+@@ -85,7 +85,7 @@ def _headcode(headcode):
+         raise ValueError(f"not a headcode: {headcode!r}")
+     if not headcode[0].isdigit() or not headcode[2:].isdigit():
+         raise ValueError(f"not a headcode: {headcode!r}")
+-    if not ("A" <= headcode[1] <= "Z"):
++    if not ("A" <= headcode[1] <= "z"):
+         raise ValueError(f"not a headcode: {headcode!r}")
+     return headcode
+ 

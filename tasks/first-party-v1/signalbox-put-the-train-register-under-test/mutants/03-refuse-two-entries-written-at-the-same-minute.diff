@@ -1,0 +1,13 @@
+diff --git a/register.py b/register.py
+index 8c22803..f039f8c 100644
+--- a/register.py
++++ b/register.py
+@@ -38,7 +38,7 @@ def work_the_register(lines):
+             # A blank line is the box's own spacing, not a movement.
+             continue
+         entry = read_entry(line)
+-        if kept_at is not None and entry["minute"] < kept_at:
++        if kept_at is not None and entry["minute"] <= kept_at:
+             raise ValueError("the register is kept in the order things happened")
+         kept_at = entry["minute"]
+         _record(section, offered, entry)

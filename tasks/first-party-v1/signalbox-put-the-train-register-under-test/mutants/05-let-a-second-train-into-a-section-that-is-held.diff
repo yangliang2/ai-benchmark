@@ -1,0 +1,13 @@
+diff --git a/register.py b/register.py
+index 8c22803..11d73fd 100644
+--- a/register.py
++++ b/register.py
+@@ -56,8 +56,6 @@ def _record(section, offered, entry):
+     elif movement == "entered":
+         if headcode not in offered:
+             raise ValueError(f"{headcode} entered the section unaccepted")
+-        if section["in_section"] is not None:
+-            raise ValueError("the section holds one train at a time")
+         offered.discard(headcode)
+         section["in_section"] = headcode
+     else:

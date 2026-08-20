@@ -1,0 +1,13 @@
+diff --git a/playbill.py b/playbill.py
+index 70c3361..d68732d 100644
+--- a/playbill.py
++++ b/playbill.py
+@@ -11,7 +11,7 @@ def set_bill(text, measure):
+     _check_measure(measure)
+     lines = []
+     line = ""
+-    for word in text.split():
++    for word in text.split(" "):
+         if not line:
+             line = word
+         elif len(line) + 1 + len(word) <= measure:

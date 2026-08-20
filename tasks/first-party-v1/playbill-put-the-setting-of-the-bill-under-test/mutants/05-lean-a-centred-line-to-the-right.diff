@@ -1,0 +1,13 @@
+diff --git a/playbill.py b/playbill.py
+index 70c3361..7fcd4c3 100644
+--- a/playbill.py
++++ b/playbill.py
+@@ -28,7 +28,7 @@ def set_bill(text, measure):
+ def centre(line, measure):
+     """`line` stood in the middle of `measure`, by the space put before it."""
+     _check_measure(measure)
+-    return " " * ((measure - len(line)) // 2) + line
++    return " " * ((measure - len(line) + 1) // 2) + line
+ 
+ 
+ def _check_measure(measure):

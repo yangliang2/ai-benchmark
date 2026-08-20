@@ -1,0 +1,103 @@
+# Round 8's second `test-authoring` task (design note §67), at the shape ticket
+# 04 checked in with `lido-put-the-admissions-desk-under-test`. The deliverable
+# is the suite, not a change to the code under test: `register.py` already does
+# everything the prompt specifies, and an agent that "fixes" it has done nothing
+# the verdict reads.
+#
+# Why it grades the way it does: held-out tests cannot grade tests — an
+# all-green suite may be thorough or may be `assert True` — so this action's
+# verdict is the mutation gate (ADR-0004). The suite the run wrote at
+# `test_path` is collected out of the workdir diff and asked two questions:
+# does it pass on the pristine repository, and does at least one of its tests
+# fail on each of the behaviour changes in `mutants/`. Both, binary. Hence
+# `control: true` — the task registers no difficulty prediction — and hence no
+# `grading/` directory: there is no held-out suite to overlay, and the author's
+# own reference suite lives in `proofs/`, where every other action's existence
+# proof lives.
+#
+# The subject is its own, and not the lido's desk in other words: what the
+# suite has to detect defects in here is a line-by-line reading of written
+# text and a fold down a book kept in time order, where the lido's is a
+# priority-ordered decision over one mapping. That is what varies across the
+# round's three cells (§67.2).
+#
+# The prompt is a complete behavioural specification and discloses nothing
+# about the mechanism (§67.6): a suite cannot be expected to catch a rule the
+# agent was never told, and the planted set has exactly the held-out status
+# grading tests have always had. It names `tests/` because that subtree is the
+# deliverable and nothing else is collected, and it asks for `test_*.py` files
+# that stand on their own because grading runs pytest with `--noconftest`
+# under a pinned config — a fixture in a conftest.py the agent wrote is never
+# loaded, and a file named anything else is never collected.
+#
+# The six planted behaviour changes are spread over six specified rules: the
+# hour the clock reaches, the capital in a headcode, entries written at the
+# same minute, the blank line that is not a movement, the one-train-in-section
+# rule, and the section going free when a train clears it. Each is proved
+# killable by proofs/ at lint time.
+id: signalbox-put-the-train-register-under-test
+category: test-authoring
+scale: single-file
+surface: application
+language: python
+control: true
+test_path: tests
+prompt: |
+  register.py is the signal box's train register: the written record of the
+  block section, one line per movement. It has never had a test to its name.
+  Write the suite it should have had.
+
+  Put the suite in tests/. Name each file `test_*.py`, and make every one of
+  them stand on its own: whatever a test needs — a line of the register, a
+  whole book of them, a helper that builds either — is defined in the test
+  module itself. No conftest.py, and no shared helper module the test files
+  import: a file lifted out of tests/ on its own has to still run.
+
+  Leave register.py alone. The suite is the deliverable, and the module is
+  already the specification below.
+
+  A **register line** is three fields — a clock reading, a headcode and a
+  movement — parted by whatever whitespace stands between them, with any
+  whitespace at either end of the line ignored.
+
+  - a **clock reading** is `HH:MM` on the twenty-four hour clock, five
+    characters with the colon third, both halves written in digits and both
+    written to their full width: `09:15`, never `9:15`. The hour runs to 23
+    and the minute to 59;
+  - a **headcode** is four characters: a digit, a capital letter, then two
+    digits — `1A24`. A small letter is not a capital;
+  - a **movement** is one of "accepted", "entered" or "cleared", written in
+    the small letters given here and nothing else.
+
+  `read_entry(line)` reads one line and gives back a mapping of three keys:
+  `minute`, the clock reading counted in minutes past midnight, so that
+  `00:00` is 0 and `23:59` is 1439; `headcode`, as written; and `movement`,
+  as written. A line that is not three fields, or whose clock reading,
+  headcode or movement is not of the shape above, raises ValueError.
+
+  `work_the_register(lines)` works down a whole register in the order it was
+  kept and gives back `{"in_section": ..., "cleared": [...], "movements": n}`
+  — what the section holds now, or None if it is free; the headcodes that
+  gave the section back, in the order they gave it back; and how many entries
+  were read:
+
+  - a blank line, or one of nothing but whitespace, is the box's own spacing:
+    it is passed over and is not a movement;
+  - every other line is read as `read_entry` reads it, and a ValueError from
+    that reading comes straight back out;
+  - the book is kept in the order things happened: an entry earlier than the
+    entry above it raises ValueError. Two entries written at the same minute
+    are in order, and are kept as they stand;
+  - "accepted" is a train offered to the box and taken. A train already on
+    the register — offered and not yet in the section, or in the section —
+    cannot be offered again, and raises ValueError. A train that gave the
+    section back is off the register, and may be offered again later in the
+    day;
+  - "entered" is a train taking the section. A train that was not accepted
+    first raises ValueError, and so does a train entering a section another
+    train is in: the section holds one train at a time;
+  - "cleared" is a train giving the section back. A headcode that is not the
+    one the section holds raises ValueError. The section is free again from
+    that entry on, and the headcode goes on the end of `cleared`;
+  - an empty register holds nothing, has cleared nothing, and counts no
+    movements.
