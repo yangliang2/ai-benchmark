@@ -308,6 +308,15 @@ def observed_outcomes(
     """
     runs = select_agent(runs, agent, explicit=agent_explicit)
     runs = select_language(tasks, runs, language, explicit=language_explicit)
+    # The task set narrows with the rows, or the reading pools toolchains
+    # where no run ever could: a category's control count, its baseline mix
+    # and every denominator are built from `tasks`, so fourteen TypeScript
+    # controls in the loaded set would land in a Python category's control
+    # row as "unswept" and move the published mixes — which round 7's
+    # precheck caught the first time both languages were loaded at once. The
+    # rows were filtered against the *full* set above, so every kept row's
+    # task is still here.
+    tasks = [task for task in tasks if task.language == language]
     _check_declarations(tasks)
     _check_ladder(runs)
     records = evaluate(tasks, runs, source=source, timeout_s=timeout_s)

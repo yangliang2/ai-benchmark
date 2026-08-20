@@ -282,7 +282,10 @@ def test_the_checked_in_corpus_holds_exactly_the_six_locate_tasks() -> None:
     otherwise be swept with its partner check never run."""
     _, located = checked_in_fault_location_tasks()
 
-    assert len(located) == 6
+    # Nine since round 7: round 4's six Python locate tasks and the three
+    # TypeScript ones (#105-#107), each still authored beside a bug-fix partner
+    # on a shared starting repository.
+    assert len(located) == 9
 
 
 # --- code-review: a proof test per planted finding, run against two trees --------

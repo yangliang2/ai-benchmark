@@ -338,7 +338,8 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:
         assert task.category != "unclassified"
-        assert task.language == "python"
+        # Two languages since round 7; each task's declaration picks its runner.
+        assert task.language in ("python", "typescript")
         assert list(task.repo_dir.iterdir())
         assert list(task.grading_dir.rglob("test_*.py"))
 

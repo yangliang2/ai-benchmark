@@ -308,6 +308,11 @@ def checked_in_profiles() -> dict[tuple[str, str], list[firstparty_v1.Task]]:
     """
     profiles: dict[tuple[str, str], list[firstparty_v1.Task]] = {}
     for task in firstparty_v1.load_task_set(_REPO / "tasks" / "first-party-v1"):
+        # The default reading is one language's (reconcile_v1.DEFAULT_LANGUAGE):
+        # the reader narrows the task set with the rows, so a TypeScript
+        # control never lands in a Python category's denominator or mix.
+        if task.language != reconcile_v1.DEFAULT_LANGUAGE:
+            continue
         levels = {} if task.construction is None else task.construction.levels
         profile = ",".join(
             f"{knob}={levels[knob]}"

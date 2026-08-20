@@ -267,7 +267,14 @@ def checked_in_tasks_and_models() -> tuple[list[firstparty_v1.Task], dict[str, s
     The models and not just the ids, because a task swept on one model is a
     different report state from one swept on both: only the second can be
     scored to a rung, and round 3 produced the first of the first kind."""
-    tasks = firstparty_v1.load_task_set(_REPO / "tasks" / "first-party-v1")
+    # The default reading is one language's: the reader narrows the task set
+    # with the rows (reconcile_v1.DEFAULT_LANGUAGE), so what this file expects
+    # of the default report is the Python corpus and never a pooled one.
+    tasks = [
+        task
+        for task in firstparty_v1.load_task_set(_REPO / "tasks" / "first-party-v1")
+        if task.language == reconcile_v1.DEFAULT_LANGUAGE
+    ]
     logs = reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
     models: dict[str, set[str]] = {}
     for log in logs:
