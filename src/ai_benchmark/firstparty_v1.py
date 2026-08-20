@@ -94,6 +94,22 @@ fourth keyed action cannot be added without one. A proof is checked by the
 lint and never by grading: they live outside `grading/`, so nothing overlays
 them into a workdir or collects them as verdict tests.
 
+A fourth verdict shape grades the one action whose deliverable is the tests
+themselves. A `test-authoring` task ships no held-out grading tests at all;
+it ships planted mutants instead (`MUTANTS_DIR`), and its verdict is the
+**mutation gate** (`_mutation_gate`): collect the prompt-named test subtree —
+`Task.test_path` — out of the workdir diff and nothing else, then ask two
+questions of it. Does that suite pass on the unmodified starting repository,
+and does it fail on every planted mutant, each one a copy of that repository
+carrying one deliberate behaviour change? `resolved` is the first and all of
+the second, binary. What it does not do is score: the fraction of mutants a
+suite killed is not computed, not stored and not reported, because a kill rate
+under the name `resolved` would be a second quality metric on one action of a
+corpus whose values are only comparable within one (design note §67.3). Nor
+does it adjudicate anything outside the subtree — an agent that edits the code
+under test commits no foul, its edits simply are not in the world the two
+gates run in, and a suite that needed them goes red on gate 1 honestly.
+
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
 so those defences stop an honest-but-messy agent, not a deliberately
@@ -186,6 +202,19 @@ CORRECTED_DIR = "corrected"
 # GRADING_DIR (see `_check_task_layout`).
 PROOFS_DIR = "proofs"
 
+# The planted mutant set of a `test-authoring` task: one file per mutant, a
+# unified diff against REPO_DIR, in its own subtree of the task directory
+# beside REPO_DIR, CORRECTED_DIR and PROOFS_DIR — and outside GRADING_DIR for
+# exactly the reason those two are. A mutant is this action's held-out key: it
+# is applied to a *copy* of the starting repository at grade time, never to the
+# workdir the agent worked in, so a mutant overlaid into a workdir would hand
+# the agent the answer, and one collected as a test would be run rather than
+# planted. Kept as a diff rather than as a whole mutated tree because a mutant
+# is one deliberate behaviour change and a diff is what says which change it
+# is; it is applied the way a logged diff is (`_git`, `git apply`), so a patch
+# git cannot apply is a broken task rather than a silent non-mutation.
+MUTANTS_DIR = "mutants"
+
 # The accepted-answer key of a fault-location or codebase-comprehension task,
 # inside GRADING_DIR: held out with the grading tests, reaching the workdir by
 # the overlay that copies that directory wholesale, and never collected,
@@ -256,6 +285,16 @@ _KEYED_CATEGORIES = frozenset({_KEY_REQUIRED_CATEGORY, _KEY_OPTIONAL_CATEGORY})
 # fault-location and for the same reason: the findings *are* the deliverable of
 # a review, so a review task with no key has no ground truth at all.
 _FINDINGS_CATEGORY: TaskCategory = "code-review"
+
+# The one action whose verdict is the mutation gate, and so the only one that
+# may ship a mutant set — mandatory there, because the mutants *are* the ground
+# truth of a suite-authoring task: one with none has nothing its tests could be
+# checked against. Named apart rather than only tested for inline, the way
+# `_KEY_REQUIRED_CATEGORY` is, so that a typo here is a type error rather than
+# a category nothing matches. Read at load, to say which action may ship a
+# mutant set and which must; every gate after that reads `is_mutation_keyed()`
+# — the mutants on disk — and never a category.
+_MUTATION_CATEGORY: TaskCategory = "test-authoring"
 
 # A `code-review` task's ground truth, inside GRADING_DIR beside the
 # accepted-answer key's precedent, and held out exactly as that one is: it
@@ -730,6 +769,19 @@ class Task(BaseModel):
     # its surface does: a second-hand row says whatever its source disclosed.
     language: LanguageStr
     prompt: NonEmptyStr
+    # Where a `test-authoring` task's deliverable lands: the workdir-relative
+    # directory the prompt names as the place to write the suite, and the one
+    # subtree grading collects out of the workdir diff (`_mutation_gate`).
+    # Declared here rather than inferred from a convention because it is what
+    # the prompt promised — a convention mistyped in a prompt would collect a
+    # different subtree than the agent was told to write in, and the task would
+    # grade every agent unresolved for a reason that says nothing about the
+    # agent. Required for that action and refused for every other, which is the
+    # validator below: nothing else has a subtree to collect, and a task
+    # declaring one that nothing reads is a claim about grading that grading
+    # does not make. That it stays inside the workdir is the loader's
+    # (`_check_task_layout`), where the refusal can name the task.
+    test_path: NonEmptyStr | None = None
     grading: Grading = Grading()
     construction: Construction | None = None
     # Whether this task declares itself a control: authored to fill a
@@ -803,6 +855,21 @@ class Task(BaseModel):
         form runs no test, which is why this is a path rather than a check.
         """
         return self.directory / PROOFS_DIR
+
+    @property
+    def mutants_dir(self) -> Path:
+        """This task's planted mutants: one patch per mutant, each a variant of
+        the starting repository grading builds for itself.
+
+        Beside `repo/`, `corrected/` and `proofs/` and outside `grading/`, so
+        that nothing in it is overlaid into a workdir or collected as a test —
+        the mutation gate applies these to its own throwaway copies, and no
+        other caller opens this directory. Empty for every action but
+        `test-authoring`, which is why this is a path rather than a check: what
+        refuses a mutant set shipped by another action is the layout, not this
+        property.
+        """
+        return self.directory / MUTANTS_DIR
 
     @property
     def harness_test_paths(self) -> tuple[str, ...]:
@@ -881,6 +948,28 @@ class Task(BaseModel):
                 f"only refactor tasks split grading into behaviour and structural "
                 f"tests; {self.category} names behaviour_tests, which would exempt "
                 "them from the must-fail-on-pristine invariant"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def only_the_mutation_gate_collects_a_test_path(self) -> Self:
+        """A test path is the mutation gate's and no other action's.
+
+        The field says one thing: *this* subtree of the workdir diff is the
+        deliverable, and everything else in it is archived rather than scored.
+        No other verdict shape in this module reads a subtree — the rest grade
+        by overlaying held-out tests over whatever the agent wrote — so a task
+        of any other action declaring one has written down a rule about its own
+        grading that its grading never applies, which is the kind of claim this
+        loader refuses rather than ignores.
+        """
+        if self.test_path is not None and self.category != _MUTATION_CATEGORY:
+            raise ValueError(
+                f"a {self.category} task declares test_path {self.test_path!r} "
+                f"— the test path is the subtree {_MUTATION_CATEGORY}'s "
+                "mutation gate collects out of the workdir diff, and every "
+                "other action is graded by held-out tests laid over the whole "
+                "workdir, so nothing here would ever read it"
             )
         return self
 
@@ -1545,6 +1634,37 @@ def findings_test_source() -> bytes:
     return _FINDINGS_TEST_SOURCE.encode("utf-8")
 
 
+# --- test-authoring: the planted mutants and the two-gate verdict --------------
+
+
+def mutant_patches(task: Task) -> list[Path]:
+    """This task's planted mutants, in the order the gate runs them: sorted by
+    filename, one patch per mutant.
+
+    Sorted rather than in directory order because a verdict must be
+    reproducible and a directory listing is not ordered anywhere in
+    particular; files only, because a mutant is one diff and a directory of
+    them would be a set the gate could not name.
+    """
+    if not task.mutants_dir.is_dir():
+        return []
+    return sorted(path for path in task.mutants_dir.iterdir() if path.is_file())
+
+
+def is_mutation_keyed(task: Task) -> bool:
+    """Whether this task's verdict is the mutation gate: it ships planted
+    mutants.
+
+    Read off the mutants on disk, the way `is_keyed` and `is_findings_keyed`
+    are read off their keys and for the same reason (design note §45.6): the
+    loader alone reads the category, to say which action may ship a mutant set
+    and which must, and every gate after it asks this. So which verdict shape
+    grades a task is a fact about what the task ships, and a task can never be
+    graded by a shape whose ground truth is not there.
+    """
+    return bool(mutant_patches(task))
+
+
 # What a sweep id has to be to work as a round key, said once for the two
 # places that enforce it: the run model, which sees ids read back out of a
 # log, and the live runner, which sees the one its caller passed in.
@@ -1733,17 +1853,38 @@ def _check_task_layout(task: Task) -> None:
         )
     if misplaced := _held_out_of_the_workdir_but_not_of_grading(task):
         raise IngestError(
-            f"{task.id}: {GRADING_DIR}/ holds {misplaced} — the corrected tree "
-            "and the existence proofs are read by the lint and by nothing else, "
-            f"and {GRADING_DIR}/ is overlaid into the workdir wholesale at grade "
-            "time, so a corrected tree kept there would hand the agent the "
-            "answers and a proof test kept there would be collected as a verdict "
-            f"test. Both live beside {REPO_DIR}/ in the task directory "
-            f"({CORRECTED_DIR}/ and {PROOFS_DIR}/), which is what makes 'never "
-            "overlaid, never collected, run by the lint only' a property of the "
+            f"{task.id}: {GRADING_DIR}/ holds {misplaced} — the corrected tree, "
+            "the existence proofs and the planted mutants are read by the lint "
+            "and by the mutation gate's own throwaway copies, never by the "
+            f"workdir, and {GRADING_DIR}/ is overlaid into the workdir wholesale "
+            "at grade time, so a corrected tree or a mutant kept there would "
+            "hand the agent the answers and a proof test kept there would be "
+            f"collected as a verdict test. All three live beside {REPO_DIR}/ in "
+            f"the task directory ({CORRECTED_DIR}/, {PROOFS_DIR}/ and "
+            f"{MUTANTS_DIR}/), which is what makes 'never overlaid, never "
+            "collected, read by the lint and the gate only' a property of the "
             "layout rather than of an author remembering it"
         )
-    if not task.grading_test_paths:
+    if is_mutation_keyed(task) and task.category != _MUTATION_CATEGORY:
+        raise IngestError(
+            f"{task.id}: a {task.category} task ships {MUTANTS_DIR}/ — a "
+            f"planted mutant is the ground truth of {_MUTATION_CATEGORY}, the "
+            "one action whose deliverable is a test suite rather than a change "
+            "to the code under test, and which verdict shape grades a task is "
+            "read off the mutants being there, so a mutant set shipped by any "
+            "other action would swap this task's whole verdict for one its "
+            "grading directory was never authored for"
+        )
+    if task.category == _MUTATION_CATEGORY:
+        # Every check here is a load-time one and not the lint's, for the reason
+        # the keys above are read at load: `ai-bench run-live` loads a task set
+        # and never lints it, so a task the mutation gate could not grade would
+        # otherwise reach a paid run and come back unresolved for a reason that
+        # says nothing about the agent. What the *set* of mutants has to satisfy
+        # — a minimum count, disjointness from the test path, the registered
+        # existence proof — is the lint's, and stays there.
+        _check_mutation_gate_layout(task)
+    elif not task.grading_test_paths:
         # Read per runner glob *plus* the canonical harness-side checks, which
         # is what `grading_test_paths` collects: the task's own held-out tests
         # are found by its language runner's glob, and the answer-key test, the
@@ -1822,22 +1963,76 @@ def _check_task_layout(task: Task) -> None:
             raise IngestError(_empty_accepted_findings_message(task))
 
 
-def _held_out_of_the_workdir_but_not_of_grading(task: Task) -> list[str]:
-    """Corrected trees and proof subtrees found inside the grading directory.
+def _check_mutation_gate_layout(task: Task) -> None:
+    """What a `test-authoring` task has to have on disk before the mutation
+    gate can grade it: a subtree to collect, mutants to plant, a proof that
+    they are killable, and no second ground truth.
 
-    The two are the only parts of a task that are held out of the *workdir* as
+    The four are the gate's own preconditions rather than authoring taste. A
+    task with no declared test path has no deliverable grading could find; one
+    with no mutants has a gate 2 that quantifies over nothing and would resolve
+    every suite that compiles; one with no proofs has nothing saying its
+    mutants are killable at all; and one shipping a grading directory has a
+    second ground truth that nothing in this verdict shape ever runs.
+    """
+    if task.test_path is None:
+        raise IngestError(
+            f"{task.id}: a {_MUTATION_CATEGORY} task declares no test_path — "
+            "the mutation gate collects the prompt-named test subtree out of "
+            "the workdir diff and grades that alone, so a task that never says "
+            "which subtree that is has no deliverable for the gate to find"
+        )
+    if _escapes_workdir(task.test_path):
+        raise IngestError(
+            f"{task.id}: test_path {task.test_path!r} climbs out of the workdir "
+            "— the test path is where the agent is told to write, and a run's "
+            "diff only ever carries what was written inside the workdir, so no "
+            "suite could ever land there and the gate would collect nothing"
+        )
+    if not is_mutation_keyed(task):
+        raise IngestError(
+            f"{task.id}: a {_MUTATION_CATEGORY} task ships no {MUTANTS_DIR}/ — "
+            "the planted mutants are this action's ground truth and the whole "
+            "of its second gate, so a task with none asks nothing of the suite "
+            "it grades beyond passing on code that already works"
+        )
+    if not task.proofs_dir.is_dir() or not any(task.proofs_dir.iterdir()):
+        raise IngestError(
+            f"{task.id}: a {_MUTATION_CATEGORY} task ships no {PROOFS_DIR}/ — "
+            "the author's own reference suite is this action's registered "
+            "existence proof, and without it nothing says the planted mutants "
+            "are killable, so a mutant no test can kill would make the task "
+            "unresolvable for every agent and look like a hard task"
+        )
+    if task.grading_dir.exists():
+        raise IngestError(
+            f"{task.id}: a {_MUTATION_CATEGORY} task ships {GRADING_DIR}/ — its "
+            "verdict is the mutation gate, which runs the agent's own collected "
+            "suite against the starting repository and against each mutant and "
+            "never overlays a held-out test at all, so a grading directory here "
+            "is a second ground truth that nothing would ever run. The author's "
+            f"reference suite belongs in {PROOFS_DIR}/, where every other "
+            "action's existence proof lives"
+        )
+
+
+def _held_out_of_the_workdir_but_not_of_grading(task: Task) -> list[str]:
+    """Corrected trees, proof subtrees and mutant sets found inside the grading
+    directory.
+
+    The three are the parts of a task that are held out of the *workdir* as
     well as of the agent: grading copies the grading directory over the workdir
-    wholesale, so a corrected tree there lands in the graded workdir and a proof
-    test there is collected as a verdict test. Read at any depth, because a
-    nested `grading/extras/corrected/` is overlaid exactly as a top-level one
-    is.
+    wholesale, so a corrected tree or a mutant there lands in the graded workdir
+    and a proof test there is collected as a verdict test. Read at any depth,
+    because a nested `grading/extras/corrected/` is overlaid exactly as a
+    top-level one is.
     """
     if not task.grading_dir.is_dir():
         return []
     return sorted(
         str(path.relative_to(task.grading_dir)) + "/"
         for path in task.grading_dir.rglob("*")
-        if path.is_dir() and path.name in (CORRECTED_DIR, PROOFS_DIR)
+        if path.is_dir() and path.name in (CORRECTED_DIR, PROOFS_DIR, MUTANTS_DIR)
     )
 
 
@@ -1878,7 +2073,17 @@ def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
     runner each belongs to, and a task resolves only if every half it has
     passes and at least one test ran overall. For a Python task the two halves
     are the same files under the same runner, and there is only ever one.
+
+    One action is graded by a different shape entirely, and the dispatch is
+    here so that nothing above this line has to know: a task shipping planted
+    mutants is graded by the mutation gate, which collects the agent's own test
+    subtree out of the diff and runs it against the starting repository and
+    against each mutant. `evaluate` and the replay path call this function and
+    are unchanged by that — a verdict is still one boolean read from running
+    code, whichever shape produced it.
     """
+    if is_mutation_keyed(task):
+        return _mutation_gate(task, diff, timeout_s=timeout_s)
     return _run_halves(task, diff, task.grading_halves, timeout_s=timeout_s)
 
 
@@ -1948,6 +2153,162 @@ def _apply_diff(task: Task, diff: str, workdir: Path) -> None:
     doing = "on the logged diff"
     _git(task, ["init", "-q", "."], workdir, doing=doing)
     _git(task, ["apply", "--whitespace=nowarn"], workdir, stdin=diff, doing=doing)
+
+
+# --- the mutation gate: a `test-authoring` task's two-gate verdict --------------
+
+
+def _mutation_gate(task: Task, diff: str, *, timeout_s: int) -> bool:
+    """Whether the suite this run wrote passes on the starting repository and
+    kills every planted mutant.
+
+    Two gates, both run over trees this function builds for itself and neither
+    over the workdir the agent worked in. Gate 1 is the collected suite against
+    a fresh copy of `repo/`: a suite that accuses correct code of a fault is
+    unresolved here, with no exception (design note §67.3). Gate 2 is the same
+    collected suite against each mutant in turn — a fresh copy of `repo/` with
+    one planted patch applied — and a mutant is killed when the runner's
+    verdict on it is False, which is to say at least one test failed. Resolved
+    is gate 1 and every mutant killed, binary: what fraction of the mutants a
+    suite kills is not a score and is not reported anywhere (§67.3 again — a
+    kill rate would be a second quality metric wearing `resolved`'s name).
+
+    Mutants run in `mutant_patches()` order and the gate stops at the first
+    survivor, which costs nothing a reader needs: the order is sorted and the
+    trees are built the same way every time, so running this again on the same
+    task and the same diff fails at the same mutant.
+    """
+    if task.test_path is None:
+        # Unreachable through the loader, which refuses a mutation-keyed task
+        # declaring no test path. Said out loud anyway rather than asserted
+        # away, because a gate that collected "the whole workdir" instead is
+        # precisely the hole §67.4 exists to close.
+        raise IngestError(
+            f"{task.id}: the mutation gate has no test_path to collect — the "
+            "task ships planted mutants and never says which subtree of the "
+            "workdir diff is the deliverable"
+        )
+    task.runner.require_toolchain()
+    with tempfile.TemporaryDirectory(prefix="ai-bench-mutate-") as name:
+        root = Path(name)
+        # Gate 1. Anything but a pass — a failure, a collection error, a
+        # timeout, or nothing collected at all — is unresolved.
+        if _collected_suite_verdict(
+            task, diff, root / "pristine", None,
+            test_path=task.test_path, timeout_s=timeout_s,
+        ) is not True:
+            return False
+        # Gate 2. Killed is the runner saying False on that mutant; a suite
+        # that passes has let the mutation through, and a suite that collected
+        # nothing there has killed nothing either.
+        for index, patch in enumerate(mutant_patches(task)):
+            verdict = _collected_suite_verdict(
+                task, diff, root / f"mutant-{index}", patch,
+                test_path=task.test_path, timeout_s=timeout_s,
+            )
+            if verdict is not False:
+                return False
+    return True
+
+
+def _collected_suite_verdict(
+    task: Task,
+    diff: str,
+    root: Path,
+    mutant: Path | None,
+    *,
+    test_path: str,
+    timeout_s: int,
+) -> bool | None:
+    """Run the collected suite over one copy of the starting repository —
+    pristine, or carrying one planted mutant — and say what it did.
+
+    True where every collected test passed, False where the run said anything
+    else, and None where *no test file was collected at all*. The third answer
+    is not the second: nothing ran, so nothing was verified, and both gates
+    read it that way rather than as a pass (the "no halves" sentence of
+    `_run_halves`, one level down).
+
+    The tree is built the way `_run_halves` builds its own and for the same
+    reasons — a throwaway root with the workdir beneath it, so that the pinned
+    config, the plugin and the report all sit somewhere the applied diff cannot
+    write — with the one difference this action is: nothing is overlaid over
+    the workdir afterwards, because the tests being run are the agent's.
+    """
+    workdir = root / "workdir"
+    workdir.mkdir(parents=True)
+    shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
+    # A repository of its own, so neither patch below can resolve its paths
+    # against a checkout this temp dir happens to sit inside — `_apply_diff`'s
+    # reason, and it holds for a mutant exactly as it does for a logged diff.
+    _git(task, ["init", "-q", "."], workdir, doing="preparing a graded copy")
+    if mutant is not None:
+        _apply_mutant(task, mutant, workdir)
+    _collect_the_test_subtree(task, diff, workdir, test_path)
+    targets = sorted(
+        str(path.relative_to(workdir))
+        for path in (workdir / test_path).rglob(task.runner.grading_test_glob)
+    )
+    if not targets:
+        return None
+    return task.runner.run_tests(root, workdir, targets, timeout_s=timeout_s)
+
+
+def _apply_mutant(task: Task, mutant: Path, workdir: Path) -> None:
+    """Plant one mutant in a copy of the starting repository.
+
+    A patch git cannot apply fails loudly, the way a logged diff git cannot
+    apply does: the run log is not the only artefact that can be broken, and a
+    mutant that quietly did not land is a gate 2 that quantifies over one
+    fewer behaviour change than the task claims — which is the failure mode
+    this verdict shape has no other guard against.
+    """
+    try:
+        patch = mutant.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise IngestError(
+            f"{task.id}: cannot read planted mutant {mutant.name}: {error}"
+        ) from error
+    _git(
+        task,
+        ["apply", "--whitespace=nowarn"],
+        workdir,
+        stdin=patch,
+        doing=f"on planted mutant {mutant.name}",
+    )
+
+
+def _collect_the_test_subtree(
+    task: Task, diff: str, workdir: Path, test_path: str
+) -> None:
+    """Apply the hunks of this run's diff that land under the declared test
+    path, and no others.
+
+    The collection rule of design note §67.4, and the whole of what keeps the
+    two gates honest: applied whole, a diff's source edits could bend the code
+    under test toward a wrong suite (gate 1 dies) or overwrite a planted
+    mutation (gate 2 dies). Everything outside the subtree is archived by the
+    run log and scored by nothing.
+
+    Ridden on `git apply --include` rather than on a diff parser written here:
+    which hunks belong to a path is git's own question, and a hand-rolled
+    splitter would be a second, weaker implementation of it. The pattern is
+    `<test_path>/*` and it covers every depth — git matches these patterns
+    without a path-separator rule, so one `*` spans `tests/test_a.py` and
+    `tests/deep/test_b.py` alike (checked against a real `git apply`, not
+    remembered). A diff whose hunks all fall outside the subtree applies
+    nothing and exits 0, which is the answer this wants: nothing collected,
+    and gate 1 reads that as nothing verified.
+    """
+    if not diff.strip():
+        return
+    _git(
+        task,
+        ["apply", "--whitespace=nowarn", f"--include={test_path.rstrip('/')}/*"],
+        workdir,
+        stdin=diff,
+        doing="collecting the test subtree from the logged diff",
+    )
 
 
 # Every git call — grading and live capture alike — runs with the operator's

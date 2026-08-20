@@ -59,9 +59,22 @@ def copy_solution(task: Task, into: Path) -> None:
 
 def workdir_diff(task: Task, edit: Callable[[Path], None]) -> str:
     """The workdir diff a run that made this edit would log."""
+    return tree_diff(task.repo_dir, edit)
+
+
+def tree_diff(repo_dir: Path, edit: Callable[[Path], None]) -> str:
+    """The unified diff this edit makes against a pristine tree, built with
+    real git the way the live runner builds a workdir diff.
+
+    What `workdir_diff` is written on, and reachable on its own because a
+    *planted mutant* is the same artefact against the same tree — one patch a
+    task ships rather than one a run logs — and hand-writing hunks for it would
+    drift from what `git apply` accepts exactly as hand-writing a workdir diff
+    would.
+    """
     with tempfile.TemporaryDirectory(prefix="ai-bench-test-") as name:
         workdir = Path(name)
-        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True, ignore=_BYPRODUCTS)
+        shutil.copytree(repo_dir, workdir, dirs_exist_ok=True, ignore=_BYPRODUCTS)
         subprocess.run([*_GIT, "init", "-q", "."], cwd=workdir, check=True)
         subprocess.run([*_GIT, "add", "-A"], cwd=workdir, check=True)
         subprocess.run([*_GIT, "commit", "-qm", "pristine"], cwd=workdir, check=True)
