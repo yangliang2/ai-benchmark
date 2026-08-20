@@ -2432,20 +2432,34 @@ def test_reconcile_v1_counts_the_same_checked_in_rounds_with_codex_rows_present(
     The rounds are the count to watch, because a round is keyed off a run's
     sweep id: a codex row read as one of ours would put its sweep on the
     header as a round of the ladder, and the kill discipline counts a knob's
-    silence in rounds. The expectation is derived from the claude-code rows
-    the corpus already carried, so nothing here moves to accommodate the
-    codex log dropped in beside them.
+    silence in rounds. The expectation is derived from the rows the reader's
+    own two unflagged selections leave — this agent, this language — so
+    nothing here moves to accommodate the codex log dropped in beside them,
+    and nothing moves either when a round sweeps a second language, which
+    round 7 did.
     """
     tasks_root = _REPO / "tasks" / "first-party-v1"
-    # Derived from the claude-code rows only: the checked-in directory holds
-    # codex rows since round 6's sweep (§53), and the reader's unflagged default
-    # reads claude-code alone — which is exactly the claim under test.
-    checked_in = [
-        run
-        for log in reconcile_v1.collect_logs([_REPO / "data" / "first-party-v1-runs"])
-        for run in firstparty_v1.load_runs(log)
-        if run.agent == "claude-code"
-    ]
+    # Derived through the reader's own seams rather than beside them: the
+    # checked-in directory holds codex rows since round 6's sweep (§53) and
+    # typescript rows since round 7's (§60), and the unflagged default reads
+    # claude-code's python rows alone — which is exactly the claim under test.
+    declared = list(firstparty_v1.load_task_set(tasks_root))
+    checked_in = reconcile_v1.select_language(
+        declared,
+        reconcile_v1.select_agent(
+            [
+                run
+                for log in reconcile_v1.collect_logs(
+                    [_REPO / "data" / "first-party-v1-runs"]
+                )
+                for run in firstparty_v1.load_runs(log)
+            ],
+            "claude-code",
+            explicit=False,
+        ),
+        reconcile_v1.DEFAULT_LANGUAGE,
+        explicit=False,
+    )
     rounds = sorted(
         reconcile_v1.rounds_by_key(checked_in).values(),
         key=lambda round: round.sort_key,
@@ -2453,7 +2467,7 @@ def test_reconcile_v1_counts_the_same_checked_in_rounds_with_codex_rows_present(
 
     logs = tmp_path / "logs"
     shutil.copytree(_REPO / "data" / "first-party-v1-runs", logs)
-    [any_task, *_] = firstparty_v1.load_task_set(tasks_root)
+    [any_task, *_] = declared
     write_log(logs / "extra-harness.jsonl", [any_task], {}, agent="codex",
               models=("gpt-5.6-terra",))
 
