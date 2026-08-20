@@ -280,14 +280,19 @@ def test_every_registered_cell_already_carries_both_ladder_rows(
     # The round's own combination: before the sweep this asserted that no
     # `codex` row existed anywhere (ticket 08 ran no sweep). The sweep is on
     # main now (§53), so the post-sweep invariant is the one that holds from
-    # here on — every registered cell carries exactly one codex row, and every
-    # codex row carries the round's sweep id; a codex row on a task outside the
+    # here on — every registered cell carries exactly one codex row of this
+    # round, and no cell outside the register does. It is keyed on the sweep
+    # id rather than on the agent alone because Codex is a standing column
+    # from round 7 on (§45.13): codex rows on other tasks are later rounds'
+    # and say nothing about this one, while a *round-6* codex row outside the
     # register would mean a cell was swept that was never registered.
     codex_rows = {key: run for key, run in rows.items() if key[1] == _AGENT}
-    assert {key[0] for key in codex_rows} == set(registered_ids()), (
-        "codex rows exist exactly for the thirty registered cells"
-    )
-    assert all(run.sweep == _SWEEP for run in codex_rows.values())
+    assert {key[0] for key, run in codex_rows.items() if run.sweep == _SWEEP} == (
+        set(registered_ids())
+    ), "the round's codex rows are exactly the thirty registered cells"
+    for task_id in registered_ids():
+        [row] = [run for key, run in codex_rows.items() if key[0] == task_id]
+        assert row.sweep == _SWEEP, task_id
 
 
 def test_the_sample_is_the_first_n_by_id_of_each_categorys_control_pool(

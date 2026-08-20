@@ -5972,6 +5972,203 @@ raised on kill rates, and 67.3 records the real alternatives it was chosen
 over. The glossary gains **mutation gate** and **planted mutant** with this
 section, marked as landing with round 8.
 
+## Round 8 cells and cost — registered 2026-08-20
+
+**68. The round's three tasks, its three combinations and its cost range,
+written down before the first paid run.** This is round 8's pre-registration
+and nothing else: §46 did it for round 5, §52 for round 6 and §59 for round 7,
+and the discipline does not relax for a round whose novelty is a **verdict
+shape** rather than a task knob, an agent or a language. If anything a new gate
+is the thing a sweep is most likely to be surprised by, which is why the
+invocation plan below keeps the dry cell §59.6 registered. The round's record —
+what the sweep measured, which gate each unresolved cell failed, what it cost —
+follows at **the next free section number**, §69 onward; nothing below is a
+result, and nothing above is renumbered.
+
+**68.1 The cells: three tasks × three combinations = nine cells.** The three
+are the tasks this round authored, read off `tasks/first-party-v1/` as the
+corpus actually holds them:
+
+```
+lido-put-the-admissions-desk-under-test          (an admissions desk; six mutants)
+playbill-put-the-setting-of-the-bill-under-test  (the setting of a bill; five mutants)
+signalbox-put-the-train-register-under-test      (a train register; six mutants)
+```
+
+**This list is the register.** Three ids, all `test-authoring`, and they are
+**every `test-authoring` task the corpus holds** — the round sweeps the action
+entire and re-runs nothing any combination has already answered.
+
+**68.2 What every one of the three is.** Each declares `category:
+test-authoring`, `language: python` and `surface: application`, and each is a
+**declared control** — `control: true`, no construction block, no knob
+activation, no prediction. The same two things follow as in §59.2, and for the
+same reasons. A control is what a category's **calibration view** denominator
+is made of, so the corpus's first `test-authoring` rows land in a cell that can
+be read against their own category's baseline rather than against nothing.
+And because no task here declares a contrast, **round 8 moves no knob's counter
+and the kill discipline does not count it**; `calibrate-v1` gains no
+`test-authoring` multiplier row from this round, and that absence is the design
+rather than a gap in it. Python only, by §67.2: `test-authoring × typescript`
+stays a **disclosed zero** in the coverage table and is a mechanical fill for a
+later round, once one round's record has proven the gate.
+
+**68.3 The combinations**: `claude-code` × `claude-haiku-4-5`, `claude-code` ×
+`claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS`) — **the three standing columns,
+unchanged from round 7**. This is §45.13's own ruling ("from round 7 on, Codex
+is a second column") in its second task round, and it is taken here without
+re-argument: a new verdict shape is the round's one instrument, and changing
+the columns beside it would confound the two. So the round is three tasks ×
+three combinations = **nine cells**.
+
+**68.4 Cost, stated before anyone spends: $1.5–5, at list price.** The anchor
+is **round 7's** per-cell spend on these same three combinations, which is the
+most recent selection in the corpus where all three were priced over one sweep,
+and the arithmetic is re-derivable from the checked-in round-7 rows rather than
+quoted from §61: the round's forty-two rows come to **$1.4532** on
+`claude-haiku-4-5`, **$4.2344** on `claude-sonnet-5` and **$1.6046** on `codex`
+× `gpt-5.6-terra`, over fourteen cells each, which is **$0.1038**, **$0.3025**
+and **$0.1146** a cell. That is **$0.5209 — about $0.52 — a task across the
+three combinations**, so three tasks come to **$1.5627, about $1.56**, if a
+suite cost what a TypeScript patch did. Registered in §59.4's summed-columns
+form, that flat extrapolation is
+
+```
+claude-code x claude-haiku-4-5   3 x $0.1038 = $0.3114
+claude-code x claude-sonnet-5    3 x $0.3025 = $0.9075
+codex x gpt-5.6-terra            3 x $0.1146 = $0.3438
+                                 total        $1.5627
+```
+
+and the registered range is **$1.5–5** — the flat extrapolation itself at the
+low end, rounded down to a round number, and roughly **3.2×** it at the high
+end. **The headroom is for the two lessons round 7 actually realized**, in
+§67.8's own terms and not for comfort. **Fresh repositories cache worse**:
+round 7's Codex column paid an effective input rate of **$0.5714/M** against
+round 6's **$0.3996/M** on the same model and the same price table, and §61
+attributed the difference to a round of fresh repositories rather than to
+TypeScript — round 8's three repositories are fresh again, authored for this
+round. And **a whole test suite is a larger write than a locate answer**: the
+deliverable here is a `tests/` subtree, on an action the corpus has never
+priced at any model, where the output half of the bill is the part nobody has
+an anchor for.
+
+**The bound is caching-aware, and both ends of it are registered**, the way
+§59.4 registered round 7's after round 6 missed its range 2.3× low by pricing
+every input token as uncached. Round 7's fourteen Codex cells read
+**2,169,811** input tokens and wrote **30,396** — 154,986.5 in and 2,171 out a
+cell — so three cells at the same rate are about **464,960 input** and **6,513
+output** tokens. At `data/price-table.json`'s `gpt-5.6-terra` prices the output
+is **$0.0782** whatever happens, and the input is **$0.9299 all-uncached**
+($2/M) against **$0.0930 all-cached** ($0.20/M). So the Codex column is
+registered at **$0.17 all-cached to $1.01 all-uncached**, with round 7's own
+observed effective input rate putting the expected figure near **$0.34**. The
+two Claude columns are **vendor-reported** and carry no such split: **$0.3114**
+on haiku and **$0.9075** on sonnet, **$1.2189** together. Added up at
+round-7-equal token counts the whole round is **$1.39 all-cached to $2.23
+all-uncached** — an envelope whose all-uncached end sits **inside** the
+registered $1.5–5 and below its middle, which is the shape §59.4 asked for and
+the opposite of registering at one's own upper bound. Its all-cached end,
+$1.39, falls **under** the floor, and that is not a slip in the arithmetic: it
+is the one-way miss the next sentence registers, stated as a number. **The one
+way this round misses is registered here too**, and it is the low side: the
+range's floor *is* the flat extrapolation,
+so the round falls under $1.5 only if nine `test-authoring` cells cost less per
+cell than round 7's forty-two did. That would be a finding about the action —
+a specification read once and a suite written straight out — and not an
+accounting surprise, and the record is to say so against this line.
+
+**Why those are list prices and not a bill.** The operator's Codex is
+authenticated by **ChatGPT login**, not by an API key, so a Codex run is **not
+billed per token** at all. Every Codex figure above and in the round's record
+is therefore a **list-price equivalent** — tokens × `data/price-table.json`,
+stamped `cost_source: table-derived` with the table's version beside it — and
+not an invoice anyone received. The two claude-code columns are
+`cost_source: vendor-reported`, the vendor's own figures, and their sum is what
+the account is actually billed. The round's record has to carry that difference
+rather than average across it, exactly as §61 did.
+
+**68.5 The limits in force: the flat default of 600 seconds, every cell, and
+nothing is registered.** `LIVE_RUN_LIMITS_S`
+(`src/ai_benchmark/firstparty_v1.py`) carries four entries — `bug-fix`,
+`fault-location`, `code-review` and `codebase-comprehension`, round 4's two by
+§37 and round 5's two by §46 — and **`test-authoring` joins none of them**.
+This ticket adds no row, because §67.8 asks for exactly that and no more.
+`live_run_limit_s()` falls back to `RUN_TIMEOUT_S`
+(`src/ai_benchmark/firstparty.py`) for any category with no row of its own, and
+that value is **600**, so all nine cells run at the **flat default** — the same
+number the four registered categories carry, reached the other way. Saying it
+here is what lets the round's record write "at the flat default" rather than
+"under the registered 600 s", which is §46's registered sense of the
+distinction and a claim only a registered category can make. Because 600 is the
+number in force for every cell of this round and of every earlier one, **no
+cross-round caveat arises** and none is implied. Two riders, both about what
+the limit is keyed on. It is keyed on a task's **category** alone — never on
+its language, its runner or its deliverable — so a suite gets no more seconds
+than a patch does. And it bounds **the agent's run**, which is where it is
+handed to the adapter; the mutation gate runs afterwards, over the captured
+diff, and is no part of the 600.
+
+**68.6 How the sweep is invoked.** Sweep id **`round-8`**, on every invocation
+of it. Run by hand under `docs/agents/sweep-protocol.md`, never queued.
+
+A **dry cell first**, in its own invocation and **graded alone before the other
+eight**: one `claude-code` × `claude-haiku-4-5` cell, **the cheapest of the
+nine**, so that a mis-shaped verdict on a brand-new gate — the failure mode
+this round adds, where the two gates run but their verdict comes out the wrong
+shape on a real agent's diff — is discovered on **one paid cell rather than
+nine**. §59.6's dry-cell rule is kept rather than re-argued: it exists for
+exactly this situation, a new instrument meeting its first paid diff, and round
+8 is the situation. It is a real, paid, graded run and one of the round's nine;
+it is **not** a rehearsal to be re-run, because a task × agent × model cell is
+only ever swept once. Its log is named like any other log of the sweep: the
+sweep protocol **bans `-dry` in a log's name**, because round 1 left two paid
+cells in `-dry`-named logs and the first pass of that analysis silently dropped
+both.
+
+The cells are chosen on the command line with **`--task`**, repeated once per
+id, and never by staging a cut-down worktree: the filter refuses an id naming
+no task in the set before anything runs, and runs the filtered set in corpus
+order. So the dry cell is
+
+```
+uv run ai-bench eval-v1 --live --sweep round-8 --agent claude-code \
+  --model claude-haiku-4-5 --task <one of the three> --log <a normally-named log>
+```
+
+and each further invocation is the same line with the remaining ids, the other
+model and the other agent, and a fresh `--log` path, the runner refusing to
+append to a log that already exists.
+
+**68.7 What the round cannot say, registered in advance.** Four readings are
+ruled out now rather than argued about against the numbers later.
+
+- **Nothing about `test-authoring` × `typescript`.** It stays a **disclosed
+  zero** (§67.2): the round's one new instrument pairs with the mature harness
+  and the mature runner so that a failure attributes cleanly, so the language
+  cell is empty by design and is a mechanical follow-on for a later round. No
+  row of this round licenses a claim about what a suite in TypeScript would
+  cost, take or resolve at.
+- **No kill-rate reading of any kind.** The verdict is **binary by ruling**
+  (§67.3): the suite passes on the pristine repository and every planted mutant
+  is killed by at least one test. The record says, per unresolved cell, **which
+  gate failed**; it does not quote a per-cell kill count as a score, and no
+  fraction over mutants is computed anywhere. "Five of six killed" is not a
+  four-fifths result, it is a red cell with a locatable reason.
+- **No cross-action difficulty comparison.** A suite and a patch are
+  **different deliverables**, so a `test-authoring` resolution rate read
+  against `bug-fix`'s or `feature-dev`'s compares two gates as much as two
+  actions — one asks whether a defect was repaired, the other whether a
+  universal quantifier over hand-planted mutants was cleared. The round
+  registers no contrast that could separate them, and none is computed from its
+  nine rows.
+- **No Codex rung.** `gpt-5.6-terra` is one model and **one model is not a
+  ladder** (§65). `reconcile_v1.LADDER_MODELS` is the two claude-code models
+  and the Codex column is not in it; the column can say what a second harness
+  did on these three tasks, never what a cheaper second-harness model would
+  have done.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

@@ -565,6 +565,16 @@ _PUBLISHED = {
         "(zero-knob)": ("11", "1.00x (n=11)", "1.00x (n=11)", "haiku-solvable (n=11)"),
         "K8=misleading": ("7", "1.11x (n=7)", "1.19x (n=7)", "haiku-solvable (n=7)"),
     },
+    # Round 8's category, authored (#119, #120) and not yet swept: three
+    # declared controls, so one zero-knob row, and every figure in it a "-"
+    # because no run of any of the three exists. A category arrives here
+    # before its sweep does — that is what the empty-cell list beneath the
+    # table is for — and pinning the unswept shape is what will make the
+    # sweep's arrival visible as a change to this block rather than as a
+    # number nobody was watching.
+    "test-authoring": {
+        "(zero-knob)": ("3", "-", "-", "-"),
+    },
 }
 
 _PUBLISHED_DENOMINATORS = {
@@ -574,6 +584,7 @@ _PUBLISHED_DENOMINATORS = {
     "codebase-comprehension": f"{_HAIKU} $0.0603 (n=4), {_SONNET} $0.1281 (n=4)",
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
+    "test-authoring": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other
@@ -589,6 +600,7 @@ _PUBLISHED_MIX = {
     "codebase-comprehension": "4 single-file; 4 hand-authored",
     "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
+    "test-authoring": "3 single-file; 3 hand-authored",
 }
 
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
@@ -618,6 +630,7 @@ _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
     "refactor": {
         "K8=misleading": "4 single-file + 3 cross-file; 4 hand-authored + 3 vendored",
     },
+    "test-authoring": {},
 }
 
 

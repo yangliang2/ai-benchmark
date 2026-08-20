@@ -665,15 +665,24 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     # the table rather than pinned twice: one ratio per category, and the claim
     # that `code-review`'s is the widest is a claim about all six of them.
     gaps: dict[str, float] = {}
+    unpriced: set[str] = set()
     category = ""
     for line in out.splitlines():
         if line.startswith("category "):
             category = line.split()[1]
         elif line.startswith("   baseline mean cost") and category:
-            haiku, sonnet = (
-                float(figure) for figure in re.findall(r"\$([\d.]+)", line)
-            )
+            figures = [float(figure) for figure in re.findall(r"\$([\d.]+)", line)]
+            if not figures:
+                # A category whose tasks are authored but unswept prints "-"
+                # for both means — round 8's `test-authoring`, which arrived in
+                # the table before its sweep did. There is no ratio to take,
+                # and leaving it out is what keeps this a reading over the
+                # categories that have priced controls behind them.
+                unpriced.add(category)
+                continue
+            haiku, sonnet = figures
             gaps[category] = round(sonnet / haiku, 2)
+    assert unpriced == {"test-authoring"}
     assert gaps == {
         "bug-fix": 2.64,
         "code-review": 3.35,
