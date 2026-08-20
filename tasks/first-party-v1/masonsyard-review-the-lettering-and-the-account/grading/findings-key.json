@@ -1,0 +1,14 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "inscription.ts", "symbol": "asCut"}]},
+    {"any": [{"file": "orders.ts", "symbol": "Book.strikeOff"},
+             {"file": "orders.ts", "symbol": "Book"}]},
+    {"any": [{"file": "account.ts", "symbol": "Account.comesTo"},
+             {"file": "account.ts", "symbol": "Account"}]}
+  ],
+  "rejected": [
+    {"file": "inscription.ts", "symbol": "dateOn"},
+    {"file": "account.ts", "symbol": "Rate.forLetters"}
+  ]
+}
