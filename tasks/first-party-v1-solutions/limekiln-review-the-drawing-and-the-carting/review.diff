@@ -1,0 +1,268 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -10,6 +10,8 @@ standard library alone. There is nothing to install: no `package.json`, no
+   for.
+ - `dockets.ts` — the dockets the burners hand in: what was drawn out of a
+   kiln, in the order they were handed in.
++- `carting.ts` — the loads the carts take away, and the day sheet.
++- `spells.ts` — the spells the burners worked the kiln in.
+ 
+ ## The house rules
+ 
+@@ -18,5 +20,20 @@ standard library alone. There is nothing to install: no `package.json`, no
+   matched however it was cut.
+ - A docket is set down as it was handed in and is never altered afterwards,
+   and the book holds the dockets in the order they came.
++- A docket says what was drawn as a plain figure of bushels and nothing else.
++  Anything else written in that place is no figure at all, and the docket is
++  set aside.
++- What the day drew is what the dockets carrying a figure come to; a docket
++  set aside is drawn by nobody and adds nothing to the day.
++- A load is set down on the day sheet as it was loaded, and the sheet names
++  every cart that carried away in the order it first loaded.
++- The sheet says what a cart carried away; a cart that never loaded carried
++  none.
++- The burners work the kiln in spells, a spell being the run of dockets one
++  burner drew before the next took the kiln over, and the last spell of the
++  day is a spell like any other.
++
++`review.diff` is the change that brought the carting and the spells in, in the
++state the kiln's own copy of it is in.
+ 
+ Run the tests with `node --test`.
+diff --git a/carting.test.ts b/carting.test.ts
+new file mode 100644
+--- /dev/null
++++ b/carting.test.ts
+@@ -0,0 +1,41 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import { Load, Sheet } from "./carting.ts";
++
++function madeUp(): Sheet {
++  return new Sheet()
++    .loaded(new Load("5", 30, 2))
++    .loaded(new Load("12", 45, 3))
++    .loaded(new Load("5", 20, 7));
++}
++
++test("a load is set down on the sheet as it was loaded", () => {
++  const [first] = madeUp().loads();
++
++  assert.equal(first.cart, "5");
++  assert.equal(first.bushels, 30);
++  assert.equal(first.hour, 2);
++  assert.deepEqual(
++    madeUp().loads().map((load) => load.hour),
++    [2, 3, 7],
++  );
++});
++
++test("what a cart carried away is what went on it", () => {
++  assert.equal(madeUp().carried("5"), 50);
++  assert.equal(madeUp().carried("12"), 45);
++});
++
++test("a cart that never loaded carried none", () => {
++  assert.equal(madeUp().carried("9"), 0);
++  assert.equal(new Sheet().carried("5"), 0);
++});
++
++test("setting a load down leaves the sheet it was set down on alone", () => {
++  const sheet = new Sheet();
++  const after = sheet.loaded(new Load("5", 30, 2));
++
++  assert.deepEqual(sheet.loads(), []);
++  assert.equal(after.loads().length, 1);
++});
+diff --git a/carting.ts b/carting.ts
+new file mode 100644
+--- /dev/null
++++ b/carting.ts
+@@ -0,0 +1,54 @@
++/**
++ * The loads the carts take away, and the day sheet they are set down on.
++ *
++ * A load is one cart taking away what was drawn: the number painted on the
++ * cart, how many bushels went on it, and the hour it was loaded. Nothing in
++ * here knows which kiln the lime came out of or who drew it, and a sheet set
++ * down on is a new sheet — the one it was set down on is left alone.
++ */
++
++export class Load {
++  readonly cart: string;
++  readonly bushels: number;
++  readonly hour: number;
++
++  constructor(cart: string, bushels: number, hour: number) {
++    this.cart = cart;
++    this.bushels = bushels;
++    this.hour = hour;
++  }
++}
++
++export class Sheet {
++  private readonly made: Load[];
++
++  constructor(made: Load[] = []) {
++    this.made = [...made];
++  }
++
++  /** The sheet with one more load set down on it. */
++  loaded(load: Load): Sheet {
++    return new Sheet([...this.made, load]);
++  }
++
++  /** Every load set down, in the order it was made. */
++  loads(): Load[] {
++    return [...this.made];
++  }
++
++  /** Every cart that carried away, in the order it first loaded. */
++  carts(): string[] {
++    const seen: Record<string, boolean> = {};
++    for (const load of this.made) {
++      seen[load.cart] = true;
++    }
++    return Object.keys(seen);
++  }
++
++  /** What this cart carried away, in bushels; none where it never loaded. */
++  carried(cart: string): number {
++    return this.made
++      .filter((load) => load.cart === cart)
++      .reduce((total, load) => total + load.bushels, 0);
++  }
++}
+diff --git a/dockets.test.ts b/dockets.test.ts
+--- a/dockets.test.ts
++++ b/dockets.test.ts
+@@ -34,3 +34,8 @@ test("the dockets one burner drew come back in the order they came", () => {
+   );
+   assert.deepEqual(handedIn().forBurner("Penhale"), []);
+ });
++
++test("what the day drew leaves the dockets that were set aside out of it", () => {
++  assert.equal(handedIn().drawn(), 65);
++  assert.equal(new DayBook().drawn(), 0);
++});
+diff --git a/dockets.ts b/dockets.ts
+--- a/dockets.ts
++++ b/dockets.ts
+@@ -20,6 +20,15 @@ export class Docket {
+     this.written = written;
+     this.hour = hour;
+   }
++
++  /**
++   * The bushels this docket is for, or nothing at all where what was written
++   * in that place is not a plain figure.
++   */
++  asFigure(): number | null {
++    const figure = Number.parseInt(this.written, 10);
++    return Number.isNaN(figure) ? null : figure;
++  }
+ }
+ 
+ export class DayBook {
+@@ -48,4 +57,12 @@ export class DayBook {
+   forBurner(who: string): Docket[] {
+     return this.kept.filter((docket) => docket.who === who);
+   }
++
++  /**
++   * What the day drew, in bushels: what the dockets carrying a figure come
++   * to, a docket set aside adding nothing to the day.
++   */
++  drawn(): number {
++    return this.kept.reduce((total, docket) => total + (docket.asFigure() ?? 0), 0);
++  }
+ }
+diff --git a/spells.test.ts b/spells.test.ts
+new file mode 100644
+--- /dev/null
++++ b/spells.test.ts
+@@ -0,0 +1,21 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import { hoursIn, whoHadIt } from "./spells.ts";
++
++const WORKED = [
++  { burner: "Trewin", from: 1, to: 6 },
++  { burner: "Roskilly", from: 7, to: 11 },
++];
++
++test("a spell is as long as the hours it ran, both ends counted", () => {
++  assert.equal(hoursIn(WORKED[0]), 6);
++  assert.equal(hoursIn({ burner: "Penhale", from: 12, to: 12 }), 1);
++});
++
++test("the burner who had the kiln at an hour is the one whose spell it fell in", () => {
++  assert.equal(whoHadIt(WORKED, 1), "Trewin");
++  assert.equal(whoHadIt(WORKED, 6), "Trewin");
++  assert.equal(whoHadIt(WORKED, 7), "Roskilly");
++  assert.equal(whoHadIt(WORKED, 12), null);
++});
+diff --git a/spells.ts b/spells.ts
+new file mode 100644
+--- /dev/null
++++ b/spells.ts
+@@ -0,0 +1,55 @@
++/**
++ * The spells the burners worked the kiln in.
++ *
++ * A spell is the stretch of dockets one burner drew before the next took the kiln
++ * over: who had it, the hour he took it and the hour he gave it up. Nothing
++ * in here knows what was drawn or what became of it — a spell is worked out
++ * from the dockets as they were handed in, and from nothing else.
++ */
++
++import { Docket } from "./dockets.ts";
++
++/** One spell: the stretch of dockets one burner drew. */
++export interface Spell {
++  readonly burner: string;
++  readonly from: number;
++  readonly to: number;
++}
++
++/**
++ * The spells these dockets were drawn in, in the order they were handed in. A
++ * spell ends where the next burner takes the kiln over, and the spell the day
++ * ends in is a spell like any other.
++ */
++export function spellsIn(dockets: Docket[]): Spell[] {
++  const spells: Spell[] = [];
++  let burner: string | null = null;
++  let from = 0;
++  let to = 0;
++  for (const docket of dockets) {
++    if (docket.who !== burner) {
++      if (burner !== null) {
++        spells.push({ burner, from, to });
++      }
++      burner = docket.who;
++      from = docket.hour;
++    }
++    to = docket.hour;
++  }
++  return spells;
++}
++
++/** How long a spell ran, counting the hour it began and the hour it ended. */
++export function hoursIn(spell: Spell): number {
++  return spell.to - spell.from + 1;
++}
++
++/** The burner who had the kiln at this hour, or nobody where none had it. */
++export function whoHadIt(spells: Spell[], hour: number): string | null {
++  for (const spell of spells) {
++    if (spell.from <= hour && hour <= spell.to) {
++      return spell.burner;
++    }
++  }
++  return null;
++}

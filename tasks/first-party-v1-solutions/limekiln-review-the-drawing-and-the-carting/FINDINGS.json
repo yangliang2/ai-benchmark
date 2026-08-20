@@ -1,0 +1,17 @@
+[
+  {
+    "file": "dockets.ts",
+    "symbol": "Docket.asFigure",
+    "note": "parseInt keeps the figures the written quantity begins with and passes over the rest, so a docket that says anything but a plain figure is drawn on instead of being set aside"
+  },
+  {
+    "file": "carting.ts",
+    "symbol": "Sheet.carts",
+    "note": "the carts are read back off the keys of an object, and a key that reads as a whole number comes back in counting order rather than in the order the cart first loaded"
+  },
+  {
+    "file": "spells.ts",
+    "symbol": "spellsIn",
+    "note": "a spell is only closed where the next burner takes the kiln over, so the last spell of the day never reaches the list at all"
+  }
+]

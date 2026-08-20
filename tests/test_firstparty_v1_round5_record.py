@@ -133,6 +133,28 @@ _LOCATE_FIX_REPOSITORIES_AS_RECORDED = 6
 # from the checked-in task set instead (`tasks_in_set` in the round-6 suite).
 _TASKS_AS_RECORDED = 113
 
+# The two fields of a calibration block a later round moves, and the only two —
+# the round-6 suite's rule, needed here the moment round 7 authored the ninth
+# and tenth `code-review` tasks. A block holds numbers of two kinds. The
+# **measured** ones — the baseline means, every `(n=…)`, the multipliers, the
+# rung floor — are the round that published them, and no task authored
+# afterwards touches them. The **counted** ones — how many tasks the row holds,
+# and the mix its denominator is drawn from — grow the moment a later round
+# authors another control in the category: unswept, changing no measurement,
+# and moving two digits in a block section 48 quotes as printed. So the quoted
+# block is compared with the counted ones written out. Rewriting the note
+# instead would falsify it, because what it quotes is what the table printed
+# that day.
+_COUNTED_MIX = re.compile(
+    r"^(   baseline mix +)\d+( single-file; )\d+( hand-authored)", re.MULTILINE
+)
+_COUNTED_ROW = re.compile(r"^(   \(zero-knob\)  )\d+ +", re.MULTILINE)
+
+
+def counts_written_out(text: str) -> str:
+    """This calibration output with its counted fields replaced by a mark."""
+    return _COUNTED_ROW.sub(r"\1N ", _COUNTED_MIX.sub(r"\1N\2N\3", text))
+
 
 def round_5_runs() -> dict[tuple[str, str], firstparty_v1.Run]:
     """Every run the sweep logged, keyed task x model.
@@ -418,12 +440,15 @@ def test_the_rungs_the_round_landed_on() -> None:
     `observed_outcomes` over the round's own tasks and runs rather than from
     the verdicts above, so that the record's rungs are the reports' rungs and
     not this file's arithmetic about them.
+
+    Selected by the round's own task ids and not by its two actions: a later
+    round authoring another `code-review` task adds an unswept one to the
+    census, whose rung is `unswept` and whose presence says nothing about what
+    round 5 landed on — which is what round 7 did.
     """
-    tasks = [
-        task
-        for task in firstparty_v1.load_task_set(_TASKS)
-        if task.category in ("code-review", "codebase-comprehension")
-    ]
+    own = set(_REVIEW + _COMPREHENSION)
+    tasks = [task for task in firstparty_v1.load_task_set(_TASKS) if task.id in own]
+    assert len(tasks) == len(own)
     outcomes = reconcile_v1.observed_outcomes(
         tasks, list(round_5_runs().values()), source="round-5 record"
     )
@@ -539,6 +564,7 @@ def test_no_repository_carries_two_of_the_round_s_actions() -> None:
     this round's two actions.
     """
     shipped: dict[str, set[str]] = {}
+    tree_of: dict[str, str] = {}
     for task in firstparty_v1.load_task_set(_TASKS):
         repo = _TASKS / task.id / "repo"
         if not repo.is_dir():
@@ -548,6 +574,7 @@ def test_no_repository_carries_two_of_the_round_s_actions() -> None:
             digest.update(str(path.relative_to(repo)).encode("utf-8"))
             digest.update(path.read_bytes())
         shipped.setdefault(digest.hexdigest(), set()).add(task.category)
+        tree_of[task.id] = digest.hexdigest()
 
     shared = [actions for actions in shipped.values() if len(actions) > 1]
     assert shared == [{"bug-fix", "fault-location"}] * len(shared), (
@@ -560,13 +587,13 @@ def test_no_repository_carries_two_of_the_round_s_actions() -> None:
     )
 
     # And the round's own twelve sit on twelve distinct trees: one action each,
-    # which is the sentence section 49 opens with.
-    signatures = {
-        digest
-        for digest, actions in shipped.items()
-        if actions & {"code-review", "codebase-comprehension"}
-    }
+    # which is the sentence section 49 opens with. Read off the round's own task
+    # ids rather than off its two actions, because a later round authoring
+    # another review task adds a thirteenth tree carrying one of them and says
+    # nothing about what round 5 sat on — which is what round 7 did.
+    signatures = {tree_of[task_id] for task_id in _REVIEW + _COMPREHENSION}
     assert len(signatures) == 12
+    assert all(len(shipped[digest]) == 1 for digest in signatures)
 
     quoted = prose(
         note_section(
@@ -594,6 +621,12 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     as printed, which is a claim about bytes: it is checked as one, block by
     block, because their adjacency in the printed table is not a claim the
     note makes.
+
+    With the two counted fields written out on both sides (`counts_written_out`
+    and the comment over it). How many tasks a category holds is not something
+    round 5 measured, and round 7's ninth and tenth `code-review` tasks moved
+    it; every figure the section actually reads — the means, the n each was
+    taken over, the multipliers, the rung floor — is still compared as printed.
     """
     main([
         "calibrate-v1",
@@ -606,7 +639,7 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     for block in quoted.split("\ncategory ")[0:1] + [
         "category " + rest for rest in quoted.split("\ncategory ")[1:]
     ]:
-        assert block.strip("\n") in out, (
+        assert counts_written_out(block.strip("\n")) in counts_written_out(out), (
             "a quoted block of the note is not what the table prints:\n" + block
         )
     # Named again here, so that a note edited to match a changed table still

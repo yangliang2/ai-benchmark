@@ -1,0 +1,14 @@
+{
+  "answer_path": "FINDINGS.json",
+  "accepted": [
+    {"any": [{"file": "dockets.ts", "symbol": "Docket.asFigure"},
+             {"file": "dockets.ts", "symbol": "Docket"}]},
+    {"any": [{"file": "carting.ts", "symbol": "Sheet.carts"},
+             {"file": "carting.ts", "symbol": "Sheet"}]},
+    {"any": [{"file": "spells.ts", "symbol": "spellsIn"}]}
+  ],
+  "rejected": [
+    {"file": "dockets.ts", "symbol": "DayBook.drawn"},
+    {"file": "carting.ts", "symbol": "Sheet.carried"}
+  ]
+}

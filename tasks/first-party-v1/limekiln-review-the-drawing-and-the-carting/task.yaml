@@ -1,0 +1,202 @@
+# code-review, the tenth of them in the corpus and the second written in
+# TypeScript, to the shape `launderette-review-the-rate-and-the-card` landed,
+# the seven Python ones after it copied and
+# `masonsyard-review-the-lettering-and-the-account` first spelled in Node: the
+# agent is handed a change that has already been applied to the starting
+# repository, plus the unified diff of it the prompt names (repo/review.diff),
+# and asked which of it is wrong. There is no second tree it can see — the
+# change lives inside the repository — and the deliverable is the findings
+# file, never an edit.
+#
+# The change is what a bank of lime kilns was asked for one summer: where the
+# lime went once it was drawn, and who had the kiln while it was being drawn.
+# It reads as a piece of work rather than as three bugs in a row, which is what
+# a review has to be graded on: the house rules it is meant to keep are the
+# README's, written down as the change was asked for and in the burners' own
+# words, so each planted finding is the code disagreeing with a rule somebody
+# wrote down rather than a matter of taste.
+#
+# The three planted findings, each named here by its primary — the most
+# specific location, which is the first alternative in the key:
+#
+#   dockets.ts Docket.asFigure  `parseInt` takes the figures the written
+#                               quantity begins with and passes over whatever
+#                               the burner wrote after them, where the rule is
+#                               that a docket says a plain figure and nothing
+#                               else or is set aside: a prefix taken for the
+#                               whole of what was written.
+#   carting.ts Sheet.carts      the carts are put into an object and read back
+#                               off its keys, and a key that reads as a whole
+#                               number comes back in counting order however it
+#                               was put in, where the rule is the order each
+#                               cart first loaded: an order kept in a place
+#                               that does not keep one.
+#   spells.ts spellsIn          a spell is closed where the next burner takes
+#                               the kiln over and nowhere else, so the burner
+#                               who has it at the end of the day is never
+#                               written up: a run closed only by the one after
+#                               it, and the last one never is.
+#
+# Two of the three are what TypeScript makes easy to get wrong and Python does
+# not, which is the reason a second TypeScript review task is worth its place
+# rather than a ninth Python one: `parseInt` reads as far as it can and keeps
+# what it got, where Python's `int` refuses the whole string, so the same
+# intention written the obvious way in either language means the opposite
+# thing; and an object's keys come back in ascending numeric order wherever
+# they read as array indices, where Python's dict has kept insertion order
+# since 3.7 and a `dict.keys()` written in the same place would be right. The
+# third is the shape a grouping walk always is, and is here because a review of
+# three needs one finding that does not depend on knowing the language to see.
+#
+# None of the three repeats a shape the eight Python review tasks or the first
+# TypeScript one carry. Those plant a boundary tested strictly, a counter never
+# cleared, a list ordered the wrong way up, a substring where an equality was
+# meant, a grouping lost to last-wins, a caller sorting a list it does not own,
+# two rules composed in the wrong order, a zero read as nothing, a list mutated
+# under the walk that reads it, a special case written under the general rule
+# that answers first, a default made once at import and kept between calls, a
+# walk ended where it should have been stepped over, a collection handed out by
+# reference where a copy was promised, a refusal swallowed and passed over as
+# an ordinary answer, a remainder dropped by an integer division, a
+# normalisation made on one side of a comparison only, two same-typed arguments
+# swapped at a call whose callee is right, a number ordered by its text, an
+# answer remembered under less than the question that produced it, a total over
+# overlapping groups, an average divided by the count of the wrong thing, a
+# replacement made once where every occurrence was meant, a removal that leaves
+# behind the place it was made in, and a rounding made at every step where the
+# rule rounds once at the end. The nearest to any of them are the second and
+# the third. A number ordered by its text is also an order nobody asked for —
+# but that one orders by a comparison the author wrote, and would be right if
+# the comparison were; this one writes no comparison at all and is undone by
+# where it put the carts. And a walk ended where it should have been stepped
+# over also loses what comes after — but that one stops reading; this one reads
+# every docket to the end and drops what it was holding when it got there.
+#
+# A planted finding is a set of alternative locations and is matched if an
+# answer matches any one of them, so each finding here writes down every level
+# that legitimately describes it:
+#
+#   Docket.asFigure   is a method of `Docket`, and dockets.ts defines `DayBook`
+#                     beside it, so `dockets.ts Docket` is a second
+#                     alternative: telling the two classes apart takes reading
+#                     them.
+#   Sheet.carts       is a method of `Sheet`, and carting.ts defines `Load`
+#                     beside it, so `carting.ts Sheet` is a second alternative
+#                     for the same reason.
+#   spellsIn          is defined at module level, and spells.ts defines no
+#                     class at all — a spell is an interface, which is erased
+#                     before anything runs and is no location a defect can live
+#                     in — so there is no enclosing class to be a second
+#                     description of it.
+#
+# Beneath the alternatives the comparison's own forgiveness still applies: a
+# bare symbol answers a key spelled `Class.method`, so `asFigure` and
+# `Docket.asFigure` both answer the first finding.
+#
+# The rejected non-findings are the two places a reviewer plausibly points at
+# and is wrong to, and each stands next door to a real finding so that the
+# reviewer who found one is the reviewer most likely to cry wolf about the
+# other. `DayBook.drawn` adds up the dockets that carry a figure and lets the
+# rest add nothing, which is what a reviewer who has just been right about a
+# docket read too loosely reads as the same fault swallowed a second time —
+# but the house rules say a docket set aside is drawn by nobody and adds
+# nothing to the day, and the repository's own visible test says what a day
+# holding one comes to. `Sheet.carried` gives none for a cart that never
+# loaded, which is the silent zero a reviewer chasing the order the carts come
+# back in is standing right beside — and the rules ask for it: the sheet says
+# what a cart carried away, and a cart that never loaded carried none, which
+# the visible tests state outright.
+#
+# Each planted finding carries its existence proof in proofs/ — one per
+# finding, named after its primary: a held-out test that fails on repo/, which
+# ships the change applied, and passes on corrected/, the same repository with
+# all three put right. They are `.test.ts` files because this task's runner is
+# `node --test`: a proof is a test of the task's own language, and a `.py`
+# proof here would be a file nothing could run. A finding is one defect however
+# many locations describe it, so it owes one proof and not one per alternative.
+# Both trees sit beside repo/ and outside grading/, which is overlaid into the
+# workdir wholesale, so the lint runs them and grading can neither collect nor
+# copy them.
+#
+# grading/ is this project's own Python whatever the repository's language, and
+# has to be: a review's verdict is a JSON file read out of the workdir and a
+# set of file digests, neither of which the repository's language has anything
+# to do with. So the canonical `_findings.py` and the `_answer.py` it takes its
+# location forgiveness from ship here byte for byte, with the one-line
+# `test_findings.py` over them, and the task names no held-out test of its own.
+#
+# The repository is stdlib-only and flat: `node:` builtins and relative `.ts`
+# imports and nothing else, no package.json, no node_modules, and no
+# subdirectory — the hash gate that holds a keyed task to answering rather than
+# repairing hashes top-level files only.
+#
+# The terrain: the prompt names neither a file nor a symbol of either half of
+# the key, and its own vocabulary is either English's or the domain's below or
+# appears outside the modules the findings live in — kilns.ts and its tests
+# carry the words a prompt about a bank of lime kilns cannot avoid, and that
+# module writes correctly the very thing the second finding gets wrong about an
+# order: `Bank.kilns` keeps the bank in a list and hands it back in the order
+# it was built. The change never reaches kilns.ts, which is what the narrowing
+# rule reads: a word of the prompt found there has selected nothing the review
+# is hiding in. The repository's own tests are green as it ships and name none
+# of the three planted symbols: what the change added tests for is the part of
+# it that works — what a load is, what a cart carried away, what a day of
+# dockets drew, how long a spell ran and who had the kiln in it.
+#
+# The prompt's last three paragraphs are the nine review tasks before it,
+# word for word, and on purpose: what the deliverable is, how the findings file
+# is shaped, and that an edited repository grades unresolved are the rules of
+# this action rather than of this task, and ten review tasks whose agents were
+# told them differently would differ by their instructions as much as by their
+# changes. What is this task's own is the paragraph that says which kilns these
+# are and which change is under review.
+#
+# The hash gate is the generator's (`ai-bench lint-v1 --write-hash-gates`) and
+# never typed, and the prompt says outright what it enforces: the deliverable
+# is the findings file, and a run that edited the code is graded unresolved
+# however well it reviewed the change.
+#
+# A control: authored to fill a category, claiming nothing about difficulty. It
+# is neither a family member nor a pair member, and it names no behaviour
+# tests — those are a refactor task's.
+id: limekiln-review-the-drawing-and-the-carting
+category: code-review
+# The reference solution is the pristine tree plus the findings file, so the
+# diff a solved run logs touches exactly one file.
+scale: single-file
+surface: application
+language: typescript
+control: true
+# The nouns a prompt about a bank of lime kilns and a repository about one
+# cannot help sharing. Read by the task-set lint's narrowing terrain rule,
+# which holds every other word of the prompt to appearing somewhere other than
+# the modules the planted findings live in.
+domain_nouns: [lime, kiln, kilns, bank, banks, burner, burners, burn, burnt,
+               quarry, stone, chalk, limestone, clunch, mark, marks, plate,
+               docket, dockets, book, books, day, days, hour, hours, figure,
+               figures, bushel, bushels, draw, draws, drawn, drew, drawing,
+               load, loads, loaded, cart, carts, carted, carting, carried,
+               sheet, sheets, spell, spells, order, orders, written, write,
+               set, aside, kept, keeps, node, library, program]
+prompt: |
+  This repository is how a bank of lime kilns keeps its own work, and
+  review.diff in its root is a change that has already been applied to it:
+  what that change was for is the last few house rules of the README, which
+  the burners agreed when it was asked for, and the code around it is what it
+  looks like now.
+
+  Read the change against those rules and say what is wrong with it. Report
+  every problem it introduced and nothing that is not one — somewhere it got
+  right, reported as a problem, is as wrong an answer as a problem you never
+  mention.
+
+  Write what you find to FINDINGS.json in the root of the repository, as a
+  JSON list with one object per problem, each with "file" (the path, relative
+  to the root of the repository, of the file the problem is in), "symbol" (the
+  function, class or method it is in, a method written as Class.method) and,
+  if you like, "note" (a sentence on what is wrong there). Nothing reads the
+  note.
+
+  That file is the deliverable. Do not put any of it right, and leave every
+  other file exactly as you found it: a run that edits the code is graded
+  unresolved however well it reviewed the change.
