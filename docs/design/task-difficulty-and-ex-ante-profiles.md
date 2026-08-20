@@ -5169,6 +5169,251 @@ and 31 left it — over a log directory whose provenance list now names
 visibly *read* and provably *not counted*, which is a stronger statement than
 their being absent would have been, and the one the suite pins.
 
+## Round 7 cells and cost — registered 2026-08-20
+
+**59. The round's fourteen tasks, its three combinations and its cost range,
+written down before the first paid run.** This is round 7's pre-registration
+and nothing else: §46 did it for round 5 and §52 for round 6, and the same
+discipline applies to a round whose novelty is a *language* rather than a task
+knob or an agent. The round's record — what the sweep measured, what it cost,
+and what a second toolchain looked like read beside the first — follows at the
+next free section numbers, §60 onward; nothing below is a result.
+
+**59.1 The cells: fourteen tasks × three combinations = forty-two cells.**
+Round 7 runs no Python. Every one of the fourteen is a task this round
+authored, written in TypeScript against a repository that did not exist before
+it, so nothing here re-runs a cell any combination has already answered. The
+fourteen are, grouped by the action they are declared under.
+
+Three `bug-fix`, the "put it right" half of the round's three planted defects:
+
+```
+leftluggage-put-the-unweighed-bag-back-on-the-scales   (a node:http service)
+lockhouse-work-the-rest-of-the-night-through           (an async / event flow)
+telegraph-write-up-the-last-message-of-the-day         (a stream pipeline)
+```
+
+Three `fault-location`, the "say where it is" half of the same three
+repositories:
+
+```
+leftluggage-locate-the-charge-nobody-arrived-at
+lockhouse-locate-the-boats-that-never-reached-the-book
+telegraph-locate-the-message-left-on-the-tape
+```
+
+Three `feature-dev`:
+
+```
+seedbank-book-out-what-the-store-hands-over           (a CLI over the filesystem)
+weighbridge-put-the-second-weighing-on-the-tape       (node:buffer, fixed-width frames)
+parishchest-seal-the-register-against-a-later-hand    (node:crypto, a digest chain)
+```
+
+Three `refactor`:
+
+```
+gasworks-take-the-press-out-of-the-roll-room          (node:zlib)
+tollhouse-take-the-writing-of-a-pass-off-the-ticket   (node:url)
+courtleet-put-the-verdicts-on-one-table               (node:vm)
+```
+
+Two `code-review`:
+
+```
+masonsyard-review-the-lettering-and-the-account
+limekiln-review-the-drawing-and-the-carting
+```
+
+**This list is the register.** Fourteen ids, and the counts are 3 `bug-fix`, 3
+`fault-location`, 3 `feature-dev`, 3 `refactor` and 2 `code-review`.
+
+**59.2 What every one of the fourteen is.** Each declares `language:
+typescript` and `surface: application`, and each is a **declared control** —
+`control: true`, no construction block, no knob activation, no prediction. Two
+things follow, and both are why the round was authored this way rather than
+with a knob in it. First, a control is what a category's **calibration view**
+denominator is made of, so a TypeScript row lands in a cell that can be read
+against its own category's baseline rather than against nothing. Second,
+because no task here declares a contrast, **round 7 moves no knob's counter
+and the kill discipline does not count it**: whatever the round measures, it
+cannot be read as a difficulty result. Nothing is re-run in Python, and
+nothing was ported from it — the three defect repositories, the three feature
+scenarios, the three restructurings and the two reviews are all new scenarios
+chosen for what the Node standard library can do and the Python corpus has
+nothing like (`node:http`, `node:events`, `node:stream`, the filesystem behind
+a real CLI, `node:buffer`, `node:crypto`, `node:zlib`, `node:url`, `node:vm`),
+under ADR-0003's stdlib-only rule.
+
+**59.3 The combinations**: `claude-code` × `claude-haiku-4-5`, `claude-code` ×
+`claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS`) — the two-model ladder plus the
+combination round 6 registered, **unchanged**. §45.13 said that from round 7
+on Codex is a second column, and **this is the first task round to carry the
+Codex column**: round 6's thirty cells were a re-run of tasks the ladder had
+already answered, and these forty-two are the first cells where a Codex row
+and its two claude-code rows are all written by the same sweep. So the round
+is fourteen tasks × three combinations = **forty-two cells**.
+
+**59.4 Cost, stated before anyone spends: $6–15, at list price.** The anchor
+is round 6's per-cell spend on the same three combinations, which is the only
+place in the corpus where all three have been priced over one selection:
+**$0.0783** a cell on `claude-haiku-4-5`, **$0.2086** on `claude-sonnet-5` and
+**$0.0717** on `codex` × `gpt-5.6-terra` (§54; the last of the three is
+table-derived). That is **$0.3586 — about $0.36 — a task across the three
+combinations**, so fourteen tasks come to **about $5** if TypeScript cost what
+Python did. The registered range is **$6–15**, which is that $5 multiplied by
+roughly 1.2 at the low end and 3 at the high end, and the headroom is for two
+identifiable things rather than for comfort: **fresh scenario types** — a
+service, an event flow, a stream, a CLI over real files, a binary frame format
+— none of which the corpus has exercised at any price, and **a toolchain the
+corpus has not exercised at all**, where an agent may spend turns on
+`node --test`, on module resolution and on TypeScript's own errors before it
+spends any on the task.
+
+**The bound is caching-aware, and both ends of it are registered.** Round 6
+missed its range 2.3× low for one identifiable reason: §52.4 priced every
+input token as uncached, so the registration landed on the round's *upper*
+bound (§54, and `docs/agents/sweep-protocol.md`, "Before the sweep" item 2).
+The fix is in the estimate, not in the stance, so this section registers the
+Codex column at both ends. Round 6's thirty Codex cells read **3,892,528**
+input tokens and wrote **49,636** — 129,751 in and 1,655 out a cell — so
+fourteen cells at the same rate are about **1,816,513 input** and **23,163
+output** tokens. At `data/price-table.json`'s `gpt-5.6-terra` prices the output
+is **$0.2780** whatever happens, and the input is **$3.6330 all-uncached**
+($2/M) against **$0.3633 all-cached** ($0.20/M). So the Codex column is
+registered at **$0.64 all-cached to $3.91 all-uncached**, with round 6's
+observed effective input rate of $0.3996/M putting the expected figure near
+**$1.00**. The two Claude columns are **vendor-reported** and carry no such
+split: 14 × $0.0783 = **$1.0962** on haiku and 14 × $0.2086 = **$2.9204** on
+sonnet, **$4.0166** together. Added up at Python-equal token counts the whole
+round is **$4.66 all-cached to $7.93 all-uncached** — an envelope whose upper
+end sits inside the registered $6–15 rather than at its floor, which is
+exactly the mistake round 6 made. **The one way this round misses low is
+registered here too**: if TypeScript costs no more than Python *and* the Codex
+column caches as well as round 6's did, the round lands near $5 and under the
+range. That outcome is a finding about the toolchain, not an accounting
+surprise, and the record is to say so against this line.
+
+**Why those are list prices and not a bill.** The operator's Codex is
+authenticated by **ChatGPT login**, not by an API key, so a Codex run is **not
+billed per token** at all. Every Codex figure above and in the round's record
+is therefore a **list-price equivalent** — tokens × `data/price-table.json`,
+stamped `cost_source: table-derived` with the table's version beside it — and
+not an invoice anyone received. A claude-code row's `vendor-reported` figure
+is made differently, which is what the `cost_source` field exists to disclose,
+and the round's record has to carry that difference rather than average across
+it. Round 7 is the first round where the two kinds of dollar are produced by
+the *same* sweep over the *same* task, so the disclosure matters more here
+than it did in round 6, not less.
+
+**59.5 The limits in force: 600 seconds, every cell, and nothing new is
+registered.** `bug-fix`, `fault-location`, `code-review` and
+`codebase-comprehension` are registered at 600 in `LIVE_RUN_LIMITS_S`
+(`src/ai_benchmark/firstparty_v1.py`) — round 4's two by §37 and round 5's two
+by §46. `feature-dev` and `refactor` are **not** in that table, and this
+ticket adds nothing to it: those six cells per combination run under the
+**flat default**, `RUN_TIMEOUT_S` in `src/ai_benchmark/firstparty.py`, which is
+numerically the same 600 seconds and is not a registration. The spec does not
+ask for a new limit and none is taken. What is worth saying once, because
+round 7 is the first round with two languages in it, is that **the limit comes
+out of the same table for every language**: `live_run_limit_s` is keyed on a
+task's *category* alone and never on its language or its runner, so **no cell
+gets a longer run because of its toolchain**. If `node --test` is slower than
+`pytest`, that shows up as a run that spent more of its 600 seconds, never as
+a cell that was given more of them. And because 600 is the number in force for
+every cell of this round and of every earlier one, **no cross-round caveat
+arises** and none is implied — the limit is still a narrated ceiling rather
+than a field stamped on a row (CONTEXT.md's live run-time limit entry).
+
+**59.6 How the sweep is invoked.** Sweep id **`round-7`**, on every invocation
+of it. Run by hand under `docs/agents/sweep-protocol.md`, never queued.
+
+A **dry cell first**, in its own invocation: one of the forty-two, run alone,
+so that a mis-shaped grade on the new runner — the failure mode a new language
+adds, where `node --test` runs but its per-testcase verdicts are read wrongly
+— is discovered on **one paid run rather than forty**. It is a real, paid,
+graded run and one of the round's forty-two; it is **not** a rehearsal to be
+re-run, because a task × agent × model cell is only ever swept once. Its log
+is named like any other log of the sweep: the sweep protocol **bans `-dry` in
+a log's name**, because round 1 left two paid cells in `-dry`-named logs and
+the first pass of that analysis silently dropped both. The rest follow in
+further invocations carrying the same `--sweep round-7` and their own fresh
+`--log` paths.
+
+The cells are chosen on the command line with **`--task`**, repeated once per
+id, and never by staging a cut-down worktree: the filter refuses an id naming
+no task in the set before anything runs, and runs the filtered set in corpus
+order. So the dry cell is
+
+```
+uv run ai-bench eval-v1 --live --sweep round-7 --agent codex \
+  --model gpt-5.6-terra --task <one of the fourteen> --log <a normally-named log>
+```
+
+and each further invocation is the same line with the remaining ids, the other
+agent and its two models, and a fresh `--log` path, the runner refusing to
+append to a log that already exists.
+
+**59.7 What the round cannot say, registered in advance.** Four readings are
+ruled out now rather than argued about against the numbers later.
+
+- **No cross-language transfer reading.** Nothing was ported. Not one of the
+  fourteen is a TypeScript rewrite of a Python task, so there is no matched
+  pair anywhere in the corpus and no "the same task in two languages" figure
+  can be computed from this round however the columns are lined up.
+- **No Python-versus-TypeScript difficulty claim.** The grid widens
+  **scenario**, not difficulty: these tasks were authored for what the Node
+  standard library can do, and they differ from the Python corpus in what they
+  are about as much as in what they are written in. A resolution rate that
+  differs between the two languages is confounded with the scenarios by
+  construction, and this round registers no contrast that would separate them.
+- **No Codex rung.** `gpt-5.6-terra` is one model, and **one model is not a
+  ladder**. The two-model ladder is claude-code's; the Codex column can say
+  what a second harness did, never what a cheaper second-harness model would
+  have done.
+- **No multiplier.** A multiplier is computed from a constructed task against
+  its category's control baseline, and **there is no constructed TypeScript
+  task** in the corpus — all fourteen are controls. `calibrate-v1` therefore
+  gains no TypeScript multiplier row from this round, and the absence is the
+  design rather than a gap in it.
+
+**59.8 The coverage target, as the lint actually prints it.** Acceptance is a
+figure read off `uv run ai-bench lint-v1`'s coverage table rather than a task
+count somebody remembers. The table has one row per (category, surface,
+language) that has tasks, plus a `(category, "-", "-", 0)` row for a category
+with no task in **any** language, so what it can show is this: exactly **five
+`typescript` × `application` rows** —
+
+```
+  bug-fix                    application  typescript  3
+  fault-location             application  typescript  3
+  feature-dev                application  typescript  3
+  refactor                   application  typescript  3
+  code-review                application  typescript  2
+```
+
+— and **no `typescript` row** for `test-authoring` or for
+`codebase-comprehension`. Those two are registered here as **zero by
+absence**, which is all the table can express, and the reasons are on the
+record: `test-authoring` has no task in any language because it needs a
+mutation gate and a new verdict shape (§45.12) and is out of round 7's scope,
+so it still prints as `test-authoring - - 0`; `codebase-comprehension` prints
+only its Python row (`application python 4`) because no locate-style
+comprehension task was authored in TypeScript this round. **The lint is not
+changed** to print registered-zero cells per language: the round buys no
+coverage-table generalisation, and adding one would move the printed table
+inside every earlier round's record suite for no reading this round needs.
+
+The `python` column is **unchanged at 113** — 6 `bug-fix`, 6
+`fault-location`, 71 `feature-dev`, 18 `refactor`, 4
+`codebase-comprehension`, 8 `code-review` — because round 7 authored no Python
+task and re-ran none. What does move is the readers' corpus-count header:
+`reconcile-v1` and `calibrate-v1` count the task set they were pointed at, so
+the line that read **113 task(s)** now reads **127 task(s)**, and any figure
+those readers print over `claude-code`'s Python rows is unchanged beneath a
+header that counts fourteen more tasks than it did.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
