@@ -1,0 +1,14 @@
+{
+  "answer_path": "ANSWER.json",
+  "accepted": [
+    {"file": "messages.ts", "symbol": "Cutter._flush"},
+    {"file": "messages.ts", "symbol": "Cutter"}
+  ],
+  "rejected": [
+    {"file": "sheet.ts", "symbol": "Totting._flush"},
+    {"file": "sheet.ts", "symbol": "Repeats._flush"},
+    {"file": "sheet.ts", "symbol": "Sheet._write"},
+    {"file": "tape.ts", "symbol": "Drum._read"},
+    {"file": "office.ts", "symbol": "Office.work"}
+  ]
+}

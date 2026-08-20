@@ -1,0 +1,107 @@
+# bug-fix, and the "put it right" half of round 7's third TypeScript planted
+# defect: one stage of a stream pipeline that holds part of its input back
+# across chunks and then throws away what it is still holding when the input
+# ends. `Cutter._flush` in messages.ts clears the tape it has read past the
+# last mark instead of giving it out. Every message with a mark after it is
+# read off, charged and written up exactly as it should be; the last message of
+# the day, which has no mark after it because nothing was sent after it, is
+# held by the cutter until the drum stops and is then dropped on the floor.
+# Nothing throws and nothing is left half done — the run settles, the page
+# reads correctly as far as it goes, and what is wrong with it is only what is
+# not on it.
+#
+# The scenario is the reason this task exists rather than a Python one: a
+# stream pipeline — `node:stream` transforms strung end to end with
+# `node:stream/promises`' `pipeline`, a source that gives out a length of tape
+# only when one is asked for, and a sink whose high-water mark is what stops
+# the whole day's traffic standing in the office at once — which the Python
+# corpus has nothing like (design note 45.11). It is disclosed in the prompt
+# and in the round record and is not a task field.
+#
+# **No held-out test decides its verdict by timing, and every one of them
+# terminates**, which is this ticket's own rule rather than the spec's. A
+# stream defect graded by writing, sleeping and then looking is a verdict about
+# the scheduler on the grading machine, and round 1 already paid for one of
+# those; a held-out test that waits on a stream nobody ends is a grading
+# timeout, which reads as unresolved and tells nobody anything. So every
+# observable here is a settled promise or a written page: `Office.work` hands
+# back the promise `pipeline` hands it, which settles when the drum has
+# stopped, every stage has given out everything it had and the sheet has taken
+# the last line, and the sheet is a list in the order it was written. Every
+# run ends because the tape does.
+#
+# The repository's own tests are green on the pristine tree. What keeps them
+# green is that no visible test ever ends a tape anywhere but at a mark: the
+# visible suite exercises the holding-back at length — a message spread over
+# two lengths of tape, a message spread over three, a mark landing on the seam
+# between them — and every one of those tapes ends with a mark, so the cutter
+# is never still holding anything when the drum stops. A visible test ending a
+# tape mid-message would hand the agent the answer and delete the action being
+# measured.
+#
+# The terrain is authored so that finding the line is work rather than a grep,
+# because the fault-location member built on this same repository is measured
+# on exactly that. A stream stage's end-of-input hook is a shape a grep finds
+# in one pass, so the repository holds four more of them across three modules
+# and every one is correct: `Totting._flush` gives out the foot of the page it
+# has been adding up all day, `Repeats._flush` gives out nothing at all and is
+# right to because what it held has gone down the office already, `Sheet._final`
+# has nothing owing because every line went down as it arrived, and `Drum._read`
+# says the tape has run out. Both answers to "what does a stage owe at the end?"
+# are written correctly somewhere in the repository, so nothing about the shape
+# decides anything: what decides it is whether the stage is still holding
+# something nobody downstream has seen. The nearest twin is `Repeats._flush`,
+# which holds something across the whole day and correctly gives out nothing.
+# The contract the defect breaks is stated in messages.ts's module comment and
+# in the README rather than beside the line that breaks it. What the symptom
+# points at first is sheet.ts, where the page and its foot are written and
+# where two of the four correct hooks live.
+#
+# The held-out tests fail on the pristine repository, as the lint requires, and
+# that failure is also what proves there is a defect for the fault-location
+# member built on this same repository to find: it is that member's registered
+# existence proof. A checked relation rather than a convention — the lint finds
+# this task by the bytes of the repo/ the two share, and runs it — so the two
+# share repo/ byte for byte.
+#
+# The grading asserts what the day ends with and not how it gets there. Which
+# stage gives the last message out, and whether the cutter reads it off in
+# `_flush` or hands the tape on for something else to read, is the fix's own
+# business: any repair that has every message on the tape read off, charged and
+# written up in the order it was sent resolves. The reference solution gives
+# out what is held when the drum stops, which is the one edit that says what
+# the repository meant.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+# The two members are deliberately neither a task family nor a pair — both
+# constructs require one varied knob and an agreed category, and these vary no
+# knob and differ in category.
+id: telegraph-write-up-the-last-message-of-the-day
+category: bug-fix
+scale: single-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  Something has gone wrong at the telegraph office. What is in front of you is
+  one day's traffic: a small program written on the Node standard library
+  alone, with nothing installed under it, in which the day's tape comes off the
+  drum a length at a time and is worked through the office from one end to the
+  other, no faster than the far end will take it.
+
+  Four messages were sent on Tuesday. The tape ran out with the last of them on
+  it: nothing was sent after it, so nothing came after it on the tape. The day
+  sheet has three lines — the first three messages, addressed, charged and
+  written up exactly as they should be — and the foot of the sheet says three
+  messages and 46 pence. The fourth was sent, it is on the tape, it is on no
+  line of the sheet, and nothing anywhere says the office ever had it.
+
+  What the office means to do is this: every message on the day's tape is read
+  off it, charged and written up in its place, in the order it was sent, and
+  the last message of a day is not a different thing from the ones before it
+  because nothing was sent after it. The foot counts what the sheet holds.
+
+  Fix it, so that every message on the day's tape is written up in the order it
+  was sent. Nothing else changes: what a message costs, how a message is
+  written up, what stands at the foot of the page, and everything the
+  repository's own tests already say about a day at the office.
