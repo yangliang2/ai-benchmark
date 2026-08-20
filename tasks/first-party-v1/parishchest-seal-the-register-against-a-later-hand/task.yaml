@@ -1,0 +1,78 @@
+# feature-dev, and the third of round 7's three TypeScript feature tasks: the
+# parish has the wax and the book and no way of telling that a later hand has
+# been through the book. The capability asked for is that telling — each entry
+# sealed onto the one before it, and a register that can say where the seals
+# somebody wrote down stop agreeing with the entries in front of it.
+#
+# The scenario is why this task exists rather than a Python one: a tamper-
+# evident digest chain over `node:crypto`, which the Python corpus has nothing
+# like. It is disclosed in the prompt and in the round record and is not a task
+# field.
+#
+# The whole of the feature lands in one file, which is what `scale:
+# single-file` says here: `seals.ts` already knows how to take a seal over a
+# text and is deliberately left knowing nothing about order, and `entries.ts`
+# already has the one form an entry reads in. What is missing is the chaining,
+# and chaining is the register's own business — so nothing but register.ts is
+# touched, and the reference solution's diff is one file.
+#
+# What makes it fail on the pristine repository is that register.ts exports no
+# `sealFor` and `Register` has no `seals`, `seal` or `brokenAt`, so the
+# held-out file does not link against the starting tree at all.
+#
+# The grading never says what a seal is *of*. Pinning the recipe would make
+# this a transcription rather than a feature, so what is held to is what a
+# chain has to do to be one: a seal that turns on both what stands before it
+# and every word of the entry, and seals that cannot be put back once a later
+# hand has been through the middle of the book.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+id: parishchest-seal-the-register-against-a-later-hand
+category: feature-dev
+scale: single-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  What is in front of you is a parish's register and the wax it is sealed
+  with — a tamper-evident digest chain over `node:crypto`, written on the Node
+  standard library alone, with nothing installed under it.
+
+  Both halves are there and neither is joined to the other. `seals.ts` will
+  take a seal over a text; the register will hold entries in the order they
+  were entered and read them back. So a later hand can go through the middle of
+  the book, alter an entry, and leave nothing whatever behind that says so.
+
+  Give the parish the telling of it. Each entry is sealed onto the seal
+  standing before it, so that altering one entry alters every seal from that
+  place on and no hand can put them back.
+
+  All of it goes in `register.ts`, beside the register it is the chaining of —
+  `seals.ts` knows how to seal a text and is to go on knowing nothing about
+  order.
+
+  Add to `register.ts`:
+
+  - `sealFor(before, entry)`, the seal one entry stands at given the seal
+    standing before it. It is a seal of the width the wax is written in, the
+    same two things always give the same seal, and it turns on both what stands
+    before it and on every word of the entry — the day, what happened and whose
+    hand — so no two different things ever stand at one seal by construction.
+
+  Extend `Register` with:
+
+  - `seals()`, the seal each entry stands at, in order: the first sealed onto
+    what stands before any entry at all, and every one after onto the seal
+    before it;
+  - `seal()`, the one seal the whole register stands at, which is the last of
+    those, or what stands before any entry where the register holds none;
+  - `brokenAt(seals)`, the place — counting from one, the way the clerk counts
+    them — of the first entry whose seal is not what the register now says it
+    stands at, and nothing at all where every one still holds. Where fewer or
+    more seals were written down than the register has entries, and everything
+    the two have in common still holds, the answer is the first place past the
+    shorter of the two.
+
+  Keep everything the repository already does, and everything its own tests
+  already say, exactly as it is, and keep the whole of it on the standard
+  library: there is nothing to install and nothing that may be installed.

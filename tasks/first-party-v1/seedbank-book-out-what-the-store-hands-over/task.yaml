@@ -1,0 +1,70 @@
+# feature-dev, and the first of round 7's three TypeScript feature tasks: the
+# store can be read from the command line but not drawn on, and the capability
+# asked for is drawing on it — seed out of a packet, and a line in a day book
+# saying so.
+#
+# The scenario is why this task exists rather than a Python one: a command-line
+# tool over the filesystem, which the Python corpus has nothing like. It is
+# disclosed in the prompt and in the round record and is not a task field. The
+# tool is real — `cli.ts` is a guarded entry point that reads its drawer out of
+# the environment and writes its exit code — and the store is real files under
+# a root nobody but the caller names.
+#
+# What makes it fail on the pristine repository is that `handouts.ts` is not
+# there and `Store.handOut` does not exist, so the held-out file cannot even be
+# imported against the starting tree, let alone pass. The feature is new
+# capability rather than a repair: nothing in `repo/` is wrong.
+#
+# Every path the held-out tests touch is under a directory they make with
+# `mkdtempSync` and remove in a `finally`, which is this ticket's own rule for
+# a filesystem task: grading writes nowhere but its throwaway workdir and the
+# system temporary directory it made for itself, and two tests never collide
+# over one path. The repository's own tests are written the same way, so an
+# agent running them leaves nothing behind in its workdir either.
+#
+# The grading asserts what the store and the counter *do*: the day book is read
+# back through the module the prompt asks for rather than at a path this file
+# pins, and the cards through the store. A solution is free to write either
+# however it likes as long as what comes back is what was asked for.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+id: seedbank-book-out-what-the-store-hands-over
+category: feature-dev
+scale: cross-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  What is in front of you is a seed bank's store: a command-line tool over the
+  filesystem, written on the Node standard library alone, with nothing
+  installed under it. The counter can be asked what the store holds and shown
+  one packet's card, but there is no way to draw on the store at all.
+
+  Give it one. Seed goes out of the drawer, and what went out is written down.
+
+  Add a new module, `handouts.ts`, holding the day book:
+
+  - `DAYBOOK`, the name of the file — in the store's own root — that the
+    handings-over are written in;
+  - `noted(name, seeds, left)`, one line of the day book, which reads
+    `broadbean: 20 out, 30 left`;
+  - `handedOut(text)`, the lines a day book's text holds, in the order they
+    were written, with the blank ones left out.
+
+  Extend `Store` with `handOut(name, seeds)`, which hands that many seeds out
+  of that packet and gives back the packet as it now stands. It files the
+  packet back with that many fewer seeds in it and adds one `noted` line to the
+  end of the day book, opening the day book where none has been opened yet.
+
+  It throws instead, and writes nothing whatever — no card, no day book — where
+  the store holds no packet of that name, where the number asked for is not a
+  whole number above nought, or where the packet holds fewer seeds than that.
+
+  Then let the counter do it: `hand-out <name> <seeds>`. Where the store hands
+  the seed over, the counter exits `DONE` and prints the one line `noted` wrote
+  down, exactly as it was written down. Where the store refuses, it exits
+  `REFUSED` and prints one line, and the drawer is left exactly as it was.
+
+  Keep everything the repository already does, and everything its own tests
+  already say, exactly as it is, and keep the whole of it on the standard
+  library — there is nothing to install and nothing that may be installed.

@@ -1,0 +1,81 @@
+# feature-dev, and the second of round 7's three TypeScript feature tasks: the
+# tape can say what a lorry weighed once, and the capability asked for is a
+# second weighing against the same ticket — a correction written after the
+# first rather than over it.
+#
+# The scenario is why this task exists rather than a Python one: a fixed-width
+# binary record format over `node:buffer`, read and written byte by byte, which
+# the Python corpus has nothing like. It is disclosed in the prompt and in the
+# round record and is not a task field.
+#
+# The repository is authored so the feature is an addition and not a repair.
+# `weighingIn` already refuses a frame whose kind byte is not a weighing's, and
+# `Tape.weighings` already passes such a frame over — so putting a second kind
+# of frame on the tape breaks nothing that reads it, and the held-out test
+# holds the old readings to exactly what they were. Where the figures sit in a
+# frame is exported from frames.ts rather than kept private to it, so the new
+# module has somewhere honest to read them from.
+#
+# What makes it fail on the pristine repository is that `corrections.ts` is not
+# there and `Tape.settled` does not exist, so the held-out file cannot be
+# imported against the starting tree at all.
+#
+# The grading asserts what the tape *reads back*, and of the layout only the
+# two things the rest of the yard depends on: that a frame is one width and
+# that its first byte says what kind it is. The figures go on and come back off
+# through the task's own two functions, so a solution may put them wherever it
+# likes inside the frame.
+#
+# A control: authored to fill a category, claiming nothing about difficulty.
+id: weighbridge-put-the-second-weighing-on-the-tape
+category: feature-dev
+scale: cross-file
+surface: application
+language: typescript
+control: true
+prompt: |
+  What is in front of you is a public weighbridge's tape: a fixed-width binary
+  record format over `node:buffer`, written on the Node standard library alone,
+  with nothing installed under it. Frames go on the tape end to end, all of one
+  width, and the first byte of each says what kind of frame it is.
+
+  A lorry is sometimes weighed a second time — the plate was out, or the load
+  shifted, or somebody read the figure off wrong. The yard will not scratch the
+  first frame out: what it wrote is what it wrote. So the tape has no way of
+  saying that a figure was ever put right, and every reading off it is the
+  first one, wrong or not.
+
+  Give it one. A correction goes on the tape after the weighing it puts right,
+  against the same ticket, and the tape is read with the last word standing.
+
+  Add a new module, `corrections.ts`, holding:
+
+  - `A_CORRECTION`, the kind byte a correction's frame carries, which is not a
+    weighing's;
+  - `Correction`, a ticket, a loaded figure and an empty figure, with `netKg()`
+    for what the load comes to once it is allowed for — and no haulier, the
+    ticket already saying whose lorry it was;
+  - `correctionFrame(correction)`, one correction as it goes on the tape: a
+    frame of the same width every other frame is, carrying `A_CORRECTION` as
+    its kind byte;
+  - `correctionIn(frame)`, the correction a frame holds, or nothing where the
+    frame is of another kind or is not a frame at all.
+
+  Extend `Tape` with:
+
+  - `corrected(correction)` — the tape with one more correction on the end of
+    it, giving back a new tape and leaving this one alone, the way `weighed`
+    already does;
+  - `corrections()` — every correction on the tape, in the order they were
+    written;
+  - `settled()` — every weighing on the tape, in the order they were weighed,
+    each at the figures of the *last* correction written against its ticket. A
+    correction against a ticket the tape has no weighing for corrects nothing
+    and is left out.
+  - `netFor(ticket)` — what that lorry finally netted, or nothing where the
+    tape has no weighing against that ticket.
+
+  Keep everything the repository already does exactly as it is — `weighings()`
+  and `forTicket()` go on saying what was weighed on the day, corrections or
+  no — and keep the whole of it on the standard library: there is nothing to
+  install and nothing that may be installed.
