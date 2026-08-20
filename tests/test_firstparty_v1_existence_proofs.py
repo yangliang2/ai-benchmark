@@ -23,7 +23,12 @@ convention is a rule here, with a **registry** of proof forms per action:
   on the author's corrected tree;
 - `codebase-comprehension` → every accepted (file, symbol) resolves in the
   starting repository, which was already a rule of the key and is registered as
-  this action's form so that a fourth keyed action cannot be added without one.
+  this action's form so that a fourth keyed action cannot be added without one;
+- `test-authoring` → the author's reference suite passes on the pristine
+  starting repository and fails on every planted mutant, checked per mutant
+  (round 8, design note §67.5) — the fourth keyed action, registered here
+  because the rule above said it had to be, and owned by
+  `test_firstparty_v1_mutation_lint.py`.
 
 Where the proofs live is what keeps them the lint's and never grading's: beside
 `repo/` and outside `grading/`, which the loader enforces rather than leaving to
@@ -81,7 +86,12 @@ from ai_benchmark.firstparty_v1 import (
 # Spelled out rather than derived from the registry it is read against, because
 # a test that computed both sides from one source would pass however wrong that
 # source was.
-KEYED_ACTIONS = {"fault-location", "codebase-comprehension", "code-review"}
+KEYED_ACTIONS = {
+    "fault-location",
+    "codebase-comprehension",
+    "code-review",
+    "test-authoring",
+}
 
 # A partner whose held-out tests *pass* on the starting repository the two
 # share: a bug-fix task with nothing to fix, which is what a locate member built
@@ -140,7 +150,7 @@ def checked_in_fault_location_tasks() -> tuple[tuple[Task, ...], tuple[Task, ...
 
 
 def test_every_action_that_carries_a_key_registers_a_proof_form() -> None:
-    """The registry is the whole of what is registered: three actions carry a
+    """The registry is the whole of what is registered: four actions carry a
     key, and each names what would prove its truth exists."""
     assert set(EXISTENCE_PROOFS) == KEYED_ACTIONS
     assert all(proof.form.strip() for proof in EXISTENCE_PROOFS.values())

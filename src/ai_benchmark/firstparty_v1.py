@@ -87,12 +87,15 @@ partner `bug-fix` member's held-out tests failing on the same pristine
 repository, which the lint now goes looking for and runs rather than trusting
 to the convention the two were once authored under; for a code-review task, a
 held-out test per planted finding that fails on the starting repository and
-passes on the author's corrected tree; and for a locate-style comprehension
+passes on the author's corrected tree; for a locate-style comprehension
 task, which has no defect behind it, a location that resolves in the starting
-repository — the key's own rule, registered as this action's form so that a
-fourth keyed action cannot be added without one. A proof is checked by the
-lint and never by grading: they live outside `grading/`, so nothing overlays
-them into a workdir or collects them as verdict tests.
+repository — the key's own rule, registered as this action's form; and for a
+test-authoring task, the author's own reference suite, which must pass on the
+pristine repository and fail on every planted mutant, checked one mutant at a
+time. No keyed action can be added without a registered form, which is the
+whole reason the registry exists. A proof is checked by the lint and never by
+grading: they live outside `grading/`, so nothing overlays them into a workdir
+or collects them as verdict tests.
 
 A fourth verdict shape grades the one action whose deliverable is the tests
 themselves. A `test-authoring` task ships no held-out grading tests at all;
@@ -109,6 +112,14 @@ corpus whose values are only comparable within one (design note §67.3). Nor
 does it adjudicate anything outside the subtree — an agent that edits the code
 under test commits no foul, its edits simply are not in the world the two
 gates run in, and a suite that needed them goes red on gate 1 honestly.
+
+What makes that verdict answerable is checked before any agent meets the task
+(`_mutant_set_problems`): at least three mutants, every one of them patching a
+file of `repo/` and none reaching into the collected test subtree, a starting
+repository with no tests already at that path, and a prompt that names it. The
+terrain rules are exempted for this action and the exemption is recorded with
+its reason (`TERRAIN_EXEMPT_ACTIONS`), because what they guard against is a key
+an agent could grep out of its workdir and this key is never in one.
 
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
@@ -691,6 +702,26 @@ TerrainRule = Literal[
 ]
 
 TERRAIN_RULES: tuple[TerrainRule, ...] = get_args(TerrainRule)
+
+# The actions the terrain rules do not apply to at all, each with the reason
+# (design note §67.6). An entry here is a whole action's exemption, which is a
+# different thing from a `TerrainWaiver`: a waiver is per task, names the exact
+# token it silences, and costs its author a reason of that task's own, so an
+# action whose every task would carry one identical action-shaped reason would
+# be counterfeiting the per-task mechanism rather than using it.
+#
+# Recorded rather than inherited. A `test-authoring` task carries no
+# accepted-answer key and no findings key, so `_ground_truth` returns None and
+# the three rules would fire on nothing anyway — but "no rule fired" and "this
+# action is exempt, for this reason" are different facts, and only the second
+# survives someone later giving this action a key of some other shape.
+TERRAIN_EXEMPT_ACTIONS: dict[TaskCategory, str] = {
+    _MUTATION_CATEGORY: (
+        "the terrain rules stop a key being grepped out of the workdir; a "
+        "planted mutant is never in the workdir, and the prompt naming the "
+        "module under test is the task's definition rather than a leak"
+    ),
+}
 
 
 class TerrainWaiver(BaseModel):
@@ -2393,13 +2424,21 @@ def lint_task_set(
     one positive that makes a **planted finding**'s alternatives real: reporting
     a finding at any of them has to grade resolved.
 
-    A task carrying a key of either shape is also held to its action's
-    registered **existence proof** (`EXISTENCE_PROOFS`), which asks the prior
-    question none of the negatives can: whether the truth the task is keyed on
-    is in the repository at all. The three forms are a partner `bug-fix` task's
-    pristine failure, a held-out test per planted finding run against two trees,
-    and an accepted location that resolves — and an action carrying a key with
-    no registered form is refused rather than exempt.
+    A `test-authoring` task carries a third shape of key — its planted mutants
+    — and is held to what that set has to be (`_mutant_set_problems`): at least
+    three mutants, every one of them patching a file of `repo/` and none of them
+    reaching into the declared test path, a starting repository with no tests
+    already sitting at that path, and a prompt that names it. All four are read
+    rather than run, and all four gate the expensive proof below.
+
+    A task carrying a key of any of the three shapes is also held to its
+    action's registered **existence proof** (`EXISTENCE_PROOFS`), which asks the
+    prior question none of the negatives can: whether the truth the task is
+    keyed on is in the repository at all. The four forms are a partner
+    `bug-fix` task's pristine failure, a held-out test per planted finding run
+    against two trees, an accepted location that resolves, and a reference suite
+    that passes pristine and dies on each planted mutant in turn — and an action
+    carrying a key with no registered form is refused rather than exempt.
 
     It is held to the three terrain rules as well
     (`_terrain_problems`): whether it gives its own answer away is an
@@ -2407,7 +2446,10 @@ def lint_task_set(
     task, in six copies, so that a seventh keyed task inherited none of it.
     The hash gate (`_hash_gate_problems`) is here for the same reason and was
     moved here from the same place: a keyed task asks for a location and not a
-    repair, and it used to be four tasks' own suites that said so.
+    repair, and it used to be four tasks' own suites that said so. One action is
+    exempt from the terrain rules at the action level and with its reason
+    recorded (`TERRAIN_EXEMPT_ACTIONS`) rather than exempt by the accident of
+    having no greppable key.
 
     The construction invariants are read rather than run, but belong here for
     the same reason: an undeclared knob, an unregistered prediction, a family
@@ -2455,6 +2497,11 @@ def lint_task_set(
         # a task shipping a dependency it cannot have is as readable when its
         # key is unreadable as when it is not.
         problems.extend(_typescript_problems(task))
+        # What a planted mutant set and the terrain around it have to be, read
+        # rather than run, and independent of everything above: a task shipping
+        # mutants carries neither key the gates above read.
+        mutant_problems = _mutant_set_problems(task) if is_mutation_keyed(task) else []
+        problems.extend(mutant_problems)
         if is_keyed(task) and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
@@ -2470,15 +2517,19 @@ def lint_task_set(
             problems.extend(
                 _findings_discrimination_problems(task, timeout_s=timeout_s)
             )
-        if (is_keyed(task) or is_findings_keyed(task)) and not (
-            key_problems or findings_problems
-        ):
+        if (
+            is_keyed(task) or is_findings_keyed(task) or is_mutation_keyed(task)
+        ) and not (key_problems or findings_problems or mutant_problems):
             # The prior question the negatives above cannot ask: whether the
             # truth this task is keyed on is in the repository at all. Gated on
             # whichever key this task carries reading clean, for the reason the
             # negatives are — a key naming a file the repository does not hold
             # says nothing about whether a defect exists at that location, and
             # the review form runs tests against two trees, which is expensive.
+            # The mutation form is gated on the cheap mutant-set rules above for
+            # that same reason and more so: it runs a whole suite once per
+            # mutant, and a mutant patching a file that is not there has nothing
+            # to say about whether the behaviour change it claims is killable.
             problems.extend(
                 _existence_proof_problems(task, tasks, timeout_s=timeout_s)
             )
@@ -2921,24 +2972,35 @@ def _answer_test_problems(task: Task) -> list[str]:
 _DIFF_FILE_HEADER = re.compile(r"^(?:---|\+\+\+) (?:[ab]/)?(\S+)")
 
 
-def _reviewed_files(task: Task) -> set[str]:
-    """Every path the change under review touches, as the unified diff the
-    starting repository ships names them — empty where that diff is missing,
-    unreadable, or names nothing.
+def _files_a_diff_names(diff: str) -> set[str]:
+    """Every path a unified diff touches, as the diff itself names them.
 
     `/dev/null` is dropped rather than reported: it is how a unified diff spells
-    the absent side of an added or deleted file, and no key could name it.
+    the absent side of an added or deleted file, and no caller could name it.
+
+    Written once for the two kinds of patch this project reads — the change a
+    `code-review` task ships under review, and a `test-authoring` task's planted
+    mutants — because "which files does this patch touch" is one question, and a
+    second reader of the same headers would be a second answer to it.
     """
-    try:
-        diff = (task.repo_dir / REVIEW_DIFF_FILE).read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return set()
     touched: set[str] = set()
     for line in diff.splitlines():
         header = _DIFF_FILE_HEADER.match(line)
         if header is not None:
             touched.add(header.group(1))
     return touched - {"/dev/null"}
+
+
+def _reviewed_files(task: Task) -> set[str]:
+    """Every path the change under review touches, as the unified diff the
+    starting repository ships names them — empty where that diff is missing,
+    unreadable, or names nothing.
+    """
+    try:
+        diff = (task.repo_dir / REVIEW_DIFF_FILE).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return set()
+    return _files_a_diff_names(diff)
 
 
 def _findings_key_problems(task: Task) -> list[str]:
@@ -3121,6 +3183,147 @@ def _findings_test_problems(task: Task) -> list[str]:
             "let a wrong answer through"
         )]
     return []
+
+
+# --- test-authoring: what a planted mutant set has to be -----------------------
+
+
+# The floor on a planted mutant set (design note §67.7): below three, the
+# universal quantifier of the mutation gate's second half barely binds and one
+# lucky assertion clears it. There is deliberately **no maximum**. Four to six
+# is the spec's *authoring guidance*, not a lint rule, and so is spreading the
+# mutants across distinct specified behaviours — neither is a refusal here, and
+# neither should be turned into one: one test killing two mutants is legal,
+# because the quantifier binds mutants and not tests.
+_MINIMUM_MUTANTS = 3
+
+
+def _mutant_set_problems(task: Task) -> list[str]:
+    """What is wrong with this `test-authoring` task's planted mutant set, and
+    with the terrain the agent is asked to write its suite into.
+
+    Four rules, every one of them read rather than run, which is what lets them
+    gate the expensive half: `lint_task_set` runs this action's registered
+    existence proof only once these are clean, because that proof runs a whole
+    suite once per mutant.
+
+    - **At least three mutants** (`_MINIMUM_MUTANTS`).
+    - **Disjointness.** Every file a mutant patch touches is a file of `repo/`,
+      and none of them falls under the declared test path. This is what makes
+      §67.4's promise — no agent edit and no mutation can ever collide — true by
+      construction rather than by the author having been careful: grading
+      collects the test subtree out of the workdir diff and plants mutants
+      outside it, so a mutant reaching into that subtree would be overwritten by
+      the very suite it is meant to catch out.
+    - **The starting repository's test path holds no tests.** An existing suite
+      there is a crib: the agent's deliverable is a suite for behaviour nothing
+      tests yet. §67.6 words this as "no existing tests for the module under
+      test"; nothing decides where one module's tests stop and another's begin,
+      so what is refused here is *any* test under the declared test path, which
+      is the same rule with nothing left to interpret.
+    - **The prompt names the test path**, as a whole token (`_prompt_names_path`,
+      the same check the terrain rules read paths with). A task whose agent
+      cannot locate its own deliverable grades every run unresolved for a reason
+      no verdict would ever explain.
+    """
+    problems: list[str] = []
+    patches = mutant_patches(task)
+    if len(patches) < _MINIMUM_MUTANTS:
+        problems.append(
+            f"{task.id}: {MUTANTS_DIR}/ holds {len(patches)} planted mutant(s), "
+            f"and the minimum is {_MINIMUM_MUTANTS} — the verdict is 'every "
+            "planted mutant is killed', so a set this small is a quantifier over "
+            "almost nothing and a suite that asserted one boundary by luck would "
+            "clear it. Plant more behaviour changes, each of a different "
+            "specified behaviour"
+        )
+    for patch in patches:
+        problems += _one_mutant_problems(task, patch)
+    if task.test_path is not None:
+        problems += _test_path_terrain_problems(task, task.test_path)
+    return problems
+
+
+def _one_mutant_problems(task: Task, patch: Path) -> list[str]:
+    """What is wrong with one planted mutant: the files it touches, read out of
+    the patch itself with the reader the change-under-review side already uses
+    (`_files_a_diff_names`)."""
+    try:
+        diff = patch.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return [(
+            f"{task.id}: the planted mutant {MUTANTS_DIR}/{patch.name} cannot be "
+            f"read ({error}) — a mutant is a unified diff against {REPO_DIR}/, "
+            "and one nothing can read is a behaviour change the gate would fail "
+            "to plant at grade time"
+        )]
+    touched = sorted(_files_a_diff_names(diff))
+    if not touched:
+        return [(
+            f"{task.id}: the planted mutant {MUTANTS_DIR}/{patch.name} names no "
+            f"file — a mutant is one deliberate behaviour change to {REPO_DIR}/, "
+            "and a patch that changes nothing is a mutant no suite could ever "
+            "kill, so it would grade every agent unresolved"
+        )]
+    problems: list[str] = []
+    for name in touched:
+        if task.test_path is not None and _under_the_test_path(name, task.test_path):
+            problems.append(
+                f"{task.id}: the planted mutant {MUTANTS_DIR}/{patch.name} "
+                f"touches {name}, which is under the declared test path "
+                f"{task.test_path!r} — the mutants and the agent's suite have to "
+                "be disjoint by construction, because grading applies the test "
+                "subtree of the run's diff over the mutated copy: a mutation in "
+                "there is either overwritten by the suite meant to catch it or "
+                "hands the agent the mechanism. Mutate the code under test"
+            )
+        elif _repo_file(task, name) is None:
+            problems.append(
+                f"{task.id}: the planted mutant {MUTANTS_DIR}/{patch.name} "
+                f"touches {name}, which is not a file of {REPO_DIR}/ — a mutant "
+                "is applied to a copy of the starting repository, so a patch "
+                "against a file that is not there fails to apply and the gate "
+                "quantifies over one fewer behaviour change than the task claims"
+            )
+    return problems
+
+
+def _under_the_test_path(name: str, test_path: str) -> bool:
+    """Whether this path falls inside the declared test subtree — the same
+    prefix question `git apply --include=<test_path>/*` answers when grading
+    collects that subtree, asked here over path components so that a `tests2/`
+    beside a `tests/` is not read as being under it."""
+    prefix = Path(test_path.rstrip("/")).parts
+    return Path(name).parts[: len(prefix)] == prefix
+
+
+def _test_path_terrain_problems(task: Task, test_path: str) -> list[str]:
+    """The two rules about the place the suite is to be written: the starting
+    repository has no tests there, and the prompt says where there is."""
+    problems: list[str] = []
+    existing = sorted(
+        str(path.relative_to(task.repo_dir))
+        for path in (task.repo_dir / test_path).rglob(task.runner.visible_test_glob)
+        if path.is_file()
+    )
+    if existing:
+        problems.append(
+            f"{task.id}: {REPO_DIR}/{test_path} already holds {existing} — the "
+            "deliverable is a suite for behaviour nothing tests yet, so a suite "
+            "shipped where the agent is told to write one is a crib: it hands "
+            "over which behaviours are worth asserting, which is the whole of "
+            "what this action measures. Start the repository with that path "
+            "empty of tests"
+        )
+    if not _prompt_names_path(task.prompt, test_path):
+        problems.append(
+            f"{task.id}: the prompt never names the test path {test_path!r} as a "
+            "whole token — that path is where grading collects the deliverable "
+            "from and nowhere else, so an agent that writes a perfect suite "
+            "somewhere else grades unresolved for a reason no verdict would "
+            "explain. Name it in the prompt exactly as task.yaml declares it"
+        )
+    return problems
 
 
 # --- the hash gate: the repository is as it was handed over --------------------
@@ -3801,7 +4004,16 @@ def _terrain_problems(task: Task) -> list[str]:
     from surviving the terrain improvement that made it unnecessary. Both
     properties reach a review task unchanged, because the waiver is read
     against what the rule fired on and never against the key it fired over.
+
+    One action is exempt from all three at the action level rather than by
+    waiver (`TERRAIN_EXEMPT_ACTIONS`, design note §67.6), and the exemption is
+    consulted here rather than left to fall out of that action having no key to
+    grep for: what these rules protect is a key an agent could read out of the
+    workdir, and a `test-authoring` task's key — its planted mutants — is never
+    in the workdir at all.
     """
+    if task.category in TERRAIN_EXEMPT_ACTIONS:
+        return []
     fired: dict[TerrainRule, dict[str, str]] = {rule: {} for rule in TERRAIN_RULES}
     try:
         key = _ground_truth(task)
@@ -4322,10 +4534,10 @@ class ExistenceProof(NamedTuple):
     """One action's registered proof form: what says its planted truth exists.
 
     `form` states in one line what the proof is, so that the registry reads as
-    the three rules it is rather than as three function names — the refusals
+    the rules it is rather than as a list of function names — the refusals
     themselves are written where each check is, in the terms that check failed
     in. `check` runs it, and is handed the whole task set because one of the
-    three forms is a relation between two tasks rather than a property of one.
+    forms is a relation between two tasks rather than a property of one.
     """
 
     form: str
@@ -4498,7 +4710,118 @@ def _accepted_locations_resolve(
     )
 
 
-# One entry per action that carries a key. A fourth cannot be added without one:
+def _reference_suite_kills_every_mutant(
+    task: Task, tasks: Sequence[Task], timeout_s: int
+) -> list[str]:
+    """`test-authoring`'s proof form: the author's reference suite passes on the
+    pristine starting repository and fails on every planted mutant, checked one
+    mutant at a time (design note §67.5).
+
+    The task's own verdict, run against the author instead of against an agent —
+    a task's reference solution has always been the author being their task's
+    first perfect agent, and here that solution is a suite. What it proves is
+    the prior question no other gate asks: that each planted mutant is killable
+    at all. The failure it exists to refuse is the *equivalent mutant*, a change
+    no behaviour distinguishes, which under the gate's universal quantifier
+    makes the task permanently unresolvable for every agent while looking merely
+    hard.
+
+    **Per mutant, never over the set.** A set-level check — "the suite fails
+    somewhere across the mutants" — is exactly where an equivalent mutant hides,
+    because one killable neighbour would carry it. Each report names the mutant
+    file for the same reason a review's proof names its finding: "a proof
+    failed" leaves the author to work out which.
+
+    A suite that fails on the pristine repository is reported alone and stops
+    the per-mutant work: every mutant would then "fail" for that reason rather
+    than for the mutation, so the per-mutant reports would be noise laid over
+    the one real problem — and this is the expensive half of linting one of
+    these tasks, a whole suite run once per mutant.
+    """
+    del tasks  # a suite killing this task's mutants is a property of one task
+    targets = _reference_suite_targets(task)
+    if not targets:
+        return [(
+            f"{task.id}: {PROOFS_DIR}/ holds no file this task's runner would "
+            f"collect as a test ({task.runner.grading_test_glob}) — the author's "
+            "reference suite is this action's existence proof, and without a "
+            "test in it nothing says the planted mutants can be killed by "
+            "anything at all"
+        )]
+    if not _reference_suite_passes(task, None, targets=targets, timeout_s=timeout_s):
+        return [(
+            f"{task.id}: the reference suite in {PROOFS_DIR}/ fails on the "
+            f"pristine {REPO_DIR}/ — the first gate of this task's own verdict "
+            "is that the agent's suite passes on the starting repository with no "
+            "exception, so a reference suite that cannot do it either is either "
+            "wrong about the specification or reading a repository that does not "
+            "match the prompt. Nothing about the mutants is judged until this "
+            "passes"
+        )]
+    return [
+        (
+            f"{task.id}: the planted mutant {MUTANTS_DIR}/{patch.name} survives "
+            f"the reference suite in {PROOFS_DIR}/ — no test tells that mutation "
+            "from the original, so as far as anything here can show it is an "
+            "*equivalent mutant*, a change no behaviour distinguishes. The "
+            "verdict demands every mutant be killed, so this one would make the "
+            "task unresolvable for every agent and read as a hard task. Plant a "
+            "change the specification's own behaviour rules out, or add the test "
+            "that catches this one"
+        )
+        for patch in mutant_patches(task)
+        if _reference_suite_passes(task, patch, targets=targets, timeout_s=timeout_s)
+    ]
+
+
+def _reference_suite_targets(task: Task) -> list[str]:
+    """The reference suite's test files, as paths relative to `proofs/`.
+
+    Found by the runner's own held-out-test glob at any depth, the way
+    `proof_test_name` names a single-file proof by that same glob: a proof is a
+    test of the task's own language, and a suite is that plural. Anything else
+    in `proofs/` — a helper module, a README — travels with it and is simply not
+    a target.
+    """
+    return sorted(
+        str(path.relative_to(task.proofs_dir))
+        for path in task.proofs_dir.rglob(task.runner.grading_test_glob)
+        if path.is_file()
+    )
+
+
+def _reference_suite_passes(
+    task: Task, mutant: Path | None, *, targets: Sequence[str], timeout_s: int
+) -> bool:
+    """Whether the author's reference suite passes on one copy of the starting
+    repository — pristine, or carrying one planted mutant.
+
+    Built the way `_proof_test_passes` builds its own and for the same reasons:
+    the tree is copied rather than run in place, the proof laid beside it, the
+    run going through the runner with its report written outside the workdir.
+    The two differences are this form's: the whole suite is the targets rather
+    than one file, and one copy carries a mutation.
+
+    Both copies are `git init`-ed, including the pristine one that has nothing to
+    apply. The two runs must differ in the mutation and in nothing else — a
+    repository root present in one and absent in the other is exactly the kind of
+    difference a test runner notices — so the tree is built identically and then
+    mutated.
+    """
+    task.runner.require_toolchain()
+    with tempfile.TemporaryDirectory(prefix="ai-bench-reference-") as name:
+        root = Path(name)
+        workdir = root / "workdir"
+        workdir.mkdir()
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
+        _git(task, ["init", "-q", "."], workdir, doing="preparing a proof copy")
+        if mutant is not None:
+            _apply_mutant(task, mutant, workdir)
+        shutil.copytree(task.proofs_dir, workdir, dirs_exist_ok=True)
+        return task.runner.run_tests(root, workdir, list(targets), timeout_s=timeout_s)
+
+
+# One entry per action that carries a key. A fifth cannot be added without one:
 # `_unregistered_proof_form_problems` refuses a keyed action this dict does not
 # name, and `_existence_proof_problems` refuses the task that would have been
 # swept under it.
@@ -4520,6 +4843,13 @@ EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
     "codebase-comprehension": ExistenceProof(
         form="every accepted (file, symbol) resolving in the starting repository",
         check=_accepted_locations_resolve,
+    ),
+    _MUTATION_CATEGORY: ExistenceProof(
+        form=(
+            "the author's reference suite passing on the pristine starting "
+            "repository and failing on every planted mutant, checked per mutant"
+        ),
+        check=_reference_suite_kills_every_mutant,
     ),
 }
 
@@ -4589,12 +4919,17 @@ def _proof_test_passes(
 def _unregistered_proof_form_problems() -> list[str]:
     """Keyed actions this project can grade and cannot prove.
 
-    Read off the two sets that say which actions may ship a key, so that adding
-    a fourth without registering what proves its truth exists is refused by the
-    lint rather than discovered by a sweep that measured nothing.
+    Read off the sets that say which actions may ship a key of some shape — an
+    accepted-answer key, a findings key, a planted mutant set — so that adding
+    another without registering what proves its truth exists is refused by the
+    lint rather than discovered by a sweep that measured nothing. The mutation
+    action is counted here for exactly that reason: its mutants are a key like
+    the others, and an action left out of this union would go unnoticed by the
+    one check whose whole job is noticing.
     """
     unregistered = sorted(
-        (_KEYED_CATEGORIES | {_FINDINGS_CATEGORY}) - set(EXISTENCE_PROOFS)
+        (_KEYED_CATEGORIES | {_FINDINGS_CATEGORY, _MUTATION_CATEGORY})
+        - set(EXISTENCE_PROOFS)
     )
     if not unregistered:
         return []
@@ -4614,7 +4949,7 @@ def _existence_proof_problems(
     """Whether this keyed task's planted truth is shown to be there at all.
 
     Dispatched off the registry rather than off a chain of category tests, so
-    that the three forms are one list a reader can see the whole of, and so that
+    that the forms are one list a reader can see the whole of, and so that
     a task of an action with no registered form is refused here rather than
     passing through a final `else` that checked nothing.
     """
