@@ -508,23 +508,3 @@ def test_the_readers_corpus_count_header_now_reads_one_hundred_and_twenty_seven(
         language="typescript", language_explicit=False,
     )
     assert len(ts) == 14
-
-
-def test_no_round_seven_row_has_been_written(
-    rows: dict[tuple[str, str, str], firstparty_v1.Run],
-) -> None:
-    """The pre-registration is pre: nothing of round 7 has been swept.
-
-    Selected by **sweep id** over every log in the directory and never by a log
-    filename, which is the discipline the whole round is run under. This is
-    the assertion that dates the file: it holds until ticket 16's sweep lands,
-    and the record's own suite is what replaces it with the post-sweep
-    invariant.
-    """
-    assert not [key for key, run in rows.items() if run.sweep == _SWEEP], (
-        "a round-7 row exists, but this ticket runs no sweep"
-    )
-    # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
-    assert {run.sweep for run in rows.values()} == {
-        None, "round-2", "round-3", "round-4", "round-5", "round-6"
-    }

@@ -965,12 +965,23 @@ def test_neither_reader_counts_a_codex_row(
         for log in reconcile_v1.collect_logs([_LOGS])
         for run in firstparty_v1.load_runs(log)
     ]
-    assert len(everything) == _CLAUDE_CODE_RUNS + 30
+    # Since section 58 was pinned, round 7 added forty-two rows to the same
+    # directory — twenty-eight claude-code TypeScript ones and fourteen more
+    # Codex ones. Section 58's own claim is unchanged — agent selection drops
+    # every round-6 row — and the second selection that keeps the printed
+    # tables at 225 is round 7's truth, pinned in its record suite and
+    # exercised here only to reach the count this section published.
+    assert len(everything) == _CLAUDE_CODE_RUNS + 30 + 42
+    assert len([run for run in everything if run.sweep == _SWEEP]) == 30
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
     )
-    assert len(selected) == _CLAUDE_CODE_RUNS
     assert not [run for run in selected if run.sweep == _SWEEP]
+    declared = list(firstparty_v1.load_task_set(_TASKS))
+    selected = reconcile_v1.select_language(
+        declared, selected, reconcile_v1.DEFAULT_LANGUAGE, explicit=False
+    )
+    assert len(selected) == _CLAUDE_CODE_RUNS
 
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     reconciled = capsys.readouterr().out
