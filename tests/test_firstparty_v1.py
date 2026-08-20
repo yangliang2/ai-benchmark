@@ -341,7 +341,9 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
         # Two languages since round 7; each task's declaration picks its runner.
         assert task.language in ("python", "typescript")
         assert list(task.repo_dir.iterdir())
-        assert list(task.grading_dir.rglob("test_*.py"))
+        # Held-out tests by the task's own runner's glob: a TypeScript-only
+        # task grades on .test.ts files and ships no Python check.
+        assert task.grading_test_paths
 
 
 def test_refactor_tasks_name_their_behaviour_tests() -> None:

@@ -484,23 +484,30 @@ def test_the_coverage_target_is_what_the_lint_prints(
 def test_the_readers_corpus_count_header_now_reads_one_hundred_and_twenty_seven(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The one printed line §59.8 says moves, from the reader that prints it.
+    """§59.8 predicted this line moves to 127; the round ruled the other way.
 
-    The header counts the task set it was pointed at, not the rows it read, so
-    fourteen new tasks move it whether or not any of them has been swept. It
-    is worth a test of its own because it is the visible consequence of the
-    round for every reading published before the sweep: the figures beneath it
-    are unchanged and the count above them is not.
+    The first two-language precheck showed the rows-only filter pooling
+    fourteen TypeScript controls into the Python categories' published mixes
+    and denominators — the pooling #97's stories 22/27/28 rule out — so the
+    reader now narrows the *task set* with the rows (4874f89), and the
+    header counts the selected language's corpus: 113 under the default,
+    fourteen under `--language typescript`. The loaded set is still 127,
+    which `eval-v1 --replay`'s own count discloses; the record (#113) says
+    both.
     """
+    assert len(tasks) == 127
     outcomes = reconcile_v1.observed_outcomes(
         list(tasks.values()), [], source="(no run log)"
     )
     header = reconcile_v1.corpus_header(
         "reconciliation", list(outcomes.values()), tasks_root=_TASKS, logs=[]
     )
-    assert any(f"— {len(tasks)} task(s)" in line for line in header)
-    assert len(tasks) == 127
-    assert not any("113 task(s)" in line for line in header)
+    assert any("— 113 task(s)" in line for line in header)
+    ts = reconcile_v1.observed_outcomes(
+        list(tasks.values()), [], source="(no run log)",
+        language="typescript", language_explicit=False,
+    )
+    assert len(ts) == 14
 
 
 def test_no_round_seven_row_has_been_written(

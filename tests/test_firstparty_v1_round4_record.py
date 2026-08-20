@@ -203,6 +203,11 @@ def controls_per_category() -> dict[str, int]:
     thing with no construction block to give it a profile."""
     counted: dict[str, int] = {}
     for task in firstparty_v1.load_task_set(_TASKS):
+        # The calibration table's default reading is one language's, and this
+        # record's rows are the Python corpus's (round 7 widened the loaded
+        # set; the reader narrows tasks with the rows since 4874f89).
+        if task.language != reconcile_v1.DEFAULT_LANGUAGE:
+            continue
         if firstparty_v1.is_control(task):
             counted[task.category] = counted.get(task.category, 0) + 1
     return counted
