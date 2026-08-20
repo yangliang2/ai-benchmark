@@ -1,0 +1,262 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -9,6 +9,8 @@ Node standard library alone. There is nothing to install: no `package.json`, no
+ - `stones.ts` — the stones standing in the yard, and how one is asked for.
+ - `orders.ts` — the order book: what the yard has been asked to cut, in the
+   order it was asked for.
++- `inscription.ts` — how the words somebody gave are set out for the chisel.
++- `account.ts` — what the yard charges, and what a quarter of it comes to.
+ 
+ ## The house rules
+ 
+@@ -17,5 +19,19 @@ Node standard library alone. There is nothing to install: no `package.json`, no
+   however it was chalked.
+ - An order is set down as it was taken and is never altered afterwards, and the
+   book holds the orders in the order they came.
++- An order struck off is out of the book, and the book is the shorter for it:
++  what is left standing in it is what is still to cut.
++- Nothing goes on a stone that was not asked for in words: every `&` an
++  inscription was given is cut in full as `and`, and every one of them is.
++- Where an inscription gives two dates, the head of the stone carries the first
++  of them; a second date goes lower down and is no business of the head's.
++- Lettering is charged by the hundred letters and figures the words were given
++  in, and a part hundred is not charged for at all.
++- A line of an account is worked out in pence and kept in pence. Only the foot
++  of the account is brought to whole shillings, and the odd pence are dropped
++  there and nowhere else.
++
++`review.diff` is the change that brought the lettering and the account in, in
++the state the yard's own copy of it is in.
+ 
+ Run the tests with `node --test`.
+diff --git a/account.test.ts b/account.test.ts
+new file mode 100644
+--- /dev/null
++++ b/account.test.ts
+@@ -0,0 +1,38 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import { Account, LETTERS_TO_A_HUNDRED, PENCE_TO_A_SHILLING, Piece, Rate } from "./account.ts";
++import { Stone } from "./stones.ts";
++
++const RATE = new Rate(7, 30);
++const SLAB = new Stone("A1", "slate", 30);
++const HUNDRED = "A".repeat(LETTERS_TO_A_HUNDRED);
++
++test("a stone is charged by the inch", () => {
++  assert.equal(RATE.forStone(SLAB), 210);
++  assert.equal(RATE.forStone(new Stone("b2", "limestone", 1)), 7);
++});
++
++test("a part hundred of lettering is not charged for at all", () => {
++  assert.equal(RATE.forLetters(HUNDRED), 30);
++  assert.equal(RATE.forLetters(`${HUNDRED}${HUNDRED}`), 60);
++  assert.equal(RATE.forLetters("HANNAH SKERRETT 1832"), 0);
++  assert.equal(RATE.forLetters(`${HUNDRED}AND ANOTHER FEW`), 30);
++});
++
++test("a line of an account is the stone and the lettering, in pence", () => {
++  const account = new Account(RATE)
++    .setDown(new Piece(SLAB, "HANNAH SKERRETT 1832"))
++    .setDown(new Piece(new Stone("b2", "limestone", 42), HUNDRED));
++
++  assert.deepEqual(account.lines(), [210, 324]);
++  assert.equal(PENCE_TO_A_SHILLING, 12);
++});
++
++test("setting a piece down leaves the account it was set down on alone", () => {
++  const account = new Account(RATE);
++  const after = account.setDown(new Piece(SLAB, "HANNAH SKERRETT 1832"));
++
++  assert.deepEqual(account.lines(), []);
++  assert.deepEqual(after.lines(), [210]);
++});
+diff --git a/account.ts b/account.ts
+new file mode 100644
+--- /dev/null
++++ b/account.ts
+@@ -0,0 +1,80 @@
++/**
++ * What the yard charges, and what a quarter of it comes to.
++ *
++ * A piece of work is a stone with words on it, and it is charged for twice
++ * over: for the stone itself, by the inch, and for the lettering, by the
++ * hundred. Everything in here is worked in pence, and only the foot of an
++ * account is ever brought to shillings.
++ */
++
++import { lettersIn } from "./inscription.ts";
++import { Stone } from "./stones.ts";
++
++/** How many pence go to a shilling. */
++export const PENCE_TO_A_SHILLING = 12;
++
++/** How many letters the lettering rate is quoted by. */
++export const LETTERS_TO_A_HUNDRED = 100;
++
++export class Rate {
++  readonly perInch: number;
++  readonly perHundred: number;
++
++  constructor(perInch: number, perHundred: number) {
++    this.perInch = perInch;
++    this.perHundred = perHundred;
++  }
++
++  /** What the stone itself comes to, in pence. */
++  forStone(stone: Stone): number {
++    return stone.inches * this.perInch;
++  }
++
++  /**
++   * What the lettering comes to, in pence: by the hundred letters and figures
++   * the words were given in, a part hundred not being charged for at all.
++   */
++  forLetters(given: string): number {
++    return Math.floor(lettersIn(given) / LETTERS_TO_A_HUNDRED) * this.perHundred;
++  }
++}
++
++export class Piece {
++  readonly stone: Stone;
++  readonly given: string;
++
++  constructor(stone: Stone, given: string) {
++    this.stone = stone;
++    this.given = given;
++  }
++}
++
++export class Account {
++  private readonly rate: Rate;
++  private readonly pieces: Piece[];
++
++  constructor(rate: Rate, pieces: Piece[] = []) {
++    this.rate = rate;
++    this.pieces = [...pieces];
++  }
++
++  /** The account with one more piece of work set down on it. */
++  setDown(piece: Piece): Account {
++    return new Account(this.rate, [...this.pieces, piece]);
++  }
++
++  /** What each piece comes to, in pence, in the order it was set down. */
++  lines(): number[] {
++    return this.pieces.map(
++      (piece) => this.rate.forStone(piece.stone) + this.rate.forLetters(piece.given),
++    );
++  }
++
++  /** What the whole account comes to, in whole shillings. */
++  comesTo(): number {
++    return this.lines().reduce(
++      (total, pence) => total + Math.floor(pence / PENCE_TO_A_SHILLING),
++      0,
++    );
++  }
++}
+diff --git a/inscription.test.ts b/inscription.test.ts
+new file mode 100644
+--- /dev/null
++++ b/inscription.test.ts
+@@ -0,0 +1,20 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import { AMPERSAND, IN_FULL, dateOn, lettersIn } from "./inscription.ts";
++
++test("the head of a stone carries the first of the dates it was given", () => {
++  assert.equal(dateOn("HANNAH SKERRETT 1832"), "1832");
++  assert.equal(dateOn("THOMAS VOLE 1801 1874 HIS WIFE ANN 1878"), "1801");
++  assert.equal(dateOn("SACRED TO THE MEMORY OF"), null);
++});
++
++test("the letters and figures of what was given are what there is to cut", () => {
++  assert.equal(lettersIn("HANNAH SKERRETT 1832"), 18);
++  assert.equal(lettersIn("  "), 0);
++});
++
++test("the yard knows what it will not cut and what it puts there instead", () => {
++  assert.equal(AMPERSAND, "&");
++  assert.equal(IN_FULL, "and");
++});
+diff --git a/inscription.ts b/inscription.ts
+new file mode 100644
+--- /dev/null
++++ b/inscription.ts
+@@ -0,0 +1,29 @@
++/**
++ * How the words somebody gave are set out for the chisel.
++ *
++ * Nothing in here knows what a stone is, whose it is or what anything is
++ * charged at. It is handed the words that were given and says what goes under
++ * the chisel, what the head of the stone carries, and how much there is of it.
++ */
++
++/** What is never cut on a stone. */
++export const AMPERSAND = "&";
++
++/** What is cut in its place. */
++export const IN_FULL = "and";
++
++/** The words as they go under the chisel. */
++export function asCut(given: string): string {
++  return given.replace(AMPERSAND, IN_FULL);
++}
++
++/** The date the head of a stone carries, or nothing where none was given. */
++export function dateOn(given: string): string | null {
++  const found = given.match(/[0-9]{4}/);
++  return found === null ? null : found[0];
++}
++
++/** How many letters and figures the words that were given come to. */
++export function lettersIn(given: string): number {
++  return given.replace(/[^0-9A-Za-z]/g, "").length;
++}
+diff --git a/orders.test.ts b/orders.test.ts
+--- a/orders.test.ts
++++ b/orders.test.ts
+@@ -33,3 +33,15 @@ test("the orders taken for one name come back in the order they came", () => {
+   );
+   assert.deepEqual(taken().forName("Dyke"), []);
+ });
++
++test("the orders wanted by a week come back in the order they came", () => {
++  assert.deepEqual(
++    taken().dueBy(5).map((order) => order.mark),
++    ["A1", "b2", "C3"],
++  );
++  assert.deepEqual(
++    taken().dueBy(3).map((order) => order.mark),
++    ["A1"],
++  );
++  assert.deepEqual(taken().dueBy(1), []);
++});
+diff --git a/orders.ts b/orders.ts
+--- a/orders.ts
++++ b/orders.ts
+@@ -48,4 +48,20 @@ export class Book {
+   forName(who: string): Order[] {
+     return this.kept.filter((order) => order.who === who);
+   }
++
++  /** Every order wanted by this week or before it, in the order it came. */
++  dueBy(week: number): Order[] {
++    return this.kept.filter((order) => order.week <= week);
++  }
++
++  /**
++   * Strike an order off. It is out of the book, and the book is the shorter
++   * for it: what is left standing in it is what is still to cut.
++   */
++  strikeOff(mark: string): void {
++    const at = this.kept.findIndex((order) => order.mark === mark);
++    if (at >= 0) {
++      delete this.kept[at];
++    }
++  }
+ }

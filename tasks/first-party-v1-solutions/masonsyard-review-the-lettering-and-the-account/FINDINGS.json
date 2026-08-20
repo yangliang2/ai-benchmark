@@ -1,0 +1,17 @@
+[
+  {
+    "file": "inscription.ts",
+    "symbol": "asCut",
+    "note": "replaces the first ampersand only, so every one after it is left standing on the stone"
+  },
+  {
+    "file": "orders.ts",
+    "symbol": "Book.strikeOff",
+    "note": "deletes the order in its place rather than closing the place up, so the book is no shorter for it and what is left has a hole in it"
+  },
+  {
+    "file": "account.ts",
+    "symbol": "Account.comesTo",
+    "note": "brings every line to whole shillings and adds those, so the odd pence are dropped a line at a time instead of once at the foot"
+  }
+]
