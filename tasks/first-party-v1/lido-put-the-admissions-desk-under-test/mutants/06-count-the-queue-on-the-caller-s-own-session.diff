@@ -1,0 +1,13 @@
+diff --git a/lido.py b/lido.py
+index 4ca0054..ec42df0 100644
+--- a/lido.py
++++ b/lido.py
+@@ -34,7 +34,7 @@ def roll_call(session, swimmers):
+     Gives back the three lists of names — who went in, who is waiting, who was
+     turned away — and leaves the session it was handed as it found it.
+     """
+-    standing = dict(session)
++    standing = session
+     called = {"admitted": [], "waiting": [], "refused": []}
+     for swimmer in swimmers:
+         decision = admit(standing, swimmer)

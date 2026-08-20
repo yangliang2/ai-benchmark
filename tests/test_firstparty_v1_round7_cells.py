@@ -80,8 +80,11 @@ _TYPESCRIPT_ROWS = {
     for category, count in _COUNTS.items()
 }
 
-# The Python side of the same table, which this round does not touch.
-_PYTHON_TOTAL = 113
+# The Python side of the same table, which this round does not touch. It reads
+# 114 rather than round 7's 113 because round 8 authored the corpus's first
+# `test-authoring` task into the Python column; §59.8's own prose, quoted
+# below, is a claim about what round 7 did and stays at 113.
+_PYTHON_TOTAL = 114
 
 
 def note_section() -> str:
@@ -449,12 +452,17 @@ def test_the_coverage_target_is_what_the_lint_prints(
     Acceptance is a figure off the lint, so the figure has to be one the lint
     can print. The table carries a row per populated (category, surface,
     language) plus a `(category, "-", "-", 0)` row only for a category with no
-    task in *any* language, which is why `test-authoring` prints as a zero and
-    `codebase-comprehension` prints only its Python row: TypeScript's absence
-    from a populated category is disclosed by absence and by this section,
-    never by a row. Pinning that is what stops the lint quietly growing a
-    registered-zero-per-language column and moving every earlier record
-    suite's printed table.
+    task in *any* language, which is why `codebase-comprehension` prints only
+    its Python row: TypeScript's absence from a populated category is disclosed
+    by absence and by this section, never by a row. Pinning that is what stops
+    the lint quietly growing a registered-zero-per-language column and moving
+    every earlier record suite's printed table.
+
+    `test-authoring` was round 7's example of the zero row and is round 8's
+    example of the other half of the same rule: the round authored Python tasks
+    for it, so it prints a Python row and no TypeScript one (§67.2), exactly as
+    `codebase-comprehension` does. The zero shape is still pinned, on the
+    categories that still have no task in any language.
     """
     table = firstparty_v1.coverage_table(list(tasks.values()))
 
@@ -462,7 +470,13 @@ def test_the_coverage_target_is_what_the_lint_prints(
     assert typescript == _TYPESCRIPT_ROWS
 
     zeros = {row[0] for row in table if row[1:] == ("-", "-", 0)}
-    assert "test-authoring" in zeros, "no task in any language, so it prints as 0"
+    assert "investigation" in zeros, "no task in any language, so it prints as 0"
+    assert "test-authoring" not in zeros
+    # The row's shape, not round 8's figure: what that count reads is pinned
+    # once, off the printed page, in tests/test_cli.py.
+    assert [row[:3] for row in table if row[0] == "test-authoring"] == [
+        ("test-authoring", "application", "python")
+    ]
     assert "codebase-comprehension" not in zeros
     assert [row for row in table if row[0] == "codebase-comprehension"] == [
         ("codebase-comprehension", "application", "python", 4)
@@ -481,7 +495,7 @@ def test_the_coverage_target_is_what_the_lint_prints(
     assert "reads **127 task(s)**" in counted
 
 
-def test_the_readers_corpus_count_header_now_reads_one_hundred_and_twenty_seven(
+def test_the_readers_corpus_count_header_reads_the_python_column(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
     """§59.8 predicted this line moves to 127; the round ruled the other way.
@@ -490,19 +504,23 @@ def test_the_readers_corpus_count_header_now_reads_one_hundred_and_twenty_seven(
     fourteen TypeScript controls into the Python categories' published mixes
     and denominators — the pooling #97's stories 22/27/28 rule out — so the
     reader now narrows the *task set* with the rows (4874f89), and the
-    header counts the selected language's corpus: 113 under the default,
-    fourteen under `--language typescript`. The loaded set is still 127,
-    which `eval-v1 --replay`'s own count discloses; the record (#113) says
-    both.
+    header counts the selected language's corpus, against a loaded set
+    `eval-v1 --replay`'s own count discloses; the record (#113) says both.
+
+    Both figures are live reads of the corpus and both moved when round 8
+    authored the first `test-authoring` task into the Python column: 113 and
+    127 at the time §59.8 was written, 114 and 128 with that task checked in.
+    The section's own prose is quoted above and is unmoved — what round 7 did
+    to the Python column is still nothing.
     """
-    assert len(tasks) == 127
+    assert len(tasks) == _PYTHON_TOTAL + sum(_COUNTS.values())
     outcomes = reconcile_v1.observed_outcomes(
         list(tasks.values()), [], source="(no run log)"
     )
     header = reconcile_v1.corpus_header(
         "reconciliation", list(outcomes.values()), tasks_root=_TASKS, logs=[]
     )
-    assert any("— 113 task(s)" in line for line in header)
+    assert any(f"— {_PYTHON_TOTAL} task(s)" in line for line in header)
     ts = reconcile_v1.observed_outcomes(
         list(tasks.values()), [], source="(no run log)",
         language="typescript", language_explicit=False,

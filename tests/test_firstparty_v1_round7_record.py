@@ -163,9 +163,24 @@ _HAIKU_MISSED = {
 # Section 66's reader counts: the corpus's `claude-code` Python rows, and the
 # Python task set the default language selection narrows to. Both are what they
 # were before the round, which is the section's claim.
+#
+# Three of them moved once after the round they record, and by the same one
+# task: round 8 authored the corpus's first `test-authoring` task, which is
+# Python and declares itself a control, so the loaded Python task set and its
+# control count each grew by one. Round 7's own prose is a claim about what
+# round 7 did and is quoted rather than recomputed, so it stays where it was —
+# and the two lines the reader prints are different counts, which is why they
+# no longer read alike: the task-set line counts the corpus the language
+# selection reaches, and the runs line counts the tasks that have rows. A task
+# authored after every sweep has none.
+# The whole corpus as this record quotes it, both languages: what
+# `eval-v1 --replay` counted at the time, and what the note's own block says.
+_RECORDED_TASKS = 127
+
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 113
-_PYTHON_CONTROLS = 46
+_PYTHON_TASKS = 114
+_PYTHON_TASKS_WITH_RUNS = 113
+_PYTHON_CONTROLS = 47
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -180,7 +195,7 @@ _TYPESCRIPT_COVERAGE = {
 }
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
-    "codebase-comprehension": 4, "code-review": 8,
+    "codebase-comprehension": 4, "code-review": 8, "test-authoring": 1,
 }
 
 # The two fields of a calibration block a later round moves, and the only two —
@@ -1079,12 +1094,18 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     """Section 64's table, taken from the lint rather than from a task count.
 
     Acceptance is a figure the lint prints, so the block the record quotes is
-    compared with the printed table line for line, and the two absent cells
-    are read as section 59.8 registered them: zero by absence, which is all
-    the table can express. `test-authoring` prints `- - 0` because it has no
-    task in any language; `codebase-comprehension` prints only its Python row
+    compared with the printed table line for line, and the absent cells are
+    read as section 59.8 registered them: zero by absence, which is all the
+    table can express. `codebase-comprehension` prints only its Python row
     because none was authored in TypeScript, and there is no per-language zero
     row for it because the lint was not changed to print one.
+
+    One line of the block has moved since, and only one: round 8 authored the
+    corpus's first `test-authoring` task, so the category this record quotes
+    as `- - 0` now prints the Python cell that task fills, and its TypeScript
+    absence is disclosed by absence exactly as `codebase-comprehension`'s is.
+    The record is not edited for it — the page it quotes is what the page was —
+    so the line is named below and every other one is still held byte for byte.
     """
     coverage = firstparty_v1.coverage_table(firstparty_v1.load_task_set(_TASKS))
 
@@ -1106,7 +1127,15 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
 
     # The two absent cells: one with no row in any language, one with a Python
     # row and no TypeScript one. Neither prints a per-language zero.
-    assert ("test-authoring", "-", "-", 0) in coverage
+    # `test-authoring` was the first of those when this round was recorded and
+    # is the second now — round 8 filled its Python cell and left the
+    # TypeScript one a disclosed zero (§67.2) — so the shape is read off a
+    # category that still has no task at all.
+    assert ("investigation", "-", "-", 0) in coverage
+    assert not [
+        row for row in coverage
+        if row[0] == "test-authoring" and row[2] == "typescript"
+    ]
     assert not [
         row for row in coverage
         if row[0] == "codebase-comprehension" and row[2] == "typescript"
@@ -1118,10 +1147,34 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     printed = capsys.readouterr().out
     assert f"lint clean: {tasks_in_set()} task(s) in {_TASKS}" in printed
 
-    [quoted] = fenced_blocks(note_section("64. The coverage table, as the lint prints it"))
-    assert quoted.rstrip("\n") in printed, (
-        "the block the record quotes is not what the lint prints"
+    [quoted] = fenced_blocks(
+        note_section("64. The coverage table, as the lint prints it")
     )
+    # Round 7's record is the page as it was, and this is not the round that
+    # rewrites it: the block is held against today's table line for line, with
+    # the one line a later round moved named here rather than edited there.
+    # Round 8 authored the corpus's first `test-authoring` task, so the row
+    # that read `- - 0` when this was recorded now reads a Python cell. Every
+    # other line is still printed byte for byte — the column widths included —
+    # which is what says round 7's own figures are unmoved.
+    recorded_zero = "  test-authoring             -            -           0"
+    quoted_lines = quoted.strip("\n").splitlines()
+    assert recorded_zero in quoted_lines
+    for line in quoted_lines:
+        if line == recorded_zero:
+            continue
+        assert line in printed, "the record quotes a line the lint does not print"
+    assert recorded_zero not in printed
+    assert [
+        line.split()
+        for line in printed.splitlines()
+        if line.startswith("  test-authoring")
+    ] == [
+        [
+            "test-authoring", "application", "python",
+            str(_PYTHON_COVERAGE["test-authoring"]),
+        ]
+    ]
 
     said = prose(note_section("64. The coverage table, as the lint prints it"))
     assert "**The five `typescript` rows are at the registered counts**" in said
@@ -1251,19 +1304,24 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
         assert record["language"] == "typescript"
     assert sum(float(record["quality_value"]) for record in merged) == 40
 
-    # The commands the note prints, against the eight logs they name. The
-    # count is derived from the loaded task set rather than pinned as a
-    # literal: `eval-v1 --replay` has no language selection, so this is the
-    # one of ticket 06's three counts that moved when the corpus grew, and
-    # ticket 08 split the pins that see it. It reads 127 today.
-    assert tasks_in_set() == 127
+    # The commands the note prints, against the eight logs they name. Every
+    # per-log verdict above was checked against the live output; what is
+    # checked here is that the record quotes those same verdicts, over the
+    # corpus as it stood when it was written. `eval-v1 --replay` has no
+    # language selection, so this is the one of ticket 06's three counts that
+    # moves whenever the corpus grows — 127 when the round was recorded, and
+    # one more since, because round 8 authored the corpus's first
+    # `test-authoring` task. The record is a snapshot and is not edited for
+    # that; the live count is asserted here beside the recorded one so the two
+    # cannot drift silently apart.
+    assert tasks_in_set() == _RECORDED_TASKS + 1
     printed_block = fenced_blocks(note_section(
         "66. Replay, and the published tables left where they were"
     ))[0]
     for name, (evaluated, resolved) in _REPLAYED.items():
         assert name in printed_block
         assert (
-            f"evaluated {evaluated} runs over {tasks_in_set()} tasks "
+            f"evaluated {evaluated} runs over {_RECORDED_TASKS} tasks "
             f"({resolved} resolved)"
         ) in printed_block
 
@@ -1313,7 +1371,8 @@ def test_neither_reader_counts_a_round_7_row(
         f"{_PYTHON_CONTROLS} control(s), {_PYTHON_CONSTRUCTED} constructed"
     ) in reconciled
     assert (
-        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over {_PYTHON_TASKS} task(s)"
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
+        f"{_PYTHON_TASKS_WITH_RUNS} task(s)"
     ) in reconciled
     assert (
         "  rounds     6 round(s): as-of 2026-08-04, as-of 2026-08-05, "
@@ -1348,11 +1407,27 @@ def test_neither_reader_counts_a_round_7_row(
     # The three lines the record quotes, against what was just printed. The
     # note writes the task set as the repo-relative path an operator types, so
     # the absolute one this suite passes is folded back to it first.
+    #
+    # Two of the three are still printed word for word. The task-set line is
+    # the one the corpus moved — round 8 authored the corpus's first
+    # `test-authoring` task, which is Python and a control — and the record is
+    # not edited for it, so what it quoted is named here and what it prints
+    # now was asserted above off the same two counts. The runs line did not
+    # move with it, because it counts the tasks that have rows and a task
+    # authored after every sweep has none.
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
     [quoted] = fenced_blocks(note_section(
         "66. Replay, and the published tables left where they were"
     ))[1:2]
+    recorded_task_set = (
+        f"  task set   tasks/first-party-v1 — {_PYTHON_TASKS - 1} task(s): "
+        f"{_PYTHON_CONTROLS - 1} control(s), {_PYTHON_CONSTRUCTED} constructed"
+    )
+    assert recorded_task_set in quoted.splitlines()
     for line in quoted.splitlines():
+        if line == recorded_task_set:
+            assert line not in printed
+            continue
         assert line in printed, line
 
     said = prose(note_section(

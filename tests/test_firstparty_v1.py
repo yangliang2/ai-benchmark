@@ -48,6 +48,7 @@ from ai_benchmark.firstparty_v1 import (
     live_run_limit_s,
     load_runs,
     load_task_set,
+    mutant_patches,
     run_live,
 )
 from ai_benchmark.schema import TaskCategory
@@ -333,7 +334,7 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
 
     assert {task.category for task in tasks} == {
         "feature-dev", "refactor", "bug-fix", "fault-location", "code-review",
-        "codebase-comprehension",
+        "codebase-comprehension", "test-authoring",
     }
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:
@@ -341,6 +342,14 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
         # Two languages since round 7; each task's declaration picks its runner.
         assert task.language in ("python", "typescript")
         assert list(task.repo_dir.iterdir())
+        if task.category == "test-authoring":
+            # Round 8's action ships no held-out tests at all: its ground truth
+            # is the planted mutant set and its verdict the mutation gate, so
+            # the deliverable it grades is the suite the agent wrote at the
+            # test path the prompt names (ADR-0004).
+            assert mutant_patches(task)
+            assert task.test_path
+            continue
         # Held-out tests by the task's own runner's glob: a TypeScript-only
         # task grades on .test.ts files and ships no Python check.
         assert task.grading_test_paths

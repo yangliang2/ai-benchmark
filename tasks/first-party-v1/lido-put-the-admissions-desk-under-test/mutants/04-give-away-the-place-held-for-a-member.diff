@@ -1,0 +1,14 @@
+diff --git a/lido.py b/lido.py
+index 4ca0054..759d53e 100644
+--- a/lido.py
++++ b/lido.py
+@@ -22,9 +22,6 @@ def admit(session, swimmer):
+     if swimmer["age"] < 8 and not swimmer["accompanied"]:
+         return "refused"
+     free = session["capacity"] - session["admitted"]
+-    if not swimmer["member"]:
+-        # The last place in the water is held back for a member.
+-        free -= 1
+     return "admitted" if free > 0 else "waiting"
+ 
+ 

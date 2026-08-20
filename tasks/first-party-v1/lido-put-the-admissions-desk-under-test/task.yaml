@@ -1,0 +1,93 @@
+# The corpus's first test-authoring task, and the first of round 8's three
+# (design note §67). The deliverable is the suite, not a change to the code
+# under test: `lido.py` already does everything the prompt specifies, and an
+# agent that "fixes" it has done nothing the verdict reads.
+#
+# Why it grades the way it does: held-out tests cannot grade tests — an
+# all-green suite may be thorough or may be `assert True` — so this action's
+# verdict is the mutation gate (ADR-0004). The suite the run wrote at
+# `test_path` is collected out of the workdir diff and asked two questions:
+# does it pass on the pristine repository, and does at least one of its tests
+# fail on each of the behaviour changes in `mutants/`. Both, binary. Hence
+# `control: true` — the task registers no difficulty prediction, and a task
+# declaring neither a construction block nor itself a control is refused —
+# and hence no `grading/` directory: there is no held-out suite to overlay,
+# and the author's own reference suite lives in `proofs/`, where every other
+# action's existence proof lives.
+#
+# The prompt is a complete behavioural specification and discloses nothing
+# about the mechanism (§67.6): a suite cannot be expected to catch a rule the
+# agent was never told, and the planted set has exactly the held-out status
+# grading tests have always had. It names `tests/` because that subtree is the
+# deliverable and nothing else is collected, and it asks for `test_*.py` files
+# that stand on their own because grading runs pytest with `--noconftest`
+# under a pinned config — a fixture in a conftest.py the agent wrote is never
+# loaded, and a file named anything else is never collected. Both are said as
+# requirements on the deliverable rather than as facts about the grader.
+#
+# The six planted behaviour changes are spread over six specified rules: the
+# unaccompanied-child boundary, the club membership rule, the lane age rule,
+# the place held for members, the queue's running count, and roll_call leaving
+# the caller's session alone. Each is proved killable by proofs/ at lint time.
+id: lido-put-the-admissions-desk-under-test
+category: test-authoring
+scale: single-file
+surface: application
+language: python
+control: true
+test_path: tests
+prompt: |
+  lido.py is the admissions desk of the borough's open-air pool: it says who
+  goes into a session, who waits for the next one, and who is turned away.
+  It has never had a test to its name. Write the suite it should have had.
+
+  Put the suite in tests/. Name each file `test_*.py`, and make every one of
+  them stand on its own: whatever a test needs — a session, a swimmer, a
+  helper that builds either — is defined in the test module itself. No
+  conftest.py, and no shared helper module the test files import: a file
+  lifted out of tests/ on its own has to still run.
+
+  Leave lido.py alone. The suite is the deliverable, and the module is
+  already the specification below.
+
+  A **session** is a mapping with three keys: `kind`, one of "lane", "family"
+  or "club"; `capacity`, how many swimmers the water holds; and `admitted`,
+  how many are in it already.
+
+  A **swimmer** is a mapping with four: `name`; `age`, in whole years;
+  `member`, whether they hold a season ticket; and `accompanied`, whether an
+  adult is going in with them.
+
+  `admit(session, swimmer)` returns "admitted", "waiting" or "refused":
+
+  - a club session is for members. A swimmer who is not a member is refused,
+    however much room there is;
+  - a lane session is for swimmers of 16 and over. A younger one is refused;
+    16 is old enough;
+  - a swimmer under 8 who is not accompanied is refused, at a session of any
+    kind. 8 is old enough to go in alone;
+  - those three refusals are settled before the water is counted, so a
+    swimmer the rules turn away is refused rather than put on the waiting
+    list, however full the session is;
+  - otherwise it is a question of places. A session has `capacity - admitted`
+    places free, and the last of them is held for a member: a member is
+    admitted while any place is free, and anybody else only while a second
+    place is free behind it. A swimmer who cannot be admitted is "waiting".
+    A session of one place in total therefore holds that place for a member,
+    and a non-member waits for it.
+
+  `admit` raises ValueError, before it decides anything, when `kind` is not
+  one of the three, when `capacity` is less than 1, when `admitted` is
+  negative or greater than `capacity`, or when `age` is negative.
+
+  `roll_call(session, swimmers)` works the whole queue, in the order it is
+  standing, and returns `{"admitted": [...], "waiting": [...], "refused":
+  [...]}` — the swimmers' names, each list in the order they presented:
+
+  - each swimmer is judged against the session as it stands, so a place taken
+    by somebody ahead of them in the queue is not offered again;
+  - a swimmer who waits, or who is refused, takes up no place;
+  - the session mapping it was handed is left as it found it: after a roll
+    call, the caller's `admitted` reads what it read before;
+  - a ValueError from `admit` comes straight back out of `roll_call`;
+  - an empty queue gives three empty lists.

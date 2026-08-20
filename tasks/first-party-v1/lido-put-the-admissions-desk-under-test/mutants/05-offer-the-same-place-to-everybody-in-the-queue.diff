@@ -1,0 +1,13 @@
+diff --git a/lido.py b/lido.py
+index 4ca0054..45e82a1 100644
+--- a/lido.py
++++ b/lido.py
+@@ -39,8 +39,6 @@ def roll_call(session, swimmers):
+     for swimmer in swimmers:
+         decision = admit(standing, swimmer)
+         called[decision].append(swimmer["name"])
+-        if decision == "admitted":
+-            standing["admitted"] += 1
+     return called
+ 
+ 

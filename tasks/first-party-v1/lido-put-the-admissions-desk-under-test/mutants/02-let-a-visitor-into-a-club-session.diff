@@ -1,0 +1,13 @@
+diff --git a/lido.py b/lido.py
+index 4ca0054..205a224 100644
+--- a/lido.py
++++ b/lido.py
+@@ -15,8 +15,6 @@ def admit(session, swimmer):
+     """
+     _check_session(session)
+     _check_swimmer(swimmer)
+-    if session["kind"] == "club" and not swimmer["member"]:
+-        return "refused"
+     if session["kind"] == "lane" and swimmer["age"] < 16:
+         return "refused"
+     if swimmer["age"] < 8 and not swimmer["accompanied"]:
