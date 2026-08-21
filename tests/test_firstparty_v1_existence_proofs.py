@@ -91,6 +91,7 @@ KEYED_ACTIONS = {
     "codebase-comprehension",
     "code-review",
     "test-authoring",
+    "investigation",
 }
 
 # A partner whose held-out tests *pass* on the starting repository the two

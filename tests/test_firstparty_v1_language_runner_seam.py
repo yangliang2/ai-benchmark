@@ -54,7 +54,17 @@ def test_a_task_selects_its_runner_by_its_own_declaration() -> None:
     assert task.runner is runner_for(task.language)
 
     parameters = inspect.signature(grade).parameters
-    assert set(parameters) == {"task", "diff", "timeout_s"}
+    assert set(parameters) == {
+        "task",
+        "diff",
+        "timeout_s",
+        # Round 9's point-gate seam: where a point-keyed row's rulings are
+        # archived, and the factory a live grade constructs a grader with.
+        # Neither selects a runner — the language key above stays the whole
+        # of that decision.
+        "rulings_path",
+        "grader_factory",
+    }
 
 
 def test_every_checked_in_task_has_a_registered_runner() -> None:
