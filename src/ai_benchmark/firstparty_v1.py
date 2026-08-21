@@ -159,7 +159,7 @@ from pydantic import (
     model_validator,
 )
 
-from ai_benchmark import _answer
+from ai_benchmark import _answer, point_grader
 from ai_benchmark.agents import DEFAULT_AGENT, AgentAdapter, adapter_for
 from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty import (
@@ -336,6 +336,38 @@ FINDINGS_TEST_FILE = "test_findings.py"
 # — the lint, checking that the key's findings describe the change rather than
 # the repository at large — finds it the way `REPO_DIR` is found.
 REVIEW_DIFF_FILE = "review.diff"
+
+# The one action whose verdict is the point gate, and so the only one that may
+# ship a points key — mandatory there, because the planted points *are* the
+# ground truth of an investigation: a task with none has nothing its prose
+# could be graded against. Named apart rather than only tested for inline, the
+# way `_MUTATION_CATEGORY` is, so that a typo here is a type error rather than
+# a category nothing matches. Read at load, to say which action may ship a
+# points key and which must; every gate after that reads `is_point_keyed()` —
+# the key on disk — and never a category.
+_POINT_CATEGORY: TaskCategory = "investigation"
+
+# An `investigation` task's ground truth, inside GRADING_DIR beside the
+# findings key's precedent and held out exactly as that one is: it stays on the
+# machine, never reaches the workdir the agent works in, and is never disclosed
+# by the prompt. Where it differs from the two keys beside it is that nothing
+# at grade time reads it out of a workdir — a point-keyed task ships no test
+# that runs and its `grading/` is never overlaid over anything — so the only
+# reader is the gate, which opens it here in the task directory.
+POINTS_KEY_FILE = "points-key.json"
+
+# Where a run's rulings are archived, one file per run row (see `_point_gate`).
+# A module-level default rather than a required argument, and here rather than
+# in `cli`, because `evaluate` has three production callers and only one of
+# them is `eval-v1`: `reconcile_v1.observed_outcomes` and, through it,
+# `calibrate-v1` both replay every logged row at the end of every sweep
+# (`docs/agents/sweep-protocol.md`) and thread no rulings argument at all. With
+# the default they replay a point-keyed row from the committed archive
+# unchanged; with a required argument they would raise on the first one.
+# `firstparty_v1` cannot import from `cli` — that is the cycle — so `cli`
+# points its `--rulings` flag at this constant rather than owning a second copy
+# of the path.
+DEFAULT_RULINGS_DIR = Path("data/first-party-v1-rulings")
 
 # The workdir's ignore file belongs to the live runner (which writes and owns
 # it), so the loader refuses tasks that ship one of their own.
@@ -1544,6 +1576,116 @@ def findings_key(task: Task) -> FindingsKey:
         ) from error
 
 
+class PlantedPoint(BaseModel):
+    """One thing an investigation's answer has to say — or, as a
+    disqualifier, one thing it may not.
+
+    An id and the claim's text, and nothing else. The text is what the grader
+    is asked about; the id is what the archive is keyed by, so an archived
+    ruling stays readable against the key that produced it. One shape carries
+    both halves because a disqualifier *is* a planted point asked of the same
+    answer — "is this claim made?" — and only the verdict's polarity differs
+    (`_point_gate`). A second model would be a second place for the id rule to
+    be written and drift from.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: NonEmptyStr
+    text: NonEmptyStr
+
+
+class PointsKey(BaseModel):
+    """An `investigation` task's ground truth: where the agent writes its
+    answer, every planted point that answer has to cover, and the claims that
+    disqualify it however much else it covered.
+
+    Where it differs from the two keys above is what a match is made of. A
+    locate key and a review key are read as (file, symbol) locations, because
+    their deliverable names places; an investigation's deliverable is prose,
+    so a point is matched by a **grader's ruling with a verbatim span**
+    (`ai_benchmark.point_grader`) rather than by a comparison this module
+    could write. What it shares with them is the quantifier: `points` is read
+    under "every", `disqualifiers` under "none", and there is nothing between
+    the two verdicts — a fraction of the points covered would be a second
+    quality metric wearing `resolved`'s name (design note §67.3, pointed at
+    points).
+
+    Ids are unique across both halves, because the archive is keyed by id and
+    two questions sharing one would archive as a single ruling — the second
+    silently answering for the first. `disqualifiers` may be empty: not every
+    investigation has a plausible wrong answer worth naming. `points` may be,
+    as far as this model is concerned, for the reason `AnswerKey` gives — a
+    task that cannot load cannot be told what is wrong with it — and the
+    loader refuses that key by name.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    answer_path: NonEmptyStr
+    points: tuple[PlantedPoint, ...] = ()
+    disqualifiers: tuple[PlantedPoint, ...] = ()
+
+    @model_validator(mode="after")
+    def no_id_is_used_twice(self) -> Self:
+        seen: set[str] = set()
+        for planted in (*self.points, *self.disqualifiers):
+            if planted.id in seen:
+                raise ValueError(
+                    f"{planted.id!r} is the id of two of this key's questions "
+                    "— a run's rulings are archived one per id, across the "
+                    "points and the disqualifiers alike, so a shared id "
+                    "archives one ruling where two were asked and lets the "
+                    "second answer for the first"
+                )
+            seen.add(planted.id)
+        return self
+
+
+def is_point_keyed(task: Task) -> bool:
+    """Whether this task's verdict is the point gate: it ships a points key.
+
+    Read off the key on disk rather than off the category, the way `is_keyed`,
+    `is_findings_keyed` and `is_mutation_keyed` are, so that the one gate whose
+    ground truth is prose is reached only where that ground truth is there. The
+    one place `category` is read is the loader, which says which action may
+    ship this key and must (`_POINT_CATEGORY`).
+    """
+    return (task.grading_dir / POINTS_KEY_FILE).is_file()
+
+
+def points_key(task: Task) -> PointsKey:
+    """The points key shipped inside this task's grading directory.
+
+    Read here and by the gate alone, which is the one way this key differs
+    from the two above: those are read a second time by a held-out grading
+    test out of the workdir the overlay copied them into, and an
+    `investigation` task ships no test that runs. The declared answer path
+    lives here for the same reason theirs does — nothing may hardcode a path
+    the prompt does not name.
+    """
+    path = task.grading_dir / POINTS_KEY_FILE
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{POINTS_KEY_FILE} is missing or "
+            f"unreadable ({error}) — a {task.category} task is graded by "
+            "asking a grader, one planted point at a time, whether the "
+            "answer covers it, and the planted points are that key"
+        ) from error
+    except json.JSONDecodeError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{POINTS_KEY_FILE} is not JSON ({error})"
+        ) from error
+    try:
+        return PointsKey.model_validate(raw)
+    except ValidationError as error:
+        raise IngestError(
+            f"{task.id}: {GRADING_DIR}/{POINTS_KEY_FILE}: {error}"
+        ) from error
+
+
 # The two shapes a task's ground truth comes in, seen as the one thing a rule
 # that reads *either* of them can read: an answer path, an accepted half and a
 # rejected half, both made of (file, symbol) locations. Written as a union
@@ -1906,6 +2048,16 @@ def _check_task_layout(task: Task) -> None:
             "other action would swap this task's whole verdict for one its "
             "grading directory was never authored for"
         )
+    if is_point_keyed(task) and task.category != _POINT_CATEGORY:
+        raise IngestError(
+            f"{task.id}: a {task.category} task ships {GRADING_DIR}/"
+            f"{POINTS_KEY_FILE} — the points key is the ground truth of "
+            f"{_POINT_CATEGORY}, the one action whose deliverable is prose "
+            "graded a point at a time, and which verdict shape grades a task "
+            "is read off the key being there, so a points key shipped by any "
+            "other action would swap this task's whole verdict for one its "
+            "grading directory was never authored for"
+        )
     if task.category == _MUTATION_CATEGORY:
         # Every check here is a load-time one and not the lint's, for the reason
         # the keys above are read at load: `ai-bench run-live` loads a task set
@@ -1915,6 +2067,24 @@ def _check_task_layout(task: Task) -> None:
         # — a minimum count, disjointness from the test path, the registered
         # existence proof — is the lint's, and stays there.
         _check_mutation_gate_layout(task)
+    elif task.category == _POINT_CATEGORY:
+        # The second action that ships no held-out grading test at all: its
+        # `grading/` holds the points key and nothing that runs, because what
+        # grades it is a grader's rulings over one prose file rather than a
+        # suite. Read at load and not left to the lint, for the reason the two
+        # keys above are read at load — `ai-bench run-live` loads a task set
+        # and never lints it, so a task the point gate could not grade would
+        # otherwise reach a paid run and come back unresolved for a reason
+        # that says nothing about the agent. A key that is missing,
+        # unparseable or malformed is refused by `points_key()` right here.
+        points = points_key(task)
+        if not points.points:
+            raise IngestError(
+                f"{task.id}: {GRADING_DIR}/{POINTS_KEY_FILE} plants no points "
+                "— the verdict is every planted point covered, so a key with "
+                "none resolves every answer that is not empty, whatever it "
+                "says"
+            )
     elif not task.grading_test_paths:
         # Read per runner glob *plus* the canonical harness-side checks, which
         # is what `grading_test_paths` collects: the task's own held-out tests
@@ -2088,7 +2258,14 @@ def load_runs(path: Path) -> list[Run]:
 # --- execution-verified grading ------------------------------------------------
 
 
-def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
+def grade(
+    task: Task,
+    diff: str,
+    *,
+    timeout_s: int = GRADE_TIMEOUT_S,
+    rulings_path: Path | None = None,
+    grader_factory: Callable[[], point_grader.PointGrader] | None = None,
+) -> bool:
     """Whether the run that produced this diff resolved the task.
 
     The whole grading suite runs against a fresh copy of the pristine repo
@@ -2105,16 +2282,29 @@ def grade(task: Task, diff: str, *, timeout_s: int = GRADE_TIMEOUT_S) -> bool:
     passes and at least one test ran overall. For a Python task the two halves
     are the same files under the same runner, and there is only ever one.
 
-    One action is graded by a different shape entirely, and the dispatch is
-    here so that nothing above this line has to know: a task shipping planted
-    mutants is graded by the mutation gate, which collects the agent's own test
-    subtree out of the diff and runs it against the starting repository and
-    against each mutant. `evaluate` and the replay path call this function and
-    are unchanged by that — a verdict is still one boolean read from running
-    code, whichever shape produced it.
+    Two actions are graded by a different shape entirely, and both dispatches
+    are here so that nothing above this line has to know: a task shipping
+    planted mutants is graded by the mutation gate, which collects the agent's
+    own test subtree out of the diff and runs it against the starting
+    repository and against each mutant; a task shipping a points key is graded
+    by the point gate, which collects one prose file out of the diff and
+    computes a verdict from a grader's per-point rulings. `evaluate` and the
+    replay path call this function and are unchanged by either — a verdict is
+    still one boolean.
+
+    The last two arguments belong to the point gate and to nothing else, which
+    is why they default to nothing: `rulings_path` is where this run row's
+    rulings are archived and read back from, and `grader_factory` is the seam
+    that decides live from replay — passed on `--live`, absent on `--replay`,
+    called only where a ruling is missing. Every other shape ignores both, and
+    a caller grading a task of any other action never has to know they exist.
     """
     if is_mutation_keyed(task):
         return _mutation_gate(task, diff, timeout_s=timeout_s)
+    if is_point_keyed(task):
+        return _point_gate(
+            task, diff, rulings_path=rulings_path, grader_factory=grader_factory
+        )
     return _run_halves(task, diff, task.grading_halves, timeout_s=timeout_s)
 
 
@@ -2392,6 +2582,352 @@ def _git(
             f"{process.stderr.strip()}"
         )
     return process.stdout
+
+
+# --- the point gate: an `investigation` task's computed verdict ----------------
+
+
+# Which half of the key a ruling answers. Carried on the archived ruling rather
+# than inferred from the key at read time, so that an archive stays readable
+# against a key whose halves were later re-cut, and so that a question moved
+# from one half to the other is a ruling the archive no longer answers rather
+# than one silently re-read under the opposite polarity.
+PointKind = Literal["point", "disqualifier"]
+
+
+class PointRuling(BaseModel):
+    """One archived ruling: what the grader said about one planted point or one
+    disqualifier, and what the gate made of the span it quoted.
+
+    `covered` and `span` are the grader's, verbatim; `verified` is the gate's —
+    whether that span was really in the collected deliverable. The two are
+    archived apart rather than folded together because a **demotion** (a
+    covered ruling quoting a span the deliverable does not contain) is a fact
+    about the instrument worth reading back off the archive rather than losing.
+    Nothing downstream trusts `verified`: a replay re-verifies every span
+    against the deliverable it collected for itself.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    point_id: NonEmptyStr
+    kind: PointKind
+    covered: bool
+    span: str | None
+    verified: bool
+
+
+class RunRulings(BaseModel):
+    """Every ruling of one run row, as the archive holds it.
+
+    The grader version and the deliverable's hash are here rather than per
+    ruling because they are properties of the grading, not of one question: a
+    row is graded by one instrument over one collected file, and rulings taken
+    under a second instrument or against a second deliverable are a different
+    archive. The hash is what makes a replay honest — rulings archived for some
+    other run's answer are refused rather than recomputed over this one's.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    grader_version: NonEmptyStr
+    deliverable_sha256: NonEmptyStr
+    rulings: tuple[PointRuling, ...]
+
+
+def rulings_file(rulings: Path, task_id: str, agent: str, model: str) -> Path:
+    """Where one run row's rulings are archived: one file per task x agent x
+    model.
+
+    That triple is the key `evaluate` already treats as unique — it refuses two
+    runs of one cell outright, because their verdicts would have to be silently
+    picked between — so an archive keyed by it holds exactly one row's rulings
+    and a second run of the same cell cannot quietly overwrite a first's
+    without `evaluate` having refused the log first.
+    """
+    return rulings / f"{task_id}__{agent}__{model}.json"
+
+
+def _point_gate(
+    task: Task,
+    diff: str,
+    *,
+    rulings_path: Path | None,
+    grader_factory: Callable[[], point_grader.PointGrader] | None,
+) -> bool:
+    """Whether the prose this run wrote covers every planted point and makes no
+    disqualifying claim.
+
+    One file is collected out of the workdir diff — the prompt-named answer
+    file and nothing else (§67.4's rule narrowed to a single path) — and one
+    call goes to the grader per planted point and per disqualifier. `resolved`
+    is every point covered and no disqualifier present, binary: what fraction
+    of the points an answer covered is not computed here, not stored in the
+    archive and not reported anywhere, because a coverage rate under the name
+    `resolved` would be a second quality metric on one action of a corpus whose
+    values are only comparable within one (§67.3, pointed at points).
+
+    Coverage is not the grader's word alone. A ruling counts only if it quotes
+    a span the collected deliverable really contains, checked here by
+    `point_grader.span_in_deliverable`; a covered ruling whose span is absent
+    or unquotable is demoted mechanically, and the demotion is archived. That
+    check is the gate's rather than the instrument's on purpose — an instrument
+    that graded its own quotations would be the only thing standing behind
+    them.
+
+    **An absent, empty or whitespace-only answer file is unresolved with zero
+    grader calls and nothing written.** That is a property the whole lint
+    depends on and not an optimisation: `lint_task_set` grades every task
+    pristine (`grade(task, "")`) to check that doing nothing does not resolve
+    it, and on a point-keyed task that call has to stay offline and free.
+
+    Live and replay are the same computation and differ only in where the
+    rulings come from. The factory is called on the first missing ruling and
+    never otherwise, so a sweep holding no point-keyed task and every replay of
+    one stay keyless; with no factory — which is what `--replay` passes — a row
+    with no usable archive is refused loudly rather than silently re-graded.
+    """
+    key = points_key(task)
+    deliverable = _collect_the_answer_file(task, diff, key.answer_path)
+    if not deliverable.strip():
+        return False
+    questions = _point_questions(key)
+    if rulings_path is None:
+        # Unreachable from `evaluate`, which always names a file, and from the
+        # lint, whose pristine call returns above. Said out loud rather than
+        # asserted away: a gate that graded without archiving would produce a
+        # verdict nothing could recompute.
+        raise IngestError(
+            f"{task.id}: the point gate was given no rulings archive to read "
+            "or write — a point-keyed verdict is recomputed from its rulings, "
+            "so a run graded without one could never be replayed"
+        )
+    archive, unusable = _archived_rulings(task, rulings_path, deliverable, questions)
+    if archive is None:
+        if grader_factory is None:
+            raise IngestError(
+                f"{task.id}: {unusable} ({rulings_path}) — a replay recomputes "
+                "a point-keyed verdict from the archived rulings and never "
+                "re-grades one, because a second grading is a second "
+                "measurement of a cell that has already been measured. Grade "
+                "this row once with a grader and commit the archive"
+            )
+        archive = _fresh_rulings(task, deliverable, questions, grader_factory())
+        _write_rulings(task, rulings_path, archive)
+    return _point_verdict(questions, archive, deliverable)
+
+
+def _point_questions(key: PointsKey) -> tuple[tuple[PointKind, PlantedPoint], ...]:
+    """Every question this key asks of an answer, each tagged with the half it
+    came from: the planted points first, then the disqualifiers.
+
+    One sequence rather than two loops, because everything downstream — the
+    calls, the archive, the completeness check on a replayed archive and the
+    verdict — walks the same questions in the same order, and the only thing
+    that differs between the halves is what a covered ruling means.
+    """
+    return tuple(
+        [("point", planted) for planted in key.points]
+        + [("disqualifier", planted) for planted in key.disqualifiers]
+    )
+
+
+def _collect_the_answer_file(task: Task, diff: str, answer_path: str) -> str:
+    """Apply the hunks of this run's diff that land on the prompt-named answer
+    file, and no others; return what that file then holds.
+
+    The mutation gate's collection rule (§67.4) narrowed from a subtree to a
+    single path, and ridden on `git apply --include` for the same reason: which
+    hunks belong to a path is git's own question. Everything else in the diff —
+    scratch notes, source explorations, a repository the agent rearranged while
+    reading it — is archived by the run log and scored by nothing.
+
+    The empty string is returned where the diff wrote no answer file at all,
+    where its hunks all fall outside the path (`git apply` applies nothing and
+    exits 0, which is the answer this wants), and where what landed there is
+    not readable UTF-8 text. All three are the same thing to the gate: no prose
+    to grade, and unresolved without a grader call.
+    """
+    with tempfile.TemporaryDirectory(prefix="ai-bench-points-") as name:
+        workdir = Path(name) / "workdir"
+        workdir.mkdir(parents=True)
+        shutil.copytree(task.repo_dir, workdir, dirs_exist_ok=True)
+        # A repository of its own, so the patch below cannot resolve its paths
+        # against a checkout this temp dir happens to sit inside —
+        # `_apply_diff`'s reason, unchanged by collecting one path instead of
+        # a whole diff.
+        _git(task, ["init", "-q", "."], workdir, doing="preparing a graded copy")
+        if diff.strip():
+            _git(
+                task,
+                ["apply", "--whitespace=nowarn", f"--include={answer_path}"],
+                workdir,
+                stdin=diff,
+                doing="collecting the answer file from the logged diff",
+            )
+        collected = workdir / answer_path
+        if not collected.is_file():
+            return ""
+        try:
+            return collected.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return ""
+
+
+def _sha256(deliverable: str) -> str:
+    """The collected deliverable's hash, as the archive records it."""
+    return hashlib.sha256(deliverable.encode("utf-8")).hexdigest()
+
+
+def _the_span_holds(covered: bool, span: str | None, deliverable: str) -> bool:
+    """Whether a ruling of covered survives the gate's own check on its span.
+
+    §76.6: no quotable span, no coverage. A ruling that says covered and quotes
+    nothing, or quotes something the deliverable does not contain under the
+    instrument's normalisation, is not a covered ruling — and the demotion is
+    mechanical here rather than an appeal back to the grader, which would be
+    the instrument marking its own quotations.
+    """
+    return (
+        covered
+        and span is not None
+        and point_grader.span_in_deliverable(span, deliverable)
+    )
+
+
+def _fresh_rulings(
+    task: Task,
+    deliverable: str,
+    questions: tuple[tuple[PointKind, PlantedPoint], ...],
+    grader: point_grader.PointGrader,
+) -> RunRulings:
+    """One call per question, in key order, archived with what the gate made of
+    each span.
+
+    One grader version over the whole row, because a row graded half under one
+    instrument and half under another is a verdict no version could stand
+    behind. A grader answering about a question other than the one it was asked
+    is refused rather than archived under the id it was meant to answer.
+    """
+    entries: list[PointRuling] = []
+    versions: set[str] = set()
+    for kind, planted in questions:
+        ruling = grader(deliverable, {"id": planted.id, "text": planted.text})
+        if ruling.point_id != planted.id:
+            raise IngestError(
+                f"{task.id}: the grader was asked about {planted.id!r} and "
+                f"ruled on {ruling.point_id!r} — a ruling archived under the "
+                "wrong question answers for a point nobody asked about"
+            )
+        versions.add(ruling.grader_version)
+        entries.append(
+            PointRuling(
+                point_id=planted.id,
+                kind=kind,
+                covered=ruling.covered,
+                span=ruling.span,
+                verified=_the_span_holds(ruling.covered, ruling.span, deliverable),
+            )
+        )
+    if len(versions) != 1:
+        raise IngestError(
+            f"{task.id}: this row was graded under {sorted(versions)} — one "
+            "row is one measurement and carries one grader version, so an "
+            "archive spanning two of them says nothing about either"
+        )
+    return RunRulings(
+        grader_version=versions.pop(),
+        deliverable_sha256=_sha256(deliverable),
+        rulings=tuple(entries),
+    )
+
+
+def _archived_rulings(
+    task: Task,
+    path: Path,
+    deliverable: str,
+    questions: tuple[tuple[PointKind, PlantedPoint], ...],
+) -> tuple[RunRulings | None, str]:
+    """This row's archived rulings, or None and why they cannot be used.
+
+    Three things make an archive usable: it is there, it was taken against the
+    very deliverable this run collected (by hash), and it answers exactly the
+    questions this key asks. Anything else is not a stale detail to work
+    around — it is rulings about some other measurement — so the caller either
+    grades the row afresh (live) or refuses it (replay), and never mixes the
+    two. An archive that is there but unreadable, not JSON, or not this shape
+    is a broken artefact rather than a missing one, and fails loudly in both
+    modes: silently re-grading over it would overwrite the very file whose
+    breakage wants looking at.
+    """
+    if not path.is_file():
+        return None, "no rulings are archived for this run"
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise IngestError(
+            f"{task.id}: the archived rulings at {path} are unreadable ({error})"
+        ) from error
+    except json.JSONDecodeError as error:
+        raise IngestError(
+            f"{task.id}: the archived rulings at {path} are not JSON ({error})"
+        ) from error
+    try:
+        archive = RunRulings.model_validate(raw)
+    except ValidationError as error:
+        raise IngestError(f"{task.id}: the archived rulings at {path}: {error}") from error
+    if archive.deliverable_sha256 != _sha256(deliverable):
+        return None, (
+            "the archived rulings were taken against a different deliverable "
+            "than this run's diff collected"
+        )
+    asked = {(kind, planted.id) for kind, planted in questions}
+    ruled = {(entry.kind, entry.point_id) for entry in archive.rulings}
+    if asked != ruled:
+        return None, (
+            "the archived rulings do not answer this task's planted points "
+            "and disqualifiers"
+        )
+    return archive, ""
+
+
+def _point_verdict(
+    questions: tuple[tuple[PointKind, PlantedPoint], ...],
+    archive: RunRulings,
+    deliverable: str,
+) -> bool:
+    """Every planted point covered by a verified ruling, and no disqualifier
+    present — computed from the archive, live and replay alike.
+
+    Every span is re-verified here rather than read off `verified`, so that a
+    replay is a recomputation and not a reprint: the archive says what the
+    grader said, and what that is worth against this deliverable is decided
+    again every time the verdict is.
+    """
+    by_question = {(entry.kind, entry.point_id): entry for entry in archive.rulings}
+    for kind, planted in questions:
+        entry = by_question[(kind, planted.id)]
+        covered = _the_span_holds(entry.covered, entry.span, deliverable)
+        if kind == "point" and not covered:
+            return False
+        if kind == "disqualifier" and covered:
+            return False
+    return True
+
+
+def _write_rulings(task: Task, path: Path, archive: RunRulings) -> None:
+    """Archive this row's rulings, so that every later reading of the verdict
+    is a recomputation over them rather than a second paid grading."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.write_text(
+            json.dumps(archive.model_dump(mode="json"), indent=2) + "\n",
+            encoding="utf-8",
+        )
+    except OSError as error:
+        raise IngestError(
+            f"{task.id}: cannot write the rulings archive at {path}: {error}"
+        ) from error
 
 
 # --- task-set lint: the authoring invariants ----------------------------------
@@ -5271,11 +5807,24 @@ def evaluate(
     source: str,
     *,
     timeout_s: int = GRADE_TIMEOUT_S,
+    rulings: Path = DEFAULT_RULINGS_DIR,
+    grader_factory: Callable[[], point_grader.PointGrader] | None = None,
 ) -> list[Record]:
     """Grade each run's diff by execution and emit first-party records.
 
     Runs for unknown tasks and duplicate runs fail loudly — either would
     otherwise vanish or overwrite silently at merge time.
+
+    The last two arguments reach the point gate and nothing else, and both have
+    a default so that a caller with no point-keyed row in its log never has to
+    know they exist. `rulings` is the archive a point-keyed row's per-point
+    rulings are read back from — defaulted rather than required because this
+    function's other production callers (`reconcile_v1.observed_outcomes`, and
+    `calibrate-v1` through it) thread no such argument and replay every logged
+    row at the end of every sweep. `grader_factory` is the live seam: passed on
+    `--live`, absent on `--replay`, and called only where a ruling is missing,
+    so a replay never constructs a client and a sweep with no point-keyed task
+    never reaches for a key.
     """
     by_id = {task.id: task for task in tasks}
     unknown = sorted({run.task_id for run in runs} - by_id.keys())
@@ -5294,7 +5843,13 @@ def evaluate(
     records = []
     for run in runs:
         task = by_id[run.task_id]
-        resolved = grade(task, run.diff, timeout_s=timeout_s)
+        resolved = grade(
+            task,
+            run.diff,
+            timeout_s=timeout_s,
+            rulings_path=rulings_file(rulings, run.task_id, run.agent, run.model),
+            grader_factory=grader_factory,
+        )
         try:
             records.append(
                 validate_record(

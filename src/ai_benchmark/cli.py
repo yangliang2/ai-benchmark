@@ -6,7 +6,7 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
-from ai_benchmark import calibrate_v1, firstparty_v1, reconcile_v1
+from ai_benchmark import calibrate_v1, firstparty_v1, point_grader, reconcile_v1
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.classify import (
     Label,
@@ -154,7 +154,19 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
             )
         runs = firstparty_v1.load_runs(args.replay)
         source = str(args.replay)
-    records = firstparty_v1.evaluate(tasks, runs, source=source)
+    records = firstparty_v1.evaluate(
+        tasks,
+        runs,
+        source=source,
+        rulings=args.rulings,
+        # The live seam of the point gate, and the only place this command
+        # names a grader: passed on --live and withheld on --replay, so a
+        # replay of a point-keyed row recomputes its verdict from the archived
+        # rulings or fails loudly, and never re-grades. Passed as the factory
+        # rather than as a grader, so that a sweep whose tasks are all graded
+        # by some other shape constructs no client at all.
+        grader_factory=point_grader.anthropic_point_grader if args.live else None,
+    )
     resolved = int(sum(r.quality_value for r in records))
     print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
     _merge_into(records, args.data)
@@ -408,6 +420,16 @@ def main(argv: list[str] | None = None) -> None:
         "(repeatable; default: every task in the set); the filtered set still "
         "runs in corpus order, not the order given here, and an id naming no "
         "task in the set is refused before anything runs",
+    )
+    evaluate_v1.add_argument(
+        "--rulings",
+        type=Path,
+        default=firstparty_v1.DEFAULT_RULINGS_DIR,
+        help="where an investigation task's per-point rulings are archived "
+        "and replayed from, one file per task x agent x model (default: "
+        f"{firstparty_v1.DEFAULT_RULINGS_DIR}); a live run writes the rulings "
+        "it takes, a replay recomputes the verdict from them and grades "
+        "nothing afresh",
     )
     evaluate_v1.set_defaults(command=_eval_v1_command)
 
