@@ -26,8 +26,12 @@ likewise recomputed from round 7's own rows rather than quoted out of §61,
 because a registration whose arithmetic cannot be re-derived is a number
 somebody wrote down.
 
-Nothing here runs a live cell and nothing here grades one: the round has not
-been swept, and the last test says so by looking for the sweep id.
+Nothing here runs a live cell and nothing here grades one. Until the sweep
+landed the last test said the round had not been swept at all; it now says the
+forward-reading version of the same claim — the nine cells the logs carry under
+this sweep id are the nine this section registered, and nothing else. Every
+verdict, gate and dollar the round produced belongs to its record and is pinned
+in `test_firstparty_v1_round8_record.py`.
 """
 
 import re
@@ -201,8 +205,14 @@ def test_the_section_takes_the_next_free_number_before_any_paid_run() -> None:
         | {int(match) for match in re.findall(r"^\*\*(\d+)\. ", text, re.MULTILINE)}
     )
     assert 67 in numbered, "the round-8 rulings"
-    assert numbered[-1] == 68, "68 is the last number the note spends"
     assert numbered.count(68) == 1
+    # 68 was the last number the note spent until the round's record took what
+    # was free after it. That the record opened at 69 — and did not renumber
+    # anything — is the same discipline read one section on, and it is pinned
+    # in full in `test_firstparty_v1_round8_record.py`.
+    assert numbered[numbered.index(68) + 1] == 69, (
+        "the record did not open at the number this section left free"
+    )
 
     counted = prose()
     assert "written down before the first paid run" in counted
@@ -574,26 +584,45 @@ def test_what_the_round_cannot_say_is_registered_in_advance() -> None:
     assert "**one model is not a ladder**" in counted
 
 
-def test_no_round_eight_row_has_been_written(
+def test_the_register_is_exactly_what_the_sweep_then_did(
     rows: dict[tuple[str, str, str], firstparty_v1.Run],
 ) -> None:
-    """The pre-registration is pre: nothing of round 8 has been swept.
+    """The registration was kept: every registered cell swept, once, and no other.
+
+    This test used to say the opposite — that no round-8 row existed yet — and
+    it was right until the sweep landed. Catching a pre-registration suite up
+    to the swept truth is the round-7 pattern, and the shape it catches up to
+    is the same claim read forwards: three registered ids under three
+    registered combinations is nine cells, and the log directory holds exactly
+    those nine under this sweep id. What the round *measured* — the verdicts,
+    the gates, the spend — belongs to the record and is pinned in
+    `test_firstparty_v1_round8_record.py`; what belongs here is only that the
+    thing swept is the thing registered.
 
     Selected by **sweep id** over every log in the directory and never by a log
-    filename, which is the discipline the whole round is run under. This is the
-    assertion that dates the file: it holds until the round's sweep lands, and
-    the record's own ticket is what replaces it with the post-sweep invariant,
-    the way round 7's record ticket did.
+    filename, which is the discipline the whole round is run under.
     """
-    assert not [key for key, run in rows.items() if run.sweep == _SWEEP], (
-        "a round-8 row exists, but this ticket runs no sweep"
+    swept = {key: run for key, run in rows.items() if run.sweep == _SWEEP}
+    assert len(swept) == _CELLS * len(_COMBINATIONS) == 9
+
+    register = set(registered())
+    assert {task_id for task_id, _, _ in swept} == register, (
+        "the cells swept are not the cells registered before the sweep"
     )
+    assert {(agent, model) for _, agent, model in swept} == set(_COMBINATIONS)
+    for task_id in register:
+        for agent, model in _COMBINATIONS:
+            assert (task_id, agent, model) in swept, (task_id, agent, model)
+
+    # None of the three was ever run under any other sweep id: they were
+    # authored for this round, and a cell is only ever swept once.
+    assert not [
+        key for key, run in rows.items()
+        if key[0] in register and run.sweep != _SWEEP
+    ]
+
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
     assert {run.sweep for run in rows.values()} == {
-        None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7"
+        None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
+        _SWEEP,
     }
-
-    # And no cell of the register has been run under any sweep id at all: the
-    # three tasks are new, so a row keyed on one of them would be a paid run
-    # this ticket is not allowed to have made.
-    assert not [key for key in rows if key[0] in registered()]

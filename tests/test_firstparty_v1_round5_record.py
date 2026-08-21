@@ -663,7 +663,7 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
 
     # The model gap the section reads off those denominators, computed from
     # the table rather than pinned twice: one ratio per category, and the claim
-    # that `code-review`'s is the widest is a claim about all six of them.
+    # that `code-review`'s is the widest is a claim about all of them.
     gaps: dict[str, float] = {}
     unpriced: set[str] = set()
     category = ""
@@ -682,7 +682,9 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
                 continue
             haiku, sonnet = figures
             gaps[category] = round(sonnet / haiku, 2)
-    assert unpriced == {"test-authoring"}
+    # Round 8's sweep priced `test-authoring`, so nothing prints "-" today;
+    # the mechanism above stays for the next category that arrives unswept.
+    assert unpriced == set()
     assert gaps == {
         "bug-fix": 2.64,
         "code-review": 3.35,
@@ -690,6 +692,7 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
         "fault-location": 2.58,
         "feature-dev": 2.60,
         "refactor": 2.87,
+        "test-authoring": 2.44,
     }
     assert max(gaps, key=lambda name: gaps[name]) == "code-review"
 

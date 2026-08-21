@@ -572,8 +572,9 @@ _PUBLISHED = {
     # table is for — and pinning the unswept shape is what will make the
     # sweep's arrival visible as a change to this block rather than as a
     # number nobody was watching.
+    # Round 8's sweep arrived (2026-08-20-r8-a..d): these are its swept rows.
     "test-authoring": {
-        "(zero-knob)": ("3", "-", "-", "-"),
+        "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "haiku-solvable (n=3)"),
     },
 }
 
@@ -584,7 +585,7 @@ _PUBLISHED_DENOMINATORS = {
     "codebase-comprehension": f"{_HAIKU} $0.0603 (n=4), {_SONNET} $0.1281 (n=4)",
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
-    "test-authoring": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
+    "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other

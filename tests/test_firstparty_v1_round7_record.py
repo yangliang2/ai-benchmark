@@ -182,6 +182,11 @@ _RECORDED_TASKS = 127
 # that a later round adding a fourth moves one number here.
 _ROUND_8_TASKS = 3
 
+# And what round 8 then swept of them into this reading: six claude-code rows,
+# the first since round 5 that the default agent-then-language selection keeps.
+# Its three Codex rows are dropped by the agent selection like round 6's were.
+_ROUND_8_CLAUDE_CODE_RUNS = 6
+
 _CLAUDE_CODE_PYTHON_RUNS = 225
 _PYTHON_TASKS = 116
 _PYTHON_TASKS_WITH_RUNS = 113
@@ -1339,14 +1344,22 @@ def test_neither_reader_counts_a_round_7_row(
     Round 7's rows are in the same directory both readers are pointed at, so
     "unmoved" has to mean read-and-dropped rather than absent. That is checked
     at the seam — selecting `claude-code` and then the default language over
-    every log leaves exactly the 225 Python rows the corpus had — and then in
-    what the readers print: reconcile's task-set line, run count and round
-    list, and every calibration block rounds 4 and 5's records published,
-    over a directory that now also holds forty-two TypeScript rows.
+    every log drops all forty-two of them — and then in what the readers print:
+    reconcile's task-set line, run count and round list, and every calibration
+    block rounds 4 and 5's records published, over a directory that now also
+    holds forty-two TypeScript rows.
 
     The task-set line is the half section 59.8 predicted wrongly, and the
     prediction is pinned here as having been overtaken: the readers narrow
-    the task set with the rows, so the default reading still counts 113.
+    the task set with the rows, so the default reading did not move to 127.
+
+    None of the three lines the section quotes is what the readers print today,
+    and the reason is round 8 rather than this round: its six claude-code
+    Python rows survive both selections, the first since round 5 to do so, and
+    its three tasks are in the Python task set. Section 66's claim — round 7's
+    rows are read and dropped — is checked here in full; what the readers print
+    now is derived from the recorded figures and the later round's own, so that
+    a record of what they printed that day is not edited to suit a later one.
     """
     everything = [
         run
@@ -1354,9 +1367,9 @@ def test_neither_reader_counts_a_round_7_row(
         for run in firstparty_v1.load_runs(log)
     ]
     # Every row in the directory: the corpus's Python claude-code rows, round
-    # 6's thirty Codex ones, and round 7's forty-two. Two selections stand
-    # between all of them and the 225 the readers count.
-    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42
+    # 6's thirty Codex ones, round 7's forty-two, and round 8's nine. Two
+    # selections stand between all of them and what the readers count.
+    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9
     assert len([run for run in everything if run.sweep == _SWEEP]) == 42
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1365,8 +1378,10 @@ def test_neither_reader_counts_a_round_7_row(
     selected = reconcile_v1.select_language(
         declared, selected, reconcile_v1.DEFAULT_LANGUAGE, explicit=False
     )
-    assert len(selected) == _CLAUDE_CODE_PYTHON_RUNS
-    assert not [run for run in selected if run.sweep == _SWEEP]
+    assert len(selected) == _CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS
+    assert not [run for run in selected if run.sweep == _SWEEP], (
+        "section 66's claim: not one round-7 row survives the two selections"
+    )
     assert reconcile_v1.DEFAULT_LANGUAGE == "python"
 
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
@@ -1376,12 +1391,13 @@ def test_neither_reader_counts_a_round_7_row(
         f"{_PYTHON_CONTROLS} control(s), {_PYTHON_CONSTRUCTED} constructed"
     ) in reconciled
     assert (
-        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
-        f"{_PYTHON_TASKS_WITH_RUNS} task(s)"
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS} "
+        f"over {_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS} task(s)"
     ) in reconciled
     assert (
-        "  rounds     6 round(s): as-of 2026-08-04, as-of 2026-08-05, "
-        "sweep round-2, sweep round-3, sweep round-4, sweep round-5"
+        "  rounds     7 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
+        "sweep round-8"
     ) in reconciled
     assert "round-7" not in reconciled
     assert _TERRA not in reconciled
@@ -1413,28 +1429,31 @@ def test_neither_reader_counts_a_round_7_row(
     # note writes the task set as the repo-relative path an operator types, so
     # the absolute one this suite passes is folded back to it first.
     #
-    # Two of the three are still printed word for word. The task-set line is
-    # the one the corpus moved — round 8 authored the corpus's
-    # `test-authoring` tasks, every one of them Python and a control — and the
-    # record is not edited for it, so what it quoted is named here and what it
-    # prints now was asserted above off the same two counts. The runs line did
-    # not move with it, because it counts the tasks that have rows and a task
-    # authored after every sweep has none.
+    # All three have moved since, and all three moved for the same reason:
+    # round 8 authored three Python controls and then swept them with six
+    # claude-code rows, so the task set grew, the runs line grew with it, and
+    # `sweep round-8` joined the round list. The record is not edited for any
+    # of that — each line it quoted is rebuilt here from the recorded figures
+    # and required to be exactly what the note says, and what the reader prints
+    # instead was asserted above off the same counts plus round 8's.
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
     [quoted] = fenced_blocks(note_section(
         "66. Replay, and the published tables left where they were"
     ))[1:2]
-    recorded_task_set = (
+    recorded = [
         f"  task set   tasks/first-party-v1 — {_PYTHON_TASKS - _ROUND_8_TASKS} "
         f"task(s): {_PYTHON_CONTROLS - _ROUND_8_TASKS} control(s), "
-        f"{_PYTHON_CONSTRUCTED} constructed"
+        f"{_PYTHON_CONSTRUCTED} constructed",
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
+        f"{_PYTHON_TASKS_WITH_RUNS} task(s)",
+        "  rounds     6 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5",
+    ]
+    assert quoted.splitlines() == recorded, (
+        "the record no longer quotes the lines its own figures rebuild"
     )
-    assert recorded_task_set in quoted.splitlines()
-    for line in quoted.splitlines():
-        if line == recorded_task_set:
-            assert line not in printed
-            continue
-        assert line in printed, line
+    for line in recorded:
+        assert line not in printed, line
 
     said = prose(note_section(
         "66. Replay, and the published tables left where they were"
