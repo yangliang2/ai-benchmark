@@ -6577,6 +6577,225 @@ calibration has grown from the **297 answers across eight sweeps** §67.1
 counted to **306 across nine** — round 8's nine final messages, archived and
 read by no verdict, exactly as every answer in it is.
 
+## Round 9 rulings — 2026-08-21
+
+§67.1 deferred the heap-3 subjective grader to round 9, and §75 declared
+both halves of "waiting pays it" cashable: 130 tasks, every heap-1 and
+heap-2 action populated, and a free-text archive of 306 answers across nine
+sweeps. This section records the grill of 2026-08-21 — thirteen decisions,
+taken one at a time in dependency order. **§76 is the next free number.**
+Like §45 and §67, this section authors nothing: it is the input to
+`/to-spec`, which files one spec for the round. One naming ruling runs
+through everything below and is stated once: what the record has called the
+"subjective grader" since §34.3 is renamed the **point gate**, because the
+design this grill settled on is not a subjective judgment — the phrase
+survives below only where a historical section is being quoted.
+
+### 76. What round 9 is
+
+**76.1 Round 9 is the point gate and its calibration experiment, with
+authoring gated in-round on the calibration number.** Two readings of
+§67.1's "two instruments" were put. A calibration-only round — the grader
+proved, tasks deferred to round 10 — was declined: the grader and the
+experiment that proves it worth trusting were always priced as one round's
+load (§44.1's row 6), and a round whose entire output is an experiment that
+sweeps nothing is thinner than this corpus's rounds run. Ruled instead:
+the calibration experiment runs **first** and gates; if the bar (76.4) is
+met, the round authors three tasks for **one** heap-3 action (76.8) and
+sweeps them; if the bar fails, the round closes as a record of the failure
+and heap 3 stays empty, disclosed — the §34.5 discipline, one action proves
+the mechanism, with the proof moved ahead of the spend. Not a paid
+authoring dollar moves before the experiment is judged.
+
+**76.2 The calibration experiment is §44.6.4's, and its transfer gap is
+named rather than assumed away.** The form §44.6.4 fixed stands: the grader
+reads an archived free-text answer blind to the verdict, rules, and the
+held-out machine verdict scores it. What the grill added is the honest
+sentence about what that proves: the archive's 306 answers are heap-1 and
+heap-2 runs — prose *narrating* work whose real deliverable was a diff or
+an answer file — where a heap-3 deliverable is the prose itself. Passing
+calibration proves the grader judges argued prose against a known truth; it
+does not directly prove it judges a proposal with no truth behind it.
+Ruled: the experiment gates as registered, the gap is disclosed in the
+round's record in as many words, and a non-gating check rides on it — the
+owner labels agree/disagree on each of the round's own swept heap-3 cells
+(nine labels, work half-done by reading the record anyway), recorded as a
+disclosed check on the transfer gap, not as a second gate. A third option —
+replacing the archive experiment with human labels alone — was declined as
+discarding five rounds of deliberately grown corpus.
+
+**76.3 The gate runs on stratum A; stratum B is reported with its confound
+named.** The archive is not one corpus but two. **Stratum A — 63 answers**
+(27 `fault-location`, 26 `code-review`, 10 locate-style comprehension):
+prose arguing locations and findings *for which a planted key exists*, so
+the grader runs in exactly its production mode — per-point coverage with
+evidence spans — and the machine verdict on the answer file scores it.
+**Stratum B — 243 heap-1 answers**: the deliverable was a diff and the
+prose merely narrates it; the only available point is the synthetic "the
+asked-for work was done", and disagreement there measures agent narrative
+truthfulness as much as grader skill — an agent that sincerely believed it
+succeeded writes a resolved-sounding message on an unresolved run, an
+irreducible ceiling that is not the grader's fault. Gating on all 306
+undifferentiated would blend a clean measurement into a confounded one —
+the hidden-second-metric move the glossary refuses elsewhere. Ruled: the
+gate reads stratum A only; stratum B runs anyway (306 calls are cheap),
+both numbers are stated, and stratum B gates nothing.
+
+**76.4 The bar: stratum-A overall agreement ≥ 90% and unresolved-class
+agreement ≥ 80%, registered as exact counts before the first grader call.**
+The second clause is the load-bearing one: a grader that always says
+"covered" collects the resolved class free, so the unresolved class is
+where discrimination lives and it gets its own floor. 90% overall is the
+human inter-rater band for judging argued prose, on a stratum with a known
+honest disagreement source that is not grader failure — §34.5's original
+worry, the right fault described at a different level of the tree than the
+key names, restated in prose; 95% would fail the grader for the corpus's
+own ambiguity, 85% would trust a grader wrong one time in seven. The
+unresolved floor sits at 80% because that class is small and one or two
+honest key-mismatches should not sink the instrument — while an
+always-covered grader is refused outright. The split inside stratum A is
+replay-computable before the grader runs, so the pre-registration states
+the bar as counts a reader can check by hand ("≥57 of 63, and ≥N of M"),
+and replay computing the split peeks at nothing. Rejected alternatives: a
+single overall figure (gameable by base rate), Cohen's κ (a statistic where
+the corpus's style is counts).
+
+**76.5 The verdict judges against planted points, and its quantifier is
+universal.** The task author hand-plants a **key of required points** —
+and, where relevant, **disqualifiers**, claims that sink an answer — and
+the verdict is: resolved iff **every** planted point is covered by the
+deliverable and no disqualifier is present. This is "plant the ground
+truth" continued into prose, the corpus's one institution applied a fourth
+time — held-out tests, findings keys, mutants, points — and ADR-0004's
+quantifier pointed at prose: a review resolves when every finding is
+covered, a suite when every mutant is killed, a proposal when every planted
+point is covered. Two alternatives were rejected: holistic judgment
+("is this resolved?") as unauditable — when it misfires nothing says why —
+and reference-answer comparison ("equivalent or better") as importing every
+known LLM-judge pathology into the verdict. The narrowing this buys is
+disclosed in the same breath: an agent can cover every planted point with a
+mediocre proposal, the same trade ADR-0004 made when it let a suite kill
+every mutant inelegantly. The subjectivity is confined to the smallest
+possible judgment — does this prose cover this point? — which is what makes
+the renaming honest.
+
+**76.6 Per-point calls with mandatory evidence spans; the verdict is
+computed, not spoken; the non-hermetic surface is confined to the archived
+rulings.** The grader is never asked "is this resolved?". It is asked one
+narrow question per planted point, and a covered-ruling must return a
+**verbatim quote from the deliverable** that covers the point — no quotable
+span, no coverage. The binary verdict is then a pure function of the
+archived per-point rulings (all covered ∧ no disqualifier), so replay
+re-reads the rulings and recomputes the verdict exactly — the free-text
+archive's status ("replay cannot regenerate a sentence") extended one step:
+replay cannot regenerate a ruling, and everything downstream of the rulings
+is exact. This is the hermetic-grading ruling §44.4 queued: heap-3 grading
+is not hermetic and cannot be, and the record confines the non-hermetic
+surface to the archived rulings rather than pretending otherwise.
+Temperature 0, a single call per point; k-vote majority is the recorded
+fallback, adopted only if calibration shows per-point instability. The
+evidence span is what makes each subjective ruling a checkable claim — the
+span either covers the point or visibly does not, and 76.2's owner check
+has something concrete to disagree with.
+
+**76.7 The grader is claude-opus-5, pinned and versioned like the
+classifier.** Strictly above both ladder rungs and a column in no sweep, so
+no cell is graded by the model that produced it — the self-grading shape a
+ladder-model grader would have, with two of three swept combinations on
+sonnet or its sibling, is the trap this avoids. Model id and prompt hash
+are pinned; the grader is a versioned instrument, and a grader version
+change is an edit that triggers re-proof (76.10). Grader and gradees share
+a vendor, and the record says so in one sentence: the verdict's trust rests
+on the calibration number, not on vendor separation. A cross-vendor grader
+(the Codex side's credentials) was declined — it recruits the corpus's
+second vendor into its first verdict instrument, and the Codex adapter is a
+swept combination, not infrastructure. Cross-vendor agreement — re-running
+the archived rulings under a second vendor — queues as a natural rider for
+a later round.
+
+**76.8 The action is `investigation` — the heap's hardest case, by §34.5's
+own precedent.** Round 4 shipped plant-and-check against `locate a fault`
+because it was the hardest ground truth in heap 2, on §6's method: kill the
+most expensive assumption cheapest and first. The point gate's most
+expensive assumption is that a planted-point key can grade a deliverable
+with **no** ground truth behind it — a genuinely open question, options
+with trade-offs, a recommendation a good answer might argue differently
+than the author did. Explain-style comprehension has quasi-ground-truth
+(the code itself) and was declined for exactly that reason: passing there
+leaves the heap's real question untested, and `investigation` still stands
+between the corpus and heap 3 one round later. If planted points survive
+contact with an open-ended proposal, `requirement-decomposition` and
+explain-style comprehension follow as mechanical fills, as `review a diff`
+and locate-style comprehension followed round 4's locate. The cost is
+named: `investigation` is where the covered-but-mediocre gap of 76.5 is
+widest, and the prompt bears that load — it names the deliverable's
+required parts so the points have something to grip.
+
+**76.9 The deliverable is one prose answer file at a prompt-named path,
+with the structure in the prompt rather than the format.** §34.4's
+institution continued: the prompt names the path and requires the
+deliverable's parts by name — the options considered, the trade-offs, the
+recommendation — and grading collects that one file from the workdir diff
+under §67.4's rule, everything else archived, not scored. Structured
+YAML/JSON was rejected: an investigation's deliverable *is* argued prose,
+fields would grade schema-compliance as much as thinking, and the evidence
+span needs running text to quote from anyway. A missing section is not a
+format crime — it is planted points going uncovered, and the verdict says
+so through the one mechanism the round is proving; no marker-string check
+enters the verdict path.
+
+**76.10 Three fresh-authored small Python repositories, each holding one
+closed-world-decidable open question; four to six points per task with the
+lint enforcing a minimum of three; and the existence proof runs in both
+directions.** Fresh-authored is §45's stance carried again, doubly needed
+here: the author must know the terrain well enough to plant points about
+its trade-offs, and a ported repo's real history is a crib. Python only is
+§45.1's own sentence — heap 3 stays on Python until its grader is trusted,
+and this is the round that decides the trusting. The question must be
+answerable from the repo and the prompt alone — no web research, no
+missing-production-data escape — or the points cannot be fair. The proof is
+§67.5's mapped over, plus the symmetric half the mapping exposes. Positive:
+the **reference answer** resolves under the point gate, per point, before
+any agent meets the task — refusing the equivalent-mutant analog, the
+unmeetable point. Negative: the author also writes one **foil answer** —
+plausible-but-wrong, the wrong recommendation argued fluently or the right
+one missing the load-bearing consideration — and the gate must rule it
+unresolved. Without the foil an always-covered grader passes every positive
+proof; calibration proves the instrument discriminates in general, the foil
+proves each task's key does — R8's two gates, mapped: reference resolves as
+the suite passed pristine, foil fails as the mutants died. Proofs run at
+authoring time; their per-point rulings are archived under the task's
+`proofs/` subtree (the standing address: never overlaid, never collected,
+never read by a verdict); the **lint stays offline and deterministic** — it
+checks the archived rulings exist, cover every point, and that the foil
+failed, and never calls the LLM; re-proof triggers on edit (points,
+reference, foil, or grader version), not on every lint run.
+
+**76.11 Nine cells, the calibration rulings stay out of the unified
+dataset, and both halves are priced before the first paid call.** The
+sweep: three tasks × the three standing combinations = nine cells, §68's
+shape verbatim — the action swept entire, nothing re-run, the dry cell
+first (§59.6's discipline). The two-model claude ladder stands; a third
+ladder model stays behind §67.9's trigger. The calibration experiment's
+306 + proof rulings are instrument calibration, not combination results:
+they are archived under `data/` with the grader's version, read by the
+record's registered counts, and never enter `unified.jsonl` — admitting
+them under a new quality metric is the second-quality-metric move the
+glossary refuses. The pre-registration section (`/to-spec`'s job, as §68
+was) prices both halves: the sweep in round 8's band, and the experiment —
+~306 archive calls plus per-task proofs on opus, short outputs — under its
+own stated range rather than riding unpriced. The order is 76.1's:
+experiment judged, then authoring.
+
+**76.12 ADR owed: ADR-0005, the point-gate verdict shape, lands with round
+9's spec** — the §45.16 pattern, as ADR-0004 landed with round 8's. All
+three conditions hold: the shape is expensive to reverse once records carry
+it, binary-universal-with-evidence-spans will surprise a reader expecting
+an LLM-judge score, and 76.5, 76.6 and 76.10 record the real alternatives
+it was chosen over. The glossary gains **point gate**, **planted point**,
+**foil answer** and **evidence span** with this section, marked as landing
+with round 9; "subjective grader" retires outside historical sections.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
