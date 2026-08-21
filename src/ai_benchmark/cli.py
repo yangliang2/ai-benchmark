@@ -6,7 +6,13 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
-from ai_benchmark import calibrate_v1, firstparty_v1, point_grader, reconcile_v1
+from ai_benchmark import (
+    calibrate_v1,
+    firstparty_v1,
+    grader_calibration_v1,
+    point_grader,
+    reconcile_v1,
+)
 from ai_benchmark.aider import ingest_aider
 from ai_benchmark.classify import (
     Label,
@@ -264,6 +270,36 @@ def _calibrate_v1_command(args: argparse.Namespace) -> None:
         agent=args.agent or DEFAULT_AGENT, agent_explicit=args.agent is not None,
         language=args.language or reconcile_v1.DEFAULT_LANGUAGE,
         language_explicit=args.language is not None,
+    ))
+
+
+def _calibrate_grader_v1_command(args: argparse.Namespace) -> None:
+    """Run the round-9 calibration experiment: the point grader against the
+    archive, scored by the held-out machine verdict.
+
+    Not `calibrate-v1`, which is the difficulty/cost table and a different
+    reader over the same corpus. This one measures the *instrument*, and it is
+    the only reader here that reaches the whole archive unfiltered: no
+    `--agent`, no `--language`, because the population it measures is every
+    archived answer and either default would silently shrink the stratum the
+    gate is read off.
+
+    `--split-only` stops after the offline half — the strata, the
+    replay-computed resolved/unresolved split, the calls the run would make and
+    the bar in counts — having built no grader and made no call. That is what
+    lets §76.4's bar be registered before the first paid ruling.
+
+    **`ANTHROPIC_API_KEY` must be exported in the invoking shell** for anything
+    but `--split-only`. The grader is a live client, so a run without it fails
+    at auth resolution rather than at the bar.
+    """
+    tasks = firstparty_v1.load_task_set(args.tasks)
+    logs = reconcile_v1.collect_logs(args.runs or [DEFAULT_V1_RUNS])
+    print(grader_calibration_v1.calibrate_grader(
+        tasks, args.tasks, logs,
+        split_only=args.split_only,
+        grader_factory=point_grader.anthropic_point_grader,
+        rulings_dir=args.rulings,
     ))
 
 
@@ -588,6 +624,61 @@ def main(argv: list[str] | None = None) -> None:
         "anything is graded",
     )
     calibrate_v1_parser.set_defaults(command=_calibrate_v1_command)
+
+    calibrate_grader_v1 = subcommands.add_parser(
+        "calibrate-grader-v1",
+        help="run the calibration experiment on the point grader: grade every "
+        "archived answer blind, score it against the replayed machine verdict, "
+        "and read the bar off stratum A alone",
+        description=(
+            "Measure the point grader against the v1 archive. Every archived "
+            "answer is read by the grader blind to the verdict, one narrow "
+            "question per planted point, and the held-out machine verdict — "
+            "recomputed by replaying the same run's diff against the same "
+            "task's held-out grading tests — scores it. Stratum A is the rows "
+            "whose task ships a key the grader can be run against in exactly "
+            "its production mode (an accepted-answer key asks one point; a "
+            "findings key asks one point per planted finding); stratum B is "
+            "every other row, against the synthetic point 'the asked-for work "
+            f"was done'. {grader_calibration_v1.CONFOUND.capitalize()} So the "
+            "gate is read off stratum A alone: overall agreement >= "
+            f"{grader_calibration_v1.OVERALL_BAR_PERCENT}% and "
+            "unresolved-class agreement >= "
+            f"{grader_calibration_v1.UNRESOLVED_BAR_PERCENT}%, both stated as "
+            "the counts they were registered as. Unlike every other v1 reader "
+            "this reads the archive unfiltered — every agent and every "
+            "language — because the population it measures is the archive "
+            "itself. Rulings are archived under --rulings, one file per "
+            "instrument version, and are never merged into the unified "
+            "dataset: a calibration ruling is instrument data, not a "
+            "combination's result on an instance. ANTHROPIC_API_KEY must be "
+            "exported in the invoking shell for anything but --split-only."
+        ),
+    )
+    calibrate_grader_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    calibrate_grader_v1.add_argument(
+        "--runs",
+        type=Path,
+        action="append",
+        help="a raw run log, or a directory of them (repeatable; default: "
+        f"{DEFAULT_V1_RUNS})",
+    )
+    calibrate_grader_v1.add_argument(
+        "--rulings",
+        type=Path,
+        default=grader_calibration_v1.DEFAULT_RULINGS_DIR,
+        help="where the per-point rulings are archived, one file per grader "
+        f"version (default: {grader_calibration_v1.DEFAULT_RULINGS_DIR})",
+    )
+    calibrate_grader_v1.add_argument(
+        "--split-only",
+        action="store_true",
+        help="compute the strata and the machine verdicts by replay, print "
+        "them with the calls the run would make and the bar in counts, and "
+        "stop — no grader is built and no call is made, which is what lets the "
+        "bar be registered before the first paid ruling",
+    )
+    calibrate_grader_v1.set_defaults(command=_calibrate_grader_v1_command)
 
     report = subcommands.add_parser(
         "report",
