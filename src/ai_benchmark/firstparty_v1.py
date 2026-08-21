@@ -356,6 +356,22 @@ _POINT_CATEGORY: TaskCategory = "investigation"
 # reader is the gate, which opens it here in the task directory.
 POINTS_KEY_FILE = "points-key.json"
 
+# The two-sided existence proof of a point-keyed task, at the standing address
+# every other action's proof lives at: inside PROOFS_DIR, beside REPO_DIR and
+# outside GRADING_DIR, never overlaid into a workdir and never read by a
+# verdict. The author's own answer to their own question, the plausible-but-
+# wrong one beside it, and the rulings the grader gave each — written by
+# `prove_points` and read back, offline, by the lint.
+#
+# Design note §76.10 fixes the subtree and leaves the filenames open; these are
+# them, named here rather than spelled in two places so that the writer that
+# produces the archive and the lint that reads it back cannot disagree about
+# where it is. Markdown because the deliverable of an investigation is argued
+# prose and the proof answers are that deliverable, written by the author.
+REFERENCE_ANSWER_FILE = "reference-answer.md"
+FOIL_ANSWER_FILE = "foil-answer.md"
+PROOF_RULINGS_DIR = "rulings"
+
 # Where a run's rulings are archived, one file per run row (see `_point_gate`).
 # A module-level default rather than a required argument, and here rather than
 # in `cli`, because `evaluate` has three production callers and only one of
@@ -752,6 +768,19 @@ TERRAIN_EXEMPT_ACTIONS: dict[TaskCategory, str] = {
         "the terrain rules stop a key being grepped out of the workdir; a "
         "planted mutant is never in the workdir, and the prompt naming the "
         "module under test is the task's definition rather than a leak"
+    ),
+    # The same exemption for the same reason, in the same words — the second
+    # action whose key is not a location an answer names, so the second whose
+    # ground truth an agent could not grep for however the prompt is worded.
+    # Registered rather than left to fall out of `_ground_truth` returning None
+    # for a points key: "no rule fired" and "this action is exempt, for this
+    # reason" are different facts, and only the second survives someone later
+    # teaching `_ground_truth` to read the points key.
+    _POINT_CATEGORY: (
+        "the terrain rules stop a key being grepped out of the workdir; a "
+        "planted point is never in the workdir, and the prompt naming the "
+        "deliverable's path and its required sections is the task's definition "
+        "rather than a leak"
     ),
 }
 
@@ -2635,6 +2664,41 @@ class RunRulings(BaseModel):
     rulings: tuple[PointRuling, ...]
 
 
+class ProofRulings(BaseModel):
+    """One half of a point-keyed task's two-sided existence proof, as the
+    archive holds it: what the grader said about the author's own answer, and
+    the three facts that say what it was said about.
+
+    The rulings are `RunRulings`' own shape, because a proof is the very
+    computation a run is graded by pointed at the author instead of at an agent
+    — one call per question, a span the gate checked, a verdict computed from
+    the archive. What it carries beside them is where the two archives differ.
+    A run's rulings are keyed to the deliverable a run's diff happened to
+    collect, and go stale when nothing but that run could make them so; a
+    proof's are the *authoring* artefact the lint holds a task to before any
+    agent meets it, and go stale the moment the author edits either input or
+    the instrument is re-versioned.
+
+    So this records all three: the grader version, the answer these rulings
+    were taken against, and the key they answer. **That is the whole mechanism
+    behind "re-proof triggers on edit, not on every lint run"** (§76.10) — the
+    lint recomputes the three hashes from what is on disk and refuses until the
+    proof is re-run, and on an unedited task it is a hash comparison and no
+    call at all.
+
+    The key is hashed over its canonical JSON rather than its file bytes
+    (`points_key_sha256`), so re-indenting the key costs nothing while any
+    change to what it asks costs a re-proof.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    grader_version: NonEmptyStr
+    points_key_sha256: NonEmptyStr
+    answer_sha256: NonEmptyStr
+    rulings: tuple[PointRuling, ...]
+
+
 def rulings_file(rulings: Path, task_id: str, agent: str, model: str) -> Path:
     """Where one run row's rulings are archived: one file per task x agent x
     model.
@@ -2893,7 +2957,7 @@ def _archived_rulings(
 
 def _point_verdict(
     questions: tuple[tuple[PointKind, PlantedPoint], ...],
-    archive: RunRulings,
+    archive: RunRulings | ProofRulings,
     deliverable: str,
 ) -> bool:
     """Every planted point covered by a verified ruling, and no disqualifier
@@ -2903,6 +2967,11 @@ def _point_verdict(
     replay is a recomputation and not a reprint: the archive says what the
     grader said, and what that is worth against this deliverable is decided
     again every time the verdict is.
+
+    One function over both archives, which is the whole point of the lint's
+    existence-proof form taking this one: what the author's reference answer is
+    proved to do is exactly what an agent's answer will be graded by, rather
+    than a restatement of it that could drift.
     """
     by_question = {(entry.kind, entry.point_id): entry for entry in archive.rulings}
     for kind, planted in questions:
@@ -2915,9 +2984,15 @@ def _point_verdict(
     return True
 
 
-def _write_rulings(task: Task, path: Path, archive: RunRulings) -> None:
-    """Archive this row's rulings, so that every later reading of the verdict
-    is a recomputation over them rather than a second paid grading."""
+def _write_rulings(task: Task, path: Path, archive: RunRulings | ProofRulings) -> None:
+    """Archive these rulings, so that every later reading of the verdict — a
+    run's, or a proof's — is a recomputation over them rather than a second
+    paid grading.
+
+    One writer for both archives: what is written is the same JSON of the same
+    per-point rulings, and two writers would be two places for the indentation,
+    the encoding and the failure message to drift.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         path.write_text(
@@ -2967,14 +3042,31 @@ def lint_task_set(
     already sitting at that path, and a prompt that names it. All four are read
     rather than run, and all four gate the expensive proof below.
 
-    A task carrying a key of any of the three shapes is also held to its
+    An `investigation` task carries the fourth shape — its **planted points** —
+    and is held to what that key has to be (`_points_key_problems`): at least
+    three points, an id and a question in each, no id used twice, a prompt that
+    names the answer path, and neither the key nor either proof answer shipped
+    inside `repo/`. All of it is read rather than run, and all of it gates that
+    action's proof below.
+
+    A task carrying a key of any of the four shapes is also held to its
     action's registered **existence proof** (`EXISTENCE_PROOFS`), which asks the
     prior question none of the negatives can: whether the truth the task is
-    keyed on is in the repository at all. The four forms are a partner
+    keyed on is in the repository at all. The five forms are a partner
     `bug-fix` task's pristine failure, a held-out test per planted finding run
-    against two trees, an accepted location that resolves, and a reference suite
-    that passes pristine and dies on each planted mutant in turn — and an action
-    carrying a key with no registered form is refused rather than exempt.
+    against two trees, an accepted location that resolves, a reference suite
+    that passes pristine and dies on each planted mutant in turn, and — the one
+    form that runs nothing and asks nothing — the archived rulings saying the
+    author's reference answer resolves under the point gate and their foil
+    answer does not. An action carrying a key with no registered form is
+    refused rather than exempt.
+
+    **Nothing here calls an LLM.** The point-keyed form is checked by reading
+    the rulings `ai-bench prove-points-v1` archived at authoring time, and the
+    pristine grade of a point-keyed task collects an empty answer file and
+    returns unresolved without a grader call. That is a property of this whole
+    command and not of its default flags, which is why the one affordance that
+    does call the grader is a subcommand beside it rather than a flag in it.
 
     It is held to the three terrain rules as well
     (`_terrain_problems`): whether it gives its own answer away is an
@@ -2982,8 +3074,8 @@ def lint_task_set(
     task, in six copies, so that a seventh keyed task inherited none of it.
     The hash gate (`_hash_gate_problems`) is here for the same reason and was
     moved here from the same place: a keyed task asks for a location and not a
-    repair, and it used to be four tasks' own suites that said so. One action is
-    exempt from the terrain rules at the action level and with its reason
+    repair, and it used to be four tasks' own suites that said so. Two actions
+    are exempt from the terrain rules at the action level and with their reason
     recorded (`TERRAIN_EXEMPT_ACTIONS`) rather than exempt by the accident of
     having no greppable key.
 
@@ -3038,6 +3130,12 @@ def lint_task_set(
         # mutants carries neither key the gates above read.
         mutant_problems = _mutant_set_problems(task) if is_mutation_keyed(task) else []
         problems.extend(mutant_problems)
+        # What a points key and the terrain around it have to be, read rather
+        # than run, gating this action's proof the way the mutant rules gate
+        # theirs — and independent of everything above, because a task shipping
+        # planted points carries none of the other three keys.
+        points_problems = _points_key_problems(task)
+        problems.extend(points_problems)
         if is_keyed(task) and not key_problems:
             # Only once the key reads clean: the negatives are graded through
             # the real pipeline, which is the expensive half of this lint, and
@@ -3054,8 +3152,13 @@ def lint_task_set(
                 _findings_discrimination_problems(task, timeout_s=timeout_s)
             )
         if (
-            is_keyed(task) or is_findings_keyed(task) or is_mutation_keyed(task)
-        ) and not (key_problems or findings_problems or mutant_problems):
+            is_keyed(task)
+            or is_findings_keyed(task)
+            or is_mutation_keyed(task)
+            or is_point_keyed(task)
+        ) and not (
+            key_problems or findings_problems or mutant_problems or points_problems
+        ):
             # The prior question the negatives above cannot ask: whether the
             # truth this task is keyed on is in the repository at all. Gated on
             # whichever key this task carries reading clean, for the reason the
@@ -3866,6 +3969,139 @@ def _test_path_terrain_problems(task: Task, test_path: str) -> list[str]:
     return problems
 
 
+# --- investigation: what a points key has to be --------------------------------
+
+
+# The floor on a planted point set (design note §76.10), and the mutant
+# minimum's own sentence pointed at points: the verdict is "every planted point
+# is covered", so below three the universal quantifier binds over almost
+# nothing and an answer that gestured at one consideration would clear it.
+# There is deliberately **no maximum**. Four to six is the spec's *authoring
+# guidance*, not a lint rule, exactly as it is for mutants — and neither should
+# be turned into one, because what the guidance is about is how much of a
+# question a key covers, which nothing here can read.
+_MINIMUM_POINTS = 3
+
+
+def _points_key_problems(task: Task) -> list[str]:
+    """What is wrong with an `investigation` task's points key, read rather
+    than run.
+
+    Gated on the key being on disk (`is_point_keyed`) rather than on the
+    category, the way every gate over the other three keys is. Every rule here
+    is a fact about the key and the terrain around it that costs nothing to
+    read, which is what lets them gate the expensive half: `lint_task_set` runs
+    this action's registered existence proof only once these are clean, exactly
+    as `_mutant_set_problems` gates its own — a key whose points are not there
+    to be covered has nothing to say about whether an archive covers them.
+
+    - **At least three planted points** (`_MINIMUM_POINTS`), with no maximum.
+    - **An id and a question in every point and every disqualifier.** The model
+      already refuses an empty string on either (`NonEmptyStr`), so what is
+      left to this is the blank that gets past `min_length=1`: an id of spaces
+      is an archive key nothing can be read against, and a question of spaces
+      is one the grader is asked about nothing.
+    - **No id used twice across the two halves.** Refused at load as well
+      (`PointsKey.no_id_is_used_twice`), because `ai-bench run-live` loads a
+      task set and never lints it — and stated here anyway, for the reason the
+      empty-accepted-set rule is stated in `_findings_key_problems`: a rule
+      that lives only at load is a rule the lint's account of this action does
+      not contain.
+    - **The `answer_path` rules**, through `_answer_path_problems`, which both
+      other answer-file actions are already held to. Above all the third of
+      them: an investigation's whole deliverable is the prose at that path, so
+      a task whose agent cannot locate it grades every run unresolved for a
+      reason no verdict would ever explain. That function's middle check —
+      an answer path a held-out grading file would be overlaid onto — is
+      inherited rather than restated, and its clause about the overlay is the
+      one thing in it that is not this action's: a point-keyed task's
+      `grading/` is never overlaid over anything. It is still a mistake worth
+      refusing, an answer path pointed at the task's own held-out key.
+    - **Nothing of the answer is in `repo/`.** The loader refuses a proofs
+      subtree kept inside `grading/`; this is the other direction, and the one
+      that matters to an agent: the key and the two proof answers are held out
+      of the workdir, and a copy of any of them in the starting repository is
+      the whole answer handed over.
+    """
+    if not is_point_keyed(task):
+        return []
+    key = points_key(task)
+    problems: list[str] = []
+    if len(key.points) < _MINIMUM_POINTS:
+        problems.append(
+            f"{task.id}: {GRADING_DIR}/{POINTS_KEY_FILE} plants "
+            f"{len(key.points)} point(s), and the minimum is "
+            f"{_MINIMUM_POINTS} — the verdict is 'every planted point is "
+            "covered', so a key this small is a quantifier over almost nothing "
+            "and an answer that named one consideration in passing would clear "
+            "it. Plant more required elements, each a different consideration, "
+            "trade-off or recommendation the question turns on"
+        )
+    seen: set[str] = set()
+    for kind, planted in _point_questions(key):
+        whose = f"the points key's {kind} {planted.id!r}"
+        if not planted.id.strip():
+            problems.append(
+                f"{task.id}: {whose} has a blank id — the archive is keyed by "
+                "id, so a ruling filed under one nobody can name is a ruling "
+                "no later reading of this verdict could match to a question"
+            )
+        if not planted.text.strip():
+            problems.append(
+                f"{task.id}: {whose} has no text — the text is the whole of "
+                "the narrow question the grader is asked about this point, and "
+                "a blank one is a question about nothing that every answer "
+                "covers or none does, depending on the mood of the instrument"
+            )
+        if planted.id in seen:
+            problems.append(
+                f"{task.id}: {whose} is the id of two of this key's questions "
+                "— the rulings are archived one per id, across the points and "
+                "the disqualifiers alike, so a shared id archives one ruling "
+                "where two were asked and lets the second answer for the first"
+            )
+        seen.add(planted.id)
+    problems.extend(
+        _answer_path_problems(
+            task,
+            "the points key's answer_path",
+            key.answer_path,
+            "however well it investigated the question",
+        )
+    )
+    problems.extend(_held_out_of_the_repository_problems(task))
+    return problems
+
+
+def _held_out_of_the_repository_problems(task: Task) -> list[str]:
+    """The points key, or either proof answer, found inside the starting
+    repository.
+
+    Read at any depth, because a `docs/points-key.json` is handed to the agent
+    exactly as a top-level one is. Named by filename rather than by content,
+    which is the same mechanical reading
+    `_held_out_of_the_workdir_but_not_of_grading` gives the other direction:
+    what a copy of the answer is worth to an agent does not depend on where the
+    author put it.
+    """
+    held_out = {POINTS_KEY_FILE, REFERENCE_ANSWER_FILE, FOIL_ANSWER_FILE}
+    shipped = sorted(
+        str(path.relative_to(task.repo_dir))
+        for path in task.repo_dir.rglob("*")
+        if path.is_file() and path.name in held_out
+    )
+    if not shipped:
+        return []
+    return [(
+        f"{task.id}: {REPO_DIR}/ holds {shipped} — the points key and the two "
+        f"answers it was proved with live in {GRADING_DIR}/ and {PROOFS_DIR}/, "
+        "held out of the workdir the agent works in. A copy of any of them in "
+        "the starting repository is not a terrain problem to be waived: it is "
+        "the required elements of the answer, or an answer itself, handed over "
+        "with the question"
+    )]
+
+
 # --- the hash gate: the repository is as it was handed over --------------------
 #
 # The deliverable of a keyed task is the location, not a repair, and the prompt
@@ -4545,11 +4781,12 @@ def _terrain_problems(task: Task) -> list[str]:
     properties reach a review task unchanged, because the waiver is read
     against what the rule fired on and never against the key it fired over.
 
-    One action is exempt from all three at the action level rather than by
-    waiver (`TERRAIN_EXEMPT_ACTIONS`, design note §67.6), and the exemption is
-    consulted here rather than left to fall out of that action having no key to
-    grep for: what these rules protect is a key an agent could read out of the
-    workdir, and a `test-authoring` task's key — its planted mutants — is never
+    Two actions are exempt from all three at the action level rather than by
+    waiver (`TERRAIN_EXEMPT_ACTIONS`, design note §67.6 and §76.10), and the
+    exemption is consulted here rather than left to fall out of those actions
+    having no key to grep for: what these rules protect is a key an agent could
+    read out of the workdir, and neither a `test-authoring` task's key — its
+    planted mutants — nor an `investigation` task's — its planted points — is
     in the workdir at all.
     """
     if task.category in TERRAIN_EXEMPT_ACTIONS:
@@ -5361,7 +5598,392 @@ def _reference_suite_passes(
         return task.runner.run_tests(root, workdir, list(targets), timeout_s=timeout_s)
 
 
-# One entry per action that carries a key. A fifth cannot be added without one:
+# --- investigation: the two-sided proof, archived and checked offline ----------
+
+
+class ProofSide(NamedTuple):
+    """One half of a point-keyed task's existence proof: an answer the author
+    wrote, the rulings the grader gave it, and what the point gate has to say
+    about it.
+
+    Two sides rather than one because the proof runs in both directions
+    (§76.10). The positive half is `_reference_suite_kills_every_mutant`'s own
+    move, mapped onto prose — the author as their task's first perfect agent,
+    refusing the *unmeetable point*, the equivalent mutant's analog. The
+    negative half is what the mapping exposes and the mutation gate got for
+    free: a suite is proved to discriminate by the mutants dying, and nothing
+    corresponds to that here unless the author also writes an answer that must
+    fail. Without it an always-covered grader passes every positive proof.
+
+    Held as data rather than as two code paths so that the writer that takes
+    the proof and the lint that reads it back walk one list: a third side, or a
+    renamed file, moves both at once or neither.
+    """
+
+    name: str
+    answer_file: str
+    rulings_file: str
+    # What `_point_verdict` must come out as, computed from this side's
+    # archived rulings against this side's own answer.
+    resolves: bool
+
+
+PROOF_SIDES: tuple[ProofSide, ...] = (
+    ProofSide("reference answer", REFERENCE_ANSWER_FILE, "reference.json", True),
+    ProofSide("foil answer", FOIL_ANSWER_FILE, "foil.json", False),
+)
+
+
+def points_key_sha256(key: PointsKey) -> str:
+    """The hash a proof archive records its key by.
+
+    Taken over the key's canonical JSON rather than over the file's bytes, so
+    that re-indenting the key or reordering nothing costs a paid re-proof while
+    every change to what the key *asks* does. Public because the writer stamps
+    it and the lint recomputes it, and a second implementation of "what counts
+    as an edit" would be the one place this mechanism could quietly stop
+    triggering.
+    """
+    return _sha256(json.dumps(key.model_dump(mode="json"), sort_keys=True))
+
+
+def proof_rulings_file(task: Task, side: ProofSide) -> Path:
+    """Where one side's rulings are archived, inside the task's proofs
+    subtree — the standing address of an existence proof, never overlaid, never
+    collected, never read by a verdict."""
+    return task.proofs_dir / PROOF_RULINGS_DIR / side.rulings_file
+
+
+def _the_reference_resolves_and_the_foil_fails(
+    task: Task, tasks: Sequence[Task], timeout_s: int
+) -> list[str]:
+    """`investigation`'s proof form: the author's reference answer resolves
+    under the point gate, per point, and the foil answer fails it — read from
+    the archived rulings and never re-asked (design note §76.10).
+
+    **This check is offline.** It calls no grader, opens no client and needs no
+    key: the rulings were taken by `ai-bench prove-points-v1` at authoring
+    time, and everything here is a recomputation over them. That is the
+    property the whole command rests on — `ai-bench lint-v1` never calls the
+    LLM — and it is why the affordance that *can* reach the network is a
+    subcommand beside the lint rather than a flag inside it.
+
+    What it holds each side to, in the order a failure is worth reading in:
+
+    - the author's answer is there and says something;
+    - its rulings are archived, are this shape, and answer **exactly** the
+      questions this key asks — every planted point and every disqualifier,
+      and nothing the key does not name, because a ruling about a question that
+      is no longer in the key is a ruling about a task that no longer exists;
+    - the archive was taken under the pinned `GRADER_VERSION`, against this
+      answer's bytes, and against this key. The three hashes are the whole of
+      "re-proof triggers on edit, not on every lint run": edit the points,
+      either answer, or bump the instrument, and this refuses until the proof
+      is re-run;
+    - and only then the verdict, `_point_verdict` over the archived rulings —
+      the very function a run's verdict is computed by, so what the proof
+      proves is the computation the sweep will perform and not a re-statement
+      of it. Every span is re-checked against the answer's own bytes here, as
+      it is there.
+
+    A side whose archive is stale or incomplete is reported and its verdict is
+    not computed: a verdict over rulings taken against some other text is not a
+    weaker claim, it is a claim about something else.
+    """
+    del tasks, timeout_s  # a proof read from an archive runs nothing
+    key = points_key(task)
+    questions = _point_questions(key)
+    return [
+        problem
+        for side in PROOF_SIDES
+        for problem in _one_proof_side_problems(task, key, questions, side)
+    ]
+
+
+def _one_proof_side_problems(
+    task: Task,
+    key: PointsKey,
+    questions: tuple[tuple[PointKind, PlantedPoint], ...],
+    side: ProofSide,
+) -> list[str]:
+    """One half of the two-sided proof, checked against what is on disk."""
+    answer_path = task.proofs_dir / side.answer_file
+    try:
+        answer = answer_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return [(
+            f"{task.id}: the author's {side.name} is missing or unreadable at "
+            f"{PROOFS_DIR}/{side.answer_file} ({error}) — this action's "
+            "existence proof runs in both directions, and the two answers are "
+            "what it runs on: the reference answer says every planted point "
+            "can be covered at all, and the foil says the key can tell a "
+            "plausible wrong answer from a right one"
+        )]
+    if not answer.strip():
+        return [(
+            f"{task.id}: the author's {side.name} at {PROOFS_DIR}/"
+            f"{side.answer_file} is empty — the point gate rules an empty "
+            "deliverable unresolved without a single grader call, so an empty "
+            "answer proves nothing in either direction"
+        )]
+    archive, unreadable = _archived_proof(task, side)
+    if archive is None:
+        return [unreadable]
+    problems = _stale_proof_problems(task, key, questions, answer, side, archive)
+    if problems:
+        return problems
+    resolved = _point_verdict(questions, archive, answer)
+    if resolved == side.resolves:
+        return []
+    if side.resolves:
+        uncovered, present = _what_the_gate_held_against(questions, archive, answer)
+        return [(
+            f"{task.id}: the author's reference answer does not resolve under "
+            f"the point gate — {_and_what_it_held(uncovered, present)}. A point "
+            "the author's own answer cannot cover is the *unmeetable point*, "
+            "the equivalent mutant's analog: it makes the task unresolvable "
+            "for every agent while reading as merely a hard one. Re-word the "
+            "point, or argue it in the reference answer, and re-run "
+            "`ai-bench prove-points-v1`"
+        )]
+    return [(
+        f"{task.id}: the author's foil answer resolves under the point gate — "
+        "the foil is the plausible-but-wrong answer this key has to tell from "
+        "a right one, so a foil that resolves says the key does not "
+        "discriminate. Calibration proves the instrument discriminates in "
+        "general; this half proves *this key* does, and without it an "
+        "always-covered grader passes every positive proof. Plant the "
+        "load-bearing point the foil misses, or write a foil that misses one, "
+        "and re-run `ai-bench prove-points-v1`"
+    )]
+
+
+def _archived_proof(task: Task, side: ProofSide) -> tuple[ProofRulings | None, str]:
+    """One side's archived rulings, or None and what is wrong with them.
+
+    Reported rather than raised, unlike a *run*'s archive: a broken run archive
+    is a measurement nobody can recompute and fails the whole replay loudly,
+    while a broken proof archive is an authoring defect like any other and
+    belongs in the list the lint prints beside the rest of them.
+    """
+    path = proof_rulings_file(task, side)
+    where = f"{PROOFS_DIR}/{PROOF_RULINGS_DIR}/{side.rulings_file}"
+    if not path.is_file():
+        return None, (
+            f"{task.id}: the author's {side.name} has no archived rulings — "
+            f"{where} is missing. The lint checks this action's existence "
+            "proof by reading the rulings the grader gave the two answers at "
+            "authoring time and never by asking the grader itself, so an "
+            "unproved task is one the lint cannot pass rather than one it "
+            "would prove for you. Run `ai-bench prove-points-v1`"
+        )
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as error:
+        return None, f"{task.id}: {where} is unreadable ({error})"
+    except json.JSONDecodeError as error:
+        return None, f"{task.id}: {where} is not JSON ({error})"
+    try:
+        return ProofRulings.model_validate(raw), ""
+    except ValidationError as error:
+        return None, f"{task.id}: {where}: {error}"
+
+
+def _stale_proof_problems(
+    task: Task,
+    key: PointsKey,
+    questions: tuple[tuple[PointKind, PlantedPoint], ...],
+    answer: str,
+    side: ProofSide,
+    archive: ProofRulings,
+) -> list[str]:
+    """Everything that makes an archive rulings about some other measurement:
+    a retired instrument, an edited answer, an edited key, or a set of
+    questions that is not this key's.
+
+    Every one of them is reported in the same shape and for the same reason —
+    the proof is out of date and has to be taken again — but each is named
+    apart, because which of the four moved is the whole of what an author needs
+    to know to decide whether re-running the proof is all that is owed.
+    """
+    where = f"{PROOFS_DIR}/{PROOF_RULINGS_DIR}/{side.rulings_file}"
+    problems: list[str] = []
+    if archive.grader_version != point_grader.GRADER_VERSION:
+        problems.append(
+            f"{task.id}: {where} was taken under grader "
+            f"{archive.grader_version!r} and the pinned instrument is now "
+            f"{point_grader.GRADER_VERSION!r} — the grader is a versioned "
+            "instrument (model id + prompt hash), and a version change is an "
+            "edit like any other: what the retired instrument said about this "
+            "answer is not what the pinned one would say. Re-run "
+            "`ai-bench prove-points-v1`"
+        )
+    if archive.answer_sha256 != _sha256(answer):
+        problems.append(
+            f"{task.id}: {where} was taken against a different {side.name} "
+            f"than {PROOFS_DIR}/{side.answer_file} now holds — the answer has "
+            "been edited since it was proved, so the archived rulings are "
+            "about text nobody will ever be graded against. Re-run "
+            "`ai-bench prove-points-v1`"
+        )
+    if archive.points_key_sha256 != points_key_sha256(key):
+        problems.append(
+            f"{task.id}: {where} was taken against a different "
+            f"{GRADING_DIR}/{POINTS_KEY_FILE} than this task now ships — the "
+            "key has been edited since it was proved, and a proof of the "
+            "questions it used to ask says nothing about the ones it asks now. "
+            "Re-run `ai-bench prove-points-v1`"
+        )
+    asked = {(kind, planted.id) for kind, planted in questions}
+    ruled = {(entry.kind, entry.point_id) for entry in archive.rulings}
+    if missing := sorted(f"{kind} {point_id!r}" for kind, point_id in asked - ruled):
+        problems.append(
+            f"{task.id}: {where} does not rule on {missing} — the proof is "
+            "read per planted point, never over the set, because a set-level "
+            "reading is exactly where the point no answer could cover hides "
+            "behind its coverable neighbours. Every point and every "
+            "disqualifier this key names is proved, or the task is not proved"
+        )
+    if extra := sorted(f"{kind} {point_id!r}" for kind, point_id in ruled - asked):
+        problems.append(
+            f"{task.id}: {where} rules on {extra}, which this key does not "
+            "name — a ruling about a question that has been retired or renamed "
+            "is a ruling about a task that no longer exists, and an archive "
+            "holding one was taken before an edit nothing else here would "
+            "catch. Re-run `ai-bench prove-points-v1`"
+        )
+    return problems
+
+
+def _what_the_gate_held_against(
+    questions: tuple[tuple[PointKind, PlantedPoint], ...],
+    archive: ProofRulings,
+    answer: str,
+) -> tuple[list[str], list[str]]:
+    """Which planted points this answer failed to cover, and which
+    disqualifiers it made — the same computation `_point_verdict` performs,
+    reported instead of reduced to a boolean.
+
+    Only reached once the verdict has already come out wrong, so that the
+    verdict itself stays the one function a run is graded by and this is the
+    explaining of it, not a second implementation with its own opinion.
+    """
+    by_question = {(entry.kind, entry.point_id): entry for entry in archive.rulings}
+    uncovered, present = [], []
+    for kind, planted in questions:
+        entry = by_question[(kind, planted.id)]
+        if _the_span_holds(entry.covered, entry.span, answer):
+            if kind == "disqualifier":
+                present.append(planted.id)
+        elif kind == "point":
+            uncovered.append(planted.id)
+    return uncovered, present
+
+
+def _and_what_it_held(uncovered: list[str], present: list[str]) -> str:
+    """The reference answer's failure, said in the terms of whichever half it
+    failed on. A covered ruling whose span the answer does not contain counts
+    as uncovered here exactly as it does in the verdict, so "not covered" means
+    "not covered by a ruling this gate could stand behind"."""
+    said = []
+    if uncovered:
+        said.append(
+            f"the planted point(s) {uncovered} are not covered by a ruling "
+            "quoting a span the answer contains"
+        )
+    if present:
+        said.append(f"the disqualifier(s) {present} are present in it")
+    return ", and ".join(said)
+
+
+def prove_points(
+    tasks: Sequence[Task],
+    grader_factory: Callable[[], point_grader.PointGrader],
+) -> list[Path]:
+    """Take every point-keyed task's two-sided existence proof, live, and
+    archive it: one grader call per planted point and per disqualifier against
+    the author's reference answer, and again against the foil.
+
+    **The one affordance in this project that calls the grader outside a run,
+    and the reason it is a command of its own.** `ai-bench lint-v1` never calls
+    the LLM — that is what the spec and the glossary both rest on, and a
+    property worth having of the whole command rather than of its default
+    flags — so the writer lives beside the lint and not inside it. What the
+    lint then does with what this wrote is `_the_reference_resolves_and_the_
+    foil_fails`, offline.
+
+    `ANTHROPIC_API_KEY` has to be exported in the invoking shell: the factory
+    constructs a live client, so a proof run without it fails at auth
+    resolution rather than at the bar.
+
+    The grader is built once across every task and both sides rather than per
+    call, and only if there is a point-keyed task at all — so a corpus holding
+    none constructs no client and needs no key, the way a sweep with no
+    point-keyed row does.
+
+    What is written is what the lint will hold it to: the rulings, the pinned
+    grader version, and the hashes of the key and of the answer they were taken
+    against. Nothing is checked here — a foil that resolves is archived exactly
+    as one that does not, because the writer's job is to record what the
+    instrument said and the lint's is to decide what it was worth. One reader
+    of a verdict, not two.
+    """
+    grader: point_grader.PointGrader | None = None
+    written: list[Path] = []
+    for task in tasks:
+        if not is_point_keyed(task):
+            continue
+        key = points_key(task)
+        questions = _point_questions(key)
+        for side in PROOF_SIDES:
+            answer = _proof_answer(task, side)
+            if grader is None:
+                grader = grader_factory()
+            fresh = _fresh_rulings(task, answer, questions, grader)
+            path = proof_rulings_file(task, side)
+            _write_rulings(
+                task,
+                path,
+                ProofRulings(
+                    grader_version=fresh.grader_version,
+                    points_key_sha256=points_key_sha256(key),
+                    answer_sha256=fresh.deliverable_sha256,
+                    rulings=fresh.rulings,
+                ),
+            )
+            written.append(path)
+    return written
+
+
+def _proof_answer(task: Task, side: ProofSide) -> str:
+    """One side's answer, read for grading — refused loudly if it is not there
+    or says nothing.
+
+    Loudly, and before any call goes out, because this is the writer: the lint
+    reports a missing answer as one authoring problem among many, but grading
+    an answer that is not there would archive a proof of nothing and charge for
+    it.
+    """
+    path = task.proofs_dir / side.answer_file
+    try:
+        answer = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise IngestError(
+            f"{task.id}: the author's {side.name} is missing or unreadable at "
+            f"{PROOFS_DIR}/{side.answer_file} ({error}) — both halves of this "
+            "action's existence proof are written by the author before it can "
+            "be taken"
+        ) from error
+    if not answer.strip():
+        raise IngestError(
+            f"{task.id}: the author's {side.name} at {PROOFS_DIR}/"
+            f"{side.answer_file} is empty — there is nothing to grade, and an "
+            "archive taken over it would prove nothing in either direction"
+        )
+    return answer
+
+
+# One entry per action that carries a key. A sixth cannot be added without one:
 # `_unregistered_proof_form_problems` refuses a keyed action this dict does not
 # name, and `_existence_proof_problems` refuses the task that would have been
 # swept under it.
@@ -5390,6 +6012,13 @@ EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
             "repository and failing on every planted mutant, checked per mutant"
         ),
         check=_reference_suite_kills_every_mutant,
+    ),
+    _POINT_CATEGORY: ExistenceProof(
+        form=(
+            "the author's reference answer resolving under the point gate, per "
+            "point, and the foil answer failing it, read from archived rulings"
+        ),
+        check=_the_reference_resolves_and_the_foil_fails,
     ),
 }
 
@@ -5460,15 +6089,16 @@ def _unregistered_proof_form_problems() -> list[str]:
     """Keyed actions this project can grade and cannot prove.
 
     Read off the sets that say which actions may ship a key of some shape — an
-    accepted-answer key, a findings key, a planted mutant set — so that adding
-    another without registering what proves its truth exists is refused by the
-    lint rather than discovered by a sweep that measured nothing. The mutation
-    action is counted here for exactly that reason: its mutants are a key like
-    the others, and an action left out of this union would go unnoticed by the
-    one check whose whole job is noticing.
+    accepted-answer key, a findings key, a planted mutant set, a points key —
+    so that adding another without registering what proves its truth exists is
+    refused by the lint rather than discovered by a sweep that measured
+    nothing. The mutation and point actions are counted here for exactly that
+    reason: their mutants and their planted points are keys like the others,
+    and an action left out of this union would go unnoticed by the one check
+    whose whole job is noticing.
     """
     unregistered = sorted(
-        (_KEYED_CATEGORIES | {_FINDINGS_CATEGORY, _MUTATION_CATEGORY})
+        (_KEYED_CATEGORIES | {_FINDINGS_CATEGORY, _MUTATION_CATEGORY, _POINT_CATEGORY})
         - set(EXISTENCE_PROOFS)
     )
     if not unregistered:

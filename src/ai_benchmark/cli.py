@@ -202,6 +202,30 @@ def _lint_v1_command(args: argparse.Namespace) -> None:
         print(line)
 
 
+def _prove_points_v1_command(args: argparse.Namespace) -> None:
+    """Take every point-keyed task's two-sided existence proof and archive it.
+
+    A command of its own rather than a flag on `lint-v1`, because `lint-v1`
+    never calls the LLM and that should hold for the whole command, flags
+    included: this is the one affordance in the project that can reach the
+    network outside a run, so it lives beside the lint rather than inside it.
+    The lint then reads back what this wrote, offline, and holds the task to
+    it — the reference answer resolving under the point gate per point, the
+    foil answer failing it, the pinned grader version, and the hashes of the
+    key and of both answers.
+
+    **`ANTHROPIC_API_KEY` must be exported in the invoking shell.** The grader
+    is a live client, so a proof run without it fails at auth resolution rather
+    than at the bar, and no partial archive is written for the task that
+    failed.
+    """
+    tasks = firstparty_v1.load_task_set(args.tasks)
+    written = firstparty_v1.prove_points(tasks, point_grader.anthropic_point_grader)
+    print(f"proved {len(written) // len(firstparty_v1.PROOF_SIDES)} point-keyed task(s)")
+    for path in written:
+        print(f"  wrote {path}")
+
+
 def _reconcile_v1_command(args: argparse.Namespace) -> None:
     """Report what the task set predicted against what the sweeps did.
 
@@ -448,6 +472,32 @@ def main(argv: list[str] | None = None) -> None:
         "unchanged corpus writes nothing, so its result is reviewable in a diff",
     )
     lint_v1.set_defaults(command=_lint_v1_command)
+
+    prove_points_v1 = subcommands.add_parser(
+        "prove-points-v1",
+        help="take every investigation task's two-sided existence proof "
+        "against the live grader and archive the rulings the lint reads back",
+        description=(
+            "Grade the author's own reference answer and their foil answer "
+            "under the point gate — one call per planted point and per "
+            "disqualifier against each — and archive the rulings, the pinned "
+            "grader version and the hashes of the points key and of both "
+            "answers into each task's proofs/ subtree. This is the one "
+            "affordance in this project that calls the grader outside a run, "
+            "and it is a command of its own rather than a flag on lint-v1 "
+            "because `ai-bench lint-v1` never calls the LLM — a property of "
+            "that whole command, flags included. `ai-bench lint-v1` then reads "
+            "these archives back, offline, and refuses a task whose reference "
+            "answer does not resolve, whose foil answer does, or whose key, "
+            "answers or grader version have moved since the proof was taken: "
+            "re-proof triggers on edit, not on every lint run. "
+            "ANTHROPIC_API_KEY must be exported in the invoking shell — the "
+            "grader is a live client, so a run without it fails at auth "
+            "resolution rather than at the bar."
+        ),
+    )
+    prove_points_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    prove_points_v1.set_defaults(command=_prove_points_v1_command)
 
     reconcile_v1_parser = subcommands.add_parser(
         "reconcile-v1",
