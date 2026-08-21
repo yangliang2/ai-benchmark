@@ -1395,7 +1395,14 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     The note numbers its sections once and never renumbers them, so a record
     taking a number already spent is a citation collision every later reference
     inherits. Section 68 said the record would open at 69; this checks that it
-    did, that the seven are contiguous, and that nothing above them exists yet.
+    did and that the seven are contiguous.
+
+    It used to check a third thing — that nothing above 75 existed — which was
+    true until round 9 opened at 76 (its rulings) and 77 (its registration).
+    That clause was the record's own frontier claim and it has been spent; what
+    survives it is the claim that outlasts the frontier, that the record's seven
+    are still exactly 69-75 and that every later section took a number above
+    them rather than one of theirs.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -1403,8 +1410,8 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
         | {int(match) for match in re.findall(r"^\*\*(\d+)\. ", text, re.MULTILINE)}
     )
     assert numbered.count(68) == 1
-    assert [number for number in numbered if number > 68] == list(range(69, 76))
-    assert numbered[-1] == 75
+    assert [number for number in numbered if 68 < number < 76] == list(range(69, 76))
+    assert all(numbered.count(number) == 1 for number in range(69, 76))
 
     for heading in record_sections():
         assert f"### {heading}\n" in text, heading

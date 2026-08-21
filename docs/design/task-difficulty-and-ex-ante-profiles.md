@@ -6796,6 +6796,346 @@ it was chosen over. The glossary gains **point gate**, **planted point**,
 **foil answer** and **evidence span** with this section, marked as landing
 with round 9; "subjective grader" retires outside historical sections.
 
+## Round 9 cells and cost — registered 2026-08-21
+
+**77. Both halves of round 9, written down before the first paid call: the
+split, the bar, the experiment's price, the sweep's, the nine cells and the
+grader's version.** This is round 9's pre-registration and nothing else: §46
+did it for round 5, §52 for round 6, §59 for round 7 and §68 for round 8, and
+the shape below is §68's. One difference this round forces. The
+**pre-registration comes before the calibration experiment**, which is the
+round's first paid call, so it registers *both* halves — the experiment that
+gates, and the sweep that only happens if the gate opens. The round's record —
+what the experiment measured, whether the bar was met, and what the sweep then
+did — follows at **the next free section number**, §78 onward; nothing below is
+a result, and nothing above is renumbered.
+
+**77.1 The order, stated: the experiment is judged first, and not a paid
+authoring dollar moves before it.** §76.1's ruling, restated here because it is
+what the two ranges below hang off. The calibration experiment runs first and
+gates. If the bar of 77.3 is met, the round authors three `investigation` tasks
+(77.6) and sweeps them; **if the bar fails, the round closes as a record of the
+failure and heap 3 stays empty, disclosed**. So the first range below is
+unconditional and the second is contingent, and no authoring call is made until
+the first is spent and read.
+
+**77.2 The stratum split, as counts, re-derived mechanically.** Not copied from
+§76.3 and not from the round's spec. `uv run ai-bench calibrate-grader-v1
+--split-only` — offline, no grader built, no call made, no key shown to
+anything — was run on **2026-08-21** and printed
+
+```
+strata (derived from each row's task and the key shape it ships)
+  stratum  answers  points  what the grader is asked
+  A        63       115     the task's planted key, run in production mode
+  B        243      243     the synthetic point "the asked-for work was done"
+
+stratum A, by action, with the replay-computed split the bar reads
+  category                answers  points  resolved  unresolved
+  code-review             26       78      19        7
+  codebase-comprehension  10       10      10        0
+  fault-location          27       27      26        1
+  (all)                   63       115     55        8
+```
+
+over **306** archived answers read out of the **37** run logs the directory
+holds. So **stratum A = 63** — 27 `fault-location`, 26 `code-review` and 10
+locate-style `codebase-comprehension` — and **stratum B = 243**, with the
+stratum-A verdicts **55 resolved / 8 unresolved**. **Every count the command
+printed matches §76.3's to the answer**, and there is no difference to report
+as a finding against this item.
+
+What that split is for is §76.3's ruling and is registered with it: **the gate
+reads stratum A alone**, stratum B runs anyway because 243 more calls are cheap
+and is reported **with its confound named and gating nothing**, and §76.2's
+**transfer gap** — the archive is heap-1 and heap-2 prose *narrating* work whose
+real deliverable was a diff or an answer file, where a heap-3 deliverable is the
+prose itself — is disclosed in the round's record in as many words, with the
+owner's nine agree/disagree labels on the round's own swept cells riding as a
+disclosed check and never as a second gate.
+
+**77.3 The bar, as counts a reader can check by hand: ≥ 57 of 63, and ≥ 7 of
+8.** §76.4 registered two percentages over stratum A; this is the arithmetic
+that turns them into answers, done once here so that nobody does it against the
+result later.
+
+```
+overall           0.90 x 63 = 56.7   -> the least whole answer count above it is 57   -> >= 57 of 63
+unresolved class  0.80 x  8 =  6.4   -> the least whole answer count above it is  7   -> >=  7 of  8
+```
+
+Rounding **up** in both lines, and never to the nearest: 56 of 63 is 88.9% and
+6 of 8 is 75%, so a bar met by rounding down would be a bar below the one §76.4
+registered.
+
+**What each clause is for.** The overall clause is the headline number and the
+weaker of the two: 90% of a stratum whose resolved class is 55 of 63 is nearly
+collectable by base rate alone. **The unresolved clause is the load-bearing
+one** — a grader that always says "covered" collects the resolved class free and
+scores 55 of 63, which is 87.3% and misses the overall bar by two answers, but a
+single point of drift the other way would carry it; read against the unresolved
+class the same grader scores **0 of 8** and is refused outright. And the floor
+sits at 80% rather than higher **because that class is small**: on 8 answers one
+honest key-mismatch — the right fault described at a level of the tree the key
+does not name, §34.5's original worry restated in prose — is absorbed at 7 of 8,
+while two sink the instrument at 6 of 8. That is the whole reason the second
+clause is registered as a count and not as a percentage: on a class this size a
+percentage hides how few answers separate met from failed.
+
+**77.4 The experiment's price: $1.5–8, at list price, counted in calls and not
+in answers.** The unit is the **call**, because production mode is one call per
+planted point and an answer graded against a three-finding key costs three of
+them.
+
+```
+stratum A   27 fault-location   x 1 point  =  27
+            26 code-review      x 3 points =  78
+            10 comprehension    x 1 point  =  10
+                                              115 calls
+stratum B  243 answers          x 1 point  = 243 calls
+                                              358 archive calls in all
+```
+
+The 26 `code-review` answers grade against a three-finding key apiece, which is
+where the gap between 63 answers and 115 calls comes from, and it is the whole
+reason this item is registered over calls: 306 answers priced as 306 calls would
+underprice the experiment by a sixth before anything else went wrong.
+
+**The proofs are priced separately and are contingent on the bar.** Only if the
+experiment passes does ticket 03's authoring writer run, once per planted point
+*and* once per disqualifier, against **both** answers — the reference answer and
+the **foil** — so a task's proof costs
+
+```
+3 tasks x (4-6 points + 0-2 disqualifiers) x (reference + foil)
+      = 8-16 calls a task = 24-48 calls for the round
+```
+
+**The assumed disqualifier count is 0–2 a task**, stated here so that the range
+cannot be silently exceeded: the 16-call top of the per-task range is 6 points
+plus 2 disqualifiers, and a task that declares a third disqualifier puts the
+round outside this registration and forces a re-registration rather than being
+absorbed by it.
+
+**The prices were read, not remembered.** Fetched on **2026-08-21** with
+
+```
+curl -sL https://platform.claude.com/docs/en/about-claude/pricing
+```
+
+- `source_url`: `https://platform.claude.com/docs/en/about-claude/pricing`
+  (`https://docs.claude.com/en/docs/about-claude/pricing` redirects there)
+- `as_of`: **2026-08-21**
+
+That command's own output carries the row **Claude Opus 5** — the model
+`point_grader.GRADER_MODEL` names — at **$5 / MTok** base input, **$0.50 /
+MTok** cache hits and refreshes, and **$25 / MTok** output. The two prices this
+round is billed at are therefore **$5/MTok in and $25/MTok out**.
+
+**The cached/uncached split the sweep protocol's item 2 asks for is settled
+here, and it is all uncached.** The grader sets no `cache_control` breakpoint
+(`point_grader.anthropic_point_grader`), every call carries a different
+deliverable, and the only shared prefix is the prompt template's **714**
+characters — an order below the smallest cacheable prefix in any case. So
+**every input token in this half is priced at the base rate** and the $0.50/MTok
+cache-hit price prices nothing this round. This is the one estimate in the
+project where that split is a fact about the instrument rather than a guess
+about a run.
+
+**The arithmetic, at four characters a token.** The deliverables are short:
+stratum-A answers run **45–1379 characters, median 352**. Filling the grader's
+prompt template with each point and its deliverable over all 358 calls comes to
+**491,246 characters**, and the deliverables those calls carry come to
+**212,658 characters**.
+
+```
+input   491,246 chars / 4                    = 122,811 tok  x $5/M  = $0.6141
+output  low   358 calls x 100 tok thinking   =  35,800 tok  x $25/M = $0.8950
+        high  358 x 300 tok + 53,164 quoted  = 160,564 tok  x $25/M = $4.0141
+                                               archive half  $1.5091 - $4.6282
+
+proofs  low   24 calls x 4,914 chars / 4     =  29,484 tok  x $5/M  = $0.1474
+              24 x 100 tok thinking          =   2,400 tok  x $25/M = $0.0600
+        high  48 calls x 8,914 chars / 4     = 106,968 tok  x $5/M  = $0.5348
+              48 x (2,000 quoted + 300)      = 110,400 tok  x $25/M = $2.7600
+                                               proofs half   $0.2074 - $3.2948
+
+                                               round total   $1.7165 - $7.9230
+```
+
+and the registered range is **$1.5–8**: the arithmetic's own low end rounded
+down to a round number and its own high end rounded up to one.
+
+**Which half of that is an assumption, named.** The input half is arithmetic
+over text that already exists, and only the four-characters-a-token convention
+stands between it and a certainty. **The output half is the half with no
+anchor**, exactly as §68.4's was, and it is registered with both ends stated
+rather than with a point estimate: the low end assumes every ruling comes back
+uncovered and quotes nothing, over **100** output tokens of `effort: low`
+thinking a call; the high end assumes every ruling quotes **its whole
+deliverable** over **300**. The high end is a bound and not an expectation — no
+ruling should quote a whole answer, since the prompt asks for the span that
+covers one point — so the expected figure sits nearer the low end of the range
+than the high. A proof answer is assumed at **4,000 characters** at the low end
+and **8,000** at the high, against an archive whose longest answer is 1,379,
+because a heap-3 reference answer is the deliverable rather than a note about
+one.
+
+**The one way this half misses is the grader thinking longer than it is
+registered to.** At more than 300 output tokens a call the top of the range
+goes, and that is a fact about the instrument at `effort: low` rather than an
+accounting surprise; the record is to say so against this line, with the
+archived rulings' own token counts beside it. The rulings themselves are
+**instrument calibration and not combination results**: they are archived under
+`data/` with the grader's version and **never enter `unified.jsonl`** (§76.11).
+
+**77.5 The sweep's price: $2.5–5, at list price, in round 8's band.** Contingent
+on 77.1, and re-derived from the **checked-in round-8 rows** — selected by sweep
+id `round-8` over every log in the directory and never by a log's filename —
+because round 8 is the nearest anchor this corpus has: the same three
+combinations, the same nine-cell shape, three freshly authored repositories and
+a brand-new verdict shape, one round ago. Its nine cells came to **$0.7237** on
+`claude-haiku-4-5`, **$1.7679** on `claude-sonnet-5` and **$0.2698** on `codex`
+× `gpt-5.6-terra`, over three cells each, which is **$0.2412**, **$0.5893** and
+**$0.0899** a cell. That is **$0.9204 a task across the three combinations**, so
+three tasks come to **$2.7612**, if an investigation costs what a test suite
+did. In §68.4's summed-columns form,
+
+```
+claude-code x claude-haiku-4-5   3 x $0.2412 = $0.7236
+claude-code x claude-sonnet-5    3 x $0.5893 = $1.7679
+codex x gpt-5.6-terra            3 x $0.0899 = $0.2697
+                                 total        $2.7612
+```
+
+— which is round 8's own **$2.7614** re-derived through rounded per-cell
+figures, the two differing by the two hundredths of a cent the rounding costs,
+and the figure a reader with the printed cents can redo.
+
+**The bound is caching-aware and both ends of it are registered**, §59.4's rule
+kept. Round 8's three Codex cells read **361,275** input tokens and wrote
+**8,122**, and round 9 sweeps three cells on the same column, so the projection
+is that round's own totals rather than a rate scaled up. At
+`data/price-table.json`'s `gpt-5.6-terra` prices the output is **$0.0975**
+whatever happens, and the input is **$0.7225 all-uncached** against **$0.0723
+all-cached**; the Codex column is registered at **$0.17 all-cached to $0.82
+all-uncached**, with round 8's own observed effective input rate of
+**$0.4771/M** putting the expected figure near **$0.27**. The two Claude columns
+are **vendor-reported** and carry no such split: **$0.7236** on haiku and
+**$1.7679** on sonnet, **$2.4915** together. Added up at round-8-equal token
+counts the whole sweep is **$2.66 all-cached to $3.31 all-uncached** — an
+envelope whose all-uncached end sits **inside** the registered $2.5–5 and below
+its middle, which is the shape §59.4 asked for.
+
+**Why the headroom is thinner than §68.4's, and the two ways this misses.** §68
+registered its ceiling at roughly 3.2× its flat extrapolation because its anchor
+was a round of another action in another language; this one is **1.8×**, because
+the anchor is the same three columns over the same nine-cell shape one round
+ago. The **low** miss is §68.4's own and is the likelier: the range's floor *is*
+the flat extrapolation rounded down, so the sweep falls under $2.5 only if nine
+`investigation` cells cost less a cell than round 8's nine `test-authoring` ones
+— a repository read once and a proposal written straight out, against a suite
+written file by file — which would be a finding about the action and not an
+accounting surprise. The **high** miss is this round's own and is what the
+thinner headroom buys watching: an investigation that reads the whole repository
+on every turn is an input bill no anchor here has priced, and $5 is where the
+record is to stop and say so.
+
+**Why those are list prices and not a bill.** Unchanged from §68.4 and stated
+again because both halves of this round carry it. The operator's Codex is
+authenticated by **ChatGPT login**, not by an API key, so a Codex run is **not
+billed per token** at all and every Codex figure above is a **list-price
+equivalent** — tokens × `data/price-table.json`, stamped `cost_source:
+table-derived` — and not an invoice anyone received. The two claude-code columns
+are `cost_source: vendor-reported`. The experiment's own calls in 77.4 are
+neither: they are metered API calls on the operator's Anthropic key, and there
+the list-price equivalent and the invoice are the same number.
+
+**77.6 The cells: three `investigation` tasks × the three standing columns =
+nine cells, and the id register is left to be filled in before the sweep.** The
+combinations are `claude-code` × `claude-haiku-4-5`, `claude-code` ×
+`claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS`) — **the three standing columns,
+unchanged from rounds 7 and 8**, taken here without re-argument for §68.3's
+reason: the point gate is the round's one instrument and changing a column
+beside it would confound the two. So the round is three tasks × three
+combinations = **nine cells**.
+
+Each of the three is **Python** (§76.10: heap 3 stays on Python until its
+grader is trusted, and this is the round that decides the trusting), and each is
+a **declared control** — `control: true`, no construction block, no knob
+activation, no prediction. The same two things follow as in §68.2 and for the
+same reasons: the corpus's first `investigation` rows land in a cell that can be
+read against their own category's baseline, and because no task here declares a
+contrast, **round 9 moves no knob's counter and the kill discipline does not
+count it**; `calibrate-v1` gains no `investigation` multiplier row from this
+round, and that absence is the design rather than a gap in it.
+
+**The three task ids do not exist yet, and that is 77.1's order rather than an
+omission.** Authoring is gated on the experiment, so there is nothing to list
+here: **the id register for round 9 is left explicitly to be filled in, in this
+section, before the sweep, by the round's task-authoring ticket** — the corpus
+holds no `investigation` task as this is written, and `investigation` is a
+**disclosed zero** in the coverage table until it does.
+
+**How the sweep is invoked.** Sweep id **`round-9`**, on every invocation of it.
+Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry cell
+first**, in its own invocation and **graded alone before the other eight**: one
+`claude-code` × `claude-haiku-4-5` cell, the cheapest of the nine, so that a
+mis-shaped verdict on a brand-new gate is discovered on **one paid cell rather
+than nine**. §59.6's dry-cell rule is kept rather than re-argued, and round 9 is
+exactly its situation — a new instrument meeting its first paid diff. It is a
+real, paid, graded run and one of the round's nine; it is **not** a rehearsal to
+be re-run, because a task × agent × model cell is only ever swept once. Its log
+is named like any other log of the sweep: the sweep protocol **bans `-dry` in a
+log's name**. The cells are chosen on the command line with **`--task`**,
+repeated once per id, and never by staging a cut-down worktree, so the dry cell
+is
+
+```
+uv run ai-bench eval-v1 --live --sweep round-9 --agent claude-code \
+  --model claude-haiku-4-5 --task <one of the three> --log <a normally-named log>
+```
+
+and each further invocation is the same line with the remaining ids, the other
+model and the other agent, and a fresh `--log` path, the runner refusing to
+append to a log that already exists. **Nothing is re-run**: the round sweeps the
+three tasks it authors and no cell any combination has already answered.
+
+**77.7 The limits in force: the flat default of 600 seconds, every cell, and
+nothing is registered.** `LIVE_RUN_LIMITS_S`
+(`src/ai_benchmark/firstparty_v1.py`) carries four entries — `bug-fix`,
+`fault-location`, `code-review` and `codebase-comprehension`, round 4's two by
+§37 and round 5's two by §46 — and **`investigation` joins none of them**. This
+ticket adds no row: §76 rules nothing about run-time limits, and §68.5's
+precedent for a new action is explicit — `test-authoring` joined no register
+one round ago, because registering is a deliberate act and the flat default
+already covers every cell. `live_run_limit_s()` falls back to `RUN_TIMEOUT_S`
+(`src/ai_benchmark/firstparty.py:247`) for any category with no row of its own,
+and that value is **600**, so all nine cells run at the **flat default** — the
+same number the four registered categories carry, reached the other way. Saying
+it here is what lets the round's record write "at the flat default" rather than
+"under the registered 600 s", which is §46's registered sense of the distinction
+and a claim only a registered category can make. Because 600 is the number in
+force for every cell of this round and of every earlier one, **no cross-round
+caveat arises** and none is implied. And the limit bounds **the agent's run**:
+the point gate runs afterwards, over the collected answer file, and its grader
+calls are no part of the 600.
+
+**77.8 The grader's pinned version, quoted verbatim.**
+
+```
+claude-opus-5:c8c8f5e6dd67
+```
+
+That is `point_grader.GRADER_VERSION` — the model id §76.7 pinned, and the
+first twelve hex digits of the SHA-256 of the prompt beside it. It is written
+down here so that **a later grader change is visibly a different instrument**
+rather than a quiet drift under a number this section already registered: the
+rulings archive holds one file per version, a version change re-triggers every
+task's proofs (§76.10), and a bar met at this string says nothing about a bar
+met at another.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
