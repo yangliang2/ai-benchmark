@@ -97,6 +97,22 @@ This holds even now that the suite runs under `pytest-xdist` (`-n auto`, `addopt
 `pyproject.toml`) and is fast — a session still shouldn't assume it owns every core, since the
 harness may be running other sessions' acceptance commands at the same time.
 
+## Confirm the payment path before queueing toward a paid gate
+
+If a round's ticket order encodes a gate that costs money to judge — a paid
+experiment, a live instrument run, anything that is not a test suite — then
+**"the payment path exists" is a pre-flight item for the first implementation
+ticket, not for the gate ticket**. Round 9 is the precedent: the calibration
+gate needed live Anthropic SDK credentials, the machine's lack of them was
+found and written into the gate ticket's runbook at spec-review time, but
+nothing made it a condition for queueing stage 1 — so ~$19 of instrument
+tickets landed in front of a gate that could not yet be paid. That spend was
+recoverable (the machinery was keyless-testable and needed eventually); the
+next round's might not be. The rule: when `qap plan` review runs on such a
+round, the judgment points must include "the gate's resource is in hand or
+has a named arrival date", and a NO parks the round **before** stage 1, not
+after it.
+
 ## Do not queue a sweep
 
 Paid runs of the first-party task set (e.g. #57) go through
