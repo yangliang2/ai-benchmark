@@ -6882,10 +6882,18 @@ while two sink the instrument at 6 of 8. That is the whole reason the second
 clause is registered as a count and not as a percentage: on a class this size a
 percentage hides how few answers separate met from failed.
 
-**77.4 The experiment's price: $1.5–8, at list price, counted in calls and not
-in answers.** The unit is the **call**, because production mode is one call per
-planted point and an answer graded against a three-finding key costs three of
-them.
+**77.4 The experiment's price: $0.25–1.5, at peak-hour list price, counted in
+calls and not in answers.** ***Re-registered 2026-08-22, by §78.4.*** The range
+registered on 2026-08-21 was **$1.5–8**, derived at Anthropic list prices while
+the grader was pinned to `claude-opus-5`; **that registration is superseded, not
+deleted** — it was made, it stood, and §78's re-pin of the instrument to
+`deepseek-v4-pro` falsified its prices. What the re-pin falsified is the money
+and nothing else: the unit, the call table below and its **358 archive calls**
+are untouched, and this re-derivation lands **before the first grader call**,
+which is what makes it honest for the same reason the superseded one was —
+not one paid call has happened. The unit is the **call**, because production
+mode is one call per planted point and an answer graded against a three-finding
+key costs three of them.
 
 ```
 stratum A   27 fault-location   x 1 point  =  27
@@ -6917,54 +6925,94 @@ plus 2 disqualifiers, and a task that declares a third disqualifier puts the
 round outside this registration and forces a re-registration rather than being
 absorbed by it.
 
-**The prices were read, not remembered.** Fetched on **2026-08-21** with
+**The prices were read, not remembered.** Fetched on **2026-08-22** with
 
 ```
-curl -sL https://platform.claude.com/docs/en/about-claude/pricing
+curl -sL https://api-docs.deepseek.com/quick_start/pricing
 ```
 
-- `source_url`: `https://platform.claude.com/docs/en/about-claude/pricing`
-  (`https://docs.claude.com/en/docs/about-claude/pricing` redirects there)
-- `as_of`: **2026-08-21**
+- `source_url`: `https://api-docs.deepseek.com/quick_start/pricing`
+- `as_of`: **2026-08-22**
 
-That command's own output carries the row **Claude Opus 5** — the model
-`point_grader.GRADER_MODEL` names — at **$5 / MTok** base input, **$0.50 /
-MTok** cache hits and refreshes, and **$25 / MTok** output. The two prices this
-round is billed at are therefore **$5/MTok in and $25/MTok out**.
+That command's own output carries the column **deepseek-v4-pro** — the model
+`point_grader.GRADER_MODEL` names — at **$1.32 / MTok** peak input on a cache
+miss, **$0.044 / MTok** peak input on a cache hit, and **$3.96 / MTok** peak
+output, with the off-peak column at half of each: $0.66, $0.022 and $1.98. The
+same page's footnote (1) states the rule and its hours in as many words:
+"Off-peak rates are half of the peak rates. Peak hours are 01:00 - 04:00 and
+06:00 - 10:00 UTC (all other hours are off-peak). Effective 00:00 (Beijing
+Time) on Sunday, August 23, 2026, we will adjust our peak/off-peak billing
+rules, with off-peak rates applying throughout the day on weekends (Saturdays
+and Sundays, Beijing Time)." **§78.4 registers this round at peak-hour list
+pricing, the conservative end of that schedule**, so the two prices this round
+is billed at are **$1.32/MTok in and $3.96/MTok out** and a call that lands
+off-peak is billed at half of every figure below. ***Superseded 2026-08-22, by
+§78:*** the prices registered on 2026-08-21 were read from the row **Claude
+Opus 5** — **$5 / MTok** input, **$0.50 / MTok** cache hits and **$25 / MTok**
+output — fetched with `curl -sL
+https://platform.claude.com/docs/en/about-claude/pricing` on that date. That
+fetch happened and is left standing as what was registered.
 
 **The cached/uncached split the sweep protocol's item 2 asks for is settled
-here, and it is all uncached.** The grader sets no `cache_control` breakpoint
-(`point_grader.anthropic_point_grader`), every call carries a different
-deliverable, and the only shared prefix is the prompt template's **714**
-characters — an order below the smallest cacheable prefix in any case. So
-**every input token in this half is priced at the base rate** and the $0.50/MTok
-cache-hit price prices nothing this round. This is the one estimate in the
-project where that split is a fact about the instrument rather than a guess
-about a run.
+here, and the round is priced at the cache-miss rate throughout.**
+***Rewritten 2026-08-22, by §78, not merely re-priced.*** The superseded
+paragraph settled this split by arguing "and it is all uncached" from a fact
+about the Anthropic client — "the grader sets no `cache_control` breakpoint" —
+and **that argument does not carry to this vendor**, which exposes no
+breakpoint parameter to set or omit. Read from the vendor's own caching page,
+fetched 2026-08-22 with
+
+```
+curl -sL https://api-docs.deepseek.com/guides/kv_cache
+```
+
+context caching here is **automatic**: the page says the disk cache "is enabled
+by default for all users, allowing them to benefit without needing to modify
+their code", that a later request hits only when it "fully matches a cache
+prefix unit", that the system may itself persist "a common prefix across
+multiple requests" as such a unit, and that the whole mechanism "works on a
+'best-effort' basis and does not guarantee a 100% cache hit rate". Every call
+this round makes carries a different point and a different deliverable, so the
+only text a detected common prefix could cover is the template's leading **223**
+characters, the part before the point id. **No hit rate is claimed here** — the
+round is registered at the **cache-miss** rate throughout, which is the
+conservative end twice over: peak hours, and no hit assumed. An automatic prefix
+hit can only lower the bill and never raise it, and the fetched cache-hit price
+of **$0.044 / MTok** against the **$1.32 / MTok** miss price puts a size on that
+headroom: input tokens that do hit are billed at a thirtieth.
 
 **The arithmetic, at four characters a token.** The deliverables are short:
 stratum-A answers run **45–1379 characters, median 352**. Filling the grader's
 prompt template with each point and its deliverable over all 358 calls comes to
-**491,246 characters**, and the deliverables those calls carry come to
-**212,658 characters**.
+**576,450 characters**, and the deliverables those calls carry come to
+**212,658 characters**. Both totals are **re-derived, not carried over**:
+§78.4's re-pin moved `point_grader.PROMPT` — this vendor's JSON output wants
+the reply's shape stated in the prompt — from **714** characters to **954**,
+which moves the filled-prompt total (***superseded 2026-08-22, by §78***:
+**491,246 characters**) and the input-token count with it. The deliverable
+total and the answer lengths did not move, because they are facts about the
+archive and the archive did not move; they were re-derived and checked rather
+than assumed.
 
 ```
-input   491,246 chars / 4                    = 122,811 tok  x $5/M  = $0.6141
-output  low   358 calls x 100 tok thinking   =  35,800 tok  x $25/M = $0.8950
-        high  358 x 300 tok + 53,164 quoted  = 160,564 tok  x $25/M = $4.0141
-                                               archive half  $1.5091 - $4.6282
+input   576,450 chars / 4                    = 144,112 tok  x $1.32/M = $0.1902
+output  low   358 calls x 100 tok thinking   =  35,800 tok  x $3.96/M = $0.1418
+        high  358 x 300 tok + 53,164 quoted  = 160,564 tok  x $3.96/M = $0.6358
+                                               archive half  $0.3320 - $0.8261
 
-proofs  low   24 calls x 4,914 chars / 4     =  29,484 tok  x $5/M  = $0.1474
-              24 x 100 tok thinking          =   2,400 tok  x $25/M = $0.0600
-        high  48 calls x 8,914 chars / 4     = 106,968 tok  x $5/M  = $0.5348
-              48 x (2,000 quoted + 300)      = 110,400 tok  x $25/M = $2.7600
-                                               proofs half   $0.2074 - $3.2948
+proofs  low   24 calls x 5,154 chars / 4     =  30,924 tok  x $1.32/M = $0.0408
+              24 x 100 tok thinking          =   2,400 tok  x $3.96/M = $0.0095
+        high  48 calls x 9,154 chars / 4     = 109,848 tok  x $1.32/M = $0.1450
+              48 x (2,000 quoted + 300)      = 110,400 tok  x $3.96/M = $0.4372
+                                               proofs half   $0.0503 - $0.5822
 
-                                               round total   $1.7165 - $7.9230
+                                               round total   $0.3823 - $1.4083
 ```
 
-and the registered range is **$1.5–8**: the arithmetic's own low end rounded
-down to a round number and its own high end rounded up to one.
+and the registered range is **$0.25–1.5**: the arithmetic's own low end
+rounded down to a round number and its own high end rounded up to one, which is
+the same rule that turned $1.7165–$7.9230 into the **superseded $1.5–8**,
+applied to the new arithmetic.
 
 **Which half of that is an assumption, named.** The input half is arithmetic
 over text that already exists, and only the four-characters-a-token convention
@@ -6979,7 +7027,10 @@ covers one point — so the expected figure sits nearer the low end of the range
 than the high. A proof answer is assumed at **4,000 characters** at the low end
 and **8,000** at the high, against an archive whose longest answer is 1,379,
 because a heap-3 reference answer is the deliverable rather than a note about
-one.
+one; the prompt around it is the template's **954** characters plus a
+200-character point, which is where the **5,154** and **9,154** characters a
+call in the block above come from (superseded: 4,914 and 8,914, at the
+714-character template).
 
 **The one way this half misses is the grader thinking longer than it is
 registered to.** At more than 300 output tokens a call the top of the range
@@ -7048,8 +7099,12 @@ billed per token** at all and every Codex figure above is a **list-price
 equivalent** — tokens × `data/price-table.json`, stamped `cost_source:
 table-derived` — and not an invoice anyone received. The two claude-code columns
 are `cost_source: vendor-reported`. The experiment's own calls in 77.4 are
-neither: they are metered API calls on the operator's Anthropic key, and there
-the list-price equivalent and the invoice are the same number.
+neither: they are metered API calls on **the operator's DeepSeek key**, and
+there the list-price equivalent and the invoice are the same number.
+***Superseded 2026-08-22, by §78:*** this sentence registered "metered API calls
+on the operator's Anthropic key" on 2026-08-21, and §78's re-pin falsified the
+vendor name. Nothing else in 77.5 moves — the sweep's arithmetic never touched
+the grader's vendor, and correcting the name reopens none of it.
 
 **77.6 The cells: three `investigation` tasks × the three standing columns =
 nine cells, and the id register is left to be filled in before the sweep.** The
@@ -7122,19 +7177,53 @@ caveat arises** and none is implied. And the limit bounds **the agent's run**:
 the point gate runs afterwards, over the collected answer file, and its grader
 calls are no part of the 600.
 
-**77.8 The grader's pinned version, quoted verbatim.**
+**77.8 The grader's pinned version, quoted verbatim.** ***Re-registered
+2026-08-22, by §78.4.***
 
 ```
-claude-opus-5:c8c8f5e6dd67
+deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62
 ```
 
-That is `point_grader.GRADER_VERSION` — the model id §76.7 pinned, and the
-first twelve hex digits of the SHA-256 of the prompt beside it. It is written
-down here so that **a later grader change is visibly a different instrument**
-rather than a quiet drift under a number this section already registered: the
-rulings archive holds one file per version, a version change re-triggers every
-task's proofs (§76.10), and a bar met at this string says nothing about a bar
-met at another.
+That is `point_grader.GRADER_VERSION` — a three-part tuple now: **the alias
+§78 re-pinned, the checkpoint that alias announces, and the first twelve hex
+digits of the SHA-256 of the prompt**. It is written down here so that **a
+later grader change is visibly a different instrument** rather than a quiet
+drift under a number this section already registered: the rulings archive holds
+one file per version, a version change re-triggers every task's proofs
+(§76.10), and a bar met at this string says nothing about a bar met at another.
+
+***Superseded 2026-08-22, by §78:*** the version registered on 2026-08-21 was
+`claude-opus-5:c8c8f5e6dd67` — two parts, the model id §76.7 pinned and the
+prompt hash beside it. That registration was made and stood; §78.1 reopened
+§76.7 on a premise failure and the string above replaces it, **before the first
+grader call**, so no ruling was ever archived under the superseded string.
+
+**The instrument's settings are part of the pin** (§78.2): **low reasoning
+effort, temperature 0, JSON output**. The narrow per-point question — coverage
+plus a verbatim quote — is what those settings are chosen for, and one of them
+carries the vendor's own caveat, recorded here so that this registration rests
+no determinism claim on a parameter the vendor says does nothing. The vendor's
+thinking-mode guide (`https://api-docs.deepseek.com/guides/thinking_mode`, read
+2026-08-22) states that "Thinking mode does not support the temperature, top_p,
+presence_penalty, or frequency_penalty parameters" and that "for compatibility
+with existing software, setting these parameters will not trigger an error but
+will also have no effect". Thinking mode is on by default on this model, so the
+`temperature=0` the client sends is **accepted and inert**; it is sent because
+§78.2 pins it. The determinism story is §76.6's and is unchanged by the change
+of vendor: **a single call per point, rulings archived, the verdict a pure
+function of the archive**.
+
+**The pin is weak, and that is disclosed** (§78.3). This vendor's API accepts
+only **moving aliases** — `deepseek-v4-pro`, `deepseek-v4-flash` — and no dated
+checkpoint id, so the snapshot pin §76.7 promised is not available from it. It
+is compensated rather than accepted silently: the vendor announces its
+checkpoints publicly, and the announced checkpoint joins the tuple above, so **a
+checkpoint announcement under the alias is a version change** and re-triggers
+every task's proofs and opens a new rulings file, exactly as any other version
+change does. What the tuple cannot catch is an **unannounced swap under the
+alias** — the residual exposure, named here rather than hidden, and bounded by
+the fact that replay never re-calls: archived rulings and archived proofs are
+immune, and only new gradings and new proofs ride the alias.
 
 ## Round 9 amendment — 2026-08-22
 

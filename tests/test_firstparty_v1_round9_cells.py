@@ -88,13 +88,25 @@ _REGISTERED_LIMITS = {"bug-fix", "fault-location", "code-review",
 # assumption standing between its input half and a certainty.
 _CHARS_PER_TOKEN = 4
 
-# What the pricing page's `Claude Opus 5` row said when it was fetched, per
-# million tokens. Read from that fetch and registered in §77.4; the section
-# carries the URL and the as-of date beside them.
-_OPUS_INPUT_PER_MTOK = 5.0
-_OPUS_OUTPUT_PER_MTOK = 25.0
-_PRICING_URL = "https://platform.claude.com/docs/en/about-claude/pricing"
-_AS_OF = "2026-08-21"
+# What the pricing page's `deepseek-v4-pro` column said when it was fetched,
+# per million tokens. Read from that fetch and re-registered in §77.4 by §78.4;
+# the section carries the URL and the as-of date beside them. **Peak-hour**
+# prices, which is what §78.4 registers the round at — the conservative end of
+# the vendor's peak/off-peak schedule — and the **cache-miss** input price,
+# which is the conservative end a second time.
+_DEEPSEEK_INPUT_PER_MTOK = 1.32
+_DEEPSEEK_OUTPUT_PER_MTOK = 3.96
+_DEEPSEEK_CACHE_HIT_PER_MTOK = 0.044
+_PRICING_URL = "https://api-docs.deepseek.com/quick_start/pricing"
+_CACHING_URL = "https://api-docs.deepseek.com/guides/kv_cache"
+_AS_OF = "2026-08-22"
+
+# The two prices the superseded registration of 2026-08-21 ran at, and the
+# range it registered. Kept here because §77.4 must still show them as
+# superseded rather than as never having been registered.
+_SUPERSEDED_INPUT_PER_MTOK = 5.0
+_SUPERSEDED_OUTPUT_PER_MTOK = 25.0
+_SUPERSEDED_RANGE = "$1.5–8"
 
 
 def note_section() -> str:
@@ -169,6 +181,11 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     inherits. §76 (the round-9 rulings) is what this follows, and the record
     takes what is free after it — which the section says in a line, so that
     whoever writes it does not have to re-derive the frontier.
+
+    The frontier has since moved once, and only once: **§78 is round 9's
+    amendment** — the grader re-pinned to `deepseek-v4-pro` after the round
+    parked at its calibration gate — and **§79 is still free**, because it is
+    the round's record that takes it. Nothing was renumbered to make room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -177,8 +194,12 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     )
     assert numbered.count(76) == 1, "the round-9 rulings, spent once"
     assert numbered.count(77) == 1
-    assert numbered[-1] == 77, "nothing above this section exists yet"
-    assert [number for number in numbered if number > 68] == list(range(69, 78)), (
+    assert numbered.count(78) == 1, "the round-9 amendment, spent once"
+    assert numbered[-1] == 78, (
+        "§78 is round 9's amendment (the grader re-pinned) and the frontier; "
+        "§79 is still free, and it is the round's record that takes it"
+    )
+    assert [number for number in numbered if number > 68] == list(range(69, 79)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
@@ -331,6 +352,14 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
 ) -> None:
     """§77.4: 358 calls, priced from the fetched page, with both ends stated.
 
+    Re-registered on 2026-08-22 by §78.4 and re-derived here at this vendor's
+    prices: the call table is untouched by the re-pin — none of it mentions a
+    vendor — and what moved is the money and the prompt the money is counted
+    over. So the character totals below are recomputed from the moved
+    `point_grader.PROMPT` rather than carried across, and the superseded range
+    and its two per-MTok prices are asserted to be still visible in the
+    section, named as superseded, dated and pointing at §78.
+
     The unit is the call and not the answer, because production mode is one
     call per planted point and a three-finding key costs three of them — which
     is exactly the gap between 63 stratum-A answers and 115 stratum-A calls,
@@ -381,19 +410,22 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
                 )
             )
             deliverable_chars += len(run.output)
-    assert (prompt_chars, deliverable_chars) == (491246, 212658)
-    assert len(point_grader.PROMPT) == 714
+    assert (prompt_chars, deliverable_chars) == (576450, 212658)
+    assert len(point_grader.PROMPT) == 954
+    # The shared prefix a detected common prefix could cover: the template up
+    # to the point id, which is all the text two calls have in common.
+    assert len(point_grader.PROMPT.split("{point_id}")[0]) == 223
 
     lengths = sorted(len(run.output) for run in stratum_a)
     assert (lengths[0], lengths[-1]) == (45, 1379)
     assert lengths[len(lengths) // 2] == 352
 
-    per_input = _OPUS_INPUT_PER_MTOK / 1e6
-    per_output = _OPUS_OUTPUT_PER_MTOK / 1e6
+    per_input = _DEEPSEEK_INPUT_PER_MTOK / 1e6
+    per_output = _DEEPSEEK_OUTPUT_PER_MTOK / 1e6
 
     input_tokens = prompt_chars // _CHARS_PER_TOKEN
     quoted_tokens = deliverable_chars // _CHARS_PER_TOKEN
-    assert (input_tokens, quoted_tokens) == (122811, 53164)
+    assert (input_tokens, quoted_tokens) == (144112, 53164)
 
     low_out = 358 * 100
     high_out = 358 * 300 + quoted_tokens
@@ -401,50 +433,55 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
 
     archive_low = round(input_tokens * per_input + low_out * per_output, 4)
     archive_high = round(input_tokens * per_input + high_out * per_output, 4)
-    assert round(input_tokens * per_input, 4) == 0.6141
-    assert round(low_out * per_output, 4) == 0.8950
-    assert round(high_out * per_output, 4) == 4.0141
-    assert (archive_low, archive_high) == (1.5091, 4.6282)
+    assert round(input_tokens * per_input, 4) == 0.1902
+    assert round(low_out * per_output, 4) == 0.1418
+    assert round(high_out * per_output, 4) == 0.6358
+    assert (archive_low, archive_high) == (0.3320, 0.8261)
 
     # The proofs: contingent on the bar, priced over points *and* disqualifiers
     # because the writer calls once per each against both answers.
     assert (3 * (4 + 0) * 2, 3 * (6 + 2) * 2) == (24, 48)
-    proof_low_in = 24 * 4914 // _CHARS_PER_TOKEN
-    proof_high_in = 48 * 8914 // _CHARS_PER_TOKEN
-    assert (proof_low_in, proof_high_in) == (29484, 106968)
+    # A proof call's prompt is the assumed answer plus the surround: the
+    # template as it now stands and a 200-character point. The template moved
+    # with the re-pin, so these two figures moved with it.
+    surround = len(point_grader.PROMPT) + 200
+    assert surround == 1154
+    proof_low_in = 24 * (4000 + surround) // _CHARS_PER_TOKEN
+    proof_high_in = 48 * (8000 + surround) // _CHARS_PER_TOKEN
+    assert (proof_low_in, proof_high_in) == (30924, 109848)
     proof_low_out = 24 * 100
     proof_high_out = 48 * (8000 // _CHARS_PER_TOKEN + 300)
     assert (proof_low_out, proof_high_out) == (2400, 110400)
     proofs_low = round(proof_low_in * per_input + proof_low_out * per_output, 4)
     proofs_high = round(proof_high_in * per_input + proof_high_out * per_output, 4)
-    assert round(proof_low_in * per_input, 4) == 0.1474
-    assert round(proof_high_in * per_input, 4) == 0.5348
-    assert round(proof_high_out * per_output, 4) == 2.7600
-    assert (proofs_low, proofs_high) == (0.2074, 3.2948)
+    assert round(proof_low_in * per_input, 4) == 0.0408
+    assert round(proof_high_in * per_input, 4) == 0.1450
+    assert round(proof_high_out * per_output, 4) == 0.4372
+    assert (proofs_low, proofs_high) == (0.0503, 0.5822)
 
     total_low = round(archive_low + proofs_low, 4)
     total_high = round(archive_high + proofs_high, 4)
-    assert (total_low, total_high) == (1.7165, 7.9230)
+    assert (total_low, total_high) == (0.3823, 1.4083)
     # The registered range holds the arithmetic, rounded outward at both ends.
-    assert 1.5 <= total_low and total_high <= 8
+    assert 0.25 <= total_low and total_high <= 1.5
 
     arithmetic = block_holding("round total")
     for line in (
-        "input   491,246 chars / 4                    = 122,811 tok  "
-        "x $5/M  = $0.6141",
+        "input   576,450 chars / 4                    = 144,112 tok  "
+        "x $1.32/M = $0.1902",
         "output  low   358 calls x 100 tok thinking   =  35,800 tok  "
-        "x $25/M = $0.8950",
+        "x $3.96/M = $0.1418",
         "        high  358 x 300 tok + 53,164 quoted  = 160,564 tok  "
-        "x $25/M = $4.0141",
-        "archive half  $1.5091 - $4.6282",
-        "proofs  low   24 calls x 4,914 chars / 4     =  29,484 tok  "
-        "x $5/M  = $0.1474",
-        "        high  48 calls x 8,914 chars / 4     = 106,968 tok  "
-        "x $5/M  = $0.5348",
+        "x $3.96/M = $0.6358",
+        "archive half  $0.3320 - $0.8261",
+        "proofs  low   24 calls x 5,154 chars / 4     =  30,924 tok  "
+        "x $1.32/M = $0.0408",
+        "        high  48 calls x 9,154 chars / 4     = 109,848 tok  "
+        "x $1.32/M = $0.1450",
         "              48 x (2,000 quoted + 300)      = 110,400 tok  "
-        "x $25/M = $2.7600",
-        "proofs half   $0.2074 - $3.2948",
-        "round total   $1.7165 - $7.9230",
+        "x $3.96/M = $0.4372",
+        "proofs half   $0.0503 - $0.5822",
+        "round total   $0.3823 - $1.4083",
     ):
         assert line in arithmetic, line
 
@@ -452,33 +489,105 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     assert "3 tasks x (4-6 points + 0-2 disqualifiers) x (reference + foil)" in proofs
     assert "= 8-16 calls a task = 24-48 calls for the round" in proofs
 
-    # The fetch itself, pinned as a command rather than as a remembered number.
-    fetched = block_holding("curl")
-    assert f"curl -sL {_PRICING_URL}" in fetched
+    # The two fetches themselves, each pinned as the command that was run
+    # rather than as a remembered number. Found by the page each names, since
+    # the section now runs two of them.
+    assert block_holding(_PRICING_URL).strip() == f"curl -sL {_PRICING_URL}"
+    assert block_holding(_CACHING_URL).strip() == f"curl -sL {_CACHING_URL}"
 
     counted = prose()
-    assert "The experiment's price: $1.5–8" in counted
+    assert "The experiment's price: $0.25–1.5" in counted
+    assert "at peak-hour list price" in counted
     assert "counted in calls and not in answers" in counted
     assert "underprice the experiment by a sixth" in counted
     assert "**The prices were read, not remembered.**" in counted
     assert f"`source_url`: `{_PRICING_URL}`" in counted
     assert f"`as_of`: **{_AS_OF}**" in counted
-    assert "row **Claude Opus 5**" in counted
-    assert "**$5 / MTok** base input" in counted
-    assert "**$25 / MTok** output" in counted
-    assert "**$5/MTok in and $25/MTok out**" in counted
-    assert "the registered range is **$1.5–8**" in counted
+    assert f"column **{point_grader.GRADER_MODEL}**" in counted
+    assert f"**${_DEEPSEEK_INPUT_PER_MTOK} / MTok** peak input on a cache" in counted
+    assert (
+        f"**${_DEEPSEEK_CACHE_HIT_PER_MTOK} / MTok** peak input on a cache hit"
+    ) in counted
+    assert f"**${_DEEPSEEK_OUTPUT_PER_MTOK} / MTok** peak output" in counted
+    assert (
+        f"**${_DEEPSEEK_INPUT_PER_MTOK}/MTok in and "
+        f"${_DEEPSEEK_OUTPUT_PER_MTOK}/MTok out**"
+    ) in counted
+    assert "the registered range is **$0.25–1.5**" in counted
     assert "**The assumed disqualifier count is 0–2 a task**" in counted
     assert "forces a re-registration rather than being absorbed by it" in counted
     assert "**45–1379 characters, median 352**" in counted
-    assert "**491,246 characters**" in counted
+    assert "**576,450 characters**" in counted
     assert "**212,658 characters**" in counted
 
+    # The off-peak rule, recorded as read — the round is registered at the
+    # conservative end of the vendor's own schedule, so the other end and the
+    # hours it applies to are on the record beside it, footnotes included.
+    assert "Off-peak rates are half of the peak rates." in counted
+    assert (
+        "Peak hours are 01:00 - 04:00 and 06:00 - 10:00 UTC "
+        "(all other hours are off-peak)."
+    ) in counted
+    assert "Effective 00:00 (Beijing Time) on Sunday, August 23, 2026" in counted
+    assert "off-peak rates applying throughout the day on weekends" in counted
+    assert (
+        "**§78.4 registers this round at peak-hour list pricing, the "
+        "conservative end of that schedule**"
+    ) in counted
+    assert "a call that lands off-peak is billed at half of every figure" in counted
+
+    # The superseded registration of 2026-08-21 is still visible, named as
+    # superseded, dated, and pointing at the ruling that replaced it. A record
+    # that reads as though the old figures were never registered is the defect
+    # this block exists to refuse.
+    for superseded in (
+        "***Re-registered 2026-08-22, by §78.4.***",
+        f"registered on 2026-08-21 was **{_SUPERSEDED_RANGE}**",
+        "**that registration is superseded, not deleted**",
+        "***Superseded 2026-08-22, by §78:*** the prices registered on "
+        "2026-08-21 were read from the row **Claude Opus 5**",
+        f"**${_SUPERSEDED_INPUT_PER_MTOK:.0f} / MTok** input",
+        f"**${_SUPERSEDED_OUTPUT_PER_MTOK:.0f} / MTok** output",
+        "https://platform.claude.com/docs/en/about-claude/pricing",
+        "the **superseded $1.5–8**",
+        "***superseded 2026-08-22, by §78***: **491,246 characters**",
+    ):
+        assert superseded in counted, superseded
+
     # The cached/uncached split the sweep protocol's item 2 asks for, settled
-    # as a fact about the instrument: the grader sets no breakpoint.
-    assert "and it is all uncached" in counted
-    assert "sets no `cache_control` breakpoint" in counted
-    assert "**every input token in this half is priced at the base rate**" in counted
+    # from this vendor's own caching page. The superseded argument rested on a
+    # `cache_control` breakpoint the retired client had and this one does not;
+    # here caching is automatic, so the honest registration is the cache-miss
+    # rate throughout and no claimed hit rate at all.
+    assert "the round is priced at the cache-miss rate throughout" in counted
+    assert "***Rewritten 2026-08-22, by §78, not merely re-priced.***" in counted
+    assert "**that argument does not carry to this vendor**" in counted
+    assert "context caching here is **automatic**" in counted
+    assert (
+        'the disk cache "is enabled by default for all users, allowing them to '
+        'benefit without needing to modify their code"'
+    ) in counted
+    assert 'a later request hits only when it "fully matches a cache prefix unit"' in counted
+    assert (
+        'the whole mechanism "works on a \'best-effort\' basis and does not '
+        'guarantee a 100% cache hit rate"'
+    ) in counted
+    assert "the template's leading **223** characters" in counted
+    assert "**No hit rate is claimed here**" in counted
+    assert "the conservative end twice over: peak hours, and no hit assumed" in counted
+    assert "can only lower the bill and never raise it" in counted
+    assert (
+        f"the fetched cache-hit price of **${_DEEPSEEK_CACHE_HIT_PER_MTOK} / MTok** "
+        f"against the **${_DEEPSEEK_INPUT_PER_MTOK} / MTok** miss price"
+    ) in counted
+    # No live `cache_control` argument survives. The words appear in the note
+    # exactly once and only inside the superseded quotation, which is the
+    # supersession discipline: the retired argument stays visible as something
+    # that was registered and is now named as replaced, and it argues nothing.
+    assert counted.count("cache_control") == 1
+    assert 'sets no `cache_control` breakpoint" — and **that argument does not' in counted
+    # And nothing in the instrument itself carries one: this vendor exposes no
+    # such parameter to set or omit.
     assert "cache_control" not in point_grader.PROMPT
     assert "cache_control" not in (
         (_REPO / "src" / "ai_benchmark" / "point_grader.py").read_text(
@@ -757,20 +866,94 @@ def test_the_grader_version_is_quoted_verbatim() -> None:
     A bar met at one grader version says nothing about a bar met at another, so
     the version is written into the registration rather than left to be read
     off the rulings archive afterwards. Quoted verbatim means exactly that: the
-    string in the note is `GRADER_VERSION`, model id and prompt hash both, and
-    a prompt edit moves it — which is what makes a later grader change visibly
-    a different instrument.
+    string in the note is `GRADER_VERSION` — never a string typed here or
+    typed there — and a prompt edit moves it, which is what makes a later
+    grader change visibly a different instrument.
+
+    Re-registered on 2026-08-22 by §78.4, and the string is now a **three-part
+    tuple**: the alias, the checkpoint that alias announces, and the prompt
+    hash. §78.3 is why the middle part exists — this vendor's API accepts only
+    moving aliases, so the announced checkpoint is what carries the pin, and
+    the residual exposure of an unannounced swap is disclosed rather than
+    hidden. The settings §78.2 makes part of the pin are asserted here too,
+    including the vendor's own caveat that `temperature` is inert under
+    thinking mode: a registration must not rest a determinism claim on a
+    parameter the vendor documents as doing nothing.
     """
-    version = block_holding("claude-opus-5").strip()
+    version = block_holding(point_grader.GRADER_MODEL).strip()
     assert version == point_grader.GRADER_VERSION
-    assert version == f"{point_grader.GRADER_MODEL}:{point_grader.PROMPT_HASH}"
-    assert point_grader.GRADER_MODEL == "claude-opus-5"
+    assert version == (
+        f"{point_grader.GRADER_MODEL}:{point_grader.GRADER_CHECKPOINT}"
+        f":{point_grader.PROMPT_HASH}"
+    )
+    assert len(version.split(":")) == 3
 
     counted = prose()
     assert "`point_grader.GRADER_VERSION`" in counted
     assert "the first twelve hex digits of the SHA-256 of the prompt" in counted
     assert "**a later grader change is visibly a different instrument**" in counted
     assert "one file per version" in counted
+    assert (
+        "**the alias §78 re-pinned, the checkpoint that alias announces, and "
+        "the first twelve hex digits of the SHA-256 of the prompt**"
+    ) in counted
+
+    # The superseded version string, still visible and named as superseded,
+    # dated and pointing at the ruling that replaced it — and the fact that
+    # makes the replacement honest: it happened before the first grader call,
+    # so nothing was ever archived under it.
+    assert "***Re-registered 2026-08-22, by §78.4.***" in counted
+    assert (
+        "***Superseded 2026-08-22, by §78:*** the version registered on "
+        "2026-08-21 was `claude-opus-5:c8c8f5e6dd67`"
+    ) in counted
+    assert "two parts, the model id §76.7 pinned and the prompt hash" in counted
+    assert "**before the first grader call**" in counted
+    assert "no ruling was ever archived under the superseded string" in counted
+
+    # §78.2's settings are part of the pin, and they are the settings the
+    # client actually sends.
+    assert (
+        "**low reasoning effort, temperature 0, JSON output**"
+    ) in counted
+    grader_source = (_REPO / "src" / "ai_benchmark" / "point_grader.py").read_text(
+        encoding="utf-8"
+    )
+    for setting in (
+        'reasoning_effort="low"',
+        "temperature=0",
+        'response_format={"type": "json_object"}',
+    ):
+        assert setting in grader_source, setting
+
+    # The vendor's own caveat, quoted, so the pin claims nothing the vendor
+    # denies; the determinism story stays §76.6's.
+    assert (
+        '"Thinking mode does not support the temperature, top_p, '
+        'presence_penalty, or frequency_penalty parameters"'
+    ) in counted
+    assert (
+        '"for compatibility with existing software, setting these parameters '
+        'will not trigger an error but will also have no effect"'
+    ) in counted
+    assert "**accepted and inert**" in counted
+    assert (
+        "**a single call per point, rulings archived, the verdict a pure "
+        "function of the archive**"
+    ) in counted
+
+    # §78.3's weak pin, disclosed with what compensates it and what it cannot
+    # catch.
+    assert "**The pin is weak, and that is disclosed** (§78.3)" in counted
+    assert "accepts only **moving aliases**" in counted
+    assert f"`{point_grader.GRADER_MODEL}`, `deepseek-v4-flash`" in counted
+    assert "no dated checkpoint id" in counted
+    assert (
+        "**a checkpoint announcement under the alias is a version change**"
+    ) in counted
+    assert "**unannounced swap under the alias**" in counted
+    assert "the residual exposure" in counted
+    assert "replay never re-calls" in counted
 
 
 def test_nothing_of_round_9_has_been_swept_and_no_task_exists_yet(
