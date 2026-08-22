@@ -105,25 +105,38 @@ def test_fake_grader_never_constructs_a_live_client(
     assert ruling.covered
 
 
-def test_importing_the_module_constructs_no_client(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_importing_the_module_constructs_no_client() -> None:
     """The import and the client both live inside the factory, so importing
     this module needs no credentials — what keeps the lint, replay and every
-    suite keyless."""
-    import importlib
+    suite keyless.
 
-    import openai
+    Checked in a subprocess with the key scrubbed from the environment: a
+    fresh keyless interpreter imports the module and reads the version, so a
+    client constructed at import time would fail loudly. An in-process
+    ``importlib.reload`` is exactly wrong here — it rebinds the module's
+    classes in place, and every later ``Ruling`` equality in the same worker
+    then compares instances of the old class against the new one (pydantic
+    equality is class-identity-aware), a poisoning that surfaces only when
+    xdist co-locates this test with a Ruling-asserting one.
+    """
+    import os
+    import subprocess
+    import sys
 
-    def never_constructed(*args: object, **kwargs: object) -> object:
-        raise AssertionError("live DeepSeek client must not be constructed")
-
-    monkeypatch.setattr(openai, "OpenAI", never_constructed)
-    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-
-    from ai_benchmark import point_grader
-
-    assert importlib.reload(point_grader).GRADER_VERSION == GRADER_VERSION
+    env = {k: v for k, v in os.environ.items() if k != "DEEPSEEK_API_KEY"}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from ai_benchmark import point_grader; print(point_grader.GRADER_VERSION)",
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == GRADER_VERSION
 
 
 # --- the live seam, on the vendor's OpenAI-compatible response shape ----------
