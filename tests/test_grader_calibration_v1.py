@@ -7,7 +7,7 @@ quote and what a reader checks the gate by hand from, so asserting on the page
 catches a figure that is right in `gate()` and wrong in the rendering.
 
 **No live grader is ever reached.** The instrument is injected by monkeypatching
-`point_grader.anthropic_point_grader`, exactly as the point-gate suite does, and
+`point_grader.deepseek_point_grader`, exactly as the point-gate suite does, and
 the fakes below rule on a marker rather than on meaning — what is under test is
 the experiment around the grader: which rows land in which stratum, how many
 calls each stratum costs, which verdict is compared with which, and which of the
@@ -366,7 +366,7 @@ class AlwaysCovered:
 def install(
     monkeypatch: pytest.MonkeyPatch, grader: Callable[[str, Point], Ruling]
 ) -> None:
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", lambda: grader)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", lambda: grader)
 
 
 def refuse(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -375,7 +375,7 @@ def refuse(monkeypatch: pytest.MonkeyPatch) -> None:
     def never_built() -> Callable[[str, Point], Ruling]:
         raise AssertionError("a grader was built when none should have been")
 
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", never_built)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", never_built)
 
 
 def calibrate(

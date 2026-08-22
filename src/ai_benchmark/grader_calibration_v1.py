@@ -61,7 +61,7 @@ run interrupted after two hundred paid calls resumes rather than repeating
 them — the project's own discipline that a second grading is a second
 measurement of something already measured.
 
-**Running it for real needs `ANTHROPIC_API_KEY` exported in the invoking
+**Running it for real needs `DEEPSEEK_API_KEY` exported in the invoking
 shell.** The grader is a live client; the committed classification cache that
 masks a missing key for `classify` masks nothing here.
 """

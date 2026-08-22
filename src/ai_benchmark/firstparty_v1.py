@@ -5912,7 +5912,7 @@ def prove_points(
     lint then does with what this wrote is `_the_reference_resolves_and_the_
     foil_fails`, offline.
 
-    `ANTHROPIC_API_KEY` has to be exported in the invoking shell: the factory
+    `DEEPSEEK_API_KEY` has to be exported in the invoking shell: the factory
     constructs a live client, so a proof run without it fails at auth
     resolution rather than at the bar.
 

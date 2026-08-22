@@ -576,7 +576,7 @@ def test_the_observed_outcomes_call_path_replays_from_the_default_archive(
     archive; with a required argument it would raise on the first one. No
     grader is constructed on that path, which the poisoned instrument pins."""
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", never_built)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", never_built)
     task = point_task(tmp_path / "tasks")
     covered = [p["id"] for p in POINTS]
     diff = workdir_diff(task, wrote({ANSWER_PATH: answer(*covered)}))
@@ -613,7 +613,7 @@ def test_eval_v1_replays_a_point_keyed_row_from_the_rulings_flag(
     """`--replay` reads the archive `--rulings` names and constructs no
     client — the poisoned instrument would raise if the command reached for
     one."""
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", never_built)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", never_built)
     tasks = tmp_path / "tasks"
     task = point_task(tasks)
     rulings = tmp_path / "rulings"
@@ -641,7 +641,7 @@ def test_eval_v1_live_grades_a_point_keyed_row_and_leaves_the_archive_behind(
         f"(workdir / {ANSWER_PATH!r}).write_text({written!r})\n"
     )
     factory = FakeFactory()
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", factory)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", factory)
     tasks = tmp_path / "tasks"
     point_task(tasks)
     rulings = tmp_path / "rulings"
@@ -663,7 +663,7 @@ def test_eval_v1_with_no_rulings_flag_reads_the_module_level_default(
     second copy of the path owned here, so an invocation naming no archive
     replays out of the one every other caller writes to."""
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", never_built)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", never_built)
     tasks = tmp_path / "tasks"
     task = point_task(tasks)
     diff = workdir_diff(task, wrote({ANSWER_PATH: answer(*[p["id"] for p in POINTS])}))

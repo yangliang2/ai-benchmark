@@ -171,7 +171,7 @@ def _eval_v1_command(args: argparse.Namespace) -> None:
         # rulings or fails loudly, and never re-grades. Passed as the factory
         # rather than as a grader, so that a sweep whose tasks are all graded
         # by some other shape constructs no client at all.
-        grader_factory=point_grader.anthropic_point_grader if args.live else None,
+        grader_factory=point_grader.deepseek_point_grader if args.live else None,
     )
     resolved = int(sum(r.quality_value for r in records))
     print(f"evaluated {len(records)} runs over {len(tasks)} tasks ({resolved} resolved)")
@@ -220,13 +220,13 @@ def _prove_points_v1_command(args: argparse.Namespace) -> None:
     foil answer failing it, the pinned grader version, and the hashes of the
     key and of both answers.
 
-    **`ANTHROPIC_API_KEY` must be exported in the invoking shell.** The grader
+    **`DEEPSEEK_API_KEY` must be exported in the invoking shell.** The grader
     is a live client, so a proof run without it fails at auth resolution rather
     than at the bar, and no partial archive is written for the task that
     failed.
     """
     tasks = firstparty_v1.load_task_set(args.tasks)
-    written = firstparty_v1.prove_points(tasks, point_grader.anthropic_point_grader)
+    written = firstparty_v1.prove_points(tasks, point_grader.deepseek_point_grader)
     print(f"proved {len(written) // len(firstparty_v1.PROOF_SIDES)} point-keyed task(s)")
     for path in written:
         print(f"  wrote {path}")
@@ -289,7 +289,7 @@ def _calibrate_grader_v1_command(args: argparse.Namespace) -> None:
     the bar in counts — having built no grader and made no call. That is what
     lets §76.4's bar be registered before the first paid ruling.
 
-    **`ANTHROPIC_API_KEY` must be exported in the invoking shell** for anything
+    **`DEEPSEEK_API_KEY` must be exported in the invoking shell** for anything
     but `--split-only`. The grader is a live client, so a run without it fails
     at auth resolution rather than at the bar.
     """
@@ -298,7 +298,7 @@ def _calibrate_grader_v1_command(args: argparse.Namespace) -> None:
     print(grader_calibration_v1.calibrate_grader(
         tasks, args.tasks, logs,
         split_only=args.split_only,
-        grader_factory=point_grader.anthropic_point_grader,
+        grader_factory=point_grader.deepseek_point_grader,
         rulings_dir=args.rulings,
     ))
 
@@ -527,7 +527,7 @@ def main(argv: list[str] | None = None) -> None:
             "answer does not resolve, whose foil answer does, or whose key, "
             "answers or grader version have moved since the proof was taken: "
             "re-proof triggers on edit, not on every lint run. "
-            "ANTHROPIC_API_KEY must be exported in the invoking shell — the "
+            "DEEPSEEK_API_KEY must be exported in the invoking shell — the "
             "grader is a live client, so a run without it fails at auth "
             "resolution rather than at the bar."
         ),
@@ -651,7 +651,7 @@ def main(argv: list[str] | None = None) -> None:
             "itself. Rulings are archived under --rulings, one file per "
             "instrument version, and are never merged into the unified "
             "dataset: a calibration ruling is instrument data, not a "
-            "combination's result on an instance. ANTHROPIC_API_KEY must be "
+            "combination's result on an instance. DEEPSEEK_API_KEY must be "
             "exported in the invoking shell for anything but --split-only."
         ),
     )

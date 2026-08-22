@@ -285,7 +285,7 @@ def test_the_lint_makes_no_grader_call_on_a_point_keyed_task(
     write_task(tmp_path)
     grader = prove(tmp_path)
     taken = len(grader.calls)
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", explode)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", explode)
 
     assert problems(tmp_path) == []
     assert len(grader.calls) == taken
@@ -301,7 +301,7 @@ def test_lint_v1_has_no_flag_that_reaches_the_grader(
     then read off its own help — the writer is a subcommand, and not among
     them."""
     proved(tmp_path)
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", explode)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", explode)
     monkeypatch.setenv("COLUMNS", "200")
 
     main(["lint-v1", "--tasks", str(tmp_path), "--write-hash-gates"])
@@ -613,12 +613,12 @@ def test_a_stale_grader_version_in_the_archive_is_refused(tmp_path: Path) -> Non
     like any other: what the retired instrument said about this answer is not
     what the pinned one would say."""
     write_task(tmp_path)
-    prove(tmp_path, FakeGrader(version="claude-opus-5:0000deadbeef"))
+    prove(tmp_path, FakeGrader(version="deepseek-v4-pro:DeepSeek-V4-Pro-0801:0000deadbeef"))
 
     reported = problems(tmp_path)
 
     assert len(reported) == len(firstparty_v1.PROOF_SIDES)
-    assert "claude-opus-5:0000deadbeef" in reported[0]
+    assert "deepseek-v4-pro:DeepSeek-V4-Pro-0801:0000deadbeef" in reported[0]
     assert point_grader.GRADER_VERSION in reported[0]
 
 
@@ -683,7 +683,7 @@ def test_prove_points_v1_writes_both_sides_with_the_version_and_the_hashes(
     stamped with everything the lint will hold it to."""
     write_task(tmp_path)
     grader = pinned_grader()
-    monkeypatch.setattr(point_grader, "anthropic_point_grader", lambda: grader)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", lambda: grader)
 
     main(["prove-points-v1", "--tasks", str(tmp_path)])
 
@@ -707,7 +707,7 @@ def test_prove_points_v1_needs_an_exported_api_key(tmp_path: Path) -> None:
     at auth resolution rather than at the bar."""
     del tmp_path
 
-    assert "ANTHROPIC_API_KEY" in (cli._prove_points_v1_command.__doc__ or "")
+    assert "DEEPSEEK_API_KEY" in (cli._prove_points_v1_command.__doc__ or "")
 
 
 def test_prove_points_v1_archives_what_the_instrument_said_and_judges_nothing(
