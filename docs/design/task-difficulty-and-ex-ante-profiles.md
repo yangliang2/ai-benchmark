@@ -7136,6 +7136,83 @@ rulings archive holds one file per version, a version change re-triggers every
 task's proofs (§76.10), and a bar met at this string says nothing about a bar
 met at another.
 
+## Round 9 amendment — 2026-08-22
+
+**78. The grader instrument is re-pinned: `deepseek-v4-pro`.** Round 9
+parked at its calibration gate on 2026-08-22 (#123): stage 1 landed entire —
+the grader, the point gate, the lint, `calibrate-grader-v1`, §77 — and the
+experiment's 358 calls could not be paid for, because the machine holds no
+Anthropic SDK credentials and no path to them was found. Grading through the
+`claude` CLI was put and stays refused: an unpinned harness inside a
+versioned instrument. This section records the third option, ruled in the
+owner's session of 2026-08-22: reopen §76.7 — whose choice of vendor rested
+on a premise that has failed — and re-pin the grader to a vendor whose
+credentials the owner holds. Nothing here is a result; the round's record
+still follows at the next free number.
+
+**78.1 The reopen is a premise failure, not a reversal.** §76.7 chose
+claude-opus-5 over a cross-vendor grader for two reasons: no cell graded by
+the model that produced it, and not recruiting the corpus's second vendor
+into its first verdict instrument. Both reasons assumed the choice existed.
+It does not — the alternatives actually on the table are a DeepSeek-graded
+round 9, an indefinite park that quietly becomes abandonment, or the CLI
+grading §76.7's session already refused. Against those three, the amendment
+carries §76.7's own logic further than the original did: **the self-grading
+shape vanishes entirely** — DeepSeek is a column in no sweep and shares a
+vendor with neither swept vendor, where opus shared one with two thirds of
+the columns — and the sentence the original trusted still holds verbatim:
+the verdict's trust rests on the calibration number, not on vendor
+separation. The 90/80 bar (§77.3) is unchanged, and this amendment is the
+first time it does precisely the job §76.2 built it for: deciding whether a
+grader nobody has vouched for is worth trusting. If `deepseek-v4-pro` cannot
+clear ≥ 57 of 63 and ≥ 7 of 8, the round closes as a record of that, §76.1's
+own sentence, and the corpus has spent an experiment's price to learn it.
+
+**78.2 What is no longer claimed: "strictly above both ladder rungs".**
+§76.7's tier argument does not carry a claim that `deepseek-v4-pro` clears
+sonnet, and none is made. The claim's load — a grader capable enough that
+its rulings mean something — moves onto the bar, where it always really
+sat: an under-capable grader fails calibration visibly, at registered
+counts, before an authoring dollar moves. The instrument's settings are part
+of the pin: **low reasoning effort, temperature 0, JSON output** — the
+per-point question is narrow (coverage plus a verbatim quote), a reasoning
+chain buys latency and paraphrase risk, and a paraphrased span is refused
+mechanically either way. k-vote majority stays the recorded fallback,
+adopted only if calibration shows per-point instability (§76.6).
+
+**78.3 The weak pin, disclosed, and what compensates it.** Anthropic model
+ids are snapshots; the DeepSeek API accepts only **moving aliases**
+(`deepseek-v4-pro`, `deepseek-v4-flash`) and no dated checkpoint id, so the
+pin §76.7 promised is not available from this vendor. Disclosed, and
+compensated rather than accepted silently: the vendor announces checkpoints
+publicly (at this writing `V4-Pro-0813`, GA 2026-08-13), and the announced
+checkpoint **joins the instrument's version tuple** — alias, announced
+checkpoint, prompt hash. A checkpoint announcement under the alias is
+thereby a version change, and a version change already re-triggers every
+task's proofs (§76.10) and opens a new rulings file (§77.8's sentence: a
+bar met at one string says nothing about a bar met at another). What the
+tuple cannot catch is an unannounced swap under the alias — named here as
+the residual exposure, bounded by the same fact that bounds everything
+else: replay never re-calls, so archived rulings and archived proofs are
+immune; only new gradings and new proofs ride the alias. The non-hermetic
+surface (§76.6) changes vendor, not size.
+
+**78.4 What §77 keeps, and the one thing re-registered before the first
+paid call.** The split (77.2), the bar (77.3), the call count (358, 77.4's
+table), the sweep's price (77.5), the cells (77.6) and the limits (77.7)
+all stand — none of them mentions a vendor. Two entries are superseded:
+**77.8's version string**, replaced by the new tuple quoted verbatim once
+the implementation pins it, and **77.4's dollar range**, re-derived at
+DeepSeek list pricing (registered at peak-hour list price, the conservative
+end of the vendor's peak/off-peak schedule) — both re-registered by the
+implementing ticket **before the first grader call**, which is honest for
+the same reason §77's original registration was: not one paid call has
+happened. The implementation changes are three and small: the live client
+moves to the vendor's OpenAI-compatible endpoint, the version constant
+becomes the tuple, and §77's amendment lands with its pins. Delivery is the
+standing pipeline's: tickets cut on #123, the park comment superseded, and
+#130's runbook then runs with the DeepSeek key in the invoking shell.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
