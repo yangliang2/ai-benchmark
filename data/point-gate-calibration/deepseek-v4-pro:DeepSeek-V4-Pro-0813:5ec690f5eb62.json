@@ -1,0 +1,4907 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62",
+  "answers": [
+    {
+      "task_id": "matcher-brace-expansion",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "04d661785930fa07e5284bd449e731c2732e6dd32f2f0f816efcd016ffbad4bf",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've successfully added the `expand(pattern)` function to matchers.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "measures-merge-duplicate-converters",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "db320e11abd00f7248f83d67e8a044c7acbc65e3755e6c2c4e55a27e74c0d84e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The refactor is complete",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "metrics-dispatch-table",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "cff2f0ce3d410d6cbe61d1a8493447ae5c72db95231368d4efff259062f29594",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "microtemplate-for-loops",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "aa33de258a867b12a63d478682fedcf8a167b85051f666848e9ffcb1e5ea023d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All requirements have been successfully implemented",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pipeline-move-retry-policy",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "bcb53d709267a40563b325284b8c326d258e10d72796c28fcc37745a46191554",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The refactor is complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "slugger-unique-slugs",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "11eb2edc8a47369bd3bf8d314281380a1ca7f3373a524f33bf54cd48441d3183",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "spans-subtract-gaps",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f6fb8ea00948cbddfced25c3c1eb215c9b65d905e8992936e3c6a77efc6cf9e9",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "spendreport-invert-storage-dependency",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "6f1c6e7bfdf0e3b47aea678d0e4ada85b94a72499b54cfb7b9bcc8762ccadcee",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The refactor is complete:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "tablecli-filter-command",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "24646886cc85283295d36b0b49350f2ef7ba850c56733f3c42a9059b279c3d21",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation is complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "tasktrack-reshape-parse-result",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "51885fd34c0ca7c0928587c4ae49049590ba5e4714d0396abe68e883b7c61e1e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The refactor is complete and verified.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "textdoc-split-render-flag",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "79a3109d04d31495c5fe08bbd07588ed757109e371fad4a119e00becfdf3b715",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The refactoring is complete and all tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "wordcount-top-words",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "9a73df26d889960f0b7592b9960f9885f28895d02e6f462a0381e11157345599",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "workflow-guarded-transitions",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "131e484884a1b850a4b392eb196422c41807b6e558bc2d4ee2bb8eabe0345baa",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done. I've added:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "calc-infix-evaluator",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "32500a233091b0fba80cd2703820a63a6e37a2c25265a5b5fb7b81a5de84bda9",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "cart-extract-coupon-policy",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "359d22784e1b68cf4f9fb38d1bcc040d0021b1645bb4d6b5bed4434ee2853be8",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactor done:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "checkout-discount-codes",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "ec585e3ba5cfb226207ca775ea5764281af941dc0933c315434e73184bd1d759",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "docstore-json-pointer",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "64b95ef726f773e11ad8d7efd1f9c99ba05bb85d110b088918278a54698a1bb4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `resolve(document, pointer)` and `DocStore.fetch(name, pointer)` for RFC 6901 JSON Pointer resolution in `docstore.py:1`, with correct `~1`/`~0` decode order, strict index validation, and existing methods untouched.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "exporters-pull-up-base-class",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "845c3e842ccd6c8c44ff7e0c095c945d87aa52b99acfe801edd065cb2db63709",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "gradebook-split-compute-from-format",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "87dcd239f0a6bea1070535f4ddb454611034d2b405cd403cc299152a71eb9706",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "jobrunner-dependency-order",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "7c6c2b32b1ee7daa527e0f7c5a75193b782d1b911830e2bce54b5a33cacbe965",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ledger-split-formatting",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "4cdf50d764f0aff37cf117018ad90dabbfa7b7d3d2a2ce05b87b13e975cb935a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "logparse-extract-timestamp-parsing",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "1a3568c9733f316478c05c9330639dcd882ddc1f0e967fe3f4acc5df6d3ce0f2",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactored `logparse.py` to route all three readers through a new `parse_stamp(line)` helper",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "matcher-brace-expansion",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f376d4b5e50c67fabc217ec3240208a9da1130373f2ce86dea8a6ff071124849",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "measures-merge-duplicate-converters",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "1a5d03bc55a54e7fdcd0df092271b4e3d7bf8fa6d1cd41bba35cdf6a4db5a7ba",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "metrics-dispatch-table",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "13cd30906c08a833400d2c95ad6027fac532b1ab775b1e13ff24f0042b570a8f",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "microtemplate-for-loops",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f7c2224e35eb1262d65226cd6cfbd8038d1fa233ebeca0dad2b8dbe597b2c890",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pipeline-move-retry-policy",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "0194cfb514e97ee2509bb6e593b7b2655cd43e6c496ffa7ec3de88489db491f3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "slugger-unique-slugs",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "d611b138b230b2c36cfcb942e0b1f7e1a827b05b9ad887a108b4800ea47dba07",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "spans-subtract-gaps",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "a688fe279e7c7a76fd2cb422e092179fd5935e2dcb8ea91709a45fc7e7283157",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "spendreport-invert-storage-dependency",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "8ad2301423e5c63a888bd0929741c625d437766fe50452f034d34bdd20a58e14",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "tablecli-filter-command",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "d4cf77275c8daec31365f25acf9a2c727df6ba39f88366026a9ea66c2a2692e3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "tasktrack-reshape-parse-result",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "d20d8e72efabe023eeee44d0d5645215f5133bdf3b5fc731af9a78e65aea4018",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "textdoc-split-render-flag",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "00867dd3ee601b702481febef3957f18324f8c78cfc325982bd197aa38e21bbd",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All 5 tests pass, and no `render` references remain anywhere in the codebase.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "wordcount-top-words",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "8b165e5fb40739010ff462cb4bba3b905e510a0f132dd5cc7ddaf1b22deadd3f",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "workflow-guarded-transitions",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "e79b952cfb4dee44a316a05a6d4544e44f462a2a1696f3a6608b9a37d320db66",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Both files are updated and verified",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "calc-infix-evaluator",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "5c39a52de8b9964e7f6768eba48a8649152a2ec8ff5e9b51747d3ca04f5694e8",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done!",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "cart-extract-coupon-policy",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "def9330c683b8362d8eeb630131ed6842778ec465a93ed3ab5c6c8094775d3d3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The refactor is complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "checkout-discount-codes",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "2b653302e699ac933cc0737c10de4250ab72a4be95762ecc04417edcc87e16fa",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and working correctly.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "docstore-json-pointer",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "8fce4da40d7cf693b3d0646d3f7358d7aacb8c07404510ee70f5a17c4e54ec2a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Excellent! I've successfully added JSON Pointer addressing (RFC 6901) to docstore.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "exporters-pull-up-base-class",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "34039f9ac774b1443642a1d3ab8b23c65455ab5a78d60503c7ed4d582f4dfa14",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "gradebook-split-compute-from-format",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "9644b0ed40f04198026920f1f1bfef71dc9d777a5416ec4d17e2ea5ec453c490",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Excellent! The refactoring is complete and all tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "jobrunner-dependency-order",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "38511723ff8d3aa52c333b27f9341ec73f31d918f3e38cf45c81eef503ec7594",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and tested",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "ledger-split-formatting",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "074386237dc194d932ab13005f25bd309585e122c26fa9b23fbaacb7c1de4023",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've successfully completed the refactor:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "logparse-extract-timestamp-parsing",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "fba8b608883ccd4e7d9ca81914614fa9bff9a584750b17505050778a57ec53d3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settings-merge-layers-l1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "2afe16e3e7596ec9d75e328aaca6f614cb00d83ae1aa1c2a56905f0307d3916b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've added the `merged(layers)` function to settings.py",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settleup-settle-debts",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "21c62c5bb7d49ec76a35b7eccfbb214bb8195b58f0b6577dc7b18f2c5e5eb1bb",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation works correctly.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "stockroom-extract-shelf-copy",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "35f05d58fe224dde976fa1261db481c6c714c29d8c464fb2cd11dfb03819b953",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "alerts-rule-table",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "45b915d563e6a69d2fb2b5dc48d69f128780a3b66406a3293953fa53eaef62c1",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "billing-split-by-weight-l1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "4fb32bdf03b1e61498b8cdc1c942990e4b9b1aa6b5fd694c0cd318e433cc96d5",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation is complete and correct.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "billing-split-by-weight-l2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "66bb9b0c005004df3ccc95ac2c40f89aa44771417a55822125276777c081bf7b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and handles all the requirements:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "billing-split-by-weight-l3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0331003e2468360731483c1302199ffb2310fdf5bca0d2288085e2d84c3a0810",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've added the `split_by_weights` function to `billing.py`.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "cartons-label-shipments",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "db4c53080b1cea974a65bc16fc8a5638f487c177a5f0c25eb6341613bdf3dfee",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "cartons-pack-shipments",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "6934ba613b9e292c94fb6c7e10555e49cdec72fa3e2db3eb543529e29fe214cb",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The `pack` function is working correctly:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "duration-parse-written-l1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "9c07ddd3b2678a2f77a47138440cffec40f8e6a701c03787d517377db7bbcd69",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've successfully added the `parse(text)` function to duration.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "duration-parse-written-l2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f5a6e043f01f93bd5e8813018732f95355269d997214273bc45cda2921540317",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've added the `parse(text)` function to duration.py",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "duration-parse-written-l3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "b60ef6dc98a378dc1f7cdf70e86c11b181fdd9760d5e76f458287ed2471c4f84",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect. I've added a `parse(text)` function to `duration.py`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "inventory-consume-lots-l1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f274cc3f9eb1be86379d9a32b4e0d15f29d80eed69780e9c9bd6aab21f45b07d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done. The `consume(lots, quantity)` function has been added to inventory.py and passes all requirements:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "inventory-consume-lots-l2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "6d0dcc8453729eda708c8871914d226ea06e3e0989fc4b4ab27a745c9bd12c3c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "inventory-consume-lots-l3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "ed243f292bb68a54c87b2511aca6cdc8914756f697ab094a38196accb1563bb5",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "leaderboard-extract-rank-key",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "4653d2008300859f31e15d2befa28bba14f768419b24e6a97d0b0b126cf1a5ff",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "playlist-space-out-artists",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "5fbc27f9787e6c81d3b49b1f04f4f179862dba89c4f2fcdd1feac4b57f6c7000",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! I've successfully added the `spread` function to playlist.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "playlist-trim-to-length",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "b0a5635a13e864fee4cfc10e5daea8cb79f011a30ac97d990d16b42d72fa9497",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "sessions-extract-expiry",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "c9339064638c2ff3ce19c8cf7f854529af813c3d5caf851b4aa9d9b8f4936aa4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The refactor is complete and all tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settings-merge-layers-l2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "8624e3f743b65f5c49c15146286f483d5533e9a36a1b79cf33ae71e7af97ed81",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settings-merge-layers-l3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "56d4b0e27cdda15ae7cf415b3a0b0a5c9f70658c51f550f1abe2c1273ca050e4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settleup-apply-expense",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "08f806a2b24c6a4f401b5d64eba0f046a7288548257001bae7cea20a58dd39ba",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "alerts-rule-table",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "df65680408224f7d86671f3458bf85c6c37c91ff97c96dafc4772342b4c05772",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "billing-split-by-weight-l1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "907958f5b13d103c08fd69478a754610b2a6d66aea888a21c6fdb84728bc4166",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "billing-split-by-weight-l2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "aee1351e81db714e248c24e6d9380942672579c43d365ab57b256de21b1c3fbf",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `split_by_weights(amount, weights)` to billing.py:34-58",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "billing-split-by-weight-l3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "41917bfdaa532ebd7b748f3c1f11f64a8f1ea9138be7cbb4d75e7b45936f3441",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "cartons-label-shipments",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "855e2c254a0c6b9c38d7d8894a9973a7db598e959b4bef786c16a82075622c0f",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "cartons-pack-shipments",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "53c6c80557746018f6dcc91933a8cd073f2ebb54f60e5601d11a20e249e92bf1",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "duration-parse-written-l1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "3a06ec87bc900ae855592bcc737f3d9ad03b552829d9a0d320cd41a173d0291a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "duration-parse-written-l2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "56e93ac508682f6cb31486553aea6969feed1fc7b7d720ff4bed94444420a56b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `parse(text)` to `duration.py`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "duration-parse-written-l3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "d6abc4e555496518a711739707d8348f3d0de2046f5a4ac40279ac911f2c6896",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "inventory-consume-lots-l1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "9a008da56e161599472ff424ad2890b78a928bd7925e9407f58554e935563b28",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `consume(lots, quantity)` to inventory.py:41-59",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "inventory-consume-lots-l2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "1cf97a268cbde2767ca962ffe4b00bc8bb5954add3c6e127420b5a1ab9cebf9e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Works as expected.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "inventory-consume-lots-l3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "bab91430a616d1e6a8b5bb3872a32cc5a438c34008af0f18280852c93a5af598",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "leaderboard-extract-rank-key",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "0eacd5021499f10196cf5a842a747d8ae01ae6bb22e7903a7d764cee3413b6a3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactor complete",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "playlist-space-out-artists",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "dc80da0cb30f1423b0f5af3102443783082f01cc52e807db7c9c973c3b364622",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `spread(tracks)` to playlist.py:1",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "playlist-trim-to-length",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f1ad33090879eab367c325ae248b2a5a789c4d28e4fb46f611c54e33c76066a6",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `trimmed(tracks, seconds)` to playlist.py, walking the queue and stopping at the first track that would exceed the slot, raising `ValueError` for negative `seconds`.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "sessions-extract-expiry",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "aeb81adef8b9e9ebeb7c48b478c3e33c88e87779d8832a3c01e258a44348e10e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settings-merge-layers-l1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "2fddae9f88ec351d71a0abc9de1fde14eac5cb5138b88b78886f9f3ba47a0071",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `merged(layers)` to settings.py",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settings-merge-layers-l2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "24f69c38c0c983d804ef4cb51da644c0acafbf023f6a82520c69eeaf733b8ab9",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All checks pass. Added `merged(layers)` to `settings.py:49`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "settings-merge-layers-l3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "7e4a74cd20f85c2716bbf9408400c1038d0733cdd158e07eb2a0f6f5937a0b56",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "settleup-apply-expense",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "26086365c876b36715851a1c995d6062fe0242873b01531c78ecec2398d12dfc",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "settleup-settle-debts",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "9039287a7d91d6a2e5784d083824c660f94faffa4b3acc7ac516a89f4e4c92c7",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "stockroom-extract-shelf-copy",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f4a5cd8756169103deea770ab6adf1006a7a9efa4625b25185586d6c6a99ca4b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "rbql-like-escape-wildcards",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "c971ee7824670cf5874b7e1f2fae74d4faf4221b8d804db44ed351f854511d17",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented backslash escape support for RBQL's `like()` function pattern language.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-extract-transition-step",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "848264008889aa5e11aa95ed43fc0c5de3aeaa2428c458cb3eac573facf8d7f4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactor complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-remember-substate-history",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "36676b2c56d44dae58eddd02392303fd357d1a3e273790c464d86ce6edb64abf",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented shallow history (UML statechart feature) for pysm's composite states.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-revert-through-one-step",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "65cb5aa8614f8458a2889c3d9fa1b6931911e0c826c0e0b979afa256a02b6281",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The refactor is complete and correct.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "rbql-quote-fields-by-policy",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "44e871229dfe285036b3a958319550f6edfa30a535e732a944f0f54550c03fff",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The refactor is complete and working correctly.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-extract-transition-step",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "1a17534d5b2e2a9311e120efd70c3ff8bbe747d3e0c059e4d1f2150dcd8d4fcd",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-remember-substate-history",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "74d93f0f41b9b4086a983e9b676d8c72f9f0ea665054d9cf09f8651bac0d5915",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented shallow history in `pysm/pysm.py`:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-revert-through-one-step",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "543d8085db2e69d71348b829f8fd4a1b84c01743b4fb1066839483243a9330fd",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "rbql-like-escape-wildcards",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "9d512f6d1049cff5f0420bd1f80bc9e2ab71845058ec58a4f819aad55c04b867",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "rbql-quote-fields-by-policy",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "cc1b50b0a335d3fa747ef5fa95189cde38168f8687fe5707ebb6ae579ee16bda",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactor complete: `get_polymorphic_quote_function(dlm, policy)` in `rbql/csv_utils.py` now owns the quoting decision (mirroring `get_polymorphic_split_function`), and `CSVWriter` in `rbql/rbql_csv.py` uses a single `quote_fields` preprocessor built from it \u2014 `quote_fields_rfc` is gone.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0d5c0675dbca5c6cc89804ead208b231d4962c2cd0b7070fc33a0f2214e23e51",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect. The `shared_keywords` function is now added.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "effdcd47a52a890c7d6c92671231e109f18fd6300bbaa7e065d2d064f5a1dda7",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've added the `shared_keywords` function",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "e74a35c3225c0571d23cd4c8b73b3676ca0e6e03518dbfb1715621daed7fc8f8",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! I've added the `shared_keywords` function to album.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c4",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "db78100ab0e73d040a32cd661cba2cb8b0d62743b81b2ae91d05d2a286f46171",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! I've added the `shared_keywords` function to album.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "cadence-next-due",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "d88994c88c176ed4b493defa1b1fcb086f72635de5153f853031dc18720ba52a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done. The `next_due` function has been added to cadence.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "digest-fit-to-budget",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "eec22c5e52f2905d33eb29d0a0382d3176c8322ac65e86f69326e663bcbd8b69",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented the `digest(entries, budget)` function in `digest.py` that cuts down a long run of log entries to a fixed number of places.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "digest-merge-runs",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f3c91ae9cd1af1c38ce666b91f43a6ab1e6f07b160b4bbfc9288442047e63d06",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "dossier-apply-correction",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "d0a2ae35449749cd0383b80a5b222734fe07d8db511029d9fde432e40b23f2ff",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "dossier-merge-two-records",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "2944ee0ce2732771f94dc202cdb91787078fedfda923f9a60b7e39ea637cced3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done. The `merge` function has been added to dossier.py and all requirements are satisfied:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "outage-charge-downtime",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "c1c8d2c70479923b94a1a25a58203f79eda6f21bd654a7852e1bf271802f912a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "outage-quiet-stretches",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "1d2c7b1b6a919d5fffec3d9966205dbd3b6220b72db79b9e41361c951316489b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and tested.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "outbox-flush-in-batches",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "edfa950d2d650362f13c7eb259aed07c8625faf077cc7fa2a9c0c4fcae99c77b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "760ed513abc8a2a74e27a64bbd188925172ed4a9fd4e8a22f69114a1d64b3c60",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation satisfies all requirements:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "88c10ab9f7675a79ef5347bae9bd13542d507acbb978be693d124b77302c9855",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The `price_for` function has been added.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "b27e3973eeabcb230ccdf05716e5f228d88299fad3bfef7a53cf862e9b3f3ed7",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c4",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "da1cf31c3e9a9236ac24a88f231df04d08951df586ffff14d7cd670cace02a49",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "roster-swap-shifts",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "107cb6c124117a36b5f54ac68d6ca947c4607de3825ca7db87896946097c2b6e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect. The `with_swap` function is working correctly:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "standrig-run-stations",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "febe0cb7185708c1a49568583915da1b31d2ef077bdd85a7f6ecc049047729e7",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The `run` function is now in place.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "7c1b984d2be10b2e5ef244ea029d4cbd12ec0d83c845459185350e5c144a2000",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f77804846ee26955ea3f6b4c4b55c07e02cc59b3780f4d79a63131d780bd1ca8",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "1c2c7076bbab4620af96414a4f898dd7c4de3083abf24cb48ccef7d23c9160ef",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "album-shared-keywords-c4",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "fa556d69c883e3fc99f53e1a4fe778f05dc0d33d98956f95c6c6322d82633c6f",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "cadence-next-due",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "15df81e7b97d9037b0228ded8ab489f33c6b942128336129c3ad885cef6195f4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `next_due(schedule, due_at, ran_at)` to `cadence.py:41`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "digest-fit-to-budget",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f66709ddf7e9950c13b904cfbd991f4012bcc153bfdce0d57fc3e7ebbf388acd",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I added `digest(entries, budget)` to `digest.py:34`.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "digest-merge-runs",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "54b2133c882c0bd5bfb99257599f4ec163bf26b68aeb0ea5d242396f00495521",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "dossier-apply-correction",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "94270a31fba99898f6b18646714597ab24cf05482e2520446997ab4b2fa1b13a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "dossier-merge-two-records",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "b649abe2dabcab5d602ab8e4e14d8242e63da136510f7a3f87957c3126c348e0",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "outage-charge-downtime",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "84123c23852ebe3c690e47745ccdee9c1687ddc38fba66a7ebf42c23e745ec39",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "outage-quiet-stretches",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "0a41e7fb6e9e8620b4deb57fd9b8519c904b5797907ba353f1384b85b3c898bc",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All cases check out",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "outbox-flush-in-batches",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "6aac7d310f230c21fcd3f4edfb1518211f3736a7e5e476b9b141382868e28b7b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All behaviors verified: batching, ordering, resumption after a failed `send`, empty-queue no-op, and `size < 1` rejection all work as specified.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "98b279f165327fd6f679d1e8b565937194cbecc216e4e537b5eb741e7f9932fa",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `price_for` in pricelist.py:31-39",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "eceaedb648b339750110b576d9baad842dec40e5fce636657c4ec127b5346e4d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `price_for` to pricelist.py",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "c473ac9a8a6c964bc36b277bd4af7fc164b5f8855d17fcd59c9379563da71aa2",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `price_for(price_list, sku, quantity)` to pricelist.py, right before `describe_rules`. It computes `list_price \u00d7 quantity`, finds rules that `speaks_to` the sale, and applies `discounted` using the highest-`rank` rule (or returns the plain amount if none apply). No mutation of `price_list`, no new dependencies.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pricelist-price-a-sale-c4",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "2c025769f67148c8f6e934b0fa912f54a4e43bb60b6ddaa4cb80311ceef542ea",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "roster-swap-shifts",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "3121a46bce6f2e3a5785d5f6442e98527a990559e82742a959aecc2d6705ddbe",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All checks pass",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "standrig-run-stations",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "14bb0158c42da8f916bac9585963f7071b815606ab476d583c0f2a246f7bcb89",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "remit-pay-what-fits",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "ae04402dcbe89f4b00a32eadf1e4df6268deb304562ea026b67f096fea86de4e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "bookcase-print-the-index",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "65c415a1587d6b98c78e7f863ab0e60d9678f52cc9aacf29cced4fc1041732c0",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Excellent! The `index` function is complete and working correctly.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "bookcase-shelve-the-run",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "a273dda9add550fcd8d2960466960c4dbbf11d836ea3cfdcb67c4539ada5893c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and correct.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "gauge-evaluate-in-units",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f11d9e63175eda216c33e1525d98a6a59b28b77e510d8589551a9036f34ca269",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and correct",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c1",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "baf800ff698a3cbdfaccfe77d0f7fafe7677528b5d4b08bc68563695a9dd73d9",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The implementation is complete and correct!",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c2",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "c333ae02ea822a5a9c00dfce86c8a79ab95e562b55ba7275bb8092fcc411e077",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The `running_sheet` function is now complete and meets all the specifications.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c3",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "d0b8e82cb23ee656a8eb7fe59a2816a5ee3d0195ff07fcaf2d7d6d71c56d94c7",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation is complete and satisfies all requirements:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c4",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "a1f68987b438d50b32f5f209b483b75bb7da14c1e6f5d03f1f4b637b57d92d16",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully added the `running_sheet(trips)` function to nightbus.py.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-chain-and-outline-states",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "c69c43ce21a0b2804a3c5beba8229f94f25e58e8179840f97e3291cedacaa947",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully added two new methods to the `StateMachineBuilder` class in `pysm/builder.py`:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-keep-snapshot-metadata-plain",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0396ff6ad4daa0d4c7267ec156e774a4c8c173dd745337d9008f32efcd986019",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation is complete and working correctly.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-list-the-waiting-events",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "2bb9de7c40cbe79701058a8cbfd36e90f1953c6fbec41b442dac669670f4f65e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented the `pending()` and `drop_pending()` methods",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-push-and-pop-states",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0318a37df26544c60a6a6f37b1caf3d6f93feca472022ef8e670c7894fb137fc",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! I've added the `push_state` and `pop_state` methods to the StateMachine class.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-rebuild-a-graph-from-a-snapshot",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "a072ef2709bc75c05e7c7a784f6c01f6e77fa80505105cce48a2b8f73d766354",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented the `rebuild(data)` function in `pysm/serialization.py` that reconstructs state machine graphs from snapshots.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-refuse-a-snapshot-in-flight",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "61243b5894338543a8a4e258b0d141bc00fef8eb440ae273869d22b6dfa6806b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented safety checks for the `snapshot()` and `restore()` functions in `pysm/serialization.py` to prevent them from running while any machine in the graph is processing an event.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-rename-and-list-states",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "7eabd4de6fa9cac849b90689cbf20c1e739b79451c46eeb51b1873daa5f9472b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation is complete and meets all the specified requirements:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-reset-to-initial-states",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "03755d75871041853f65eed27ef89c222d6106fd2a88b7d18192d3183f5df28b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully added the `reset` method to the `StateMachine` class in `pysm/pysm.py`.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-trace-what-the-machine-did",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "7886ce13b6bde69ff9bf68fb51f9d055b86d9a2f0c844c81019cdf13f7406662",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented the `trace` feature for StateMachine.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-work-out-a-way-there",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "44aba5e446e23029b6ac0fc90bd9e34bbfc1151de0e80da57523bc9dd5d6df34",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've successfully implemented the `route(target)` method for the `StateMachine` class in the pysm library.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "remit-chase-the-overdue",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "815a153187d2593f2ac8f5f29e180687c624bb1fa61c6188535b54641fdacaa6",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "roll-count-the-windows",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f2da4a6a7d4a54842ff7f28fe4828c166da727dbd8d52cb5b1159a03b2ba2a9f",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The `windows()` function has been successfully added to roll.py with all requirements met",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "roll-pick-from-bursts",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0bc41f8240fd3b3dc3ee56f1eb9f3fc2f706a4bb21c55281b9484d0eecc45c0e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The `pick(photos, pause)` function has been added to roll.py and passes all the required tests.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "sieve-select-what-matches",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "a083629bf437685b66122d721233d27cb3a40a69e9c9d828f2a21b8ad53214a8",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The implementation is complete and all tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "bookcase-print-the-index",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "014c791b25aa19ff90ba070e402ae46d4754e3e6aca94947e1d9c8284b67a161",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "bookcase-shelve-the-run",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "d6d019a076fe2cb80cd2d2abb76f1d3a323f0f483c0bff64c7ab90da68dd4fd6",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "gauge-evaluate-in-units",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "cca32f1087a328f8ed8499500f226d686deb481e3f03abc39a3cdf926136bd2b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c1",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f4fb635ada5a47fc3b1f66906b09baa845c8838a4239bdb1353cbc3558b2e747",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c2",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f54a3827df7b2b3e3fe76c8b21cbe2b31d39325e9a28c4489d4b5806283bd007",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c3",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "029ee8babd04cf0584fde105c424fcdc4f54195266e3e38ab461f560ae414a7a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `running_sheet(trips)` to nightbus.py:8, reusing the existing `operating_day`/`runs_on`/`arrives`/`running_time` helpers and a small private `_clock` formatter. Verified it compiles and produces correctly grouped, ordered, and formatted output without mutating the input list.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "nightbus-print-the-sheet-c4",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "cbb1251941593c947f19e493e662de227b2e936ddf51b08968d555a4f343e33c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-chain-and-outline-states",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "214a715f3a17c7b1625d9d96795cd28b03375c1d55ca0c9f26759d1e2b38fd43",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `chain` and `outline` to `pysm/builder.py`:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-keep-snapshot-metadata-plain",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "eedb908d1edece20dba7f2c7b71fa4661048be014a087ded1e1d5e6e28eb46fc",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-list-the-waiting-events",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "938f1f5db9a6d7f25d6740443ee3d92cbd9226566e3abf2f9dcb69063757ede9",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `pending()` and `drop_pending()` to `QueuedStateMachine` (pysm/queued.py) and `AsyncQueuedStateMachine` (pysm/aio.py). Both return internal-queue events before external-queue events (actual handling order), `pending()` hands back a fresh list each call, and `drop_pending()` clears both queues and returns the count removed.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-push-and-pop-states",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "fddd41a7a09450c9583d8ad65698f2dd3ae5cc676b227e25165f33e8d0bacc31",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `push_state` and `pop_state` to `StateMachine` in `pysm/pysm.py:874-931`, right after `revert_to_previous_leaf_state`.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-rebuild-a-graph-from-a-snapshot",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "05a989ecac6331d7b17621ee6d0e2b65afbb41f5f6592287303a5afc3b35f739",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "`rebuild(data)` is implemented in `pysm/serialization.py`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-refuse-a-snapshot-in-flight",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "93ef68b6bf9fb890c28b7390f00f6a45e6b5d36a93e57dfcc20ce65e0b07fe23",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-rename-and-list-states",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "fcdd320453cc49f0684707f8b57531cf219706443f68a66ca35dd4ba295dccd1",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-reset-to-initial-states",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "6b6477fe2ad5fd6214e3d9c14961ed9a1d0a1857b10eaa1dc9b61108348724c2",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "pysm-trace-what-the-machine-did",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "ee793a994095f67c13a7aa27693e5e17009a3d8bc7e7fa768ae02aea8fc6fe63",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "remit-chase-the-overdue",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "02c1bdfbb092600e036efb57690e01a32b6b5173a2e14a625caa715813a5898e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "remit-pay-what-fits",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "738877b78ac3a1f20a23c57b063f7c9e22b687607c8d92f48b263f020c988412",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "roll-count-the-windows",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "2874d8baa45d1d89fc079089028c1b96d397f4fb6804a325a69f46618c85e906",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `windows(photos, every)` to roll.py",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "roll-pick-from-bursts",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "90584317a48d029ad53966d0ed98b3ea1653d3c569d5a59d59d6c87a32a21ee7",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added `pick(photos, pause)` to `roll.py:32-59` (helpers `_bursts` and `_keeper` plus `pick` itself), leaving the existing functions untouched.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "sieve-select-what-matches",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "2b3628f448956c7a1d7bfa92e1eee89bdfc9a8d19d3ac85ad1cfbeae2a0757e3",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "All existing tests pass and manual checks confirm the new `select` function handles comparisons, `IS (NOT) NULL`, `IN`, `BETWEEN`, `TRUE`/`FALSE`, `NOT`/`AND`/`OR` precedence, three-valued logic, unknown-field detection (skipped when `records` is empty), and syntax errors \u2014 all raising `ValueError` as specified.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "noticeboard-locate-the-lost-notice",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "dcb47fc124f675519fea7a4dd1d5f3b62c7e455e8d48b63aee6c14134b1ee07c",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "allotments-go-back-for-what-nobody-could-read",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "486af403d87ab308a3b72d30fcb687f6a725bdbc8e1f45f7620bde4a5c1a1a85",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! The fix is complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "allotments-locate-the-swallowed-reading",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "c98094ac6a2ddbfe3bd9c4856d4045a8f6bdb8299223acee76f6b3584edd89cb",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ferry-cast-off-when-it-should",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "18f056e638820ba466d7c9c84a8292f7bad67e1eeb72ae40f3fb801cfc069755",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed!",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "ferry-locate-the-idle-boat",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "8032ecc70c36d5d7520daddff3c85617a700b8105d93ae85d0770811759b32cc",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lostproperty-locate-the-wrong-write-up",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "367fa688889b310723c1d6590d67b3bbd71ce468f7047ad82449bc414e5013c4",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lostproperty-write-up-what-happened",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "1da41934ea4847d2fa645ee2ce1ca48171869ae20ce6c93fd3195f0f868fcc6d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "noticeboard-show-every-notice",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0d0d32a402e7fd04e95924abf0130ae622eb7479cf66627944ad60f000a9a0bd",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The fix is working correctly.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "paperround-count-each-walk-on-its-own",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "13dfe8052afaea1aa957ead2a5a7608fa4530fc71dee928effe6c487078cdb4b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The fix is complete and all tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "paperround-locate-the-carried-over-count",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "0d135fc8dca122d8a6703379204681628ff29555cc61ea064722e46bf6a9b25e",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "postoffice-charge-what-the-scale-said",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0be31d50eff16057e40d6cc476af041472def97695a11c172b9141e7c5564470",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "postoffice-locate-the-wrong-band",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "f744cd45a69684ef36f51fd966d39c504aebc5c17cdca3ed82582c51db5aaca6",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "allotments-go-back-for-what-nobody-could-read",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "a18f5449c9f9e944a8f20ac6c18e17b71d3be54559972cc9a5a5d439acbdbe2b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "allotments-locate-the-swallowed-reading",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "23427be84dfa033dd811965d11c1d002fc9fdc2e012aa8932f57448fd60d135d",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ferry-cast-off-when-it-should",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "1b8119749d4902dcf5ac3ab64a25e019eee6486d9119430836fbe33ff9c777ec",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ferry-locate-the-idle-boat",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "e7a9a202c12d4238f1d5df450db770549b44a293d7044480425a5d732c43242b",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lostproperty-locate-the-wrong-write-up",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "e9cd80a71b2bff9762d18b729887493da5bc57b62970499fd19e17b712ab3351",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lostproperty-write-up-what-happened",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "41bdbb24c69dadc39815d3aebada143a3b5c5849b4f1fd1af233f6cd0a07c157",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "the bug is fixed, and all 26 existing tests still pass",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "noticeboard-locate-the-lost-notice",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "c5fcd5e01dd5b9f93923f94daa74c3d9ff83959ef92cde97a6cf7c132df934ef",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "noticeboard-show-every-notice",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f90f0c51fe36c866bb48204a696ce670ec873027173b227ea7a7d519e7cd916a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "paperround-count-each-walk-on-its-own",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "b93b6be17637d7c209474d2c14d477f995458f839f1de54201e55f718b37ef8e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "paperround-locate-the-carried-over-count",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "47d04a0600fbb667fe40682983fb5ca39319ce326b728e92f867b3775426a2e0",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "postoffice-charge-what-the-scale-said",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "d799c55c95b6dac898de5183a25a63cd46dc9a3a89867bcf2ce5d35a3b3de314",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "postoffice-locate-the-wrong-band",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "d54abc64a2d41d7b244c5e8fef1ee4bbfdc9580d869aef959dafba59eaf2da48",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "bandstand-where-the-poster-is-worded",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "2be80cb09dcc73cde648030a8e1b4bea87773213350aed38a8100a3b80d1683c",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": true,
+          "span": "the `Sheet.wording` method in `sheet.py`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "apiary-review-the-book-and-the-crop",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "89b5ba44fa84fb689724eff6620122a891f4a43dd945f2e0b49b02cbb6eb55f5",
+      "rulings": [
+        {
+          "point_id": "reports-harvest.py:Book.taken_by",
+          "covered": true,
+          "span": "1. **harvest.py:Book.taken_by** \u2014 The cache key doesn't include `summer`, so queries for different summers on the same member will incorrectly return cached values from another summer.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-keepers.py:Roll.hives_kept",
+          "covered": true,
+          "span": "3. **keepers.py:Roll.hives_kept** \u2014 Counts hives per keeper instead of distinct hives, which violates the rule that \"a hive kept between two members is still the one hive, and stands under the club to be counted once.\"",
+          "verified": true
+        },
+        {
+          "point_id": "reports-crop.py:off_a_hive",
+          "covered": true,
+          "span": "crop.py:off_a_hive \u2014 Divides by the number of lots instead of the number of distinct hives",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "belfry-review-the-peals-and-the-board",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "dc55d39bad9eb8fd266026f184eff3fab2d73749ffe1cb27faca220b54823ead",
+      "rulings": [
+        {
+          "point_id": "reports-ringers.py:Band.ringer",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-peals.py:Book.longest",
+          "covered": true,
+          "span": "Book.longest calls `minutes()` with arguments backwards, resulting in incorrect duration calculations",
+          "verified": false
+        },
+        {
+          "point_id": "reports-board.py:peal_board",
+          "covered": true,
+          "span": "**peal_board** sorts lines as strings in reverse rather than sorting by number of peals (descending) then join order (ascending), violating the rule about ties",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "boatyard-where-a-lift-out-is-refused",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "27826d073f8d0ddc12ae5d650514d23525f4539a33710ed07d6bea39e7b362ea",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "coalround-where-the-monthly-figure-is-worked-out",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "830e6fef5436c7e8ce7f902814caf920b6f33a36c37a3e4206d493090c84122c",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "commonland-review-the-beasts-and-the-dues",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "63bbffb9493d480c11cd2a6a852268cf858e5c79a848f4f5a9e5be968d786b7c",
+      "rulings": [
+        {
+          "point_id": "reports-graziers.py:Register.turned_out",
+          "covered": true,
+          "span": "1. **graziers.py: Register.turned_out** \u2014 Returns the actual internal list rather than a copy, allowing callers to modify the register's state directly",
+          "verified": true
+        },
+        {
+          "point_id": "reports-dues.py:owed_by",
+          "covered": true,
+          "span": "dues.py: owed_by \u2014 Silently skips unpriced beast kinds instead of refusing them, which amounts to passing them over as nothing",
+          "verified": false
+        },
+        {
+          "point_id": "reports-dues.py:share_out",
+          "covered": true,
+          "span": "**dues.py: share_out** \u2014 Doesn't ensure that wage shares sum exactly to the wage, and doesn't give any remainder to the commoner who owes the most",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "launderette-review-the-rate-and-the-card",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "430ff535a80515b93226c27ab4a3dd4e80742334fbfe35cd66d8ce7fec2d8464",
+      "rulings": [
+        {
+          "point_id": "reports-tariff.py:price_for",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-stamps.py:Card.add_stamp",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-washes.py:Book.owed",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "parishhall-review-the-hire-and-the-diary",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "0f7549ba152400e1d65777f225d6207d88bda73b4fa6d1abb964676c68eb2073",
+      "rulings": [
+        {
+          "point_id": "reports-charges.py:hire_for",
+          "covered": true,
+          "span": "hire_for \u2014 Heating is added after rounding, but should be included in the amount before rounding to the pound, violating Rule 3.",
+          "verified": false
+        },
+        {
+          "point_id": "reports-charges.py:price_of",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-diary.py:Diary.cancel",
+          "covered": true,
+          "span": "**Diary.cancel** \u2014 Modifying the list while iterating skips elements; won't remove all bookings of a hirer if they're consecutive, violating Rule 2.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pigeonloft-where-a-timed-in-bird-is-matched",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "4c85762375010ec39d8d66bc323ecf93b2a718463b4ae59d0ac0ae0ebac261be",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "produceshow-review-the-points-and-the-sheet",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "d083256e24f9f4f531d39aa0198292c01ff9ff27b079a49978ace0a9eb6834de",
+      "rulings": [
+        {
+          "point_id": "reports-points.py:points_for",
+          "covered": true,
+          "span": "points.py - points_for has a logic error: it returns the base point value before checking if it's a championship first, so championship firsts never get doubled.",
+          "verified": false
+        },
+        {
+          "point_id": "reports-points.py:tally",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-entries.py:Book.of_class",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "toolshed-review-the-lending-book",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "f8f2333c2d03686d8770ed4d81450f4ded5a55d7ff1b9e664acb6e1399d49c45",
+      "rulings": [
+        {
+          "point_id": "reports-labels.py:matching",
+          "covered": true,
+          "span": "**labels.py, matching()** \u2014 Substring matching allows partial label matches (e.g., \"saw\" matching \"jigsaw\"), violating the rule that labels name the whole, never a part.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-loans.py:Book.by_member",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-desk.py:slip",
+          "covered": true,
+          "span": "**desk.py, slip()** \u2014 In-place sorting of `book.loans` violates the rule that printing off the book leaves its order alone.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "watermill-review-the-grist-and-the-toll",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "714f6c038f9c81816b76941c5f4a1359b6685e1f196ab789d0d4737f1b176b63",
+      "rulings": [
+        {
+          "point_id": "reports-grist.py:Book.to_the_stones",
+          "covered": true,
+          "span": "1. **grist.py, Book.to_the_stones** \u2014 Uses `or` instead of `and` for the dried and weighed conditions, violating rule 9 which requires both.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-grist.py:Hopper.tip_in",
+          "covered": true,
+          "span": "2. **grist.py, Hopper.tip_in** \u2014 Appends the lot and updates the peck count before checking capacity, so the hopper is modified even when the lot is rejected (violates rule 10).",
+          "verified": true
+        },
+        {
+          "point_id": "reports-toll.py:worth_the_water",
+          "covered": true,
+          "span": "3. **toll.py, worth_the_water** \u2014 The LEAST_TO_GRIND_BUSHELS constant is 1 but should be 4, since one bushel equals 4 pecks (rule 4), making the minimum stone-worthy amount 4 pecks, not 1 (violates rule 12).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "apiary-review-the-book-and-the-crop",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "ed1758f6755e5da32e2f5a12d6a670aabeca4c5082809dfc5ddb8d35c62081b4",
+      "rulings": [
+        {
+          "point_id": "reports-harvest.py:Book.taken_by",
+          "covered": true,
+          "span": "3. **`harvest.py` `Book.taken_by`** \u2014 caches by member only, not by `(member, summer)`, so a second call for a different summer returns the wrong, stale cached pounds (violates \"the summer asked after and of no other\").",
+          "verified": true
+        },
+        {
+          "point_id": "reports-keepers.py:Roll.hives_kept",
+          "covered": true,
+          "span": "**`keepers.py` `Roll.hives_kept`** \u2014 sums each keeper's hive count instead of counting distinct hives, double-counting a hive kept by two members",
+          "verified": true
+        },
+        {
+          "point_id": "reports-crop.py:off_a_hive",
+          "covered": true,
+          "span": "**`crop.py` `off_a_hive`** \u2014 divides by the number of lots instead of distinct hives, so a hive robbed twice in a summer is counted twice, not once (violates \"a hive robbed twice in the one summer counting once\").",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "bandstand-where-the-poster-is-worded",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "f9e4fcc0f957c8701a8308d957fa169eee2008d082cff55445f64b0950743e0e",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "belfry-review-the-peals-and-the-board",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "2511adfaeea83ddc3a3bbe713e28797b58199bea1568e9e0ec169d28bbc89939",
+      "rulings": [
+        {
+          "point_id": "reports-ringers.py:Band.ringer",
+          "covered": true,
+          "span": "`ringers.py` \u2013 `Band.ringer`: normalizes only the query name, not the stored `each.who`, unlike the established `tower.hung()` pattern that normalizes both sides \u2014 breaks the \"spaces and capitals are no part of it\" rule.",
+          "verified": false
+        },
+        {
+          "point_id": "reports-peals.py:Book.longest",
+          "covered": true,
+          "span": "`peals.py` \u2013 `Book.longest`: calls `minutes(peal.came_round, peal.pulled_off)` with arguments swapped from `minutes(pulled_off, came_round)`, producing a negative duration instead of picking the longest-standing peal.",
+          "verified": false
+        },
+        {
+          "point_id": "reports-board.py:peal_board",
+          "covered": true,
+          "span": "**`board.py` \u2013 `peal_board`**: sorts formatted `\"count who\"` strings lexicographically rather than by count, so ties break by name instead of taken-on order, and multi-digit counts (e.g. \"10\") sort incorrectly against single digits (e.g. \"9\").",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "boatyard-where-a-lift-out-is-refused",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "3da57e80e55329a3ad54ba33a8701ed71d081ca82bee9ade4a657b1555b96ad2",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "coalround-where-the-monthly-figure-is-worked-out",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "33e72ddfce4447db8663f6f1dcce0aa76bd51fd237f547c1b7a53a30dbdf8790",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "commonland-review-the-beasts-and-the-dues",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "35e371a8edcb2fa906a308093a2e63271f4bb2eaa4b83f400ff2420f5a2c2348",
+      "rulings": [
+        {
+          "point_id": "reports-graziers.py:Register.turned_out",
+          "covered": true,
+          "span": "3. **`graziers.py: Register.turned_out`** \u2014 returns the live internal list instead of a copy, breaking \"a beast is turned out by writing it in the register and in no other way\" (compare `reeve.py`'s `days_kept`, which correctly returns `list(self.kept)`).",
+          "verified": true
+        },
+        {
+          "point_id": "reports-dues.py:owed_by",
+          "covered": true,
+          "span": "1. **`dues.py: owed_by`** \u2014 swallows the `KeyError` from `gates_for` on an unpriced kind via `continue`, treating it as 0 gates instead of refusing it (the rule, and the function's own docstring, say it must not be passed over as nothing).",
+          "verified": true
+        },
+        {
+          "point_id": "reports-dues.py:share_out",
+          "covered": true,
+          "span": "**`dues.py: share_out`** \u2014 plain floor division drops the remainder instead of giving it to the commoner who owes the most, so shares don't always sum to the wage (compare `reeve.py`'s `shared_out`, which gets this right).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "launderette-review-the-rate-and-the-card",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "3e436c8077cd7bfb83fbcd0a27d6b2869d20b829d9a4207541d68d4c5ffbef3c",
+      "rulings": [
+        {
+          "point_id": "reports-tariff.py:price_for",
+          "covered": true,
+          "span": "1. **`tariff.py:price_for`** \u2014 off-by-one on the late rate: `hour > 20` excludes 8pm itself, but the rule says eight o'clock is already the cheaper hour (should be `>=`).",
+          "verified": true
+        },
+        {
+          "point_id": "reports-stamps.py:Card.add_stamp",
+          "covered": true,
+          "span": "**`stamps.py:Card.add_stamp`** \u2014 the card is never cleared, so `stamps == 10` only ever fires once; a regular never earns a second free wash on their 20th, 30th, etc. visit.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-washes.py:Book.owed",
+          "covered": true,
+          "span": "washes.py:Book.owed` \u2014 slices `prices[card.free_washes:]` off ascending-sorted prices, which discounts the *cheapest* loads instead of the *dearest*, backwards from the rule.",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "parishhall-review-the-hire-and-the-diary",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "808e611d459506d47878b19f8e5f78f51905d25853b6a59a4ec420955c7c1c61",
+      "rulings": [
+        {
+          "point_id": "reports-charges.py:hire_for",
+          "covered": true,
+          "span": "2. **`hire_for`** (charges.py) \u2014 rounds `rate * hours` up to the pound *before* adding the heating charge, so the final bill (e.g. \u00a33.50 for a winter booking) isn't itself a whole number of pounds. The rule requires the *whole* of rate-plus-heating to be rounded up to the pound.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-charges.py:price_of",
+          "covered": true,
+          "span": "**`price_of`** (charges.py) \u2014 uses `if booking.agreed:`, which is falsy for an agreed price of `0`, so an evening agreed at nothing gets charged the normal hire rate instead of costing nothing.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-diary.py:Diary.cancel",
+          "covered": true,
+          "span": "**`Diary.cancel`** (diary.py) \u2014 removes items from `self.bookings` while iterating over it, so the list shifts mid-loop and every other matching booking survives.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "pigeonloft-where-a-timed-in-bird-is-matched",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "2c3bccdf9b2879bdddf8d049f2ee55563893aa3128504b2b987ec3918e8ace25",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": true,
+          "span": "`clocking.py`, in `Book.belongs_to`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "produceshow-review-the-points-and-the-sheet",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "753c4c62e9582595fe80bff2601e22dc8cb27f88d9026811de5a56963ca44bc4",
+      "rulings": [
+        {
+          "point_id": "reports-points.py:points_for",
+          "covered": true,
+          "span": "**`points.py: points_for`** \u2014 checks `entry.place in PLACES` first, which matches `\"first\"` and returns early, so the championship-doubling rule is dead code; a championship first always scores 4 instead of 8.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-points.py:tally",
+          "covered": true,
+          "span": "**`points.py: tally`** \u2014 `running={}` is a mutable default argument shared across calls, so a tally \"asked for with none handed in\" doesn't actually start at nothing \u2014 it silently carries over totals from earlier unrelated calls.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-entries.py:Book.of_class",
+          "covered": true,
+          "span": "1. **`entries.py: Book.of_class`** \u2014 uses `break` instead of `continue`, so it stops at the first entry of a different class and misses later entries of the requested class, even though the book is explicitly unordered by class (the same pattern `stewards.in_tent` gets right with `continue`).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "toolshed-review-the-lending-book",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "6d0e47df712406952e3671cb632783561504de78e14cfe49f5a9aaf6ea65b80b",
+      "rulings": [
+        {
+          "point_id": "reports-labels.py:matching",
+          "covered": true,
+          "span": "1. **`labels.py::matching`** \u2014 matches labels by substring (`wanted in tidy(tool.label)`), so a search for \"saw\" matches \"jigsaw\", which is exactly the case the new house rule forbids (\"somebody after the saw is not after the jigsaw\").",
+          "verified": true
+        },
+        {
+          "point_id": "reports-loans.py:Book.by_member",
+          "covered": true,
+          "span": "**`loans.py::Book.by_member`** \u2014 `{loan.who: [loan] for loan in self.out()}` overwrites each member's entry rather than accumulating, so a member with several things out only shows the last one, violating \"what the desk shows against a member is every one of them.\"",
+          "verified": true
+        },
+        {
+          "point_id": "reports-desk.py:slip",
+          "covered": true,
+          "span": "desk.py::slip` \u2014 sorts `book.loans` in place (no copy taken) to build the slip, permanently reordering the book's own loan history as a side effect of printing, violating \"printing anything off it leaves that order alone.\"",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "watermill-review-the-grist-and-the-toll",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "aa93fd2257db9990cd9d411ffb4f8eb67f2b2e98f5f1f1f8cb633848ec28c4dc",
+      "rulings": [
+        {
+          "point_id": "reports-grist.py:Book.to_the_stones",
+          "covered": true,
+          "span": "`grist.py` `Book.to_the_stones` \u2014 uses `dried or weighed` instead of `dried and weighed`",
+          "verified": false
+        },
+        {
+          "point_id": "reports-grist.py:Hopper.tip_in",
+          "covered": true,
+          "span": "**`grist.py` `Hopper.tip_in`** \u2014 mutates `lots`/`pecks` before checking capacity and never reverts on rejection, so a turned-away lot still changes the hopper's state.",
+          "verified": true
+        },
+        {
+          "point_id": "reports-toll.py:worth_the_water",
+          "covered": true,
+          "span": "4. **`toll.py` `worth_the_water`** \u2014 compares raw pecks against `LEAST_TO_GRIND_BUSHELS` (1) without converting bushels to pecks, so it accepts lots as small as 1 peck instead of requiring a full bushel (4 pecks).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "noticeboard-locate-the-lost-notice",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "b609950c71a2de84450922dc289776851c7caac915cff6325baf477ff4f5d483",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "allotments-go-back-for-what-nobody-could-read",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "70bc089f2beda29427614a8306a4db5a8ba3abb72a7ec4097bb7c8c53f56d9df",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed unreadable-card handling.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "allotments-locate-the-swallowed-reading",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "92fba0dff06bcff3cab60a41e75598e81774e88b0a92da17f4f37f0e38520645",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "apiary-review-the-book-and-the-crop",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "e71aa34b18fd543e0f2258442fa8ceba500f8df65eb48a0033df3769edaf99a9",
+      "rulings": [
+        {
+          "point_id": "reports-harvest.py:Book.taken_by",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-keepers.py:Roll.hives_kept",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-crop.py:off_a_hive",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "bandstand-where-the-poster-is-worded",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "de2490f6a4704018a13b503714bd46d4de467d1019def20df51ac5352846af0b",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "belfry-review-the-peals-and-the-board",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "0b5baae0ca2214d97b8b05d8c82ed745c978211c9db42d7b9aa73aecd8c882e8",
+      "rulings": [
+        {
+          "point_id": "reports-ringers.py:Band.ringer",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-peals.py:Book.longest",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-board.py:peal_board",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "boatyard-where-a-lift-out-is-refused",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "9f0f1aa6bff1c27cbc2115eb1cc21749f6c059463994ef67b5cbc3f2dd5491be",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "calc-infix-evaluator",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "a245cacedf9f656c22b27f9d1e3c812fa8388e3f5ade3949bbc714f695594847",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented `evaluate(expression)`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "cart-extract-coupon-policy",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "9179b704ed910019a7dc89b27be1c36679bf7110cc845f77dc85b11fe889cd2a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "checkout-discount-codes",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "f15ddbfa4e85c1d2d9e2b37965e6f1498807f3cd89a938a5906550a997685708",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "commonland-review-the-beasts-and-the-dues",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "f896c1907e3c43af53a2e17ee5ba1e71c0a810ed130711ee9d35382dd0d53e09",
+      "rulings": [
+        {
+          "point_id": "reports-graziers.py:Register.turned_out",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-dues.py:owed_by",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-dues.py:share_out",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "docstore-json-pointer",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "069b9fa51b20919bdc2d0fc652546340ce58e53ee00c33c5505fd7d32975b3ac",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented JSON Pointer support.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "exporters-pull-up-base-class",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "4dc55bb56cb5a6598217170521b7fa61ad483a123b1ccf9d53d67d36c05771a0",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ferry-cast-off-when-it-should",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "a59a2cc7153da1b214c44c2cb64acc9c75284b1a8f39870b0df70f685ed4c85d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ferry-locate-the-idle-boat",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "a9c89a44e4e599c40dfbc8453118f5fea1a413741aa075ffe001aa5bb15f5f67",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "gradebook-split-compute-from-format",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "755916539435bc6d767c98d52c27a88857e1ef07c31bb55523ef0744df8589da",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented the pure refactor in [gradebook.py](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-gliecphr/workdir/gradebook.py).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "jobrunner-dependency-order",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "dc4bc025dc97ddbb639f01a3da361d488f89998d75a97be09380e60f63b852a1",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented dependency-aware job scheduling.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "launderette-review-the-rate-and-the-card",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "9cf18330c3693950e91d24fb4dcf9b9951abab0838626926435f53dd8a18a1e5",
+      "rulings": [
+        {
+          "point_id": "reports-tariff.py:price_for",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-stamps.py:Card.add_stamp",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-washes.py:Book.owed",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "ledger-split-formatting",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "530192115629ba659898e59ccb9566e86c204f9a289c7076e55496953d1a6e2b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Extracted money formatting into [formatting.py](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-3j8asn_r/workdir/formatting.py) and updated [ledger.py](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-3j8asn_r/workdir/ledger.py) to import both helpers.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "logparse-extract-timestamp-parsing",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "290d7c7424780688db9cb8db738e2ec545bf07b540cb276f1a8a252a900cfdde",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactored `logparse.py` with `parse_stamp(line)` and routed all three readers through it.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "lostproperty-locate-the-wrong-write-up",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "9f50720f489cd446458d95d3410750d7ee733e23f6e119ee7449286c5cff6901",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lostproperty-write-up-what-happened",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "c368981a9f8f669523e84fba46ce84ddb4a6e9c8f7b7d2ad73f119740ed92f9b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "matcher-brace-expansion",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "acc3cd91287683c18dc96b70d1a84455981f9943499a4f47f491c9de3291ab7d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented `expand(pattern)` in [matchers.py](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-s9w8tg8o/workdir/matchers.py), supporting nested groups, empty alternatives, escaping, ordering, and unbalanced-brace errors.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "measures-merge-duplicate-converters",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "b65dd4b248a77d496ca03b48acf31c9e575ac35ea1bff965ec48a53900a82b22",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented the conversion refactor.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "microtemplate-for-loops",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "0ebdc97d683f970109af6e8695580ba29653765a260c1376b530779e4f3ce36c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented loop blocks and new filters.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "noticeboard-show-every-notice",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "2d84eb790e2bd49cfa067cced8c895b3c5d0c2fccdf8715b2b5c282b83254a1e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed pagination so a remainder creates a final short board.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "paperround-count-each-walk-on-its-own",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "0e7116cf45cea5bb48e9476b8e34e96711e2b32c5837f73a1796691a779b0da1",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed the stale-list leak.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "paperround-locate-the-carried-over-count",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "cd85a095d985dc8c189cbf4cb72588e205348176954ebb2a0250171362cc6e96",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "postoffice-charge-what-the-scale-said",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "3b68d7238095cbad378daa2ce95234711f058057b9efe818deaa542c951b0571",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "postoffice-locate-the-wrong-band",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "6f9374e324be7b2e031a4dbdcc5298ee17cc6d369fca8609a509bb664e588054",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "leftluggage-locate-the-charge-nobody-arrived-at",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "7129320b60f81435877ffa89a7094dd64fb3b70ac1d0beed4c94fdc139857a23",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "courtleet-put-the-verdicts-on-one-table",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "c49cb46bd57bcee1eafafd7b0614ae76d42de0c4254f7d6378917dbad0b7f15e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The refactor is complete and all 14 tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "gasworks-take-the-press-out-of-the-roll-room",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "df69eb136a0d8c445e4a0b7a4b2ad7a80828eb12c4a0a24ac2afed2c687a042e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! All 15 tests pass. The refactor is complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "leftluggage-put-the-unweighed-bag-back-on-the-scales",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "dcf2b490981e8a500649a9c4cbbee570c219af3718163cf9081c23374621bf1c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Perfect! The fix is working correctly. The left-luggage office is now fixed:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "limekiln-review-the-drawing-and-the-carting",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "7672983189c8a16e842bb818b3d5ecf7bd3197a7046bbe78b075d46a2a3c689c",
+      "rulings": [
+        {
+          "point_id": "reports-dockets.ts:Docket.asFigure",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-carting.ts:Sheet.carts",
+          "covered": true,
+          "span": "1. **carting.ts \u2014 Sheet.carts()** uses `Object.keys()` on numeric string keys, which sorts them numerically instead of preserving insertion order, breaking the rule \"in the order it first loaded.\"",
+          "verified": true
+        },
+        {
+          "point_id": "reports-spells.ts:spellsIn",
+          "covered": true,
+          "span": "2. **spells.ts \u2014 spellsIn()** never adds the final spell to its result after the loop completes, violating the rule that \"the last spell of the day is a spell like any other.\"",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "lockhouse-locate-the-boats-that-never-reached-the-book",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "0ca1c7463b00e5f5ad79929aad7c63cb486bc5beb67870230521e4d9d82cba31",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": true,
+          "span": "The defect is located in **keeper.ts** within the **Keeper.keep** method at line 57.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "lockhouse-work-the-rest-of-the-night-through",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "563fafddbab2c95d727a0e9d440fe281f6a3c08513c3f6988461b077c2ffaa84",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The fix is complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "masonsyard-review-the-lettering-and-the-account",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "99244bbf0b2d73d2b96b58247e459fc6afe273089e7517ee97aa30f707bdbe7f",
+      "rulings": [
+        {
+          "point_id": "reports-inscription.ts:asCut",
+          "covered": true,
+          "span": "**inscription.ts:asCut** \u2014 Uses `String.replace()` which only replaces the *first* ampersand, but the rule requires *every* ampersand to be replaced with \"and\".",
+          "verified": true
+        },
+        {
+          "point_id": "reports-orders.ts:Book.strikeOff",
+          "covered": true,
+          "span": "orders.ts:Book.strikeOff \u2014 Uses delete on an array element, which creates a sparse array instead of actually shortening it.",
+          "verified": false
+        },
+        {
+          "point_id": "reports-account.ts:Account.comesTo",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "parishchest-seal-the-register-against-a-later-hand",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "4b1490656f98ac2d18581d336c5e8eae28754a6a2d0ba0befc97e3c6163fed98",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "seedbank-book-out-what-the-store-hands-over",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "0ed2f03bd888cacc390068e6ef09b3ae02ac88c55cf5f12f50aa3d6254e3e58c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've successfully added the seed handout functionality to your seed bank store.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "telegraph-locate-the-message-left-on-the-tape",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "A",
+      "deliverable_sha256": "60a20c3ef7b523bd74cf27aab638e299db69083201ecfc0353cdc5b1601e9999",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "telegraph-write-up-the-last-message-of-the-day",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "abbadf7e080d0620237ea577b528ffacc26191f6d7ceff1fa49a63bc60121bde",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed!",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "tollhouse-take-the-writing-of-a-pass-off-the-ticket",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "f43d26cddd2e97368568a7755a1ad56567a6028e0a4bd35fdd2ad13975026fde",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactoring complete! I've successfully extracted the link serialization logic from `Ticket` into a new `links.ts` module:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "weighbridge-put-the-second-weighing-on-the-tape",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "a08270e7927c686ef06e8ce397ad408deaee0321906bf470ff2c2ab5fe00cab4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've successfully implemented the corrections system for the weighbridge tape.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "courtleet-put-the-verdicts-on-one-table",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "0d53f252c9e591c162c48db4665cbc424a6fb619aeee794260e8dcb178060694",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactor is done",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "gasworks-take-the-press-out-of-the-roll-room",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "bdbbde2c3bc9896dc570f2f2e23e3c6114027a4a292c1aa3414c682b3e5006c5",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "leftluggage-locate-the-charge-nobody-arrived-at",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "8fa049559338713f4b7cfe8750c8cd9af713c689d38007c5318309be3c437b3b",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "leftluggage-put-the-unweighed-bag-back-on-the-scales",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "31b3bd219b8cc9f4813bd0b6a51da225ea2e247fb73f72ff248754534376a37d",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "limekiln-review-the-drawing-and-the-carting",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "cf821ee2235d3937d14aa29aab8ba9ebebaf0122eb3b5cd73ec5e3d7579edb7c",
+      "rulings": [
+        {
+          "point_id": "reports-dockets.ts:Docket.asFigure",
+          "covered": true,
+          "span": "**`dockets.ts` \u2014 `Docket.asFigure`**: uses `Number.parseInt`, which accepts trailing garbage and leading whitespace/sign (e.g. \"40 bushels\" \u2192 40), so writings that aren't \"a plain figure ... and nothing else\" are wrongly treated as figures instead of being set aside.",
+          "verified": false
+        },
+        {
+          "point_id": "reports-carting.ts:Sheet.carts",
+          "covered": true,
+          "span": "carting.ts \u2014 Sheet.carts: builds the cart list via a plain object's keys; JS reorders integer-like string keys ascending regardless of insertion order, so carts don't always come back \"in the order it first loaded\" (masked in the shipped test because the sample carts happen to already be in ascending order).",
+          "verified": false
+        },
+        {
+          "point_id": "reports-spells.ts:spellsIn",
+          "covered": true,
+          "span": "`spells.ts` \u2014 `spellsIn`: never pushes the final spell before returning, so the last spell of the day is silently dropped \u2014 the opposite of \"the last spell of the day is a spell like any other.\" Not caught by `spells.test.ts` since that test hardcodes spell data rather than calling `spellsIn`.",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lockhouse-locate-the-boats-that-never-reached-the-book",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "b98e149a44af5dcd2546aa8922287671bb0a8d498f64c2bf2b4c9387c35a98a4",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lockhouse-work-the-rest-of-the-night-through",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "14f5de3befee414b82d51b19be91d95f81be5d32659c55ded9264782264f4e17",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "masonsyard-review-the-lettering-and-the-account",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "a230c966ef95608c60ca342e184bb8f1acd6dba06a5ee3d4bd40c752797952e8",
+      "rulings": [
+        {
+          "point_id": "reports-inscription.ts:asCut",
+          "covered": true,
+          "span": "**`inscription.ts` \u2014 `asCut`**: replaces `&` with `and` without the global flag, so only the first ampersand in an inscription is cut in full \u2014 violating \"every one of them is.\"",
+          "verified": true
+        },
+        {
+          "point_id": "reports-orders.ts:Book.strikeOff",
+          "covered": true,
+          "span": "1. **`orders.ts` \u2014 `Book.strikeOff`**: strikes an order using `delete`, which leaves a hole instead of shrinking the array. `count()` still reports the old length and `orders()` surfaces the hole as `undefined`, so the book isn't actually shorter \u2014 violating \"the book is the shorter for it.\"",
+          "verified": true
+        },
+        {
+          "point_id": "reports-account.ts:Account.comesTo",
+          "covered": true,
+          "span": "account.ts \u2014 `Account.comesTo`: rounds each line's pence down to shillings before summing, rather than summing all lines' pence and rounding once at the foot. This drops pence on every line instead of \"there and nowhere else,\" and can undercount the true total.",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "parishchest-seal-the-register-against-a-later-hand",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "70316a7a6246c7049bb42b57218cc3a67ebb0c8b4d81b8b6b3d8e0c35cad59be",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "seedbank-book-out-what-the-store-hands-over",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f3760b77e5fc872aaf4f0408ec448c3225a3e27772237de4b69675aac69c989a",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "telegraph-locate-the-message-left-on-the-tape",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "A",
+      "deliverable_sha256": "2bf153ac8cba9978f521187ac0615eec94f3555c50189460bd4148c58f842a95",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": true,
+          "span": "The defect is in `messages.ts`, in `Cutter._flush`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "telegraph-write-up-the-last-message-of-the-day",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "55301a5fcb423207c10b9ff4d2fff0ecaa929d403995ae1ff56f2acb354cf064",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "tollhouse-take-the-writing-of-a-pass-off-the-ticket",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "2f66c3bee40f0d1174e9b48034fd6bda8589876532df123a471957fb2b9b09cf",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "weighbridge-put-the-second-weighing-on-the-tape",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "6e568e24459f07a58d2fbb359a44029cb7a5967dc9b9fd1c307a9ed6b03086b0",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "courtleet-put-the-verdicts-on-one-table",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "c1d2bdd119cb059f9060104ee7d675ac55f40dc5f162fb85c0fddcd06234720c",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented the verdict table refactor in [court.ts](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-xq9m6ker/workdir/court.ts).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "gasworks-take-the-press-out-of-the-roll-room",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "056bcd5db6534d4a7fc0a0c2927c7da37e2fee7cf153ce6119c5bb0f703f33ec",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented the press extraction and injection.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "leftluggage-locate-the-charge-nobody-arrived-at",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "02794e6b4d4820aa49eba3ee9bb082f7580f573a85813adbe07e45d51859455f",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "leftluggage-put-the-unweighed-bag-back-on-the-scales",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "3236d0518ce00bf7dbbd954e39838dc12a6c18d02abf588860f7dfe56079a507",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed the missing-weight sentinel handling.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "limekiln-review-the-drawing-and-the-carting",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "e424d303ac0170a8b51373dea4a3b2759af5d4ef38c0cf9cc9fe41da716b3d37",
+      "rulings": [
+        {
+          "point_id": "reports-dockets.ts:Docket.asFigure",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-carting.ts:Sheet.carts",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-spells.ts:spellsIn",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lockhouse-locate-the-boats-that-never-reached-the-book",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "02e9a008d05fcb09dd4cdf3f34ce749b5b4d95a856f39e7e9d0e28fa1536f2c2",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lockhouse-work-the-rest-of-the-night-through",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "6476751c5767abd3e72023aa12c1bf960ff703e8575492834c5c7213a8e0aaaf",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "masonsyard-review-the-lettering-and-the-account",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "8c201dc14fdc2bcfedb2950c52206b2aac7e5c45504294b01beaa950ffdebe43",
+      "rulings": [
+        {
+          "point_id": "reports-inscription.ts:asCut",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-orders.ts:Book.strikeOff",
+          "covered": false,
+          "span": null,
+          "verified": false
+        },
+        {
+          "point_id": "reports-account.ts:Account.comesTo",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "parishchest-seal-the-register-against-a-later-hand",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "8beefb37e1dffed5fc6d5a857931dd4273669a3c7f43f59802c530236550834b",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented the tamper-evident register chain in [register.ts](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-mlldsevc/workdir/register.ts).",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "seedbank-book-out-what-the-store-hands-over",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "c94b8df2cbc3c6c43aa41291e4fb4548a0d215cb15b7c751743c1976b3980eb0",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented seed handouts and day-book recording.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "telegraph-locate-the-message-left-on-the-tape",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "A",
+      "deliverable_sha256": "afc5f8c6119beb9dedca4d4c0c4128e2e026780af298ad31c5a5793f2a88bbe4",
+      "rulings": [
+        {
+          "point_id": "the-answer-names-an-accepted-location",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "tollhouse-take-the-writing-of-a-pass-off-the-ticket",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "60617102e77224ef2a9f532df85e51c2f9d0617ba1a392b36c63708b69478ad0",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Refactor complete.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "weighbridge-put-the-second-weighing-on-the-tape",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "3234cfff2d7c45cb580d62e89b2e5f5d1d756ca0837c437b71ad85bb49dc80c5",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Implemented correction support.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "telegraph-write-up-the-last-message-of-the-day",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "897003f09a4d5d11abe4efc8f2b90f33f8a9b778da10b9256e4dee5a8248d294",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Fixed the dropped final message.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "playbill-put-the-setting-of-the-bill-under-test",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "cd7bdd2b2ff34c3483bb967e4e2514e0235a06e0429af96c792bafae5759a0b4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "I've created a comprehensive test suite for `playbill.py` with **60 tests across 7 self-contained test files**, all passing.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "lido-put-the-admissions-desk-under-test",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "e08099d7d65def650e45c66adcb9c1dfc38786f6fb916c5e0bb8f869edc98551",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "The comprehensive test suite is complete and all 92 tests pass.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "signalbox-put-the-train-register-under-test",
+      "agent": "claude-code",
+      "model": "claude-haiku-4-5",
+      "stratum": "B",
+      "deliverable_sha256": "bea8a06119cd09da5f1558457e389bfe3ec07c3906153822d7f8677fd71c67e6",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Done! I've written a comprehensive test suite for `register.py` with **79 tests** across three self-contained files:",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "lido-put-the-admissions-desk-under-test",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f1696571f8b9bc215ae884a7379f6a83b582c502c1b42d51ffe8ba24d850d0e4",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "playbill-put-the-setting-of-the-bill-under-test",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "afe3be60f93416a5a20e37f6ea6c1ecac43fec644875918a48b82961e745356e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Wrote 7 self-contained test files in `tests/` (43 tests total) covering `set_bill` and `centre`",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "signalbox-put-the-train-register-under-test",
+      "agent": "claude-code",
+      "model": "claude-sonnet-5",
+      "stratum": "B",
+      "deliverable_sha256": "f0c531da058f6754de3c7cd68f0e43ac26ec23b726fef576d5ad13f314654a88",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": false,
+          "span": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "task_id": "lido-put-the-admissions-desk-under-test",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "9d68e619353586db2633737901007ad0b3a2c066e84998004ffc4beef9301a61",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added [tests/test_lido.py](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-cgcpqtvi/workdir/tests/test_lido.py) covering admission rules, validation, capacity reservation, and full queue behavior. It is self-contained.",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "playbill-put-the-setting-of-the-bill-under-test",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "53f96d1efde105014eae5dee5fa217234d743093873cdaf22afa5f2e578a358e",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added a standalone `unittest` suite",
+          "verified": true
+        }
+      ]
+    },
+    {
+      "task_id": "signalbox-put-the-train-register-under-test",
+      "agent": "codex",
+      "model": "gpt-5.6-terra",
+      "stratum": "B",
+      "deliverable_sha256": "a7fa67dcc229a08c2638fcbaf6623a0e35d269df0818b45452abbe2110afda87",
+      "rulings": [
+        {
+          "point_id": "the-asked-for-work-was-done",
+          "covered": true,
+          "span": "Added self-contained register test suite: [tests/test_register.py](/private/var/folders/kj/j2g0jc115tl9jf4fsmj_wxcc0000gn/T/ai-bench-live-l2lm2k66/workdir/tests/test_register.py).",
+          "verified": true
+        }
+      ]
+    }
+  ]
+}
