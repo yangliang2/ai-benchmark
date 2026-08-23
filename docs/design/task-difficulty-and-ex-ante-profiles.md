@@ -7650,6 +7650,109 @@ the authoring and sweep work returns as fresh issues re-filed from
 question of this vendor's grader, and the next move is a design discussion,
 not a third prompt.
 
+## Round 9 v2 record — 2026-08-23
+
+**81. The v2 calibration verdict: the bar is failed again, and the question of
+this vendor's grader is closed.** The experiment ran on 2026-08-23 under
+`deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be` — §80's grader v2, the
+same alias and checkpoint as v1 with §80.2's revised prompt — 358 grader calls
+over both strata, **one paid run, no resume needed**, every pre-flight of the
+runbook green first: the full suite at 2540, the lint clean, the split
+re-derived identical to §77.2 (63 / 115, 55 / 8, 243, 358), and no sweep row
+newer than §80.4's registration. The gate's counts, against §77.3's registered
+bar:
+
+```
+overall agreement           46 of 63   >= 57 of 63   NOT MET
+unresolved-class agreement   7 of 8    >=  7 of 8    met
+```
+
+Both clauses gate, so **the gate is failed** — eleven answers short where v1
+was forty-two. What follows is §80.6's failed branch, ruled before the run so
+this record only reports that it happened: **§81 closes the question of this
+vendor's grader** — the next move is a **design discussion, not a third
+prompt**, and no third run is attempted under this vendor. Heap 3 stays empty,
+disclosed; the coverage table's `investigation` zero stands; #131–#134 stay
+closed unstarted exactly as §79 left them; **#127 (ADR-0005) runs on either
+branch** and is not among the blocked — it writes its gating sentences from
+§79's and this section's actual verdicts.
+
+**81.1 Where the seventeen disagreements fell, read rather than scored.** 16
+of the 17 are the grader refusing an answer the machine verdict resolved
+(`code-review` 7 of 19, `fault-location` 7 of 26, `codebase-comprehension` 2
+of 10); the one that runs the other way is the same `apiary` code-review cell
+§79.1 reported. Read against their own deliverables, the sixteen divide into
+three kinds. (i) **Thirteen are pointer prose** — every one a codex row: the
+archived final message is a single line of the shape "Wrote `ANSWER.json`" or
+"Wrote the review findings to `FINDINGS.json`", naming no location and no
+finding, while the machine verdict read the answer file that message points
+at. The grader was shown the message, found nothing to quote, and ruled
+not-covered — **a refusal faithful to the deliverable it was given**. (ii)
+**Two are the residue of §79.2's mechanisms, one each.** The `ferry` ×
+sonnet answer reads "Wrote `ANSWER.json` pointing to `loading.py`,
+`Line.call`." — the accepted pair verbatim, backticked, the exact form §80.2's
+location-equivalence rule told the grader to accept — and was refused anyway;
+that is mechanism (a)'s one true residual, and the same task's haiku answer,
+in the same style, was covered with a clean span in the same run. The
+`masonsyard` × sonnet answer failed on one point of three with a covered
+ruling whose span fails both comparisons — mechanism (b)'s residual, one
+stratum-A case where v1 had fifteen. (iii) **One is an honest key-mismatch of
+level**: the `launderette` × haiku message narrates all three findings at
+file level (`tariff.py`, `stamps.py`, `washes.py`) where the key's points name
+`file:symbol` — §34.5's worry in prose, the mismatch §77.3 sized the
+unresolved clause to absorb, here landing three points at once on one answer.
+
+**81.2 The two mechanisms §79.2 named are gone as mechanisms, and what their
+removal uncovered.** Mechanism (a), the literal-form refusal, carried 32
+single-point refusals in v1 (`fault-location` 24 of 26, comprehension 8 of
+10); under the revised prompt the two categories' refusals fall to 7 and 2,
+and of those nine, eight are kind-(i) pointer rows with no location in the
+deliverable to accept — leaving **one** refusal the prompt was written to
+prevent. Mechanism (b), the paraphrased quote, falls from fifteen refused
+spans to **two archive-wide** (one per stratum), the prompt's
+markdown-included rule and §80.3's fallback doing the job from opposite ends.
+What their removal uncovered is the pointer confound: §79.3 named narrative
+truthfulness as stratum B's confound, and the same confound lives inside
+stratum A wherever an agent's final message is a pointer to its answer file
+rather than a narration of it — thirteen of the 63, concentrated in the codex
+column, whose final messages are habitually one line. Sized against the bar,
+said to size the confound and never to re-score a registered gate: had those
+thirteen deliverables narrated what their answer files carried, the remaining
+four disagreements would have left the count at 59 of 63, above the bar. The
+bar was registered over this stratum, this stratum includes pointer prose,
+and the gate is failed; but the residue the instrument actually owns is two
+answers, not seventeen, and **no prompt can quote what a deliverable does not
+contain**. That finding — the calibration deliverable (the archived final
+message) was never guaranteed to carry the answer the machine verdict read —
+is the design discussion's first agenda item, inherited by the failed branch
+rather than argued here.
+
+**81.3 Stratum B, reported and gating nothing.** 157 of 243, against v1's 149.
+The confound is §79.3's, unchanged: stratum B's deliverable was a diff and the
+archived prose merely narrates it, so a disagreement there measures the
+agent's narrative truthfulness as much as the grader's skill — which is why
+§77.2 registered it as reported-never-gating, and why no sentence of this
+record leans on it.
+
+**81.4 The transfer gap, restated for this record's reader.** Had the bar been
+met, calibration would have proved the grader judges argued prose against a
+known truth — not that it judges a proposal with no truth behind it; the
+owner's ~9 labels on swept cells were to watch that gap, non-gating. The bar
+failed, no cell was swept, the labels do not arise; the gap is stated so a
+reader knows what a met bar would and would not have certified.
+
+**81.5 The spend, against the registered range, and where everything landed.**
+Exactly the 358 calls §80.4 re-registered — 115 on stratum A, 243 on stratum
+B, no proof calls (authoring never began) — inside the reaffirmed **$0.25–1.5**
+by that register's own arithmetic ($0.4462–1.4762 at the v2 prompt's length);
+the vendor's console is the invoice's word, and the run's date (2026-08-23, a
+Sunday under the off-peak rule the vendor made effective that very day) puts
+the actual bill at half the peak figures the registration conservatively
+priced. Instrument as pinned above; archive committed whole and unedited at
+`data/point-gate-calibration/deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be.json`
+— a new file, one rulings file per instrument version — and nothing from
+calibration in `data/unified.jsonl`.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

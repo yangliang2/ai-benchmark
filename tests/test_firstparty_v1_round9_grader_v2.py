@@ -203,10 +203,15 @@ def test_the_register_quotes_the_live_version_tuple() -> None:
         hashlib.sha256(point_grader.PROMPT.encode()).hexdigest()[:12]
     )
 
-    # v1's tuple, read off the archive it named rather than typed here.
+    # v1's tuple, read off the archive it named rather than typed here. §81's
+    # run has since happened (the named exception this suite absorbs once),
+    # so the directory holds exactly the two instruments' files — v1's and
+    # the live tuple's — and v1's is the one that is not the live tuple.
     archived = sorted(path.stem for path in _ARCHIVES.glob("*.json"))
-    assert len(archived) == 1, "v1's rulings file, the only archive so far"
-    v1_alias, v1_checkpoint, v1_hash = archived[0].split(":")
+    assert len(archived) == 2, "v1's rulings file and §81's v2 file, no more"
+    assert point_grader.GRADER_VERSION in archived
+    (v1_tuple,) = [one for one in archived if one != point_grader.GRADER_VERSION]
+    v1_alias, v1_checkpoint, v1_hash = v1_tuple.split(":")
     assert v1_alias == point_grader.GRADER_MODEL, "the alias did not move"
     assert v1_checkpoint == point_grader.GRADER_CHECKPOINT, (
         "the checkpoint did not move"
@@ -565,22 +570,24 @@ def test_nothing_from_calibration_is_in_the_unified_dataset() -> None:
         assert _SWEEP not in json.dumps(row.get("sweep_id", ""))
 
 
-def test_the_register_is_written_before_the_first_paid_call() -> None:
-    """§80.4 registers; §81 records. No v2 ruling exists yet.
+def test_the_register_was_written_before_the_first_paid_call() -> None:
+    """§80.4 registered; §81 has since recorded — the run session's named
+    exception, updated here once, when the v2 rulings file landed.
 
-    The register's honesty rests on the same fact §77's and §78.4's did — not
-    one paid call has been made under the instrument being registered — and
-    that fact is checkable: the rulings archive holds one file per version, so
-    a file named by the v2 tuple would mean the paid run had already happened
-    and this item was written after it rather than before.
+    As written by ticket 16 this test asserted the absence of any v2 rulings
+    file, which was the checkable form of the register's honesty claim — not
+    one paid call made under the instrument being registered. §81's one paid
+    run of 2026-08-23 then happened, so the absence claim expired by design;
+    what stays checkable is that the register still *says* it was filled
+    before the first paid call (the historical claim §81 leans on) and that
+    the run wrote exactly the file the register's tuple named.
 
-    (The design-note frontier — §81 left free — is pinned once, in
+    (The design-note frontier — now §81 — is pinned once, in
     `tests/test_firstparty_v1_round9_cells.py`, and is not asserted twice.)
     """
     archived = sorted(path.name for path in _ARCHIVES.glob("*.json"))
-    assert f"{point_grader.GRADER_VERSION}.json" not in archived, (
-        "a v2 rulings file exists: §81's run has happened, and §80.4 is no "
-        "longer a registration made before the first paid call"
+    assert f"{point_grader.GRADER_VERSION}.json" in archived, (
+        "§81's run archives under the tuple §80.4 registered"
     )
 
     counted = prose()
