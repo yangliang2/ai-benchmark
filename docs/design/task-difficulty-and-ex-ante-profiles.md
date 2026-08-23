@@ -7477,14 +7477,146 @@ before the first grader call:
   carried, and the **$0.25–1.5** range is reaffirmed if it holds or
   re-registered if it does not.
 
-The v2 register, left explicitly to be filled by the re-registration ticket
-before the first paid call:
+The v2 register, filled **2026-08-23** by the re-registration ticket and
+before the first paid call — not one grader call has been made under this
+instrument, which is what makes this registration honest for the same reason
+§77's and §78.4's were:
 
 ```
-grader v2 version tuple:  (from point_grader.GRADER_VERSION, quoted verbatim)
-split re-derived:         (date; must print §77.2's counts to the answer)
-price:                    (reaffirmed $0.25–1.5, or the re-registered range)
+grader v2 version tuple:  deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be
+split re-derived:         2026-08-23 — stratum A 63 answers / 115 points, 55
+                          resolved / 8 unresolved; stratum B 243; 358 archive
+                          calls in all; §77.2's counts to the answer
+price:                    $0.25–1.5 reaffirmed — the arithmetic redone at the
+                          revised prompt's length lands at $0.4462–1.4762
 ```
+
+**The tuple, and which part of it moved.** Read out of
+`point_grader.GRADER_VERSION` and quoted above verbatim rather than retyped.
+**The alias is unchanged** — `deepseek-v4-pro`, the model §78.1 re-pinned;
+this amendment is a prompt revision and no model switch rides it. **The
+checkpoint is unchanged** — `DeepSeek-V4-Pro-0813`, re-verified against the
+fresh pinned fetch below, whose `MODEL VERSION` cell still announces it, so
+there is nothing to disclose under §78.3's moved-checkpoint rule; had it
+moved, that would have been a version change of its own and stopped this
+registration rather than being absorbed into it. **The prompt hash is what
+moved**: `5ec690f5eb62` becomes `8bf4fedb86be`, because §80.2's two revisions
+landed in `point_grader.PROMPT` and the hash is the tuple's third part. That
+one moved part is exactly what makes v2 **a different instrument** under
+§77.8's own sentence — a new version string, a new rulings file named by it,
+and the same bar met afresh or not at all; nothing v1 measured transfers, and
+§79's failure is neither inherited nor erased. **§77.8 is not edited**: it
+records the v1 instrument that ran §79 and stays exactly as registered.
+
+**The split, re-derived and identical.** `uv run ai-bench calibrate-grader-v1
+--split-only` — offline, no grader built, no call made, no key shown to
+anything — was run on **2026-08-23** and printed
+
+```
+strata (derived from each row's task and the key shape it ships)
+  stratum  answers  points  what the grader is asked
+  A        63       115     the task's planted key, run in production mode
+  B        243      243     the synthetic point "the asked-for work was done"
+
+stratum A, by action, with the replay-computed split the bar reads
+  category                answers  points  resolved  unresolved
+  code-review             26       78      19        7
+  codebase-comprehension  10       10      10        0
+  fault-location          27       27      26        1
+  (all)                   63       115     55        8
+
+grader calls: 115 on stratum A + 243 on stratum B = 358 in all
+
+the bar (§76.4), registered as counts over stratum A alone
+  overall agreement           >= 57 of 63
+  unresolved-class agreement  >= 7 of 8
+```
+
+over the same **306** archived answers in the same **37** run logs, and its
+own `instrument:` line printed the v2 tuple above — a second place the string
+can be read from, though the register quotes `GRADER_VERSION` all the same.
+**Every count matches §77.2's to the answer**, so the corpus the two
+experiments are read over is one corpus and the v1 and v2 verdicts are
+comparable. A moved count would have stopped this registration by design
+rather than being re-registered after the fact. The guardrail that keeps it
+identical through the run is the one stated above and restated here in as many
+words: **no new sweep row lands under `data/first-party-v1-runs/` between this
+registration and §81's run.**
+
+**The bar, unchanged: ≥ 57 of 63 overall and ≥ 7 of 8 unresolved-class.**
+§77.3's counts verbatim, restated here so that a reader of the second
+experiment need not chase them, and deliberately not re-derived — §77.3 shows
+the rounding that produced them, and doing that arithmetic twice invites two
+answers. **A revised prompt re-argues no bar.** What §80.2 changed is the
+question the instrument asks, not what agreement is required of the answer,
+and a bar adjusted in the same amendment that reworks the instrument it judges
+is a bar fitted to a result.
+
+**The price: $0.25–1.5, reaffirmed at the revised prompt's length.** §77.4's
+own method, applied to the v2 prompt over the same 358 calls.
+
+**The prices were read, not remembered.** Fetched on **2026-08-23** with
+
+```
+curl -sL https://api-docs.deepseek.com/quick_start/pricing
+```
+
+- `source_url`: `https://api-docs.deepseek.com/quick_start/pricing`
+- `as_of`: **2026-08-23**
+
+That command's own output carries the column **deepseek-v4-pro** at **$1.32 /
+MTok** peak input on a cache miss, **$0.044 / MTok** peak input on a cache
+hit, and **$3.96 / MTok** peak output — every figure unmoved from §77.4's
+fetch of 2026-08-22, so the money moves only with the prompt. The same
+column's `MODEL VERSION` cell reads `DeepSeek-V4-Pro-0813`, which is the
+checkpoint assertion above. **The page's footnote (1) has changed and is
+recorded as read**: it now says "Off-peak rates are half of the peak rates.
+Peak hours are 01:00 - 04:00 and 06:00 - 10:00 UTC, Monday through Friday (all
+other hours are off-peak)." — the weekend adjustment §77.4 quoted as
+forthcoming, now in force. **The schedule moved and the prices did not**, and
+this round stays registered at **peak-hour list pricing, cache-miss
+throughout** (§78.4's conservative end, twice over), which under the new
+footnote is more conservative than before rather than less: a weekend call is
+now off-peak whatever the hour, and off-peak is half of every figure below.
+
+**The arithmetic, at four characters a token, redone rather than carried.**
+What moved is the template: `point_grader.PROMPT` goes from **954** to
+**1,461** characters with §80.2's two revisions, so the filled-prompt total
+goes from §77.4's **576,450** characters to **757,956** and the input-token
+count with it. What did not move is the archive, and it is checked rather than
+re-argued: the deliverables those calls carry still come to **212,658
+characters**, stratum-A answers still run **45–1379 characters, median 352**,
+and the call table is still 27 × 1 + 26 × 3 + 10 × 1 = 115 on stratum A plus
+243 on stratum B = **358**. The template's leading **223** characters — the
+part before the point id, and all the text two calls have in common — did not
+move either, so §77.4's cache paragraph carries unchanged and no hit rate is
+claimed here.
+
+```
+input   757,956 chars / 4                    = 189,489 tok  x $1.32/M = $0.2501
+output  low   358 calls x 100 tok thinking   =  35,800 tok  x $3.96/M = $0.1418
+        high  358 x 300 tok + 53,164 quoted  = 160,564 tok  x $3.96/M = $0.6358
+                                               archive half  $0.3919 - $0.8860
+
+proofs  low   24 calls x 5,661 chars / 4     =  33,966 tok  x $1.32/M = $0.0448
+              24 x 100 tok thinking          =   2,400 tok  x $3.96/M = $0.0095
+        high  48 calls x 9,661 chars / 4     = 115,932 tok  x $1.32/M = $0.1530
+              48 x (2,000 quoted + 300)      = 110,400 tok  x $3.96/M = $0.4372
+                                               proofs half   $0.0543 - $0.5902
+
+                                               round total   $0.4462 - $1.4762
+```
+
+The proofs half is priced over the same 24–48 calls, contingent on the bar as
+it was in §77.4, at the same assumed 4,000- and 8,000-character answers; only
+the surround moved, from the 954-character template plus a 200-character point
+to **1,661** characters a call, which is where the 5,661 and 9,661 above come
+from. **The registered range holds**: $0.4462–1.4762 sits inside **$0.25–1.5**
+at both ends, so the range is **reaffirmed rather than re-registered**, and no
+range is superseded by this item. The headroom at the top is thinner than it
+was — $1.4762 against $1.5, where v1's arithmetic topped out at $1.4083 — and
+that is a fact about a longer prompt, disclosed here so that §81 reports the
+spend against a range whose margin was known before the call.
 
 **80.5 What §79 keeps, mechanically.** §79 is v1's record and stays exactly
 as computed, under v1's tuple and v1's whitespace-only normalisation. Its pin

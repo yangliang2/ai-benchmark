@@ -101,6 +101,18 @@ _PRICING_URL = "https://api-docs.deepseek.com/quick_start/pricing"
 _CACHING_URL = "https://api-docs.deepseek.com/guides/kv_cache"
 _AS_OF = "2026-08-22"
 
+# §80.4: v1's instrument, frozen as literals of this suite. §77 registers the
+# v1 grader — the one that ran §79 — and §77.4 and §77.8 are not edited again,
+# so the figures below stop reading the live `point_grader` the moment grader
+# v2 moves it. What §80.4 registers is registered in §80.4, and this file keeps
+# saying what §77 said. `tests/test_firstparty_v1_round9_grader_v2.py` is the
+# suite that reads the live code.
+_V1_GRADER_VERSION = "deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62"
+_V1_PROMPT_CHARS = 576450
+_V1_PROMPT_LEN = 954
+_V1_PROMPT_PREFIX = 223
+_V1_PROOF_SURROUND = _V1_PROMPT_LEN + 200
+
 # The two prices the superseded registration of 2026-08-21 ran at, and the
 # range it registered. Kept here because §77.4 must still show them as
 # superseded rather than as never having been registered.
@@ -401,24 +413,19 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     ):
         assert line in counts, line
 
-    # The characters the calls carry, filled the way the grader fills them.
-    prompt_chars = 0
+    # The characters the calls carry. The deliverable half is a fact about the
+    # archive and stays derived; the prompt half was derived from the live
+    # `point_grader.PROMPT` until grader v2 moved it, and is **frozen to v1's
+    # figures per §80.4** — §77.4 registers the v1 instrument and is not
+    # edited, so this suite must keep asserting what it registered rather than
+    # following a prompt that has moved out from under it. The live figures are
+    # re-derived in `tests/test_firstparty_v1_round9_grader_v2.py`.
     deliverable_chars = 0
     for run in runs:
         for point in grader_calibration_v1.points_for(tasks[run.task_id]):
-            prompt_chars += len(
-                point_grader.PROMPT.format(
-                    point_id=point["id"],
-                    point_text=point["text"],
-                    deliverable=run.output,
-                )
-            )
             deliverable_chars += len(run.output)
-    assert (prompt_chars, deliverable_chars) == (576450, 212658)
-    assert len(point_grader.PROMPT) == 954
-    # The shared prefix a detected common prefix could cover: the template up
-    # to the point id, which is all the text two calls have in common.
-    assert len(point_grader.PROMPT.split("{point_id}")[0]) == 223
+    assert deliverable_chars == 212658
+    prompt_chars = _V1_PROMPT_CHARS
 
     lengths = sorted(len(run.output) for run in stratum_a)
     assert (lengths[0], lengths[-1]) == (45, 1379)
@@ -448,7 +455,8 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     # A proof call's prompt is the assumed answer plus the surround: the
     # template as it now stands and a 200-character point. The template moved
     # with the re-pin, so these two figures moved with it.
-    surround = len(point_grader.PROMPT) + 200
+    # §80.4: v1's surround, frozen with the template it was measured over.
+    surround = _V1_PROOF_SURROUND
     assert surround == 1154
     proof_low_in = 24 * (4000 + surround) // _CHARS_PER_TOKEN
     proof_high_in = 48 * (8000 + surround) // _CHARS_PER_TOKEN
@@ -521,7 +529,7 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     assert "**The assumed disqualifier count is 0–2 a task**" in counted
     assert "forces a re-registration rather than being absorbed by it" in counted
     assert "**45–1379 characters, median 352**" in counted
-    assert "**576,450 characters**" in counted
+    assert f"**{_V1_PROMPT_CHARS:,} characters**" in counted
     assert "**212,658 characters**" in counted
 
     # The off-peak rule, recorded as read — the round is registered at the
@@ -576,7 +584,9 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
         'the whole mechanism "works on a \'best-effort\' basis and does not '
         'guarantee a 100% cache hit rate"'
     ) in counted
-    assert "the template's leading **223** characters" in counted
+    assert (
+        f"the template's leading **{_V1_PROMPT_PREFIX}** characters"
+    ) in counted
     assert "**No hit rate is claimed here**" in counted
     assert "the conservative end twice over: peak hours, and no hit assumed" in counted
     assert "can only lower the bill and never raise it" in counted
@@ -884,12 +894,19 @@ def test_the_grader_version_is_quoted_verbatim() -> None:
     thinking mode: a registration must not rest a determinism claim on a
     parameter the vendor documents as doing nothing.
     """
+    # §80.4: v1's tuple, a literal of this suite rather than a read of the
+    # live `point_grader.GRADER_VERSION`. §77.8 records the instrument that ran
+    # §79 and is not edited again; grader v2's tuple is registered in §80.4 and
+    # re-derived from the code by that item's own suite. The block lookup still
+    # goes through the live alias, which did not move — checked here rather
+    # than assumed.
     version = block_holding(point_grader.GRADER_MODEL).strip()
-    assert version == point_grader.GRADER_VERSION
-    assert version == (
-        f"{point_grader.GRADER_MODEL}:{point_grader.GRADER_CHECKPOINT}"
-        f":{point_grader.PROMPT_HASH}"
-    )
+    assert version == _V1_GRADER_VERSION
+    v1_alias, v1_checkpoint, v1_hash = _V1_GRADER_VERSION.split(":")
+    assert (v1_alias, v1_checkpoint) == (
+        point_grader.GRADER_MODEL, point_grader.GRADER_CHECKPOINT,
+    ), "the alias and the checkpoint did not move; only the prompt hash did"
+    assert version == f"{v1_alias}:{v1_checkpoint}:{v1_hash}"
     assert len(version.split(":")) == 3
 
     counted = prose()
