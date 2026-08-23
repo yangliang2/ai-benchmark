@@ -7302,6 +7302,86 @@ becomes the tuple, and §77's amendment lands with its pins. Delivery is the
 standing pipeline's: tickets cut on #123, the park comment superseded, and
 #130's runbook then runs with the DeepSeek key in the invoking shell.
 
+## Round 9 record — 2026-08-23
+
+**79. The calibration verdict: the bar is failed, and heap 3 stays empty.**
+The experiment ran on 2026-08-23 under
+`deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62` — 358 grader calls over
+both strata, one paid run resumed once after a mid-run connection failure
+(105 calls in the first invocation, 253 in the second, nothing re-asked: the
+archive at `data/point-gate-calibration/` is written per answer and reused by
+deliverable hash, §76.6's resume working as designed). The gate's counts,
+against §77.3's registered bar:
+
+```
+overall agreement           15 of 63   >= 57 of 63   NOT MET
+unresolved-class agreement   7 of 8    >=  7 of 8    met
+```
+
+Both clauses gate, so **the gate is failed**, in one sentence: this grader is
+not an instrument the corpus may point at prose. What follows is what §76.1
+priced: no `investigation` task is authored, no cell is swept, the coverage
+table's `investigation` zero stands disclosed, heap 3 stays empty, and the
+round closes having cost the experiment's price and nothing more. Tickets
+08–11 (#131–#134) close unstarted, each naming this section; ticket 04
+(#127, ADR-0005) is not among the closed — it runs on either branch and
+writes its gating sentences from this verdict. The failure is a finding
+about the instrument, not about the corpus.
+
+**79.1 Where the disagreements fell, read rather than scored.** 47 of the 48
+disagreements are the grader refusing an answer the machine verdict resolved;
+one runs the other way (a machine-unresolved `code-review` answer the grader
+resolved). By category, of the machine-resolved answers the grader refused:
+`fault-location` 24 of 26, `codebase-comprehension` 8 of 10, `code-review`
+15 of 19. A sampled refusal, quoted whole: the planted point asks whether the
+answer "names the location it was asked for as one of these:
+`paging.py:Paginator.page_count`, `paging.py:Paginator`"; the archived answer
+opens "The defect is in **`paging.py`, method `Paginator.page_count`**
+(line 52)" — and the ruling is covered = false, span = null.
+
+**79.2 Two mechanisms, both the instrument's, both visible in the archive.**
+(a) **The literal-form refusal**, carrying the two single-point categories:
+where the deliverable names the accepted location in prose (`the
+Yard.book_in method in yard.py`) rather than in the key's rendered
+`file.py:Class.method` form, the grader rules not-covered with no span —
+though the machine's own matcher accepts exactly these prose forms, which is
+why the machine verdict is resolved. (b) **The paraphrased quote**: on 15
+covered rulings the grader's span is the deliverable with its markdown
+stripped (`dues.py: owed_by — Silently skips…` quoted for `**dues.py:
+owed_by** — Silently skips…`), and a span that is not verbatim is not a span
+— §76.6's mechanical check refused them exactly as specified. Together these
+are §76.4's honest key-mismatch anticipated — at the scale of a category
+rather than the odd answer, which is the difference between an absorbed
+mismatch and a failed instrument. This is the job §78.1 said the bar would do
+for a grader nobody had vouched for, and it did it before an authoring dollar
+moved. Neither mechanism is per-point instability, so the recorded k-vote
+fallback (§76.6) does not arise; a reworded per-point question or a different
+effort setting would be a different instrument under §77.8's sentence — a new
+version string, a new rulings file, a new bar — and no such attempt is made
+inside this round, whose one paid run is spent.
+
+**79.3 Stratum B, reported and gating nothing.** 149 of 243. The confound,
+in as many words: stratum B's deliverable was a diff and the archived prose
+merely narrates it, so a disagreement there measures the agent's narrative
+truthfulness as much as the grader's skill — which is why §77.2 registered it
+as reported-never-gating, and why no sentence of this record leans on it.
+
+**79.4 The transfer gap, and the labels that do not arise.** Had the bar been
+met, calibration would have proved the grader judges argued prose against a
+known truth — not that it judges a proposal with no truth behind it; that gap
+was to be watched by the owner's ~9 agree/disagree labels on the round's own
+swept cells, a disclosed non-gating check. The bar failed, no cell was swept,
+and the labels do not arise; the gap is stated anyway so the record's reader
+knows what a met bar would and would not have certified.
+
+**79.5 The spend, against the registered range.** Exactly the 358 calls
+§77.4's table counted — 115 on stratum A, 243 on stratum B, no proof calls
+(authoring never began) — inside the re-registered $0.25–1.5 by that entry's
+own per-call arithmetic; the vendor's console is the invoice's word. Date
+2026-08-23, instrument as pinned above, archive committed whole at
+`data/point-gate-calibration/deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62.json`,
+and nothing from calibration in `data/unified.jsonl`.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

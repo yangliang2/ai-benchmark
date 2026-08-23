@@ -195,11 +195,12 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert numbered.count(76) == 1, "the round-9 rulings, spent once"
     assert numbered.count(77) == 1
     assert numbered.count(78) == 1, "the round-9 amendment, spent once"
-    assert numbered[-1] == 78, (
-        "§78 is round 9's amendment (the grader re-pinned) and the frontier; "
-        "§79 is still free, and it is the round's record that takes it"
+    assert numbered.count(79) == 1, "the round-9 record (the calibration verdict), spent once"
+    assert numbered[-1] == 79, (
+        "§79 is round 9's record — the calibration verdict of 2026-08-23 — "
+        "and the frontier; §80 is still free for whatever round comes next"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 79)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 80)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
