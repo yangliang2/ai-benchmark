@@ -182,10 +182,12 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     takes what is free after it — which the section says in a line, so that
     whoever writes it does not have to re-derive the frontier.
 
-    The frontier has since moved once, and only once: **§78 is round 9's
-    amendment** — the grader re-pinned to `deepseek-v4-pro` after the round
-    parked at its calibration gate — and **§79 is still free**, because it is
-    the round's record that takes it. Nothing was renumbered to make room.
+    The frontier has since moved three times: **§78 is round 9's amendment**
+    — the grader re-pinned to `deepseek-v4-pro` after the round parked at its
+    calibration gate — **§79 is the round's record** (the calibration verdict
+    of 2026-08-23, FAILED), and **§80 is the second amendment** — grader v2
+    by prompt revision, whose own record takes §81. Nothing was renumbered to
+    make room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -196,11 +198,12 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert numbered.count(77) == 1
     assert numbered.count(78) == 1, "the round-9 amendment, spent once"
     assert numbered.count(79) == 1, "the round-9 record (the calibration verdict), spent once"
-    assert numbered[-1] == 79, (
-        "§79 is round 9's record — the calibration verdict of 2026-08-23 — "
-        "and the frontier; §80 is still free for whatever round comes next"
+    assert numbered.count(80) == 1, "the round-9 second amendment (grader v2), spent once"
+    assert numbered[-1] == 80, (
+        "§80 is round 9's second amendment — grader v2 by prompt revision — "
+        "and the frontier; §81 is still free for the v2 record"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 80)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 81)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

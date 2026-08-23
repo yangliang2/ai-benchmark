@@ -7382,6 +7382,142 @@ own per-call arithmetic; the vendor's console is the invoice's word. Date
 `data/point-gate-calibration/deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62.json`,
 and nothing from calibration in `data/unified.jsonl`.
 
+## Round 9 second amendment — 2026-08-23
+
+**80. Grader v2: the instrument's question is revised; the model, the settings
+and the bar stay.** Round 9 closed at its calibration gate on 2026-08-23,
+FAILED — §79 is that record, and nothing in this section reopens a figure in
+it. What this section records is the replan, ruled in the owner's session of
+2026-08-23: **grader v2 by prompt revision, not a model switch.** The
+instrument keeps `deepseek-v4-pro`, the announced checkpoint, and §78.2's
+settings — low reasoning effort, temperature 0, JSON output — and moves only
+the per-point question it asks. Under §77.8's own sentence that is a
+**different instrument**: a new version string, a new rulings file, and the
+same bar met afresh or not at all. §79.2 said no reworded question would be
+attempted inside the round whose one paid run was spent, and none was; this
+amendment is the next attempt at the same question, registered and priced like
+the first, with its own record to follow at §81.
+
+**80.1 Why the prompt moves and the model does not.** §79.1–79.2's evidence,
+read as a repair order. 47 of 48 disagreements are the grader refusing answers
+the machine verdict resolved, and both mechanisms are defects of the
+instrument's spec, not of the model's capability: (a) the grader was never
+told that prose, backticked and `file.py:Class.method` renderings of one
+location are the same location — though the machine's own matcher accepts
+exactly those forms, which is why the machine side of each disagreement was
+resolved; (b) the grader quoted deliverables with their markdown stripped, and
+the gate's whitespace-only normalisation refused the quotes exactly as
+specified. On everything the spec did pin, the model executed flawlessly: 358
+of 358 well-formed JSON rulings, zero refusals, zero truncations, zero empty
+spans, a non-degenerate verdict split (#130's closing comment holds the
+tallies). A model switch would spend a second experiment learning nothing
+about either mechanism; a prompt revision aims at both. And the revision is
+not a bar lowered to fit the failure: the bar (§77.3) does not move, the split
+(§77.2) must re-derive identical, the failed run stands recorded at §79, and
+the fix aligns the grader with a matcher the corpus already trusts rather than
+with the answers it happened to want.
+
+**80.2 The two prompt revisions, and what each aligns with.** Both land in
+`point_grader.PROMPT`, whose hash is the version tuple's third part, so both
+are visible in the string §80.4 registers.
+
+- **Location equivalence.** The per-point question gains the rule the machine
+  matcher already applies: a deliverable names a location whether it writes
+  `file.py:Class.method`, backticks it, or names the same method and file in
+  prose — the forms are one answer, and coverage is judged on the location
+  named, never on the rendering. This carries §79.2(a), which carried
+  `fault-location` 24 of 26 and comprehension 8 of 10.
+- **Span discipline.** The instruction to quote verbatim gains the words the
+  last run showed it needs: the span is copied from the deliverable
+  **character for character, including any markdown markers** (`**`,
+  backticks, `#`, list dashes) the deliverable carries — a quote with the
+  formatting stripped is not the deliverable's text. This aims at §79.2(b)'s
+  fifteen refused quotes.
+
+**80.3 The gate's normalisation is loosened beside it — ruled, not riding.**
+The replan's one open judgment point, flagged because it changes the gate's
+mechanics rather than the prompt; the owner ruled it on 2026-08-23: **do
+both.** `span_in_deliverable` keeps its whitespace-normalised containment
+check and gains a fallback: where the raw comparison fails, both sides are
+stripped of markdown markers — a definition the implementation pins once and
+tests pin by example — and compared again. What the trade is and why it was
+taken, in as many words: §76.6's "no quotable span, no coverage" survives —
+a span must still be mechanically locatable in the deliverable, and a
+paraphrase still fails both comparisons — while the instrument stops failing
+on a distinction that is presentational rather than semantic. The prompt
+revision aims at the model's quoting habit; the fallback absorbs whatever of
+the habit survives the prompt — two defences over the same fifteen-ruling
+mechanism, deliberately overlapping, because §80.6 makes a second failure
+terminal for this vendor's grader and a terminal gate should not hang on
+prompt obedience alone. Disclosed with it: the loosening is not
+calibration-only — the same function is the production gate's span check and
+the lint's, so every future point-gate verdict inherits it. That reach is
+exactly why it needed its own ruling rather than a ride.
+
+**80.4 The re-registration, before the first paid call — and the register
+left to be filled.** §78.4's pattern, one round on. The implementing ticket,
+before the first grader call:
+
+- **The version tuple** — the same alias, the checkpoint **re-verified
+  against a fresh pinned fetch** of the vendor's pricing page (a moved
+  checkpoint is a version change, disclosed rather than absorbed), and the
+  new prompt hash — quoted verbatim into the register below from
+  `point_grader.GRADER_VERSION`, never retyped. §77.8 is not edited again: it
+  records the v1 instrument that ran §79, and the v2 tuple lives here.
+- **The split**, re-derived with `calibrate-grader-v1 --split-only` and
+  **required identical to §77.2**: stratum A 63 answers / 115 points, 55
+  resolved / 8 unresolved; stratum B 243; 358 archive calls. A moved split
+  stops the run by design — and **no new sweep row lands under
+  `data/first-party-v1-runs/` between this registration and §81's run**.
+- **The bar, unchanged**: ≥ 57 of 63 overall and ≥ 7 of 8 unresolved-class,
+  §77.3's counts verbatim. A revised prompt re-argues no bar.
+- **The price**, re-derived over the same 358 calls by §77.4's own method
+  (peak-hour list price, cache-miss throughout): the prompt's length moves
+  with the revision, so the filled-prompt arithmetic is redone rather than
+  carried, and the **$0.25–1.5** range is reaffirmed if it holds or
+  re-registered if it does not.
+
+The v2 register, left explicitly to be filled by the re-registration ticket
+before the first paid call:
+
+```
+grader v2 version tuple:  (from point_grader.GRADER_VERSION, quoted verbatim)
+split re-derived:         (date; must print §77.2's counts to the answer)
+price:                    (reaffirmed $0.25–1.5, or the re-registered range)
+```
+
+**80.5 What §79 keeps, mechanically.** §79 is v1's record and stays exactly
+as computed, under v1's tuple and v1's whitespace-only normalisation. Its pin
+suite (`tests/test_firstparty_v1_round9_calibration.py`) reaches both through
+the live code today — the archive path through `point_grader.GRADER_VERSION`,
+the span audit through `span_in_deliverable` — and both move under this
+amendment, so repointing the suite is this amendment's own work: the v1 tuple
+`deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62` becomes a literal of the
+suite, and the span audit pins v1's whitespace-only rule locally, each with a
+comment naming this section. The archived `verified` flags are frozen data
+and re-derive §79's figures untouched either way. The design-note frontier
+assertion moves to 80 with this amendment and to 81 with the record, the
+named exception each time, touching nothing else in its suite.
+
+**80.6 The re-run, its record at §81, and the two branches out of it.** A
+runbook ticket mirrors #130, its rules restated rather than pointed at.
+**`DEEPSEEK_API_KEY` is not stored anywhere on this machine** — the owner
+supplies it in the invoking shell at the gate, the payment-path pre-flight
+named at the top of the runbook. The paid run is **one run, run by hand in
+the session and never queued** (a cascade retry can double-spend a paid
+gate), resumed on infrastructure failure only and never repeated for a nicer
+number — and the machine's own proxy is the first suspect on a connection
+failure: a `Connection refused` at the vendor's host is probed with `curl
+--noproxy '*'` before anything is blamed, then the run is resumed, §79's own
+resume-by-deliverable-hash doing the rest. The record lands at **§81**, over
+a new rulings file named by the v2 tuple, the archive committed whole,
+nothing from calibration in `data/unified.jsonl`. Both branches out of §81
+are ruled now, so the record only reports which one happened: **bar met** —
+the authoring and sweep work returns as fresh issues re-filed from
+#131–#134's own texts, re-pointed at §81; **bar failed** — §81 closes the
+question of this vendor's grader, and the next move is a design discussion,
+not a third prompt.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
