@@ -37,11 +37,13 @@ _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 _UNIFIED = _REPO / "data" / "unified.jsonl"
+# §80.5: v1's version tuple, a literal of this suite rather than a read of the
+# live `point_grader.GRADER_VERSION`. One rulings file is one instrument's, and
+# §79 is v1's record — the archive path must not follow a moving version.
+_V1_GRADER_VERSION = "deepseek-v4-pro:DeepSeek-V4-Pro-0813:5ec690f5eb62"
+
 _ARCHIVE = (
-    _REPO
-    / "data"
-    / "point-gate-calibration"
-    / f"{point_grader.GRADER_VERSION}.json"
+    _REPO / "data" / "point-gate-calibration" / f"{_V1_GRADER_VERSION}.json"
 )
 
 # §79's quoted figures, as counts a reader can check by hand — the registered
@@ -85,6 +87,20 @@ def _by_cell(
     }
 
 
+def _span_holds_under_v1(span: str, deliverable: str) -> bool:
+    """v1's span rule, whitespace-only — pinned locally per §80.5.
+
+    §79's figures were computed under it, and v2's `span_in_deliverable` gained
+    a markdown-stripped fallback (§80.3) that would newly accept §79.2(b)'s
+    fifteen refused quotes. This suite audits frozen data, so it keeps v1's
+    comparison — calling the unchanged `point_grader.normalise_whitespace`
+    rather than re-implementing it.
+    """
+    return point_grader.normalise_whitespace(
+        span
+    ) in point_grader.normalise_whitespace(deliverable)
+
+
 def _grader_resolved(rulings: calibration.AnswerRulings) -> bool:
     """The gate's own verdict shape over archived rulings: every point covered
     with a mechanically verified span."""
@@ -125,8 +141,8 @@ def test_the_archive_is_pinned_to_the_grader_version_and_named_by_it(
     """The version is stamped once at the archive level and the file is named
     by it — one rulings file per instrument version (§77.8's sentence), so a
     version change cannot silently continue an old file."""
-    assert archive.grader_version == point_grader.GRADER_VERSION
-    assert _ARCHIVE.name == f"{point_grader.GRADER_VERSION}.json"
+    assert archive.grader_version == _V1_GRADER_VERSION
+    assert _ARCHIVE.name == f"{_V1_GRADER_VERSION}.json"
 
 
 def test_both_stratum_a_figures_re_derive_to_the_quoted_counts(
@@ -197,9 +213,7 @@ def test_every_covered_rulings_span_is_audited_mechanically(
             assert ruling.span is not None, (
                 "a covered ruling without a span is not a covered ruling"
             )
-            mechanical = point_grader.span_in_deliverable(
-                ruling.span, deliverable
-            )
+            mechanical = _span_holds_under_v1(ruling.span, deliverable)
             assert ruling.verified == mechanical, (
                 f"{answer.task_id} [{ruling.point_id}]: archived "
                 f"verified={ruling.verified} but the mechanical check says "
@@ -233,7 +247,10 @@ def _section_79() -> str:
     note's 75-column line breaks."""
     text = _NOTE.read_text(encoding="utf-8")
     start = text.index("**79. The calibration verdict")
-    end = text.index("## Open questions", start)
+    # §80.5: §79 ends where round 9's second amendment begins. Slicing to
+    # `## Open questions` would swallow §80 whole, and these pins would stop
+    # being assertions about §79's own text.
+    end = text.index("## Round 9 second amendment", start)
     return " ".join(text[start:end].split())
 
 
@@ -246,7 +263,9 @@ def test_the_record_quotes_the_derived_counts_and_the_verdict() -> None:
     assert "NOT MET" in record
     assert "the gate is failed" in record
     assert "358" in record, "the spend is quoted in calls"
-    assert point_grader.GRADER_VERSION in record
+    # §80.5: §79 quotes v1's tuple and is not edited, so this reads the same
+    # literal the archive is named by.
+    assert _V1_GRADER_VERSION in record
 
 
 def test_the_record_states_the_transfer_gap_and_the_confound(

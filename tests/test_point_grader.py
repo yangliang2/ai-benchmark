@@ -20,6 +20,7 @@ from ai_benchmark.point_grader import (
     deepseek_point_grader,
     normalise_whitespace,
     span_in_deliverable,
+    strip_markdown,
 )
 
 
@@ -82,6 +83,100 @@ def test_span_not_present_does_not_match() -> None:
     deliverable = "The cache is warm and never touches the network."
     span = "the cache is always cold"
 
+    assert not span_in_deliverable(span, deliverable)
+
+
+def test_prompt_carries_the_location_equivalence_rule() -> None:
+    """§80.2's first revision, aimed at §79.2(a): the machine's own matcher
+    accepts prose, backticked and `file.py:Class.method` renderings of one
+    location, and the grader is now told the same rule in as many words."""
+    prompt = " ".join(PROMPT.split())
+
+    assert (
+        "A deliverable names a location whether it writes it as "
+        "`file.py:Class.method`, backticks it, or names the same method and "
+        "file in prose" in prompt
+    )
+    assert (
+        "coverage is judged on the location named, never on the rendering"
+        in prompt
+    )
+
+
+def test_prompt_carries_the_span_discipline_rule() -> None:
+    """§80.2's second revision, aimed at §79.2(b)'s fifteen refused quotes: a
+    span stripped of the deliverable's markdown is not the deliverable's
+    text."""
+    prompt = " ".join(PROMPT.split())
+
+    assert (
+        "Copy the span out of the deliverable character for character, "
+        "including any markdown markers (**, backticks, #, list dashes) the "
+        "deliverable carries" in prompt
+    )
+    assert "a quote with the formatting stripped is not the deliverable's text" in prompt
+
+
+# --- §80.3's fallback: the markdown strip, pinned by example ------------------
+
+
+@pytest.mark.parametrize(
+    ("marker", "deliverable", "span"),
+    [
+        (
+            "**",
+            "**dues.py: owed_by** — Silently skips zero-rate graziers.",
+            "dues.py: owed_by — Silently skips zero-rate graziers.",
+        ),
+        (
+            "backticks",
+            "The defect is in `yard.py`, method `Yard.book_in`.",
+            "The defect is in yard.py, method Yard.book_in.",
+        ),
+        (
+            "#",
+            "The ledger was read whole.\n## Findings\nIt double-counts the "
+            "standing charge.",
+            "The ledger was read whole. Findings It double-counts the "
+            "standing charge.",
+        ),
+        (
+            "list dashes",
+            "- the total is rounded once here\n- and rounded again on export",
+            "the total is rounded once here and rounded again on export",
+        ),
+    ],
+)
+def test_a_span_stripped_of_its_markdown_matches_through_the_fallback(
+    marker: str, deliverable: str, span: str
+) -> None:
+    """§80.3: the whitespace-only comparison refuses each of these — that is
+    §79.2(b)'s mechanism — and the markdown-stripped comparison accepts them.
+    One example per marker class the section names."""
+    assert normalise_whitespace(span) not in normalise_whitespace(deliverable), (
+        f"the {marker} example must fail the raw comparison, or it proves "
+        "nothing about the fallback"
+    )
+    assert span_in_deliverable(span, deliverable)
+
+
+def test_strip_markdown_removes_the_four_marker_classes_once() -> None:
+    """The strip is one definition in the implementation rather than a regex
+    at the call site, so it is pinned directly too."""
+    assert strip_markdown("**bold**") == "bold"
+    assert strip_markdown("a `code` span") == "a code span"
+    assert strip_markdown("### Heading\nbody") == "Heading body"
+    assert strip_markdown("- one\n- two") == "one two"
+
+
+def test_a_paraphrased_span_fails_both_comparisons() -> None:
+    """§76.6 survives §80.3: the fallback forgives a rendering, never a
+    paraphrase. No quotable span, no coverage."""
+    deliverable = "**dues.py: owed_by** — Silently skips zero-rate graziers."
+    span = "the owed_by function ignores graziers whose rate is zero"
+
+    assert normalise_whitespace(span) not in normalise_whitespace(deliverable)
+    assert strip_markdown(span) not in strip_markdown(deliverable)
     assert not span_in_deliverable(span, deliverable)
 
 

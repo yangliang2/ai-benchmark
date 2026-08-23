@@ -99,6 +99,15 @@ deliverable's own text that establishes it. Never infer, never paraphrase,
 and never answer based on what the deliverable *should* say — if no such
 span exists, the point is not covered, with no exceptions.
 
+A deliverable names a location whether it writes it as `file.py:Class.method`,
+backticks it, or names the same method and file in prose (for example "the
+`book_in` method in `yard.py`"). Those renderings are one answer: coverage is
+judged on the location named, never on the rendering.
+
+Copy the span out of the deliverable character for character, including any
+markdown markers (**, backticks, #, list dashes) the deliverable carries — a
+quote with the formatting stripped is not the deliverable's text.
+
 Return covered (true or false) and span: when covered, the exact verbatim
 quote from the deliverable that covers the point; null when not covered.
 
@@ -116,6 +125,12 @@ When the point is not covered, "covered" is false and "span" is null.
 PROMPT_HASH = hashlib.sha256(PROMPT.encode()).hexdigest()[:12]
 GRADER_VERSION = f"{GRADER_MODEL}:{GRADER_CHECKPOINT}:{PROMPT_HASH}"
 
+# The markers §80.3 names, stripped line by line: `**`, backticks, and — at the
+# start of a line, where they are structure rather than text — heading hashes
+# and list dashes.
+_INLINE_MARKERS = ("**", "`")
+_LINE_LEAD = re.compile(r"^\s*(?:#{1,6}\s*|-\s+)")
+
 
 def normalise_whitespace(text: str) -> str:
     """Collapse every run of whitespace to a single space and strip the ends.
@@ -126,12 +141,44 @@ def normalise_whitespace(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def strip_markdown(text: str) -> str:
+    """`text` with §80.3's markdown markers removed and whitespace normalised.
+
+    Defined once here rather than inlined at the call site, so that the
+    fallback comparison in `span_in_deliverable` has one definition a test can
+    pin by example: `**`, backticks, heading `#`s and list dashes.
+    """
+    for marker in _INLINE_MARKERS:
+        text = text.replace(marker, "")
+    stripped = [_LINE_LEAD.sub("", line) for line in text.splitlines()]
+    return normalise_whitespace("\n".join(stripped))
+
+
 def span_in_deliverable(span: str, deliverable: str) -> bool:
     """Whether `span` appears in `deliverable`, modulo whitespace
-    normalisation. §76.6: no quotable span, no coverage — this is the check;
-    the refusal on a failing check belongs to the gate, not this module.
+    normalisation and — failing that — modulo markdown markers too. §76.6: no
+    quotable span, no coverage — this is the check; the refusal on a failing
+    check belongs to the gate, not this module.
+
+    The fallback is §80.3's ruling, taken with its trade stated: §79.2(b)
+    showed the grader quoting deliverables with their markdown stripped
+    (`dues.py: owed_by — …` for `**dues.py: owed_by** — …`), and the
+    whitespace-only rule refused those quotes exactly as specified. The v2
+    prompt aims at the model's quoting habit; this fallback absorbs whatever
+    of the habit survives it, deliberately overlapping, because §80.6 makes a
+    second failure terminal for this vendor's grader and a terminal gate
+    should not hang on prompt obedience alone. §76.6 survives it: a span must
+    still be mechanically locatable in the deliverable, and a paraphrase fails
+    both comparisons.
+
+    **The loosening is not calibration-only.** This same function is the
+    production point gate's span check (`firstparty_v1`) and the point lint's,
+    as well as the calibration reader's, so every future point-gate verdict
+    inherits it — disclosed here rather than discovered later.
     """
-    return normalise_whitespace(span) in normalise_whitespace(deliverable)
+    if normalise_whitespace(span) in normalise_whitespace(deliverable):
+        return True
+    return strip_markdown(span) in strip_markdown(deliverable)
 
 
 def deepseek_point_grader() -> PointGrader:
