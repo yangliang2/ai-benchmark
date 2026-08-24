@@ -7753,6 +7753,89 @@ priced. Instrument as pinned above; archive committed whole and unedited at
 — a new file, one rulings file per instrument version — and nothing from
 calibration in `data/unified.jsonl`.
 
+## Round 10 rulings — 2026-08-23
+
+**82. What round 10 is: the calibration's truth source repaired, the same
+instrument, and heap 3 taken up again.** Ruled in the owner's grill of
+2026-08-23, the design discussion §80.6's failed branch mandated. Seven
+rulings, numbered below the way §76's were, and the scope one first because
+everything hangs off it: **what §81.2's pointer finding reopens is the
+calibration experiment's truth source — not the instrument, not the point
+gate, and not the idea of calibrating against the archive.** The two failed
+gates read together are a clean diagnosis: with §80.2's revisions in place
+the instrument's own residue is two answers of sixty-three, and the thirteen
+that sank the bar are deliverables with nothing in them to quote — a defect
+of the stratum's construction, §79.3's confound living inside stratum A.
+Round 9 stays closed; both its records stand; the repair is this new round's
+question. The point gate is untouched by any of this: production mode
+collects the prompt-named answer file, where pointer prose is structurally
+impossible.
+
+**82.1 The vendor closure is reopened on premise failure, and the instrument
+does not move.** §81's sentence — "closes the question of this vendor's
+grader… no third run is attempted under this vendor" — was ruled at §80.6
+before the pointer finding existed, on the premise that a second failure
+would be the instrument's. §81.2's own reading falsified that premise for
+thirteen of the seventeen disagreements, so the closure is reopened exactly
+the way §78.1 reopened §76.7: not a reversal, a premise failure, recorded in
+as many words. The instrument is kept whole —
+`deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be`, §78.2's settings, §80.2's
+prompt — because moving any part of it opens a new rulings file (§77.8) and
+forfeits the round's one material asset: **the 358 archived rulings of §81's
+run stay readable by deliverable hash, and the repaired read below costs zero
+new paid calls.**
+
+**82.2 Stratum A″: the pointer rows removed by a mechanical definition, and
+the disclosure that makes the re-read honest.** The term **pointer prose** is
+now the glossary's: a deliverable whose text merely points at the artifact
+that carried the answer instead of narrating it. Its mechanical definition,
+ruled here and pinned before any implementation: **a final message is pointer
+prose iff, after removing every reference to the prompt-named answer file
+(the bare name and any path ending in it), no remaining file-shaped token
+names a file that exists in the task's repository tree.** The definition is
+semantic (it is §81.1's "naming no location and no finding" made checkable),
+carries no tuned number, reads only the deliverable and the file tree, and
+never looks at a verdict. A″ is stratum A minus the rows that definition
+catches — **the filter's actual output, not §81.1's inspected thirteen**: the
+registration runs it over the 63, re-derives the denominator, the agreement
+count and the bar (§76.4's 90/80 as counts over what remains; at the
+inspected classification that is ≥ 45 of 50 and ≥ 7 of 8, and the borderline
+answers the inspection kept — `ferry` × sonnet, `launderette` × haiku,
+`masonsyard` × sonnet — stay inside A″ as the instrument's own account). And
+the disclosure, in as many words: **the A″ read is a derivation over spent
+rulings, and its outcome is knowable at registration time.** It is not a
+blind pre-registration and does not claim to be one; its honesty rests on
+the filter's independence from every verdict, and its one genuinely open
+outcome is whether the mechanical filter reproduces the inspection — a
+mismatch is a loud stop before an authoring dollar moves.
+
+**82.3 Two explicit gates, in §76.1's shape.** Gate one: **A″ gates
+authoring** — the re-derived bar over the filter's output, met before the
+first authoring ticket runs, the §76.1 order kept at zero marginal cost.
+Gate two: **the two-sided proofs gate the sweep** — §76.10's existing
+requirement raised to an explicit registered gate: every reference answer of
+the three `investigation` tasks resolves per point and every foil fails,
+archived rulings checked offline by the lint, before the first sweep dollar.
+The two layers close over each other's weakness: A″ certifies the instrument
+on agent-written prose it never saw the like of in authoring; the proofs
+certify it on exactly the deliverable type production grades. The kill
+discipline is uniform: either gate failing stops the round with a record,
+and the transfer gap stays disclosed with the owner's ~9 non-gating labels
+riding the swept cells as §77.2 registered.
+
+**82.4 Delivery, and what returns from round 9.** Round 10 goes down the
+standing pipeline: these rulings, then `/to-spec` files a **new spec issue**
+— #123 is closed history and takes no third amendment — then `qap plan` cuts
+tickets on the new issue. The round's arc: the reopen and A″ registration
+(§76.1's pre-registration discipline, §77's shape), the A″ read, three
+`investigation` tasks recast from #131–#133's own texts re-pointed at the
+new sections, the proofs gate, the nine-cell sweep recast from #134 (three
+tasks × the three standing columns, dry cell first, §77.5's band re-anchored
+in the new registration), and the record at the next free numbers. **#127
+(ADR-0005) does not wait**: its subject — the point-gate verdict shape — is
+unchanged by everything above, both gate verdicts it quotes exist, and it
+queues to `qap run` as soon as this section lands.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

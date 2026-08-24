@@ -198,8 +198,9 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     — the grader re-pinned to `deepseek-v4-pro` after the round parked at its
     calibration gate — **§79 is the round's record** (the calibration verdict
     of 2026-08-23, FAILED), **§80 is the second amendment** — grader v2 by
-    prompt revision — and **§81 is the v2 record** (FAILED at 46 of 63, the
-    vendor's grader question closed). Nothing was renumbered to make room.
+    prompt revision — **§81 is the v2 record** (FAILED at 46 of 63), and
+    **§82 is round 10's rulings** — the truth source repaired, the vendor
+    closure reopened on premise failure. Nothing was renumbered to make room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -212,12 +213,13 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert numbered.count(79) == 1, "the round-9 record (the calibration verdict), spent once"
     assert numbered.count(80) == 1, "the round-9 second amendment (grader v2), spent once"
     assert numbered.count(81) == 1, "the round-9 v2 record (the second verdict), spent once"
-    assert numbered[-1] == 81, (
-        "§81 is round 9's v2 record — the second calibration verdict of "
-        "2026-08-23, which closed this vendor's grader question — and the "
-        "frontier; §82 is still free for whatever comes next"
+    assert numbered.count(82) == 1, "the round-10 rulings, spent once"
+    assert numbered[-1] == 82, (
+        "§82 is round 10's rulings — the grill of 2026-08-23 that repaired "
+        "the calibration's truth source and reopened the vendor closure on "
+        "premise failure — and the frontier; §83 is still free"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 82)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 83)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
