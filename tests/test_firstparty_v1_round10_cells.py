@@ -34,11 +34,12 @@ trailing headings swallows whole sections silently, and every pin in this file
 would then read as met on text §83 never wrote.
 
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
-two tests are the forward-reading ones and they die at different tickets: no
-`round-10` row exists yet, and the corpus holds the round's first
-`investigation` task and no second or third.
+two tests read the round forwards: no `round-10` row exists yet, and the id
+register §83.7 left to be filled now names the three `investigation` tasks —
+checked against the corpus, which holds those three and no fourth.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -160,6 +161,33 @@ def block_holding(*needles: str) -> str:
         if all(needle in block for needle in needles)
     ]
     assert len(found) == 1, f"exactly one fenced block holds {needles!r}"
+    return found[0]
+
+
+_REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
+
+
+def register_ids() -> dict[str, str]:
+    """§83.7's filled id register: task id → gloss, parsed from the one
+    fenced block whose every line is an id line.
+
+    Found by shape rather than by position or by a quoted id — the same rule
+    `block_holding` applies — so removing the register fails loudly and a
+    second id-shaped block appearing in the section is caught as the
+    ambiguity it would be. Before the fill, the same shape check asserted no
+    such block existed anywhere in the section.
+    """
+    found: list[dict[str, str]] = []
+    for block in blocks():
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        matches = [_REGISTER_LINE.fullmatch(line) for line in lines]
+        if lines and all(matches):
+            found.append({
+                match.group(1): match.group(2) or ""
+                for match in matches
+                if match is not None
+            })
+    assert len(found) == 1, "exactly one fenced block of §83 is the id register"
     return found[0]
 
 
@@ -734,14 +762,17 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_8_rows(
 def test_the_nine_cells_and_the_invocation_are_registered(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """§83.7: three tasks × three columns, the sweep id, the dry cell, and an id
-    register deliberately left empty.
+    """§83.7: three tasks × three columns, the sweep id, the dry cell, and the
+    id register — registered empty, filled by the round's second authoring
+    ticket exactly where the section left it.
 
-    The three ids do not exist yet — nothing has been authored — so what this
-    checks is the shape: the columns, the count, the language, the control
-    declaration and the sweep's invocation, plus the one thing that makes the
-    empty register honest rather than an omission, that the section says
-    outright it is to be filled in here before the sweep.
+    What this checks is the registration's shape: the columns, the count, the
+    language, the control declaration and the sweep's invocation, plus both
+    halves of the register's story — the section's own record that the
+    register was left explicitly to be filled in before the sweep, and the
+    filled register now standing where it said it would. What the register's
+    ids claim about the corpus is the forward-reading test's at the end of
+    this file.
     """
     counted = prose()
 
@@ -768,7 +799,10 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     ) in counted
     assert f"`calibrate-v1` gains no `{_CATEGORY}` multiplier row" in counted
 
-    # The register, left for the authoring ticket and said to be left.
+    # The register: left for the authoring ticket, said to be left, and now
+    # filled where the section said it would be. The registration-time prose
+    # stays as the record it is — it was true as written — and the fill is
+    # dated and attributed rather than blended into it.
     assert "**The three task ids do not exist yet.**" in counted
     assert (
         "**the id register for round 10 is left explicitly to be filled in, in "
@@ -777,6 +811,16 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     ) in counted
     assert f"corpus holds no `{_CATEGORY}` task as this is written" in counted
     assert "**disclosed zero**" in counted
+    assert (
+        "**Filled in 2026-08-24, by that ticket, exactly where this section "
+        "left it.**"
+    ) in counted
+    assert "**This list is the register.**" in counted
+    assert f"**every `{_CATEGORY}` task the corpus holds**" in counted
+    assert (
+        "the round sweeps the action entire and re-runs nothing any "
+        "combination has already answered"
+    ) in counted
 
     # That claim was true of the corpus when §83 was registered and stayed
     # true until the round's first authoring ticket landed task 1; the prose
@@ -787,12 +831,13 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     assert (_CATEGORY, "-", "-", 0) not in table
     assert [row for row in table if row[0] == _CATEGORY and row[3]]
 
-    # No fenced block of the section is a register of task ids: an id listed
-    # here before the tasks exist would be a cell nothing can sweep.
-    id_line = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
-    for block in blocks():
-        for line in block.splitlines():
-            assert id_line.fullmatch(line.strip()) is None, line
+    # Exactly one fenced block of the section is a register of task ids —
+    # the one the fill wrote, in §68.1's form: an id a line, each with a
+    # one-line gloss. Before the fill this asserted no such block existed;
+    # what the ids claim about the corpus is the forward-reading test's.
+    assert len(register_ids()) == _CELLS
+    for task_id, gloss in register_ids().items():
+        assert gloss, f"{task_id}: a register line carries its gloss"
 
     # The invocation.
     assert f"Sweep id **`{_SWEEP}`**" in counted
@@ -908,21 +953,48 @@ def test_nothing_of_round_10_has_been_swept_yet(
     }
 
 
-def test_the_corpus_holds_the_first_investigation_task_and_no_other_yet(
+def test_the_register_names_every_investigation_task_and_each_is_proved(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test, its no-task half retired by the round's
-    first authored task.
+    """The second forward-reading test, in its final form: the register check.
 
-    This test used to say the corpus held no `investigation` task, and it was
-    right until the round's first authoring ticket landed one. What is worth
-    pinning between that ticket and the next is the caught-up claim read
-    forwards: the corpus holds task 1 of the three and no second or third yet.
-    The round's second authoring ticket replaces this with the register check
-    — the three ids §83.7 left to be filled in, against the three tasks then
-    checked in.
+    Its first form said the corpus held no `investigation` task; ticket 05
+    caught it up to "task 1 and no second or third yet"; the round's second
+    authoring ticket landed the other two and filled §83.7's register, which
+    is the form this test now holds the round to. The register is read
+    against the corpus rather than restated: the three ids exist, they are
+    exactly the `investigation` tasks the corpus holds — no fourth anywhere —
+    every one is the Python application-surface declared control §83.7
+    registered, and each ships a points key and a two-sided proof that is
+    green under the pinned instrument, the verdicts recomputed through
+    `_point_verdict` rather than taken on the archives' word.
     """
+    register = register_ids()
     authored = sorted(
         task_id for task_id, task in tasks.items() if task.category == _CATEGORY
     )
-    assert authored == ["granary-decide-how-to-answer-for-a-past-day"]
+    assert sorted(register) == authored, "the register is the corpus, whole"
+    assert len(register) == _CELLS, "and the corpus holds no fourth"
+
+    for task_id in register:
+        task = tasks[task_id]
+        assert task.category == _CATEGORY
+        assert task.language == "python"
+        assert task.surface == "application"
+        assert task.control is True
+        assert task.construction is None
+
+        key = firstparty_v1.points_key(task)
+        questions = firstparty_v1._point_questions(key)
+        for side in firstparty_v1.PROOF_SIDES:
+            answer = (task.proofs_dir / side.answer_file).read_text(
+                encoding="utf-8"
+            )
+            raw = firstparty_v1.proof_rulings_file(task, side).read_text(
+                encoding="utf-8"
+            )
+            archive = firstparty_v1.ProofRulings.model_validate(json.loads(raw))
+            assert archive.grader_version == point_grader.GRADER_VERSION
+            assert firstparty_v1._point_verdict(
+                questions, archive, answer
+            ) is side.resolves, f"{task_id}: {side.name}"

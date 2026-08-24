@@ -1,0 +1,31 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-refusals-already-at-the-door",
+      "text": "The answer says that read_meter already refuses a bad line at recording time \u2014 an unknown house, a dial below nought, or a visit dated out of order \u2014 so a catch at recording would join refusals the book already makes there."
+    },
+    {
+      "id": "the-refit-reads-lower",
+      "text": "The answer says that refit puts on a fresh meter whose dial starts at nought, so the first reading after a refit lawfully stands lower than the last one before it, and a catch that treats every lower dial as bad is wrong unless it consults the house's fitting day."
+    },
+    {
+      "id": "a-bad-line-stands-in-the-book",
+      "text": "The answer says that usage is computed as the difference between consecutive dial readings, so a backwards reading admitted to the book falsifies the figure on each side of it, and that a catch at recording keeps the bad line out of the book where a catch at reading-out leaves it standing."
+    },
+    {
+      "id": "two-owners-each-costed",
+      "text": "The answer weighs owning the catch at recording against owning it at reading-out, naming at least one cost of each owner."
+    },
+    {
+      "id": "one-owner-argued",
+      "text": "The answer commits to exactly one of the two mechanisms as the owner of the catch and argues for it against the other."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "lower-is-always-wrong",
+      "text": "The answer claims that a dial reading lower than the house's previous one is always a mistake."
+    }
+  ]
+}

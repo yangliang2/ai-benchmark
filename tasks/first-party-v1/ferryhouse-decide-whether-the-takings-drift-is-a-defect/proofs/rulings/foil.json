@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "ad2048eae83e76e5c76c253d40b0321273921bc570e40383b10a3094189f8270",
+  "answer_sha256": "73555ea7a383d00c11c4d0b7a11f4959751aac0700280ef67126d04f8aebf38a",
+  "rulings": [
+    {
+      "point_id": "no-money-on-the-line",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-table-keeps-no-dates",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-refund-pays-todays-fare",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-quote-and-the-record",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-ruling-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Give the board Reading A: the drift is policy, the book working as built.\nThe design's consistency is the evidence \u2014 a defect is a place where the\ncode betrays its own intention, and this code has one intention visible in\nevery function: the fare table as it stands is the price of everything,\nalways. The clerk's surprise is a documentation gap, not a bookkeeping one.\nPrint on the takings sheet that figures are stated at current fares, teach\nthe clerk that a pre-rise printing is superseded by a post-rise one, and\nleave the code alone. Simplicity that can answer every question it is asked\n\u2014 today's quote, today's valuation of any span of traffic \u2014 should not be\ntraded away to make yesterday's piece of paper agree with today's.",
+      "verified": true
+    },
+    {
+      "point_id": "the-box-can-be-recounted",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "the sums actually taken at the box for past crossings can be recovered from the book as it stands",
+      "verified": true
+    }
+  ]
+}

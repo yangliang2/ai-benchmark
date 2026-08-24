@@ -1,0 +1,79 @@
+# The corpus's second `investigation` task, and round 10's second of three
+# (design note §82, registered §83). The deliverable is one prose file — the
+# write-up the prompt asks for at ANSWER.md — not a change to the code: the
+# repository is the evidence, the question is genuinely open, and a good
+# answer argues its way to a recommendation.
+#
+# A different kind of question from the first task's. Granary asks how a
+# system should come to be able to answer something it cannot; here nothing
+# new has to come to exist at all — two mechanisms already stand, the
+# recording in intake.py and the reading-out in render.py, and the question
+# is which of them should own a duty neither owns today: catching a dial
+# reading lower than the one before it. Three tasks that ask one question
+# three times would measure one thing three times.
+#
+# Why it grades the way it does: held-out tests cannot grade an argument — a
+# write-up may be thorough or may be three confident paragraphs about nothing
+# — so this action's verdict is the point gate. The prompt-named answer file
+# is collected out of the workdir diff and put to a grader one planted point
+# at a time: resolved is every planted point covered by a verbatim span of
+# the answer's own text and no disqualifying claim made, binary. Hence
+# `control: true` — the task registers no difficulty prediction, and a task
+# declaring neither a construction block nor itself a control is refused —
+# and hence no grading/ suite to run: grading/ holds the points key and
+# nothing that executes, because there is no behaviour to test. The key is
+# proved both ways at authoring time (proofs/): the author's reference answer
+# resolves per point and a fluent foil answer fails, rulings archived and
+# read offline by the lint.
+#
+# The question is decidable in the closed world of the repository and the
+# prompt alone: both candidate owners are in the code, and everything the
+# choice turns on is too. The five planted points are the reasoning the
+# question cannot be honestly answered without: that read_meter already
+# refuses the lines it can see are wrong on their own, so recording is where
+# the book already says no; that refit lawfully lowers the next reading, so
+# a bare lower-than-last rule is wrong unless it consults the fitting day;
+# that usage is a difference of consecutive dials, so an admitted bad line
+# falsifies the figure on each side of it and a catch at reading-out leaves
+# it standing in the book; that both owners are weighed with a cost named on
+# each side; and that exactly one owner is committed to and argued against
+# the other. The one disqualifier is the plausible wrong claim the refit
+# path refutes: that a lower dial is always a mistake.
+id: pumphouse-decide-who-catches-the-backwards-reading
+category: investigation
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The pump-house keeps its book in one JSON file: every metered house on the
+  works, with the day its meter was last fitted, and a line for every visit
+  of the meter-reader — the day, the house and the dial as it stood.
+  ledger.py reads and writes the book, intake.py is every way the book
+  changes, render.py is what gets read back out, and cli.py is how the clerk
+  works it.
+
+  Twice this year a house's quarterly bill has come out below nought. Both
+  times a dial reading lower than the one before it had got into the book,
+  and nothing between the reader's visit and the printed bill ever put the
+  two dials side by side. The board wants the book to catch a backwards
+  reading, and the works has two mechanisms that could own that duty: the
+  recording in intake.py, or the reading-out in render.py.
+
+  Decide which of the two should own the catch, and write your answer to
+  ANSWER.md. This is an investigation of the repository as it stands, and
+  the repository is the whole of the evidence: read the code, decide, and
+  argue it. Your write-up carries three sections, under these headings:
+
+  - **Options considered** — each mechanism that could own the duty, in
+    terms of what this code does today: what the catch would look like in
+    each place, concretely enough that a reader of this repository could
+    start on it.
+  - **Trade-offs** — what each owner costs and what it buys, in this
+    repository's own terms: what has to change, what stays as it is, and
+    what each owner can and cannot catch.
+  - **Recommendation** — the one owner you would give the duty to, and the
+    argument for it over the other.
+
+  Leave every file of the repository as you found it: the write-up at
+  ANSWER.md is the whole deliverable.

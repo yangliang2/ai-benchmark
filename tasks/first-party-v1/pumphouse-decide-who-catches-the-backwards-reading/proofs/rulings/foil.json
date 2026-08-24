@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "b2084adf47b6c671a684ee47b0b5ec90ca44cb8dab093de5161c4999aea71276",
+  "answer_sha256": "ac17b8ea34a67262b4d2c1d45cdcb0f9613cccc82172922d9c3035c2aab190b7",
+  "rulings": [
+    {
+      "point_id": "the-refusals-already-at-the-door",
+      "kind": "point",
+      "covered": true,
+      "span": "read_meter would compare the offered\ndial with the house's last and refuse the lower one at the door, beside its\nexisting refusals.\n\n## Trade-offs\n\nOption B looks tidy but hardens the door in a way this book has been careful not to. Everything read_meter refuses today is wrong on the face of the one line \u2014 a house that does not exist, a dial below nought, a day out of order.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refit-reads-lower",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-bad-line-stands-in-the-book",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "two-owners-each-costed",
+      "kind": "point",
+      "covered": true,
+      "span": "Option B looks tidy but hardens the door in a way this book has been careful not to. Everything read_meter refuses today is wrong on the face of the one line \u2014 a house that does not exist, a dial below nought, a day out of order. A dial comparison is a different kind of rule: it makes the door sit in judgment over the reader's eyes, and a refusal at the door is a reading lost \u2014 the reader is on a round, the refusal lands at the clerk's desk later, and the visit's figure may never be recovered. The door should record what the reader called; recording is testimony, not arithmetic.\n\nOption A costs one honest thing: the error is found at billing rather than on the reading's day.",
+      "verified": true
+    },
+    {
+      "point_id": "one-owner-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Give the duty to render. It owns the only computation the defect can hurt, it already holds both dials in its hand, and the rule it needs is total \u2014 flag every negative difference, every time. Intake should stay the thin, faithful recorder it is: doors that do arithmetic turn readers away, and a book is better served by taking every reading it is offered and judging them all in one place, at the moment the money is counted.",
+      "verified": true
+    },
+    {
+      "point_id": "lower-is-always-wrong",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "A dial reading lower than the house's previous one is always a mistake \u2014 a misread figure, a slipped digit at the keyboard \u2014 and always exactly one kind of thing, which is what makes the catch so cheap to own at reading-out, where the dials are already put side by side.",
+      "verified": true
+    }
+  ]
+}

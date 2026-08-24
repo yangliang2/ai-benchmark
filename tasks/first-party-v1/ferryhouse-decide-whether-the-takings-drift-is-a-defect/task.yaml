@@ -1,0 +1,79 @@
+# The corpus's third `investigation` task, and the last of round 10's three
+# (design note §82, registered §83). The deliverable is one prose file — the
+# write-up the prompt asks for at ANSWER.md — not a change to the code: the
+# repository is the evidence, the question is genuinely open, and a good
+# answer argues its way to a recommendation.
+#
+# A different kind of question again. Granary asks how a system should come
+# to answer what it cannot; pumphouse asks which of two standing mechanisms
+# should own a new duty; here nothing is missing and nothing is to be built
+# — a behaviour has been observed, a past quarter's takings restated at
+# today's fares, and the question is what the behaviour *is*: a defect to be
+# put right, or the book's own way of keeping accounts, working as built.
+# Ruling on what stands is a different act from designing what should.
+#
+# Why it grades the way it does: held-out tests cannot grade an argument — a
+# write-up may be thorough or may be three confident paragraphs about nothing
+# — so this action's verdict is the point gate. The prompt-named answer file
+# is collected out of the workdir diff and put to a grader one planted point
+# at a time: resolved is every planted point covered by a verbatim span of
+# the answer's own text and no disqualifying claim made, binary. Hence
+# `control: true` — the task registers no difficulty prediction, and a task
+# declaring neither a construction block nor itself a control is refused —
+# and hence no grading/ suite to run: grading/ holds the points key and
+# nothing that executes, because there is no behaviour to test. The key is
+# proved both ways at authoring time (proofs/): the author's reference answer
+# resolves per point and a fluent foil answer fails, rulings archived and
+# read offline by the lint.
+#
+# The question is decidable in the closed world of the repository and the
+# prompt alone: the observed drift and everything a ruling turns on are in
+# the code. The five planted points are the reasoning the question cannot be
+# honestly answered without: that a crossing line carries no money figure,
+# so every counting prices old lines through the table as it stands; that
+# set_fare replaces the one undated figure a class has, so a superseded fare
+# is gone from the book; that a refund is priced off the table as it stands
+# when it is given, so after a change the box hands back a sum it never
+# took; that the table's two uses are told apart — pricing a crossing not
+# yet made against restating money already taken; and that exactly one
+# ruling is committed to and argued against the other reading. The one
+# disqualifier is the plausible wrong claim the first two points refute:
+# that the sums actually taken can be recovered from the book as it stands.
+id: ferryhouse-decide-whether-the-takings-drift-is-a-defect
+category: investigation
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The ferry-house keeps its book in one JSON file: the fare for each class
+  of crossing as it stands, and a line for every crossing made and every
+  crossing turned back. ledger.py reads and writes the book, fares.py and
+  crossings.py are every way the book changes, report.py is what gets read
+  back out, and cli.py is how the clerk works it.
+
+  At midsummer the board raised the horse fare from fourpence to sixpence.
+  The clerk had printed the spring quarter's takings before the rise;
+  printed again after it, the same quarter comes out higher, though not one
+  spring crossing changed. The board wants to know what to make of that:
+  whether the book restating a past quarter at today's fares is a defect to
+  be put right, or the book's own way of keeping accounts, working as built.
+
+  Decide what the behaviour is, and write your answer to ANSWER.md. This is
+  an investigation of the repository as it stands, and the repository is the
+  whole of the evidence: read the code, decide, and argue it. Your write-up
+  carries three sections, under these headings:
+
+  - **Options considered** — the readings the behaviour could honestly be
+    given, each in terms of what this code does today: at least two, each
+    grounded concretely enough in the code that a reader of this repository
+    could see how it holds.
+  - **Trade-offs** — what accepting each reading costs and what it buys, in
+    this repository's own terms: what each reading makes of the book's other
+    uses of the fare table, and what following it would leave the ferry-house
+    able and unable to say.
+  - **Recommendation** — the one reading you would give the board, and the
+    argument for it over the other.
+
+  Leave every file of the repository as you found it: the write-up at
+  ANSWER.md is the whole deliverable.

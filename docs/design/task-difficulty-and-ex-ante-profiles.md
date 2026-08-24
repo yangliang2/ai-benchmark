@@ -6495,16 +6495,16 @@ merged dataset; the four together are the merged one record for record:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-a.jsonl --data /tmp/r8replay/a.jsonl
-  evaluated 1 runs over 131 tasks (1 resolved)
+  evaluated 1 runs over 133 tasks (1 resolved)
   merged 1 records into /tmp/r8replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-b.jsonl --data /tmp/r8replay/b.jsonl
-  evaluated 2 runs over 131 tasks (2 resolved)
+  evaluated 2 runs over 133 tasks (2 resolved)
   merged 2 records into /tmp/r8replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-c.jsonl --data /tmp/r8replay/c.jsonl
-  evaluated 3 runs over 131 tasks (3 resolved)
+  evaluated 3 runs over 133 tasks (3 resolved)
   merged 3 records into /tmp/r8replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-d.jsonl --data /tmp/r8replay/d.jsonl
-  evaluated 3 runs over 131 tasks (2 resolved)
+  evaluated 3 runs over 133 tasks (2 resolved)
   merged 3 records into /tmp/r8replay/d.jsonl (3 total)
 ```
 
@@ -8178,6 +8178,25 @@ coverage table until it does, so there is nothing to list here: **the id
 register for round 10 is left explicitly to be filled in, in this section,
 before the sweep, by the round's second task-authoring ticket** — the one
 that lands the last of the three, once all three ids exist.
+
+**Filled in 2026-08-24, by that ticket, exactly where this section left it.**
+The three are the tasks the round authored — each proved both ways under
+83.4's gate before this line was written — read off `tasks/first-party-v1/`
+as the corpus actually holds them:
+
+```
+granary-decide-how-to-answer-for-a-past-day               (a granary's book; how it comes to answer for a past day)
+pumphouse-decide-who-catches-the-backwards-reading        (a pump-house's book; which mechanism owns a new duty)
+ferryhouse-decide-whether-the-takings-drift-is-a-defect   (a ferry-house's box; whether a behaviour is defect or policy)
+```
+
+**This list is the register.** Three ids, all `investigation`, and they are
+**every `investigation` task the corpus holds** — the round sweeps the action
+entire and re-runs nothing any combination has already answered. Three
+different kinds of open question, deliberately: how a system should come to
+answer what it cannot, which of two standing mechanisms should own a duty,
+and whether an observed behaviour is a defect or a policy — three tasks that
+asked one question three times would measure one thing three times.
 
 **How the sweep is invoked.** Sweep id **`round-10`**, on every invocation of
 it. Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry

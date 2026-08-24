@@ -576,13 +576,14 @@ _PUBLISHED = {
     "test-authoring": {
         "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "haiku-solvable (n=3)"),
     },
-    # Round 10's category, authored (#141, ticket 05) and not yet swept: one
-    # declared control, so one zero-knob row, every figure a "-" because no
-    # run exists. Same arrival as round 8's `test-authoring` above: pinning
-    # the unswept shape makes ticket 06's second and third tasks, and then
-    # ticket 07's sweep, visible as changes to this block.
+    # Round 10's category, authored (#141, tickets 05 and 06) and not yet
+    # swept: three declared controls, so one zero-knob row, every figure a
+    # "-" because no run exists. Same arrival as round 8's `test-authoring`
+    # above: ticket 06's second and third tasks moved this count from 1 to 3,
+    # exactly as pinning the unswept shape was meant to make visible, and
+    # ticket 07's sweep is what moves the dashes next.
     "investigation": {
-        "(zero-knob)": ("1", "-", "-", "-"),
+        "(zero-knob)": ("3", "-", "-", "-"),
     },
 }
 
@@ -611,7 +612,7 @@ _PUBLISHED_MIX = {
     "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
     "test-authoring": "3 single-file; 3 hand-authored",
-    "investigation": "1 single-file; 1 hand-authored",
+    "investigation": "3 single-file; 3 hand-authored",
 }
 
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {

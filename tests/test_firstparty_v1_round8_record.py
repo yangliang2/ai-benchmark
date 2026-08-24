@@ -154,32 +154,32 @@ _MODULES_UNDER_TEST = ("lido.py", "playbill.py", "register.py")
 
 # Section 73's coverage figure, per language. The Python column is round 7's
 # plus this round's three; the TypeScript rows are round 7's exactly. One row
-# joined after the round it records: round 10 authored the corpus's first
-# `investigation` task, a Python control, and this live read moves with the
-# corpus while the note's own quoted table stays the snapshot it was.
+# joined after the round it records: round 10 authored its three
+# `investigation` tasks, Python controls all, and this live read moves with
+# the corpus while the note's own quoted table stays the snapshot it was.
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
-    "investigation": 1,
+    "investigation": 3,
 }
 _TYPESCRIPT_COVERAGE = {
     "bug-fix": 3, "fault-location": 3, "feature-dev": 3, "refactor": 3,
     "code-review": 2,
 }
-_PYTHON_TASKS = 117
+_PYTHON_TASKS = 119
 # What the runs line counts instead: the Python tasks that have rows. The two
-# were one number until round 10 authored a task after every sweep — a task
+# were one number until round 10 authored tasks after every sweep — a task
 # with no rows joins the task-set line and not this one.
 _PYTHON_TASKS_WITH_RUNS = 116
-# What round 10 has authored so far: the corpus's first `investigation` task,
-# a Python control. Named so the reconcile line this record quotes can be
+# What round 10 has authored: its three `investigation` tasks, Python
+# controls all. Named so the reconcile line this record quotes can be
 # rebuilt from the live figures rather than retyped.
-_ROUND_10_TASKS = 1
+_ROUND_10_TASKS = 3
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
 _CLAUDE_CODE_PYTHON_RUNS = 231
-_PYTHON_CONTROLS = 50
+_PYTHON_CONTROLS = 52
 _PYTHON_CONSTRUCTED = 67
 _ALL_ROWS = 306
 _ROUND_8_ROWS = 9
@@ -1087,9 +1087,9 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     zero by absence, which is all the table can express, and no per-language
     zero row exists for it because the lint was not changed to print one.
 
-    One line of the block has moved since, and only one: round 10 authored the
-    corpus's first `investigation` task, so the row this record quotes as
-    `- - 0` now prints the Python cell that task fills. The record is not
+    One line of the block has moved since, and only one: round 10 authored
+    its three `investigation` tasks, so the row this record quotes as
+    `- - 0` now prints the Python cell those tasks fill. The record is not
     edited for it — the page it quotes is what the page was — so the line is
     named below, round 7's own pattern, and every other one is still held
     byte for byte.
@@ -1351,8 +1351,8 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     ))[1:2]
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
     # One line of the block has moved since, and only one: round 10 authored
-    # the corpus's first `investigation` task, a Python control with no rows,
-    # so the task-set line grew by one task and one control while the runs
+    # its three `investigation` tasks, Python controls with no rows, so the
+    # task-set line grew by three tasks and three controls while the runs
     # line stayed. The record is not edited for it — the line it quoted is
     # rebuilt here from the live figures minus round 10's, held to be exactly
     # what the note says, and every other line is still printed byte for byte.

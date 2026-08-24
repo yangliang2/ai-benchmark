@@ -1,0 +1,31 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "no-money-on-the-line",
+      "text": "The answer says that a crossing line carries no money figure — cross and refund record the day, the class and the note only — so every counting of past takings prices old lines through whatever fare table stands at the moment of counting."
+    },
+    {
+      "id": "the-table-keeps-no-dates",
+      "text": "The answer says that set_fare replaces the one undated figure a class has, so once a fare changes the figure that was in force on any earlier day is gone from the book."
+    },
+    {
+      "id": "the-refund-pays-todays-fare",
+      "text": "The answer says that a refund is priced off the fare table as it stands when the refund is given, so after a fare change the box hands back a different sum than it took for that same crossing."
+    },
+    {
+      "id": "the-quote-and-the-record",
+      "text": "The answer tells apart the fare table's two uses in this code: pricing a crossing not yet made, where the figure as it stands is the right one, and restating money already taken, where it is not the same question."
+    },
+    {
+      "id": "a-ruling-argued",
+      "text": "The answer commits to exactly one ruling — a defect to be put right, or the book's intended way of keeping accounts — and argues for it against the other reading."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "the-box-can-be-recounted",
+      "text": "The answer claims that the sums actually taken at the box for past crossings can be recovered from the book as it stands."
+    }
+  ]
+}

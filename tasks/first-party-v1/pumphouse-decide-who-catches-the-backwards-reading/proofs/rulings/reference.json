@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "b2084adf47b6c671a684ee47b0b5ec90ca44cb8dab093de5161c4999aea71276",
+  "answer_sha256": "c54d12a4814316fa7ce98d87c0502797720e685f7e29a8b1b4949712365f9b9c",
+  "rulings": [
+    {
+      "point_id": "the-refusals-already-at-the-door",
+      "kind": "point",
+      "covered": true,
+      "span": "The first fact: read_meter already refuses a bad line at recording time \u2014 a house the book does not know, a dial below nought, a visit dated out of order, each raised before the line touches the book \u2014 so the recording is where the book already says no, and a backwards-dial check would join refusals that already exist there.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refit-reads-lower",
+      "kind": "point",
+      "covered": true,
+      "span": "refit puts a fresh meter on the wall, and its docstring says outright what that does to the dial \u2014 the fresh dial starts at nought, so the first reading after a refit lawfully stands lower than the last one before it. The drop is the fitting, not the water. So a lower dial is not always a mistake, and any catch that treats every lower dial as bad \u2014 wherever it lives \u2014 is wrong unless it consults the house's fitting day, which the book keeps on the house's line and which both mechanisms can read.",
+      "verified": true
+    },
+    {
+      "point_id": "a-bad-line-stands-in-the-book",
+      "kind": "point",
+      "covered": true,
+      "span": "usage is computed as the difference\nbetween consecutive dial readings, so a backwards reading admitted to the book falsifies the figure on each side of it \u2014 the quarter it ends and the quarter it starts \u2014 and a catch at recording keeps the bad line out of the book where a catch at reading-out leaves it standing there.",
+      "verified": true
+    },
+    {
+      "point_id": "two-owners-each-costed",
+      "kind": "point",
+      "covered": true,
+      "span": "Option 1 costs a stricter door. A hard refusal at recording can turn away a\ntrue reading when the book itself is behind \u2014 a refit done on the wall but\nnot yet entered in the book makes the lawful next reading look bad \u2014 so\nintake's catch is only as good as the clerk's discipline about entering\nfittings first, and the works must accept that ordering rule. What it buys\nis a book that stays clean: the two negative bills both happened because a\nbad line got *into* the book, and usage is computed as the difference\nbetween consecutive dial readings, so a backwards reading admitted to the\nbook falsifies the figure on each side of it \u2014 the quarter it ends and the\nquarter it starts \u2014 and a catch at recording keeps the bad line out of the\nbook where a catch at reading-out leaves it standing there. Catch it at the\ndoor and no downstream reader needs to think about it.\n\nOption 2 costs exactly that thinking, forever. A catch at reading-out leaves\nthe bad line standing in the book where a catch at recording keeps it out:\nstand, usage_between, bill and every report anyone adds later must each\nre-decide what a negative difference means, or silently trust a book that is\nknown to admit bad lines. The flag also arrives late \u2014 at billing, weeks\nafter the visit, when the reader who could re-check the dial has moved on \u2014\nso what render can do is refuse or annotate a figure, never repair the line.\nWhat it buys is a door that never wrongly refuses: a true-but-lower reading\n(the not-yet-entered refit) gets recorded, and the ambiguity is surfaced to\na human at the moment money is at stake.",
+      "verified": true
+    },
+    {
+      "point_id": "one-owner-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Give the duty to intake. The recording is where the book already refuses what it can see is wrong, the backwards check needs only the last reading that read_meter already fetches plus the fitting day the book already keeps, and a line stopped at the door protects every reader of the book at once, where a catch in render protects one function and leaves the book dirty for the rest. The one honest cost \u2014 a refusal when a refit was done but not yet entered \u2014 is a cost the works can carry procedurally (enter the fitting, then the reading; the error message can say so), whereas Option 2's cost is structural and permanent: a book that may hold bad lines, and a judgment re-made in every reading-out for the life of the works. Render's version also arrives too late to be acted on cheaply. Catch it where the line comes in.",
+      "verified": true
+    },
+    {
+      "point_id": "lower-is-always-wrong",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

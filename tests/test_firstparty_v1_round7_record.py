@@ -166,9 +166,9 @@ _HAIKU_MISSED = {
 #
 # Three of them moved after the round they record, and by later rounds' own
 # tasks: round 8 authored the corpus's `test-authoring` cell, three Python
-# tasks each declaring itself a control, and round 10 authored the first
-# `investigation` one, a fourth Python control, so the loaded Python task set
-# and its control count grew with each. Round 7's own prose is a claim about
+# tasks each declaring itself a control, and round 10 authored its three
+# `investigation` ones, Python controls all three, so the loaded Python task
+# set and its control count grew with each. Round 7's own prose is a claim about
 # what round 7 did and is quoted rather than recomputed, so it stays where it
 # was — and the
 # two lines the reader prints are different counts, which is why they no longer
@@ -184,10 +184,10 @@ _RECORDED_TASKS = 127
 # that a later round adding a fourth moves one number here.
 _ROUND_8_TASKS = 3
 
-# And what round 10 has added so far: the corpus's first `investigation` task,
-# a Python control graded by the point gate. Its own round's suites count it;
+# And what round 10 has added: its three `investigation` tasks, Python
+# controls graded by the point gate. Their own round's suites count them;
 # this file only has to keep the live task-set arithmetic honest.
-_ROUND_10_TASKS = 1
+_ROUND_10_TASKS = 3
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -195,9 +195,9 @@ _ROUND_10_TASKS = 1
 _ROUND_8_CLAUDE_CODE_RUNS = 6
 
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 117
+_PYTHON_TASKS = 119
 _PYTHON_TASKS_WITH_RUNS = 113
-_PYTHON_CONTROLS = 50
+_PYTHON_CONTROLS = 52
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -213,7 +213,7 @@ _TYPESCRIPT_COVERAGE = {
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
-    "investigation": 1,
+    "investigation": 3,
 }
 
 # The two fields of a calibration block a later round moves, and the only two —
@@ -1174,7 +1174,7 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     # rewrites it: the block is held against today's table line for line, with
     # the lines later rounds moved named here rather than edited there.
     # Round 8 authored the corpus's `test-authoring` tasks and round 10 its
-    # first `investigation` one, so the two rows that read `- - 0` when this
+    # three `investigation` ones, so the two rows that read `- - 0` when this
     # was recorded now read Python cells. Every other line is still printed
     # byte for byte — the column widths included — which is what says round
     # 7's own figures are unmoved.
@@ -1336,7 +1336,7 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # language selection, so this is the one of ticket 06's three counts that
     # moves whenever the corpus grows — 127 when the round was recorded,
     # three more when round 8 authored the corpus's `test-authoring` tasks,
-    # and one more when round 10 authored its first `investigation` one. The
+    # and three more when round 10 authored its `investigation` ones. The
     # record is a snapshot and is not edited for that; the live count is
     # asserted here beside the recorded one so the two cannot drift silently
     # apart.

@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "ad2048eae83e76e5c76c253d40b0321273921bc570e40383b10a3094189f8270",
+  "answer_sha256": "026da6402470376691f604a362e20fcef800f07ee698957e8583c325332fb4f2",
+  "rulings": [
+    {
+      "point_id": "no-money-on-the-line",
+      "kind": "point",
+      "covered": true,
+      "span": "A crossing line carries no money figure \u2014 cross and refund record the day, the class and the note only, and crossings.py says so in as many words: the line is the crossing, not the money. So every counting of past takings prices old lines through whatever fare table stands at the moment of counting",
+      "verified": true
+    },
+    {
+      "point_id": "the-table-keeps-no-dates",
+      "kind": "point",
+      "covered": true,
+      "span": "set_fare replaces the one undated figure a class has, so once the board changes a fare, the figure that was in force on any earlier day is gone from the book.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refund-pays-todays-fare",
+      "kind": "point",
+      "covered": true,
+      "span": "the refund path stops being explainable at all \u2014 a refund is priced off the fare table as it stands when the refund is given, so after a fare change the box hands back a different sum than it took for that same crossing.",
+      "verified": true
+    },
+    {
+      "point_id": "the-quote-and-the-record",
+      "kind": "point",
+      "covered": true,
+      "span": "It also obliges honesty about the one place the current behaviour is right: the fare table's two uses are not the same question. quote prices a crossing not yet made, and for that the figure as it stands is exactly right \u2014 a quote should move the day the board moves the fare. It is restating money already taken that today's figure cannot do.",
+      "verified": true
+    },
+    {
+      "point_id": "a-ruling-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Tell the board it is a defect. The takings report presents itself as money \u2014 it is counted in pence and the refund path treats its figures as sums to hand out of a real box \u2014 and the refund is the proof by the book's own hand that the behaviour is not a chosen policy: no board chooses to pay back sixpence for a fourpenny crossing, yet that is what the code does after midsummer, for the same reason the printings drifted.",
+      "verified": true
+    },
+    {
+      "point_id": "the-box-can-be-recounted",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}
