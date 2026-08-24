@@ -7873,6 +7873,539 @@ residue at 2 of 63, and the A″ readings at the bar from both sides) — and
 the kill discipline keeps one uniform sentence: a failed proof stops the
 round with a record.
 
+## Round 10 cells and cost — registered 2026-08-23
+
+**83. Round 10 written down before the first paid call: the reopen, the
+instrument, the readings that gate nothing, the round's one gate, both prices
+and the nine cells.** This is round 10's pre-registration and nothing else:
+§46 did it for round 5, §52 for round 6, §59 for round 7, §68 for round 8 and
+§77 for round 9, and the shape below is §77's a round on. One difference this
+round forces, and it is the mirror of §77's. Round 9 had to register two
+halves because its first paid call was a calibration experiment that gated;
+round 10 has **no paid experiment at all** — §82.1 keeps the instrument
+whole, so the repaired read of §82.2 is a derivation over rulings already
+spent and costs **zero new paid calls**. What is left to pre-register is
+therefore the authoring-and-sweep half alone: the one hard gate that stands
+before the first sweep dollar, the two prices, and the nine cells. The
+round's record — what the readings said, whether the proofs opened the gate,
+and what the sweep then did — follows at **the next free section numbers**,
+§84 onward; nothing below is a result, and nothing above is renumbered.
+
+**83.1 The vendor closure is reopened on premise failure, in as many words.**
+§82.1's ruling, registered here because it is what licenses every paid call
+below. §81's own sentence, quoted from that record rather than paraphrased,
+reads "closes the question of this vendor's grader… no third run is attempted
+under this vendor". It was ruled at §80.6, **before the pointer finding
+existed**, on the premise that a second failure would be the instrument's.
+§81.2's own reading falsified that premise for **thirteen of the seventeen
+disagreements**: the deliverables that sank the bar are answers with nothing
+in them to quote, a defect of stratum A's construction rather than of the
+grader. So the closure is reopened exactly the way **§78.1 reopened §76.7:
+not a reversal, a premise failure**, named as one and recorded in as many
+words.
+
+**§81 itself is not edited.** It stands as the record it is, its verdict
+unchanged, its 358 rulings untouched, and no round-9 section, archive or pin
+suite is altered by this registration. What reopens is the question §81
+closed and nothing else: the instrument does not move (83.2), round 9's
+verdicts are not re-read as anything but what they were, and heap 3's
+emptiness stays a disclosed zero until the proofs of 83.4 open the sweep.
+
+**83.2 The instrument, unmoved, quoted from the code and never retyped.**
+§82.1 keeps the instrument whole, so this round runs on exactly what §80.4
+registered, read back out of the code rather than copied across:
+
+```
+deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be
+```
+
+That is `point_grader.GRADER_VERSION`, read on **2026-08-23** with
+
+```
+uv run python -c 'from ai_benchmark import point_grader as p; print(p.GRADER_VERSION)'
+```
+
+— **the same alias** §78.1 re-pinned, **the same announced checkpoint**
+§78.3's weak pin rests on, and **the same prompt hash** §80.2's two revisions
+produced. The settings are part of the pin and are §78.2's, unchanged: **low
+reasoning effort, temperature 0, JSON output**. Nothing about the instrument
+is re-argued here and nothing about it moves.
+
+**The standing rule, stated because this round runs on a moving alias.** Any
+**checkpoint movement discovered en route is a version change**, and a
+version change **stops the round for re-registration** rather than being
+absorbed into it — §78.3's rule and §80.4's practice, restated as a stop
+because this round has more to lose by it than either of theirs did. What it
+forfeits is the round's one material asset: **the 358 archived rulings of
+§81's run stay readable by deliverable hash**, and they stay readable only
+while the version string they were archived under is the version string in
+force. A moved checkpoint opens a new rulings file (§77.8), re-triggers every
+task's proofs (§76.10), and leaves §84's readings derived over an archive the
+round no longer runs on.
+
+**83.3 The A″ readings: two mechanical operationalisations, both reported,
+gating nothing.** §82.5 supersedes §82.3's first gate the same day it was
+ruled and before anything was registered, so what is registered here is the
+superseding shape and not the superseded one. The pointer-prose re-read of
+the **committed v2 archive** — stratum A minus the rows a mechanical
+pointer-prose filter catches — is computed **offline**, at zero new paid
+calls, under **both** operationalisations the grill separated:
+**file-reference**, §82.2's definition read literally over file-shaped
+tokens, and **file-or-symbol**, the same definition widened so that a message
+narrating its finding by symbol alone counts as narration rather than as
+pointing. Both are **readings and not a gate**. Both are reported, both
+disclosed, and **neither is tuned into gating**: a gate whose verdict flips on
+tokenisation minutiae certifies nothing, and repairing a definition with the
+outcomes already visible is a tuning exercise this corpus refuses. **The A″
+readings gate nothing**, and the round's only gate is 83.4's.
+
+**The disclosure, in as many words.** **The A″ read is a derivation over
+spent rulings, and its outcome is knowable at registration time.** It is not
+a blind pre-registration and does not claim to be one. What honesty it has
+rests on the filter's independence from every verdict — it reads the
+deliverable and the repository tree and never looks at a ruling — and on both
+readings being reported whole rather than chosen between after the fact.
+
+**Where they land: §84**, the next free number after this section, written by
+the round's reading ticket. **No reading's numbers appear here**: §83
+registers and §84 reports, and a registration that quoted its own outcome
+would be the exact thing this disclosure exists to refuse.
+
+**83.4 The round's single hard gate: the two-sided proofs, before the first
+sweep dollar.** §82.5's ruling. §76.10's standing authoring requirement is
+raised to the round's one explicit registered gate, and it is the only gate
+round 10 has.
+
+**The bar is the existing lint rule's universal quantifier, and it is stated
+as a quantifier and never as a percentage.** For the three `investigation`
+tasks: **every planted point of every task's reference answer resolves, and
+every foil answer fails**, read offline from the archived rulings. Every
+point, every task, both sides — no fraction met, no proportion computed, no
+threshold anywhere in the clause. There is nothing here to round and nothing
+to tune, which is precisely what §82.5 wanted of a gate after A″ turned out
+not to be one.
+
+**The check already exists and it is offline.**
+`_the_reference_resolves_and_the_foil_fails`
+(`src/ai_benchmark/firstparty_v1.py`) is that rule, called by **`ai-bench
+lint-v1`**, and it reads the **archived rulings** taken by `ai-bench
+prove-points-v1` at authoring time: the lint **never calls the LLM**, opens
+no client and needs no key. The proofs are paid once, at authoring; the gate
+is then read as many times as anyone likes, for nothing, which is why the
+affordance that can reach the network is a subcommand beside the lint rather
+than a flag inside it.
+
+**The kill discipline, in its one standing sentence: a failed proof stops the
+round with a record, heap 3 stays empty, disclosed.** The sentence §76.1
+wrote, §77.1 registered and §82.5 kept word for word, unchanged by the gate
+moving from the calibration bar to the proofs.
+
+**83.5 The proofs' price: $0.05–0.6, at peak-hour list price, counted over
+calls.** The round's only metered calls, contingent on nothing — the proofs
+are what the gate reads, so they are spent before the gate can open — and
+counted over **calls** rather than over answers, because `ai-bench
+prove-points-v1` calls once per planted point *and* once per disqualifier,
+against **each** of the two answers, the reference answer and the **foil**.
+So
+
+```
+3 tasks x (4-6 points + 0-2 disqualifiers) x (reference + foil)
+      = 8-16 calls a task = 24-48 calls for the round
+```
+
+**The assumed disqualifier count is 0–2 a task**, restated here from §77.4 so
+that the range cannot be silently exceeded: the 16-call top of the per-task
+range is 6 points plus 2 disqualifiers, and a task that declares a third
+disqualifier puts the round outside this registration and forces a
+re-registration rather than being absorbed by it.
+
+**The prices were read, not remembered.** Fetched on **2026-08-23** with
+
+```
+curl -sL https://api-docs.deepseek.com/quick_start/pricing
+```
+
+- `source_url`: `https://api-docs.deepseek.com/quick_start/pricing`
+- `as_of`: **2026-08-23**
+
+That command's own output carries the column **deepseek-v4-pro** — the model
+`point_grader.GRADER_MODEL` names — at **$1.32 / MTok** peak input on a cache
+miss, **$0.044 / MTok** peak input on a cache hit, and **$3.96 / MTok** peak
+output, with the off-peak column at half of each: $0.66, $0.022 and $1.98.
+Every figure is unmoved from §80.4's fetch and §77.4's before it, so nothing
+in the money moves for a price reason this round. The same column's `MODEL
+VERSION` cell reads `DeepSeek-V4-Pro-0813`, which is 83.2's checkpoint
+re-verified against this fetch rather than against a memory of one. The
+page's footnote (1) reads "Off-peak rates are half of the peak rates. Peak
+hours are 01:00 - 04:00 and 06:00 - 10:00 UTC, Monday through Friday (all
+other hours are off-peak)." — the weekend adjustment §77.4 quoted as
+forthcoming and §80.4 recorded as in force, unchanged since. **This round is
+registered at peak-hour list pricing, cache-miss throughout** — §78.4's
+conservative end, twice over — so the two prices it is billed at are
+**$1.32/MTok in and $3.96/MTok out**, and a call that lands off-peak, or on a
+weekend at any hour, is billed at half of every figure below. §77.4's cache
+paragraph carries unchanged and **no hit rate is claimed here**.
+
+**The arithmetic, at four characters a token.** The template is read from the
+code rather than carried from §77.4: `point_grader.PROMPT` stands at
+**1,461** characters, §80.2's revised prompt, so a proof call's surround is
+that plus a 200-character point — **1,661** characters a call — which is
+where the 5,661 and 9,661 below come from.
+
+```
+proofs  low   24 calls x 5,661 chars / 4     =  33,966 tok  x $1.32/M = $0.0448
+              24 x 100 tok thinking          =   2,400 tok  x $3.96/M = $0.0095
+        high  48 calls x 9,661 chars / 4     = 115,932 tok  x $1.32/M = $0.1530
+              48 x (2,000 quoted + 300)      = 110,400 tok  x $3.96/M = $0.4372
+                                               round total   $0.0543 - $0.5902
+```
+
+and the registered range is **$0.05–0.6**: the arithmetic's own low end
+rounded down to a round number and its own high end rounded up to one, which
+is §77.4's own rule applied to this round's arithmetic.
+
+**Which half is an assumption, named — and this round both halves are.**
+§77.4 could call its input half arithmetic over text that already exists,
+because its 358 calls carried archived deliverables. **This round's do not**:
+the three reference answers and their three foils are **not written yet**, so
+a proof answer is *assumed* at **4,000 characters** at the low end and
+**8,000** at the high, §77.4's own figures reused unchanged, against an
+archive whose longest answer is 1,379 — a heap-3 reference answer is the
+deliverable rather than a note about one. **The output half is the half with
+no anchor**, exactly as §68.4's and §77.4's were, and is registered with both
+ends stated rather than as a point estimate: the low end assumes every ruling
+comes back uncovered and quotes nothing, over **100** output tokens of
+`effort: low` thinking a call; the high end assumes every ruling quotes **its
+whole deliverable** over **300**. The high end is a bound and not an
+expectation. **The one way this misses is an answer longer than 8,000
+characters or a grader thinking longer than 300 tokens a call**, and the
+record is to say so against this line with the archived proofs' own token
+counts beside it. The proof rulings are **instrument work and not combination
+results**: they are archived in each task's own proofs subtree with the
+grader's version and **never enter `unified.jsonl`** (§76.11).
+
+**83.6 The sweep's price: $2.5–5, at list price, in round 8's band.**
+Contingent on 83.4's gate, and re-derived — not copied from §77.5 — from the
+**checked-in round-8 rows**, selected by sweep id `round-8` over every log in
+`data/first-party-v1-runs/` and **never by a log's filename**. **Round 9
+never swept**, so round 8 is still the nearest anchor this corpus has: the
+same three combinations, the same nine-cell shape, three freshly authored
+repositories and a verdict shape new at the time — two rounds back rather
+than one, which is the only thing about the anchor that got worse. Its nine
+cells came to **$0.7237** on `claude-haiku-4-5`, **$1.7679** on
+`claude-sonnet-5` and **$0.2698** on `codex` × `gpt-5.6-terra`, over three
+cells each, which is **$0.2412**, **$0.5893** and **$0.0899** a cell. That is
+**$0.9204 a task across the three combinations**, so three tasks come to
+**$2.7612**, if an investigation costs what a test suite did. In §68.4's
+summed-columns form,
+
+```
+claude-code x claude-haiku-4-5   3 x $0.2412 = $0.7236
+claude-code x claude-sonnet-5    3 x $0.5893 = $1.7679
+codex x gpt-5.6-terra            3 x $0.0899 = $0.2697
+                                 total        $2.7612
+```
+
+— which is round 8's own **$2.7614** re-derived through rounded per-cell
+figures, the two differing by the two hundredths of a cent the rounding
+costs, and the figure a reader with the printed cents can redo. **The
+re-derivation landed on §77.5's figures to the cent**, which is what it
+should do and is worth saying rather than assuming: the anchor rows are
+checked in and did not move, and round 9 added none of its own.
+
+**The bound is caching-aware and both ends of it are registered**, §59.4's
+rule kept. Round 8's three Codex cells read **361,275** input tokens and
+wrote **8,122**, and round 10 sweeps three cells on the same column, so the
+projection is that round's own totals rather than a rate scaled up. At
+`data/price-table.json`'s `gpt-5.6-terra` prices the output is **$0.0975**
+whatever happens, and the input is **$0.7225 all-uncached** against **$0.0723
+all-cached**; the Codex column is registered at **$0.17 all-cached to $0.82
+all-uncached**, with round 8's own observed effective input rate of
+**$0.4771/M** putting the expected figure near **$0.27**. The two Claude
+columns are **vendor-reported** and carry no such split: **$0.7236** on haiku
+and **$1.7679** on sonnet, **$2.4915** together. Added up at round-8-equal
+token counts the whole sweep is **$2.66 all-cached to $3.31 all-uncached** —
+an envelope whose all-uncached end sits **inside** the registered $2.5–5 and
+below its middle, which is the shape §59.4 asked for.
+
+**The headroom, and the two ways this range misses.** The ceiling sits at
+roughly **1.8×** the flat extrapolation, §77.5's own multiple, because the
+anchor is still the same three columns over the same nine-cell shape. The
+**low** miss is the likelier: the range's floor *is* the flat extrapolation
+rounded down, so the sweep falls under $2.5 only if nine `investigation`
+cells cost less a cell than round 8's nine `test-authoring` ones — a
+repository read once and a proposal written straight out, against a suite
+written file by file — which would be a finding about the action and not an
+accounting surprise. The **high** miss is what the thin headroom buys
+watching: an investigation that reads the whole repository on every turn is
+an input bill no anchor here has priced, and **$5 is where the record is to
+stop and say so**.
+
+**Why those are list prices and not a bill.** Unchanged from §68.4 and §77.5
+and stated again because both prices above carry it. The operator's Codex is
+authenticated by **ChatGPT login**, not by an API key, so a Codex run is
+**not billed per token** at all and every Codex figure above is a
+**list-price equivalent** — tokens × `data/price-table.json`, stamped
+`cost_source: table-derived` — and not an invoice anyone received. The two
+claude-code columns are `cost_source: vendor-reported`. The proofs of 83.5
+are neither: they are metered API calls on **the operator's DeepSeek key**,
+and there the list-price equivalent and the invoice are the same number.
+
+**83.7 The cells: three `investigation` tasks × the three standing columns =
+nine cells, and the id register is left to be filled in before the sweep.**
+The combinations are `claude-code` × `claude-haiku-4-5`, `claude-code` ×
+`claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS`) — **the three standing
+columns, unchanged from rounds 7 and 8**, taken here without re-argument for
+§68.3's reason: the point gate is the round's one instrument and changing a
+column beside it would confound the two. So the round is three tasks × three
+combinations = **nine cells**.
+
+Each of the three is **Python** (§76.10: heap 3 stays on Python until its
+grader is trusted, and the proofs of 83.4 are what this round trusts it by),
+and each is a **declared control** — `control: true`, no construction block,
+no knob activation, no prediction. The same two things follow as in §68.2 and
+§77.6 and for the same reasons: the corpus's first `investigation` rows land
+in a cell that can be read against their own category's baseline, and because
+no task here declares a contrast, **round 10 moves no knob's counter and the
+kill discipline does not count it**; `calibrate-v1` gains no `investigation`
+multiplier row from this round, and that absence is the design rather than a
+gap in it.
+
+**The three task ids do not exist yet.** The corpus holds no `investigation`
+task as this is written, and `investigation` is a **disclosed zero** in the
+coverage table until it does, so there is nothing to list here: **the id
+register for round 10 is left explicitly to be filled in, in this section,
+before the sweep, by the round's second task-authoring ticket** — the one
+that lands the last of the three, once all three ids exist.
+
+**How the sweep is invoked.** Sweep id **`round-10`**, on every invocation of
+it. Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry
+cell first**, in its own invocation and **graded alone before the other
+eight**: one `claude-code` × `claude-haiku-4-5` cell, the cheapest of the
+nine, so that a mis-shaped verdict is discovered on **one paid cell rather
+than nine**. §59.6's dry-cell rule is kept rather than re-argued, and round 10
+is its situation as squarely as round 9's would have been — the point gate
+meeting its first paid diff. It is a real, paid, graded run and one of the
+round's nine; it is **not** a rehearsal to be re-run, because a task × agent ×
+model cell is only ever swept once. Its log is named like any other log of the
+sweep: the sweep protocol **bans `-dry` in a log's name**. The cells are
+chosen on the command line with **`--task`**, repeated once per id, and never
+by staging a cut-down worktree, so the dry cell is
+
+```
+uv run ai-bench eval-v1 --live --sweep round-10 --agent claude-code \
+  --model claude-haiku-4-5 --task <one of the three> --log <a normally-named log>
+```
+
+and each further invocation is the same line with the remaining ids, the other
+model and the other agent, and a fresh `--log` path, the runner refusing to
+append to a log that already exists. **Nothing is re-run**: the round sweeps
+the three tasks it authors and no cell any combination has already answered.
+
+**83.8 The limits in force: the flat default of 600 seconds, every cell, and
+nothing is registered.** `LIVE_RUN_LIMITS_S`
+(`src/ai_benchmark/firstparty_v1.py`) carries four entries — `bug-fix`,
+`fault-location`, `code-review` and `codebase-comprehension`, round 4's two
+by §37 and round 5's two by §46 — and **`investigation` joins none of them**.
+This ticket adds no row and **changes no code**: §82 rules nothing about
+run-time limits, and §68.5's precedent for a new action is explicit —
+`test-authoring` joined no register two rounds ago, because registering is a
+deliberate act and the flat default already covers every cell.
+`live_run_limit_s()` falls back to `RUN_TIMEOUT_S`
+(`src/ai_benchmark/firstparty.py:247`) for any category with no row of its
+own, and that value is **600**, so all nine cells run at the **flat
+default** — the same number the four registered categories carry, reached the
+other way. Saying it here is what lets the round's record write "at the flat
+default" rather than "under the registered 600 s", which is §46's registered
+sense of the distinction and a claim only a registered category can make.
+Because 600 is the number in force for every cell of this round and of every
+earlier one, **no cross-round caveat arises** and none is implied. And the
+limit bounds **the agent's run**: the point gate runs afterwards, over the
+collected answer file, and its grader calls are no part of the 600.
+
+**83.9 No new sweep row lands between this registration and the round's own
+sweep.** §80.4's guardrail, carried forward for this round's own reason. The
+A″ readings of §84 are a derivation over the archive as it stands — **306
+archived answers in 37 run logs, stratum A 63 of them** — and a sweep row
+landing under `data/first-party-v1-runs/` between now and the round's sweep
+would move the denominator out from under a reading already registered as
+knowable. So the split the readings are computed over is **the split this
+section registers**, and the check is one command:
+
+```
+find data/first-party-v1-runs -type f -newermt 2026-08-23
+```
+
+Run before the round's own sweep it must print nothing; run after it, it must
+print the round's own logs and nothing else. A row that appears there
+unaccounted for stops the round the way a moved split stopped §80.4's
+registration — by design, and before the reading rather than after it.
+
+## Round 10 A″ readings — read 2026-08-23
+
+**84. The A″ readings: both operationalisations, side by side, gating
+nothing.** §83.3 registered where these land and deliberately quoted no
+outcome; this section is that report and nothing else. It is a **reading and
+not a verdict** — §82.5 took the gate off A″ the same day §82.3 gave it one,
+before anything was registered — so nothing below is compared with a bar, no
+clause of it is met or failed, and the round's one gate is still §83.4's
+two-sided proofs. **§85 is the next free section number**, and the round's
+record takes it and what follows it; nothing above is renumbered.
+
+**84.1 What was re-read, and why it wanted re-reading.** The committed v2
+rulings archive, whole and unedited —
+
+```
+data/point-gate-calibration/deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be.json
+```
+
+— §81's own **358 rulings, one per point**, taken under the instrument this
+round keeps whole:
+
+```
+deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be
+```
+
+which is `point_grader.GRADER_VERSION` read out of the code as §83.2 read it
+and never retyped here. What is re-read is **stratum A with the pointer-prose
+rows filtered out**, and the reason is §82's scope ruling: §81's failed bar
+was diagnosed at §81.2 as a **broken truth source rather than a broken
+instrument** — thirteen of the seventeen disagreements were deliverables with
+nothing in them to quote, and **no prompt can quote what a deliverable does
+not contain**. So the question this read asks is what the archive says about
+the rows whose deliverables carried an answer at all, and the answer costs
+**zero new paid calls**: it is a derivation over rulings already spent.
+
+**The command, and the row set it read.** The figures below are what
+
+```
+uv run ai-bench calibrate-grader-v1 --pointer-filtered-read
+```
+
+printed on **2026-08-23**, over the whole of `data/first-party-v1-runs/` — 37
+logs, collected wholesale and **never selected by filename** — and not what
+anyone remembered. Its row set is the **registered split**: the **306 rows
+the archive holds rulings for**, of which **63 are stratum A**, the same split
+§77.2 registered and §81 ran. A run-log row the archive does not name is *out
+of this read* rather than an error in it, so when this round's own sweep lands
+its nine `round-10` rows the counts below do not move — which is what lets a
+pin suite hold them across the sweep. The check §83.9 registered was run first
+and printed nothing: no sweep row had landed between the registration and this
+reading.
+
+**84.2 Both readings, as counts, side by side.** The command's own table:
+
+```
+operationalisation  caught  A″ denominator  overall agreement  unresolved-class agreement
+file-reference      17      46              42 of 46           3 of 4
+file-or-symbol      15      48              44 of 48           5 of 6
+```
+
+**The disclosure, in as many words and beside the numbers themselves: the A″
+read is a derivation over spent rulings, and its outcome is knowable at
+registration time.** It is not a blind pre-registration and does not claim to
+be one. What honesty it has rests on the filters' independence from every
+verdict — each reads only the deliverable and the task's repository tree, and
+never a verdict, a ruling, a category or a stratum — and on **both** readings
+being reported whole rather than chosen between once the outcomes were
+visible.
+
+**The rows each filter caught**, named rather than counted at, so that a
+reader can go and look at every one:
+
+```
+task                                                    agent        model             file-reference  file-or-symbol
+apiary-review-the-book-and-the-crop                     codex        gpt-5.6-terra     caught          caught
+bandstand-where-the-poster-is-worded                    codex        gpt-5.6-terra     caught          caught
+belfry-review-the-peals-and-the-board                   claude-code  claude-haiku-4-5  caught          -
+belfry-review-the-peals-and-the-board                   codex        gpt-5.6-terra     caught          caught
+boatyard-where-a-lift-out-is-refused                    codex        gpt-5.6-terra     caught          caught
+commonland-review-the-beasts-and-the-dues               codex        gpt-5.6-terra     caught          caught
+ferry-locate-the-idle-boat                              codex        gpt-5.6-terra     caught          caught
+launderette-review-the-rate-and-the-card                codex        gpt-5.6-terra     caught          caught
+leftluggage-locate-the-charge-nobody-arrived-at         codex        gpt-5.6-terra     caught          caught
+limekiln-review-the-drawing-and-the-carting             codex        gpt-5.6-terra     caught          caught
+lockhouse-locate-the-boats-that-never-reached-the-book  codex        gpt-5.6-terra     caught          caught
+masonsyard-review-the-lettering-and-the-account         codex        gpt-5.6-terra     caught          caught
+noticeboard-locate-the-lost-notice                      codex        gpt-5.6-terra     caught          caught
+paperround-locate-the-carried-over-count                claude-code  claude-sonnet-5   caught          caught
+paperround-locate-the-carried-over-count                codex        gpt-5.6-terra     caught          caught
+parishhall-review-the-hire-and-the-diary                claude-code  claude-haiku-4-5  caught          -
+postoffice-locate-the-wrong-band                        codex        gpt-5.6-terra     caught          caught
+```
+
+**84.3 The readings gate nothing, and the two reasons are on the page above.**
+§82.5's ruling in its own words: **a gate whose verdict flips on tokenisation
+minutiae certifies nothing**, and repairing the definition with the outcomes
+visible is a tuning exercise this corpus refuses — so **both
+operationalisations are reported as readings, both disclosed, and neither is
+tuned into gating**. The first reason is the **overall clause sitting exactly
+at its bar under either definition**: a verdict decided by whether a dotted
+symbol counts as narration is a verdict about tokenisation and not about the
+instrument. The second is the **filtered unresolved class**, four answers
+under one operationalisation and six under the other — a size §77.3's own
+sentence disqualifies: "on a class this size a percentage hides how few
+answers separate met from failed". So **no bar is read over these counts in
+this section, no percentage is computed from them, and no clause of them is a
+result.** The round's one gate is §83.4's, and it is the proofs.
+
+**84.4 The divergence between the two operationalisations, named and read.**
+The readings differ by exactly **two rows**, and both are `claude-code` ×
+`claude-haiku-4-5`:
+
+```
+belfry-review-the-peals-and-the-board     Book.rung_by
+parishhall-review-the-hire-and-the-diary  Diary.cancel
+```
+
+Each message narrates its finding **by symbol alone** and names no file of its
+own tree, so §82.2's definition read literally over file-shaped tokens calls
+it pointer prose while the term's own semantic — naming no location *and no
+finding* — plainly does not. That is the divergence §82.5 found between the
+ruled definition and the ruled meaning, and it is left standing rather than
+settled, because settling it with these outcomes in view is the tuning §82.5
+refused. Both rows sit inside A″ under one reading and outside it under the
+other; **they are read here and neither is scored**.
+
+**And two rows the verdict-blind filter caught that §81.1's inspection could
+not**: `apiary-review-the-book-and-the-crop` × codex and
+`paperround-locate-the-carried-over-count` × `claude-sonnet-5`. Both messages
+say only that the answer file was written — true pointers under either
+operationalisation, and both catch them — and both rows **agree** with their
+machine verdict, which is exactly why an inspection reading the seventeen
+disagreements never reached them. The filter is verdict-blind and the
+inspection was not; this is the filter working rather than the filter
+drifting. Together with the symbol-only pair above these are the **four rows**
+by which the file-reference catch of seventeen exceeds §81.1's inspected
+thirteen, and the thirteen the inspection did see are the remaining thirteen
+exactly. Read, and not scored: no count in 84.2 is defended by either pair and
+no clause of this section turns on them.
+
+**84.5 What this read cost, and where it landed: nothing, and nowhere.** **No
+new paid call was made.** No grader client was constructed — the read path
+takes no factory at all, so it has nothing to call rather than a factory it
+happens to call zero times — no key was read and no network was reached; the
+archive was read and never written. And **nothing from this read entered
+`data/unified.jsonl`**: calibration rulings are instrument data and not a
+combination's result on a benchmark instance (§76.11), so they stay under
+`data/point-gate-calibration/` where §81.5 left them. Round 9's records, its
+archive and its pin suites are untouched by this section, exactly as §83.1
+said they would be.
+
+**84.6 §82.5's preview, checked against what the command printed — no
+difference to record.** The preview's figures were **anchors and not
+registrations**, and the standing rule was to record any difference as a
+finding here rather than reconcile this section to them. There is none: **the
+command's figures are the preview's, figure for figure** — both A″
+denominators, both overall counts, both unresolved-class counts, and the
+catches of seventeen and fifteen §82.5 reported in its own prose — and its
+caught rows carry §82.5's four border cases in the two pairs 84.4 names. That
+the preview and the implemented filters agree is worth its own line rather
+than silence, because a mismatch would have been the loud stop §82.2 armed —
+and that stop has already fired once this round, at the preview itself, which
+is what turned A″ from a gate into the reading this section reports.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

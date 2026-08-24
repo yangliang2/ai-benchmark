@@ -18,6 +18,7 @@ diff its row logged, so a stratum's agreement moves only when a test moves an
 answer's prose or a row's diff.
 """
 
+import hashlib
 import json
 from collections.abc import Callable, Mapping
 from datetime import date
@@ -792,3 +793,380 @@ def test_the_points_a_key_shape_asks_are_derived_from_the_key(
     # The findings key's own quantifier travels into the point's text: a finding
     # is matched at any of its alternatives, so the point names them all.
     assert "payroll.py:gross_for" in grader_calibration_v1.points_for(review)[0]["text"]
+
+
+# --- the pointer-prose filtered read (§82.2, §82.5) ----------------------------
+
+# What each stratum-A row of the filtered fixture says, chosen so that the two
+# operationalisations disagree about it in a way a reader can check by eye.
+#
+# - the two fault-location rows narrate: each names a file of its own tree, so
+#   neither filter touches them;
+# - the codex row is pointer prose: it says the answer file was written and
+#   names nothing else, which both filters catch;
+# - the review row is a **symbol-only narration**: it names the three defects by
+#   symbol and no file at all, so file-reference catches it and file-or-symbol
+#   does not. That is §82.5's divergence, reproduced at a seam where every count
+#   around it is small enough to check by hand.
+POINTER_OUTPUTS = {
+    FL_RESOLVED: "The basket totals low in `pricing.py`, in `total`.",
+    FL_UNRESOLVED: "The basket totals low in `pricing.ts`, in `total`.",
+    CODEX_ROW: "Wrote `ANSWER.json` and touched nothing else.",
+    REVIEW: "Three of them: `gross_for`, `net_for` and `owed`, all written up "
+    "in `FINDINGS.json`.",
+}
+
+
+def archive_rulings(
+    tasks_root: Path,
+    log: Path,
+    rulings: Path,
+    covers: Mapping[str, tuple[str, ...]],
+) -> None:
+    """Write the rulings archive directly, with no grader anywhere in reach.
+
+    The filtered read scores the archive rather than the instrument, so a test of
+    it wants the rulings as data: which points a row's rulings call covered is a
+    parameter here instead of something a fake grader has to be talked into by
+    the row's prose. That separation is what lets a row's prose be a pointer and
+    its rulings say "covered" at the same time — which is exactly the shape the
+    two readings differ over.
+
+    Each covered ruling quotes the row's own first line, so the span check every
+    agreement figure re-runs passes on its own terms rather than by being
+    trusted.
+    """
+    tasks = {task.id: task for task in load_task_set(tasks_root)}
+    answers = []
+    for run in firstparty_v1.load_runs(log):
+        task = tasks[run.task_id]
+        covered = set(covers.get(run.task_id, ()))
+        first = run.output.splitlines()[0]
+        answers.append(grader_calibration_v1.AnswerRulings(
+            task_id=run.task_id,
+            agent=run.agent,
+            model=run.model,
+            stratum="A" if firstparty_v1.carries_a_key(task) else "B",
+            deliverable_sha256=hashlib.sha256(
+                run.output.encode("utf-8")
+            ).hexdigest(),
+            rulings=tuple(
+                grader_calibration_v1.CalibrationRuling(
+                    point_id=point["id"],
+                    covered=point["id"] in covered,
+                    span=first if point["id"] in covered else None,
+                    verified=point["id"] in covered,
+                )
+                for point in grader_calibration_v1.points_for(task)
+            ),
+        ))
+    grader_calibration_v1.write_rulings(
+        grader_calibration_v1.rulings_file(rulings, point_grader.GRADER_VERSION),
+        grader_calibration_v1.CalibrationRulings(
+            grader_version=point_grader.GRADER_VERSION, answers=tuple(answers)
+        ),
+    )
+
+
+def filtered_fixture(
+    tmp_path: Path, *, outputs: Mapping[str, str] | None = None
+) -> tuple[Path, Path, Path]:
+    """The fixture corpus with pointer-shaped prose on it, and an archive of
+    rulings taken against exactly that prose.
+
+    The archive's verdicts are fixed so that both rows either filter catches
+    **disagree** with their machine verdict and both rows it keeps agree: the
+    readings then move visibly when a row crosses the filter, which is the whole
+    thing under test.
+    """
+    tasks, log = tmp_path / "tasks", tmp_path / "runs" / "fixture.jsonl"
+    rulings = tmp_path / "rulings"
+    write_archive(tasks, log, outputs={**POINTER_OUTPUTS, **dict(outputs or {})})
+    archive_rulings(tasks, log, rulings, {
+        FL_RESOLVED: (ACCEPTED,),
+        FL_UNRESOLVED: (),
+        CODEX_ROW: (),
+        REVIEW: tuple(review_point_id(name) for name in REVIEW_FINDINGS),
+        PLAIN_RESOLVED: (SYNTHETIC,),
+        PLAIN_UNRESOLVED: (),
+    })
+    return tasks, log, rulings
+
+
+def caught_lines(page: str) -> list[str]:
+    """The caught-rows table, which is what a verdict-blindness test holds
+    still while everything around it moves."""
+    body = page.split("the rows each filter caught")[1]
+    return [line for line in body.splitlines() if line.strip()]
+
+
+def test_the_filtered_read_reports_both_operationalisations_side_by_side(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """§82.5's two readings, each with its caught rows, its A″ denominator and
+    both agreement figures — and no grader built to get them.
+
+    The arithmetic, by hand over four stratum-A rows: file-reference catches the
+    codex pointer and the symbol-only review row, leaving two rows that both
+    agree and one unresolved row among them; file-or-symbol catches the pointer
+    alone, leaving three rows of which the review row disagrees and two of which
+    are unresolved. Every column differs between the two lines, which is the
+    divergence §82.5 refused to tune away.
+    """
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+
+    page = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert "file-reference      2       2               2 of 2             1 of 1" in page
+    assert "file-or-symbol      1       3               2 of 3             1 of 2" in page
+
+
+def test_the_caught_rows_are_listed_by_task_agent_and_model(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The divergence on the page rather than in the difference between two
+    counts: every caught row is named, with a column per operationalisation, so
+    the row the two readings disagree about can be read off it."""
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+
+    page = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert f"{CODEX_ROW}    codex        {MODEL}  caught          caught" in page
+    assert f"{REVIEW}  {AGENT}  {MODEL}  caught          -" in page
+    assert FL_RESOLVED not in caught_lines(page)
+
+
+def test_the_filtered_read_prints_the_knowable_outcome_disclosure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """§82.2's disclosure, in its own output and in its own words: the read is a
+    derivation over spent rulings, its outcome is knowable at registration time,
+    and it is not a blind pre-registration. The page a reader has in front of
+    them is where that belongs, not only the record that quotes it."""
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+
+    page = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert grader_calibration_v1.KNOWABLE_OUTCOME in page
+    assert "derivation over spent rulings" in page
+    assert "not a blind pre-registration" in page
+    assert grader_calibration_v1.VERDICT_BLIND in page
+
+
+def test_the_filtered_read_gates_nothing_and_prints_no_bar(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """§82.5: A″ is a reading. No bar, no MET/FAILED, no percentage — and
+    `gate()` is not called on the filtered set, which is asserted by making the
+    call fail rather than by reading the page for its absence."""
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+
+    def never_gated(judged: object) -> object:
+        raise AssertionError("the filtered read gates nothing")
+
+    monkeypatch.setattr(grader_calibration_v1, "gate", never_gated)
+    page = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert "MET" not in page
+    assert "FAILED" not in page
+    assert "%" not in page
+    assert ">=" not in page
+    assert grader_calibration_v1.GATES_NOTHING in page
+
+
+def test_a_row_outside_the_registered_split_is_out_of_the_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A run-log row the archive holds no rulings for — a cell swept after the
+    registration — is excluded rather than refused, and moves no reading.
+
+    This is what makes §84's counts re-derive identically before and after the
+    round's own sweep adds nine `round-10` cells to the logs: the A″ denominator
+    is fixed by the archive, not by whatever the logs have grown to hold.
+    """
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+    before = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    swept = "fl-swept-later"
+    write_keyed_task(tasks, swept)
+    [task] = [one for one in load_task_set(tasks) if one.id == swept]
+    row = Run(
+        task_id=swept,
+        agent=AGENT,
+        model=MODEL,
+        output="Wrote `ANSWER.json` and touched nothing else.",
+        diff=keyed_diff(task, right=True),
+        tokens_in=1,
+        tokens_out=1,
+        cost_usd=0.1,
+        latency_s=1.0,
+        turns=1,
+        as_of=_AS_OF,
+        sweep="round-10",
+    )
+    log.write_text(log.read_text() + row.model_dump_json() + "\n")
+
+    after = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert "file-reference      2       2               2 of 2             1 of 1" in after
+    assert "file-or-symbol      1       3               2 of 3             1 of 2" in after
+    assert caught_lines(after) == caught_lines(before)
+    assert swept not in after
+    assert "6 row(s) the archive holds rulings for" in after
+
+
+def test_a_registered_row_whose_rulings_are_missing_is_a_loud_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The opposite case, and the opposite answer. A row the archive *registers*
+    but whose rulings do not answer it — here because its prose was edited after
+    they were taken — is named and refused: dropping it would move the
+    denominator the archive fixed, and calling a grader to replace it is what
+    this read exists not to do."""
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    write_archive(tasks, log, outputs={
+        **POINTER_OUTPUTS, REVIEW: "Three of them, since rewritten.",
+    })
+    refuse(monkeypatch)
+
+    with pytest.raises(SystemExit, match=f"{REVIEW} x {AGENT} x {MODEL}"):
+        calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+
+def test_the_filtered_read_refuses_a_registered_row_the_logs_lost(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The denominator is the archive's, so a registered row that vanished from
+    the run logs is a broken read rather than a smaller one — the same refusal
+    from the other side, and what keeps "excluded" from quietly meaning "lost"."""
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    kept = [
+        line for line in log.read_text().splitlines()
+        if json.loads(line)["task_id"] != CODEX_ROW
+    ]
+    log.write_text("\n".join(kept) + "\n")
+    refuse(monkeypatch)
+
+    with pytest.raises(SystemExit, match=f"{CODEX_ROW} x codex x {MODEL}"):
+        calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+
+def test_the_filters_are_blind_to_the_machine_verdict(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Move a row's held-out verdict and the filters say exactly what they said
+    before.
+
+    The review row's diff now reports all three planted findings, so its machine
+    verdict flips to resolved; its prose is untouched, so its rulings still
+    answer it. The agreement figures move — that is the reading doing its job —
+    and the caught rows do not, because nothing the filters read has changed.
+    """
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+    before = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    rows = []
+    for line in log.read_text().splitlines():
+        row = json.loads(line)
+        if row["task_id"] == REVIEW:
+            task = next(one for one in load_task_set(tasks) if one.id == REVIEW)
+            row["diff"] = review_diff(task, reported=REVIEW_FINDINGS)
+        rows.append(json.dumps(row))
+    log.write_text("\n".join(rows) + "\n")
+
+    after = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert caught_lines(after) == caught_lines(before)
+    # The review row now agrees, and only the reading that kept it moves.
+    assert "file-reference      2       2               2 of 2             1 of 1" in after
+    assert "file-or-symbol      1       3               3 of 3             1 of 1" in after
+
+
+def test_the_filters_are_blind_to_the_archived_ruling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The same claim from the grader's side: flip what the archive says the
+    grader ruled and the filters do not notice.
+
+    They cannot — they are handed a deliverable and a task and have no ruling in
+    reach — and that independence is what §82.2 rests the read's honesty on: the
+    rows removed were chosen by something that could not know whether removing
+    them helped.
+    """
+    tasks, log, rulings = filtered_fixture(tmp_path)
+    refuse(monkeypatch)
+    before = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    archive_rulings(tasks, log, rulings, {
+        FL_RESOLVED: (),
+        FL_UNRESOLVED: (ACCEPTED,),
+        CODEX_ROW: (ACCEPTED,),
+        REVIEW: tuple(review_point_id(name) for name in REVIEW_FINDINGS),
+        PLAIN_RESOLVED: (),
+        PLAIN_UNRESOLVED: (SYNTHETIC,),
+    })
+    after = calibrate(tasks, log, rulings, capsys, "--pointer-filtered-read")
+
+    assert caught_lines(after) == caught_lines(before)
+    # Every stratum-A row either filter kept now carries the opposite grader
+    # verdict to its machine one, so both readings agree with nothing at all.
+    assert "file-reference      2       2               0 of 2             0 of 1" in after
+    assert "file-or-symbol      1       3               0 of 3             0 of 2" in after
+
+
+def test_the_two_filters_read_the_deliverable_and_the_tree_and_nothing_else(
+    tmp_path: Path,
+) -> None:
+    """The filters at their own seam: two arguments, a deliverable and a task,
+    with no verdict, ruling, category or stratum among them.
+
+    Pinned by the fixture pair the readings turn on — a pointer both catch, and a
+    symbol-only narration only the first does — so that the signature's claim is
+    checked by the answers as well as by the argument list.
+    """
+    tasks = tmp_path / "tasks"
+    write_keyed_task(tasks, CODEX_ROW)
+    write_review_task(tasks, REVIEW)
+    by_id = {task.id: task for task in load_task_set(tasks)}
+    pointer, narration = POINTER_OUTPUTS[CODEX_ROW], POINTER_OUTPUTS[REVIEW]
+
+    assert grader_calibration_v1.is_pointer_prose_by_file_reference(
+        pointer, by_id[CODEX_ROW]
+    )
+    assert grader_calibration_v1.is_pointer_prose_by_file_or_symbol(
+        pointer, by_id[CODEX_ROW]
+    )
+    assert grader_calibration_v1.is_pointer_prose_by_file_reference(
+        narration, by_id[REVIEW]
+    )
+    assert not grader_calibration_v1.is_pointer_prose_by_file_or_symbol(
+        narration, by_id[REVIEW]
+    )
+    # And a message that names a file of the tree is nobody's pointer prose.
+    assert not grader_calibration_v1.is_pointer_prose_by_file_reference(
+        POINTER_OUTPUTS[FL_RESOLVED], by_id[CODEX_ROW]
+    )

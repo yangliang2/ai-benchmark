@@ -121,6 +121,29 @@ terrain rules are exempted for this action and the exemption is recorded with
 its reason (`TERRAIN_EXEMPT_ACTIONS`), because what they guard against is a key
 an agent could grep out of its workdir and this key is never in one.
 
+A fifth verdict shape grades the action whose deliverable is prose with no
+code and no held-out test to run against it. An `investigation` task ships no
+grading tests and no mutants; it ships a **points key** instead
+(`points_key`), and its verdict is the **point gate** (`_point_gate`):
+collect the one prompt-named answer file out of the workdir diff — the
+mutation gate's subtree rule narrowed to a single path — and ask a pinned,
+versioned grader one narrow question per planted point and per optional
+disqualifier, never "is this resolved?". A covered ruling must quote the
+deliverable back verbatim; a span the gate cannot itself locate in the
+deliverable is demoted, mechanically and archived, so an instrument grading
+its own quotations is never the only thing standing behind them. `resolved`
+is then computed rather than spoken: every planted point covered and no
+disqualifier present, binary and universally quantified over points. What it
+does not do is score: the fraction of points an answer covered is not
+computed, not stored and not reported, for the same reason a mutation gate
+never reports a kill rate — a coverage percentage under the name `resolved`
+would be a second quality metric on one action of a corpus whose values are
+only comparable within one (design note §67.3, pointed at points by §76.5).
+The per-point rulings are archived and the verdict is a pure function of
+them, so replay re-reads rulings rather than re-asking the grader — the one
+non-hermetic surface this grading admits is confined to those archived
+rulings and nothing past them.
+
 What it is not: a sandbox — and that is a real limit, not a formality.
 Grading executes agent-written code in the same process tree as the oracle,
 so those defences stop an honest-but-messy agent, not a deliberately

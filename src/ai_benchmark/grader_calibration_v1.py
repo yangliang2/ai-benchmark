@@ -61,6 +61,16 @@ run interrupted after two hundred paid calls resumes rather than repeating
 them — the project's own discipline that a second grading is a second
 measurement of something already measured.
 
+**The pointer-prose filtered read (§82.2, §82.5) is a third mode, and it pays
+nothing.** `--pointer-filtered-read` computes the same offline split, scores the
+**registered split** — the rows the committed archive holds rulings for — off
+those archived rulings alone, and reports **stratum A″** under both of §82.5's
+operationalisations of the pointer-prose filter. It constructs no grader (the
+entry point takes no factory), reads no key of the instrument's and makes no
+call. Neither reading gates: §82.5 ruled A″ a reading and the two-sided proofs
+the round's one gate, so the page carries no bar, no MET/FAILED and no
+percentage.
+
 **Running it for real needs `DEEPSEEK_API_KEY` exported in the invoking
 shell.** The grader is a live client; the committed classification cache that
 masks a missing key for `classify` masks nothing here.
@@ -68,6 +78,7 @@ masks a missing key for `classify` masks nothing here.
 
 import hashlib
 import json
+import re
 from collections import Counter
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -88,8 +99,10 @@ from ai_benchmark.firstparty_v1 import (
     findings_key,
     grade,
     is_findings_keyed,
+    is_keyed,
     load_runs,
 )
+from ai_benchmark.language_runners import SourceUnreadable
 from ai_benchmark.point_grader import Point, PointGrader
 from ai_benchmark.reconcile_v1 import padded_table
 from ai_benchmark.schema import NonEmptyStr
@@ -850,4 +863,469 @@ def calibrate_grader(
     judged, calls, reused = judge(answers, grader_factory, rulings_dir=rulings_dir)
     return render(
         judged, tasks_root=tasks_root, logs=logs, calls=calls, reused=reused
+    )
+
+
+# --- pointer prose: two verdict-blind filters (§82.2, §82.5) -------------------
+
+# What the filters are allowed to look at, said once so that a later reader can
+# check the claim rather than take it: the deliverable's own text and the task's
+# repository tree. Never a verdict, never a ruling, never a category and never a
+# stratum — that independence is the whole of what makes the A″ readings honest,
+# because the rows the filter removes were chosen by something that cannot know
+# whether removing them helps.
+VERDICT_BLIND = (
+    "the filters read only the deliverable and the task's repository tree, and "
+    "never a verdict, a ruling, a category or a stratum"
+)
+
+# §82.2's disclosure, in its own words. Printed by the read itself rather than
+# left to the record, because the page is what a reader has in front of them.
+KNOWABLE_OUTCOME = (
+    "the A″ read is a derivation over spent rulings, and its outcome is knowable "
+    "at registration time; it is not a blind pre-registration and does not claim "
+    "to be one"
+)
+
+# §82.5: both operationalisations are readings and neither is tuned into
+# gating, so this page carries no bar, no verdict word and no percentage.
+GATES_NOTHING = (
+    "this read gates nothing (§82.5): no bar is read over it, no verdict is "
+    "computed from it, and gate() is not called on the filtered set"
+)
+
+# A token as this module recognises one: a run of the characters a file path or
+# a symbol is spelled out of. Markdown's own punctuation — backticks, brackets,
+# parentheses, quotes — is outside the class and so ends a token rather than
+# joining it, which is what lets `crop.py` and [FINDINGS.json](/tmp/FINDINGS.json)
+# be read without a markdown parser.
+_TOKEN = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_./\\-]*")
+
+# What makes a token file-shaped: a dot with a name character on either side of
+# it, after the ends are trimmed. "the location." is not file-shaped once its
+# sentence-ending dot is gone; "crop.py" and "3.50" both are, and the second
+# names no file in any tree, so being file-shaped decides nothing on its own.
+_A_DOT_INSIDE = re.compile(r"[A-Za-z0-9_]\.[A-Za-z0-9_]")
+
+
+def answer_file(task: Task) -> str:
+    """The prompt-named answer file of whichever key this task ships.
+
+    Every stratum-A task carries one (`carries_a_key`), and it is the file the
+    prompt promised the deliverable would be written to — which is exactly what
+    makes a message that merely points at it pointer prose rather than an
+    answer.
+    """
+    if is_findings_keyed(task):
+        return findings_key(task).answer_path
+    if is_keyed(task):
+        return answer_key(task).answer_path
+    raise IngestError(
+        f"{task.id}: the pointer-prose filters ask what the prompt named as the "
+        "answer file, and a task shipping no key named none — the filters are "
+        "defined over stratum A, whose rows all carry a key"
+    )
+
+
+def _trimmed(token: str) -> str:
+    return token.strip("./\\-")
+
+
+def _segments(token: str) -> list[str]:
+    """A token read as a path: backslashes are separators, empty and `.` segments
+    drop out."""
+    return [
+        segment
+        for segment in _trimmed(token).replace("\\", "/").split("/")
+        if segment and segment != "."
+    ]
+
+
+def _file_shaped(token: str) -> bool:
+    return bool(_A_DOT_INSIDE.search(_trimmed(token)))
+
+
+def _names_the_answer_file(token: str, answer_path: str) -> bool:
+    """§82.2's "the bare name and any path ending in it", mechanically.
+
+    Two spellings, both matched on whole path segments and case-sensitively:
+    the token's segments end with the answer path's segments (`workdir/ANSWER.json`
+    for `ANSWER.json`), or its last segment is the answer path's last segment
+    (the bare name). Segment-wise so that `MY_ANSWER.json` is not read as a
+    reference to `ANSWER.json`.
+    """
+    segments, wanted = _segments(token), _segments(answer_path)
+    if not segments or not wanted:
+        return False
+    return segments[-len(wanted) :] == wanted or segments[-1] == wanted[-1]
+
+
+def _repository_file_names(task: Task) -> set[str]:
+    """Every file name in the task's pristine starting repository, at any depth.
+
+    Names rather than paths: "names a file that exists in the task's repository
+    tree" is a question about what the message named, and a message that writes
+    `crop.py` has named the tree's `crop.py` whether or not it spelled the
+    directories above it.
+    """
+    return {path.name for path in task.repo_dir.rglob("*") if path.is_file()}
+
+
+def _repository_symbols(task: Task) -> set[str]:
+    """Every symbol defined in the task's repository tree, in every spelling an
+    answer may legitimately name it by.
+
+    Read through the task's own language runner rather than by a pattern written
+    here, which is what makes the symbol side say what it does with each
+    language instead of silently reading one it has no extractor for: the
+    runner's `source_glob` selects the files, `loads` says whether the reading
+    instrument can see them, and `defined_symbols` returns both the qualified
+    `Class.method` and the bare `method` — so a dotted form such as
+    `Book.rung_by` resolves by membership and needs no splitting here. Python is
+    read by `ast` and TypeScript by the declaration scan; a file neither can get
+    through defines, for this filter, nothing.
+    """
+    runner = task.runner
+    symbols: set[str] = set()
+    for path in sorted(task.repo_dir.glob(runner.source_glob)):
+        try:
+            source = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if not runner.loads(source):
+            continue
+        try:
+            symbols |= runner.defined_symbols(source)
+        except SourceUnreadable:
+            continue
+    return symbols
+
+
+def _remaining_tokens(deliverable: str, task: Task) -> list[str]:
+    """The deliverable's tokens with every reference to the prompt-named answer
+    file removed — the "after removing" both operationalisations start from.
+
+    The whole token goes, not just its last segment: the reference
+    `[FINDINGS.json](/tmp/ai-bench/workdir/FINDINGS.json)` is one mention of the
+    answer file, and reading `workdir` out of it as a surviving token would let
+    a pointer rescue itself with the path it pointed along.
+    """
+    answer_path = answer_file(task)
+    return [
+        token
+        for token in _TOKEN.findall(deliverable)
+        if not (_file_shaped(token) and _names_the_answer_file(token, answer_path))
+    ]
+
+
+def is_pointer_prose_by_file_reference(deliverable: str, task: Task) -> bool:
+    """§82.2's ruled definition: a final message is pointer prose iff, after
+    removing every reference to the prompt-named answer file, no remaining
+    file-shaped token names a file that exists in the task's repository tree.
+
+    Token rule: a token is a maximal run of `[A-Za-z0-9_./\\-]`; it is
+    file-shaped when it holds a dot with a name character on either side, and it
+    names a repository file when its last path segment is the name of a file
+    anywhere in `task.repo_dir`.
+
+    **Verdict-blind**: it reads the deliverable and the task's repository tree
+    and nothing else — no verdict, no ruling, no category, no stratum. That
+    independence is what makes the A″ readings honest, and it is why this
+    catches rows §81.1's verdict-aware inspection could not see.
+    """
+    names = _repository_file_names(task)
+    return not any(
+        _file_shaped(token) and (_segments(token) or [""])[-1] in names
+        for token in _remaining_tokens(deliverable, task)
+    )
+
+
+def is_pointer_prose_by_file_or_symbol(deliverable: str, task: Task) -> bool:
+    """§82.5's second operationalisation: as file-reference, and additionally no
+    remaining token names a symbol defined in the repository tree.
+
+    Token rule: file-reference's, plus — a token names a symbol when the token
+    itself, trimmed of surrounding punctuation, is one of the symbols the task's
+    own language runner reports defined in the tree. The runner reports both
+    `Class.method` and the bare `method`, so a dotted form such as `Book.rung_by`
+    resolves whole; Python is read by `ast`, TypeScript by the declaration scan,
+    and a language without an extractor is never read at all.
+
+    **Verdict-blind**, for the same reason and in the same words as
+    file-reference. This is the operationalisation that keeps the two
+    symbol-only narrations §82.5 found — messages naming a defect by symbol and
+    no file — out of the caught set, where the term's own semantic ("naming no
+    location and no finding") plainly leaves them.
+    """
+    if not is_pointer_prose_by_file_reference(deliverable, task):
+        return False
+    symbols = _repository_symbols(task)
+    return not any(
+        _trimmed(token) in symbols for token in _remaining_tokens(deliverable, task)
+    )
+
+
+@dataclass(frozen=True)
+class Operationalisation:
+    """One of §82.5's two spellings of the pointer-prose filter, named as that
+    section names it and carrying the predicate itself, so that the page loops
+    over the pair rather than hard-coding either."""
+
+    name: str
+    catches: Callable[[str, Task], bool]
+
+
+FILE_REFERENCE = Operationalisation(
+    "file-reference", is_pointer_prose_by_file_reference
+)
+FILE_OR_SYMBOL = Operationalisation(
+    "file-or-symbol", is_pointer_prose_by_file_or_symbol
+)
+OPERATIONALISATIONS = (FILE_REFERENCE, FILE_OR_SYMBOL)
+
+
+# --- the filtered read: A″ off the committed archive, gating nothing -----------
+
+
+def read_registered_split(
+    answers: Sequence[ArchivedAnswer], *, rulings_dir: Path = DEFAULT_RULINGS_DIR
+) -> list[Judged]:
+    """Judge the registered split off the committed rulings alone.
+
+    **No grader is constructed here and none can be**: this function takes no
+    factory, so the read path has nothing to call rather than a factory it
+    happens to call zero times.
+
+    The **registered split** is the set of cells the archive holds rulings for,
+    and it fixes the denominator. A run-log row the archive does not name — a
+    cell swept after the registration, say — is *out of the read*: not an error,
+    not a reading-mover, so §84's counts re-derive identically before and after
+    a later sweep adds rows to the logs. A row the archive *does* name but whose
+    rulings do not answer it (they were taken against other prose, or against
+    other points) is the opposite case and fails loudly naming the row: it is
+    a registered row this read cannot score, and dropping it silently would move
+    the denominator the archive fixed.
+    """
+    path = rulings_file(rulings_dir, point_grader.GRADER_VERSION)
+    existing = read_rulings(path)
+    if existing is None:
+        raise IngestError(
+            f"there is no rulings archive at {path} — the filtered read is a "
+            "derivation over rulings already spent, so it has nothing to read "
+            "and makes no call to fill the gap"
+        )
+    if existing.grader_version != point_grader.GRADER_VERSION:
+        raise IngestError(
+            f"{path} archives rulings taken under {existing.grader_version!r} "
+            f"while this build's instrument is {point_grader.GRADER_VERSION!r} — "
+            "one file is one instrument's measurement of the archive"
+        )
+    archived = {
+        (one.task_id, one.agent, one.model): one for one in existing.answers
+    }
+    judged: list[Judged] = []
+    for answer in answers:
+        registered = archived.pop(answer.cell, None)
+        if registered is None:
+            continue
+        rulings = _reusable(registered, answer)
+        if rulings is None:
+            raise IngestError(
+                f"{answer.run.task_id} x {answer.run.agent} x {answer.run.model}: "
+                f"the archive at {path} registers this row but its rulings do "
+                "not answer it — they were taken against other prose or other "
+                "points, and this read neither drops a registered row nor calls "
+                "a grader to replace it"
+            )
+        judged.append(Judged(answer=answer, rulings=rulings))
+    if archived:
+        task_id, agent, model = sorted(archived)[0]
+        raise IngestError(
+            f"{task_id} x {agent} x {model}: the archive at {path} registers "
+            "this row and the run log(s) do not hold it — the registered split "
+            "fixes the denominator, so a row that vanished from the logs is a "
+            "broken read rather than a smaller one"
+        )
+    return judged
+
+
+@dataclass(frozen=True)
+class Reading:
+    """One operationalisation's A″ reading: the rows it caught, the rows left,
+    and how the two verdicts agree over what is left.
+
+    A reading and not a verdict: there is no bar on it, nothing here compares
+    anything with `registered_count`, and `gate()` is never called on `kept`
+    (§82.5).
+    """
+
+    operationalisation: Operationalisation
+    caught: tuple[Judged, ...]
+    kept: tuple[Judged, ...]
+
+    @property
+    def denominator(self) -> int:
+        """The A″ denominator: stratum A minus what the filter caught."""
+        return len(self.kept)
+
+    @property
+    def agreed(self) -> int:
+        return sum(1 for one in self.kept if one.agrees)
+
+    @property
+    def unresolved(self) -> tuple[Judged, ...]:
+        return tuple(one for one in self.kept if not one.answer.machine_resolved)
+
+    @property
+    def unresolved_agreed(self) -> int:
+        return sum(1 for one in self.unresolved if one.agrees)
+
+
+def readings(judged: Sequence[Judged]) -> list[Reading]:
+    """Both operationalisations applied over the stratum-A rows of the
+    registered split, in §82.5's order.
+
+    Stratum B is not filtered and not read: it gates nothing and has no answer
+    file to point at, its deliverable having been a diff.
+    """
+    stratum_a = [one for one in judged if one.answer.stratum == "A"]
+    return [
+        Reading(
+            operationalisation=one,
+            caught=tuple(
+                row
+                for row in stratum_a
+                if one.catches(row.answer.deliverable, row.answer.task)
+            ),
+            kept=tuple(
+                row
+                for row in stratum_a
+                if not one.catches(row.answer.deliverable, row.answer.task)
+            ),
+        )
+        for one in OPERATIONALISATIONS
+    ]
+
+
+def _filtered_header(
+    judged: Sequence[Judged],
+    tasks_root: Path,
+    logs: Sequence[Path],
+    rulings_path: Path,
+) -> list[str]:
+    return [
+        "pointer-prose filtered read: stratum A″ under both operationalisations",
+        *padded_table(
+            [
+                ["  task set:", str(tasks_root)],
+                ["  run log(s):", f"{len(logs)} log(s)"],
+                ["  instrument:", point_grader.GRADER_VERSION],
+                ["  rulings read:", str(rulings_path)],
+                ["  deliverable:", "each row's output — the agent's final message"],
+                [
+                    "  registered split:",
+                    f"{len(judged)} row(s) the archive holds rulings for; "
+                    "a run-log row outside it is out of this read",
+                ],
+            ],
+            indent="",
+        ),
+    ]
+
+
+def _readings_table(reading: Sequence[Reading]) -> list[str]:
+    rows = [
+        [
+            "operationalisation",
+            "caught",
+            "A″ denominator",
+            "overall agreement",
+            "unresolved-class agreement",
+        ]
+    ]
+    for one in reading:
+        rows.append([
+            one.operationalisation.name,
+            str(len(one.caught)),
+            str(one.denominator),
+            f"{one.agreed} of {one.denominator}",
+            f"{one.unresolved_agreed} of {len(one.unresolved)}",
+        ])
+    return padded_table(rows, indent="  ")
+
+
+def _caught_table(reading: Sequence[Reading]) -> list[str]:
+    """Every row either filter caught, by task x agent x model, with a column per
+    operationalisation — so the divergence between the two is on the page rather
+    than in the difference between two counts."""
+    caught = [{one.answer.cell for one in each.caught} for each in reading]
+    every = sorted(set().union(*caught)) if caught else []
+    rows = [
+        ["task", "agent", "model", *[one.operationalisation.name for one in reading]]
+    ]
+    for cell in every:
+        rows.append([
+            *cell,
+            *["caught" if cell in each else "-" for each in caught],
+        ])
+    if not every:
+        rows.append(["(none)", "", "", *["-" for _ in reading]])
+    return padded_table(rows, indent="  ")
+
+
+def render_pointer_filtered(
+    judged: Sequence[Judged],
+    *,
+    tasks_root: Path,
+    logs: Sequence[Path],
+    rulings_path: Path,
+) -> str:
+    """The filtered read's whole page: both readings side by side, the rows each
+    filter caught, and the two disclosures.
+
+    No bar, no MET/FAILED and no percentage anywhere on it. §82.5 ruled A″ a
+    reading precisely because a gate whose verdict flips on tokenisation minutiae
+    certifies nothing, and a page that printed a bar beside these counts would be
+    inviting the reading to be read as one.
+    """
+    reading = readings(judged)
+    return "\n".join([
+        *_filtered_header(judged, tasks_root, logs, rulings_path),
+        "",
+        f"disclosure (§82.2): {KNOWABLE_OUTCOME}.",
+        f"  {VERDICT_BLIND}.",
+        f"  {GATES_NOTHING}.",
+        "",
+        "the two operationalisations, side by side",
+        *_readings_table(reading),
+        "",
+        "the rows each filter caught",
+        *_caught_table(reading),
+    ])
+
+
+def pointer_filtered_read(
+    tasks: Sequence[Task],
+    tasks_root: Path,
+    logs: Sequence[Path],
+    *,
+    rulings_dir: Path = DEFAULT_RULINGS_DIR,
+    timeout_s: int = GRADE_TIMEOUT_S,
+) -> str:
+    """`--pointer-filtered-read`: the A″ readings off the committed archive.
+
+    Takes no grader factory — the read path cannot construct a grader, which is
+    §82.5's "costs zero new paid calls" made structural rather than promised.
+    The split is computed offline exactly as `--split-only` computes it, the
+    registered split is scored off the archive, and both operationalisations are
+    reported as readings.
+    """
+    runs = [run for log in logs for run in load_runs(log)]
+    answers = split(tasks, runs, timeout_s=timeout_s)
+    judged = read_registered_split(answers, rulings_dir=rulings_dir)
+    return render_pointer_filtered(
+        judged,
+        tasks_root=tasks_root,
+        logs=logs,
+        rulings_path=rulings_file(rulings_dir, point_grader.GRADER_VERSION),
     )

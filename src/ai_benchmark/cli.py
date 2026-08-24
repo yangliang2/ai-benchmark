@@ -289,12 +289,25 @@ def _calibrate_grader_v1_command(args: argparse.Namespace) -> None:
     the bar in counts — having built no grader and made no call. That is what
     lets §76.4's bar be registered before the first paid ruling.
 
+    `--pointer-filtered-read` is the other offline mode (§82.2, §82.5):
+    stratum A″ re-read off the **committed** rulings, with pointer-prose rows
+    removed by both operationalisations of the verdict-blind filter and both
+    readings printed side by side. It is routed here, before the factory is
+    named, so the read path has no grader to construct rather than a factory it
+    happens not to call — the whole read costs zero new paid calls. It gates
+    nothing: no bar, no MET/FAILED and no percentage.
+
     **`DEEPSEEK_API_KEY` must be exported in the invoking shell** for anything
-    but `--split-only`. The grader is a live client, so a run without it fails
-    at auth resolution rather than at the bar.
+    but `--split-only` and `--pointer-filtered-read`. The grader is a live
+    client, so a run without it fails at auth resolution rather than at the bar.
     """
     tasks = firstparty_v1.load_task_set(args.tasks)
     logs = reconcile_v1.collect_logs(args.runs or [DEFAULT_V1_RUNS])
+    if args.pointer_filtered_read:
+        print(grader_calibration_v1.pointer_filtered_read(
+            tasks, args.tasks, logs, rulings_dir=args.rulings,
+        ))
+        return
     print(grader_calibration_v1.calibrate_grader(
         tasks, args.tasks, logs,
         split_only=args.split_only,
@@ -670,13 +683,26 @@ def main(argv: list[str] | None = None) -> None:
         help="where the per-point rulings are archived, one file per grader "
         f"version (default: {grader_calibration_v1.DEFAULT_RULINGS_DIR})",
     )
-    calibrate_grader_v1.add_argument(
+    offline = calibrate_grader_v1.add_mutually_exclusive_group()
+    offline.add_argument(
         "--split-only",
         action="store_true",
         help="compute the strata and the machine verdicts by replay, print "
         "them with the calls the run would make and the bar in counts, and "
         "stop — no grader is built and no call is made, which is what lets the "
         "bar be registered before the first paid ruling",
+    )
+    offline.add_argument(
+        "--pointer-filtered-read",
+        action="store_true",
+        help="report stratum A\u2033 (§82.2, §82.5): the committed rulings "
+        "re-read with pointer-prose rows removed by both operationalisations "
+        "of the verdict-blind filter, side by side. Scores only the registered "
+        "split — the rows the archive holds rulings for — so a later sweep "
+        "moves no reading; constructs no grader, reads no key and makes no "
+        "call. It gates nothing: no bar, no MET/FAILED and no percentage are "
+        "printed, because §82.5 ruled A\u2033 a reading and the two-sided "
+        "proofs the round's one gate",
     )
     calibrate_grader_v1.set_defaults(command=_calibrate_grader_v1_command)
 
