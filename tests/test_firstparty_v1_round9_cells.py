@@ -179,9 +179,16 @@ def stratum_a(
 
     Derived from the key shape the task ships, never from its category, which
     is `grader_calibration_v1.split`'s own rule read here without the replay it
-    does for stratum B as well.
+    does for stratum B as well. Scoped to the rows §77.2 registered — every
+    sweep before round 10's, which landed the first `investigation` rows on
+    2026-08-24 — by sweep id, never by a log filename; what this fixture names
+    is the archive the gate was read over, and that archive is spent.
     """
-    return [run for run in runs if firstparty_v1.carries_a_key(tasks[run.task_id])]
+    return [
+        run for run in runs
+        if run.sweep != "round-10"
+        and firstparty_v1.carries_a_key(tasks[run.task_id])
+    ]
 
 
 def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> None:
@@ -266,8 +273,11 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
     tests. That is the machine verdict the grader will be scored against, and
     computing it before the grader runs peeks at nothing the grader will see.
     """
-    assert len(logs) == 37
-    assert len(runs) == 306
+    # 41 files since round 10's four sweep logs joined the directory; every
+    # derivation below is scoped to the registered rows by sweep id.
+    assert len(logs) == 41
+    registered = [run for run in runs if run.sweep != "round-10"]
+    assert len(registered) == 306
 
     by_category = {
         category: [
@@ -281,7 +291,7 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
         "fault-location": 27,
     }
     assert len(stratum_a) == 63
-    assert len(runs) - len(stratum_a) == 243
+    assert len(registered) - len(stratum_a) == 243
 
     points = sum(
         len(grader_calibration_v1.points_for(tasks[run.task_id]))
@@ -409,7 +419,8 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
         for run in stratum_a
         if tasks[run.task_id].category == "code-review"
     )
-    synthetic_calls = len(runs) - len(stratum_a)
+    registered = [run for run in runs if run.sweep != "round-10"]
+    synthetic_calls = len(registered) - len(stratum_a)
     assert (keyed_calls, review_calls, synthetic_calls) == (115, 78, 243)
     assert keyed_calls + synthetic_calls == 358
 
@@ -432,7 +443,7 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     # following a prompt that has moved out from under it. The live figures are
     # re-derived in `tests/test_firstparty_v1_round9_grader_v2.py`.
     deliverable_chars = 0
-    for run in runs:
+    for run in registered:
         for point in grader_calibration_v1.points_for(tasks[run.task_id]):
             deliverable_chars += len(run.output)
     assert deliverable_chars == 212658
@@ -1015,7 +1026,9 @@ def test_nothing_of_round_9_has_been_swept_and_the_action_landed_in_round_10(
     assert [task for task in tasks.values() if task.category == _CATEGORY]
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
+    # `round-10` joined on 2026-08-24 — the round that filled heap 3's first
+    # cells; still no `round-9`, which is this test's claim.
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8",
+        "round-8", "round-10",
     }

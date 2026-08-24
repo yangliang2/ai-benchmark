@@ -58,6 +58,7 @@ from ai_benchmark.schema import TaskCategory
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
+_RULINGS = _REPO / "data" / "first-party-v1-rulings"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _HEADING = "## Round 10 cells and cost — registered 2026-08-23"
@@ -902,6 +903,9 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
 ) -> None:
     """§83.9: the archive the A″ readings are derived over, held still.
 
+    Landed form: the round's own sweep (2026-08-24-r10-a..d) is the one
+    arrival the registered sentence allowed, and nothing else landed.
+
     §80.4's guardrail carried forward, for this round's own reason: §84's
     readings are a derivation over the archive as it stands, so a sweep row
     landing between this registration and the round's own sweep would move the
@@ -912,8 +916,14 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     section's prose, which is what makes the registered sentence a claim about
     the corpus and not about itself.
     """
-    assert len(logs) == 37
-    assert len(runs) == 306
+    # Landed form: the archive grew by exactly the round's own sweep and by
+    # nothing else — 37 logs and 306 rows at registration, plus the sweep's
+    # four logs and nine `round-10` rows, keyed on what the rows carry.
+    assert len(logs) == 41
+    assert len(runs) == 315
+    late = [run for run in runs if run.sweep == _SWEEP]
+    assert len(late) == _CELLS * 3
+    assert len(runs) - len(late) == 306, "nothing else landed in between"
 
     counted = prose()
     assert (
@@ -928,28 +938,44 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     assert check == f"find data/first-party-v1-runs -type f -newermt {_AS_OF}"
 
 
-def test_nothing_of_round_10_has_been_swept_yet(
+def test_the_round_10_cells_are_the_nine_registered(
     runs: list[firstparty_v1.Run],
+    tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The first forward-reading test: this is a registration and not a record.
+    """The first forward-reading test, in its landed form.
 
-    It is written apart from the no-task one below because the two die at
-    different tickets — this one at the round's sweep, that one at the round's
-    first authored task — and a single test asserting both would have to be
-    edited twice and would lose half its meaning the first time.
+    Its first form said no `round-10` row existed yet — a registration, not a
+    record — and was retired by the sweep it foresaw (2026-08-24-r10-a..d,
+    dry cell first). What it holds the round to now is the landed version of
+    the same claim: the cells carrying sweep id `round-10` are exactly the
+    nine §83.7 registered — the register's three tasks under the three
+    standing combinations — none repeated, and every one has archived
+    per-run rulings, so its verdict is a pure function of what is checked in.
 
     Selected by **sweep id** over every log in the directory and never by a log
     filename, which is the discipline the whole round is run under.
     """
-    assert not [run for run in runs if run.sweep == _SWEEP], (
-        "a round-10 row exists: this test is retired by the sweep's own "
-        "ticket, and the record's suite takes the verdicts"
-    )
+    swept = [run for run in runs if run.sweep == _SWEEP]
+    cells = {(run.task_id, run.agent, run.model) for run in swept}
+    assert len(swept) == len(cells) == _CELLS * 3, "nine cells, none repeated"
+    assert cells == {
+        (task_id, agent, model)
+        for task_id in register_ids()
+        for agent, model in (
+            ("claude-code", "claude-haiku-4-5"),
+            ("claude-code", "claude-sonnet-5"),
+            ("codex", "gpt-5.6-terra"),
+        )
+    }
+    for task_id, agent, model in sorted(cells):
+        assert firstparty_v1.rulings_file(
+            _RULINGS, task_id, agent, model
+        ).is_file(), f"{task_id} x {agent} x {model}: archived rulings"
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8",
+        "round-8", _SWEEP,
     }
 
 

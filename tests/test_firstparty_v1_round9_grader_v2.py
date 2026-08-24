@@ -27,7 +27,10 @@ recomputes it, and the price arithmetic is redone over the live
 Nothing here calls the grader or spends a dollar. The last two tests are the
 guardrail ones: the run-log directory the split was registered over still
 holds exactly what it held, no `round-9` row has appeared under it, and
-nothing from calibration has reached `data/unified.jsonl`.
+nothing from calibration has reached `data/unified.jsonl`. (§81's run has
+since spent the registration, and round 10's sweep landed the first rows
+after it on 2026-08-24; the guardrail carries that claim in its landed form,
+with the registered corpus scoped back out by sweep id.)
 """
 
 import hashlib
@@ -57,7 +60,9 @@ _ITEM = "**80.4 The re-registration"
 _NEXT_ITEM = "**80.5 What §79 keeps"
 
 # The sweep id that must not appear before §81's run, and the eight the logs
-# already carry. `None` is round 1, which predates `--sweep`.
+# carried at the registration. `None` is round 1, which predates `--sweep`.
+# Round 10's later sweep is admitted only where the landed-form guardrail
+# below names it, never here.
 _SWEEP = "round-9"
 _SWEPT_SO_FAR = {
     None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
@@ -166,12 +171,25 @@ def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
 
 
 @pytest.fixture(scope="module")
+def registered(runs: list[firstparty_v1.Run]) -> list[firstparty_v1.Run]:
+    """The corpus §80.4 registered the split over, which §81's run then spent:
+    every sweep before round 10's, which landed the first `investigation` rows
+    on 2026-08-24. Scoped by sweep id, never by a log filename; the registered
+    counts below stay §80.4's own, unretyped."""
+    return [run for run in runs if run.sweep != "round-10"]
+
+
+@pytest.fixture(scope="module")
 def stratum_a(
-    tasks: dict[str, firstparty_v1.Task], runs: list[firstparty_v1.Run]
+    tasks: dict[str, firstparty_v1.Task],
+    registered: list[firstparty_v1.Run],
 ) -> list[firstparty_v1.Run]:
     """The archived answers the gate is read over: every row whose task ships
     a key the grader can be run against in exactly its production mode."""
-    return [run for run in runs if firstparty_v1.carries_a_key(tasks[run.task_id])]
+    return [
+        run for run in registered
+        if firstparty_v1.carries_a_key(tasks[run.task_id])
+    ]
 
 
 def test_the_register_quotes_the_live_version_tuple() -> None:
@@ -241,7 +259,7 @@ def test_the_register_quotes_the_live_version_tuple() -> None:
 def test_the_split_re_derived_offline_equals_the_registered_counts(
     tasks: dict[str, firstparty_v1.Task],
     logs: list[Path],
-    runs: list[firstparty_v1.Run],
+    registered: list[firstparty_v1.Run],
     stratum_a: list[firstparty_v1.Run],
 ) -> None:
     """§80.4: the split, re-derived and required identical to §77.2's.
@@ -255,10 +273,15 @@ def test_the_split_re_derived_offline_equals_the_registered_counts(
     its own task's held-out tests. No grader is built and no call is made,
     which is what lets the register be written before the first paid ruling.
     """
-    assert len(logs) == _LOGS_HELD
-    assert len(runs) == _ANSWERS
+    # 41 files since round 10's four sweep logs joined the directory on
+    # 2026-08-24. The corpus §80.4 registered — `_LOGS_HELD` logs' rows — is
+    # scoped from every row by sweep id and re-derived below at its own
+    # counts, unretyped; that its rows sit in exactly `_LOGS_HELD` of the
+    # files is asserted with the guardrail test below.
+    assert len(logs) == 41
+    assert len(registered) == _ANSWERS
     assert len(stratum_a) == _STRATUM_A
-    assert len(runs) - len(stratum_a) == _STRATUM_B
+    assert len(registered) - len(stratum_a) == _STRATUM_B
 
     points = sum(
         len(grader_calibration_v1.points_for(tasks[run.task_id]))
@@ -361,7 +384,7 @@ def test_the_bar_is_restated_unchanged_and_re_argued_by_nothing() -> None:
 def test_the_price_is_re_derived_from_the_live_prompt_at_fetched_prices(
     tasks: dict[str, firstparty_v1.Task],
     stratum_a: list[firstparty_v1.Run],
-    runs: list[firstparty_v1.Run],
+    registered: list[firstparty_v1.Run],
 ) -> None:
     """§80.4: §77.4's method over the v2 prompt, inside the registered range.
 
@@ -383,12 +406,14 @@ def test_the_price_is_re_derived_from_the_live_prompt_at_fetched_prices(
         len(grader_calibration_v1.points_for(tasks[run.task_id]))
         for run in stratum_a
     )
-    synthetic_calls = len(runs) - len(stratum_a)
+    # The arithmetic is the registered corpus's — every row before round 10's
+    # sweep, scoped by sweep id — so the figures stay §80.4's own.
+    synthetic_calls = len(registered) - len(stratum_a)
     assert keyed_calls + synthetic_calls == _CALLS
 
     prompt_chars = 0
     deliverable_chars = 0
-    for run in runs:
+    for run in registered:
         for point in grader_calibration_v1.points_for(tasks[run.task_id]):
             prompt_chars += len(
                 point_grader.PROMPT.format(
@@ -540,14 +565,38 @@ def test_no_new_sweep_row_has_landed_under_the_run_log_directory(
     is stated in the item and checked here: the same 37 logs, the same 306
     answers, and no `round-9` row, selected by **sweep id** over every log in
     the directory and never by a log filename.
+
+    Landed form: §81's run has since spent the registration, and round 10's
+    sweep then landed the first rows after it, on 2026-08-24 — every one
+    carrying sweep id `round-10`. What stays checkable is that the corpus
+    held still between the registration and the run: the registered logs
+    still hold exactly the registered answers, nothing beyond them carries
+    any sweep id but round 10's, and no `round-9` row ever appeared.
     """
-    assert len(logs) == _LOGS_HELD
-    assert len(runs) == _ANSWERS
+    # The directory grew by round 10's four sweep logs and nine rows, keyed
+    # on what the rows carry; the registered corpus is scoped back out by
+    # sweep id, its counts unretyped.
+    assert len(logs) == 41
+    late = [run for run in runs if run.sweep == "round-10"]
+    assert len(late) == 9
+    assert len(runs) - len(late) == _ANSWERS
+    # A registered log is one no round-10 row landed in — keyed on what its
+    # rows carry, and counting round 7's two empty logs the way the register
+    # did (a file with no rows is still a file the split was registered over).
+    held = [
+        log for log in logs
+        if all(
+            run.sweep != "round-10" for run in firstparty_v1.load_runs(log)
+        )
+    ]
+    assert len(held) == _LOGS_HELD
     assert not [run for run in runs if run.sweep == _SWEEP], (
         "a round-9 row exists: the split §80.4 registered has moved under it, "
         "which is a stop-and-report rather than a re-registration"
     )
-    assert {run.sweep for run in runs} == _SWEPT_SO_FAR
+    # `round-10` is the one sweep id the landed form admits beyond §80.4's
+    # eight; the registered census constant stays as registered.
+    assert {run.sweep for run in runs} == _SWEPT_SO_FAR | {"round-10"}
 
     counted = prose()
     assert (

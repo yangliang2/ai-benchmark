@@ -581,9 +581,10 @@ _PUBLISHED = {
     # "-" because no run exists. Same arrival as round 8's `test-authoring`
     # above: ticket 06's second and third tasks moved this count from 1 to 3,
     # exactly as pinning the unswept shape was meant to make visible, and
-    # ticket 07's sweep is what moves the dashes next.
+    # Round 10's sweep (2026-08-24, nine cells) priced it: one resolved cell
+    # in the nine, and it is sonnet's, so the rung floor reads sonnet-only.
     "investigation": {
-        "(zero-knob)": ("3", "-", "-", "-"),
+        "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "sonnet-only (n=3)"),
     },
 }
 
@@ -595,7 +596,7 @@ _PUBLISHED_DENOMINATORS = {
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
     "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",
-    "investigation": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
+    "investigation": f"{_HAIKU} $0.0843 (n=3), {_SONNET} $0.2368 (n=3)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other

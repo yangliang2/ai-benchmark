@@ -173,8 +173,12 @@ _PYTHON_TASKS = 119
 _PYTHON_TASKS_WITH_RUNS = 116
 # What round 10 has authored: its three `investigation` tasks, Python
 # controls all. Named so the reconcile line this record quotes can be
-# rebuilt from the live figures rather than retyped.
+# rebuilt from the live figures rather than retyped. Its sweep then landed
+# on 2026-08-24 — nine rows, six of them claude-code Python ones that
+# survive both selections the way this round's six did.
 _ROUND_10_TASKS = 3
+_ROUND_10_ROWS = 9
+_ROUND_10_CLAUDE_CODE_ROWS = 6
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
@@ -1307,7 +1311,9 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         for log in reconcile_v1.collect_logs([_LOGS])
         for run in firstparty_v1.load_runs(log)
     ]
-    assert len(everything) == _ALL_ROWS
+    # `_ALL_ROWS` was every row in the directory when §75 was recorded;
+    # round 10's sweep landed nine more on 2026-08-24, the only rows since.
+    assert len(everything) == _ALL_ROWS + _ROUND_10_ROWS
     assert len([run for run in everything if run.sweep == _SWEEP]) == _ROUND_8_ROWS
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1316,7 +1322,9 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     selected = reconcile_v1.select_language(
         declared, selected, reconcile_v1.DEFAULT_LANGUAGE, explicit=False
     )
-    assert len(selected) == _CLAUDE_CODE_PYTHON_RUNS
+    # Round 10's six claude-code Python rows now survive both selections
+    # exactly as this round's six do; §75's own figure stays unretyped.
+    assert len(selected) == _CLAUDE_CODE_PYTHON_RUNS + _ROUND_10_CLAUDE_CODE_ROWS
     assert len([run for run in selected if run.sweep == _SWEEP]) == (
         _CLAUDE_CODE_ROUND_8_ROWS
     )
@@ -1329,14 +1337,18 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         f"{_PYTHON_CONTROLS} control(s), {_PYTHON_CONSTRUCTED} constructed"
     ) in reconciled
     assert (
-        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
-        f"{_PYTHON_TASKS_WITH_RUNS} task(s)"
+        f"  runs       "
+        f"{_CLAUDE_CODE_PYTHON_RUNS + _ROUND_10_CLAUDE_CODE_ROWS} over "
+        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_10_TASKS} task(s)"
     ) in reconciled
+    # `sweep round-10` joined the round list when its sweep landed, the
+    # second round after 5 the default reading counts.
     assert (
-        "  rounds     7 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     8 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8"
+        "sweep round-8, sweep round-10"
     ) in reconciled
+    assert "             6 keyed on a sweep id, 2 on an as-of date" in reconciled
     # The round declared no contrast, so it reaches the report as a label and
     # nothing else, and the prediction reconciliation is where it was.
     assert reconciled.count(f"sweep {_SWEEP}") == 1
@@ -1350,25 +1362,32 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         "75. Replay, the readers, and heap 1 closed"
     ))[1:2]
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
-    # One line of the block has moved since, and only one: round 10 authored
-    # its three `investigation` tasks, Python controls with no rows, so the
-    # task-set line grew by three tasks and three controls while the runs
-    # line stayed. The record is not edited for it — the line it quoted is
-    # rebuilt here from the live figures minus round 10's, held to be exactly
-    # what the note says, and every other line is still printed byte for byte.
-    recorded_task_set = (
+    # When §75 was recorded, one line of the block had moved and only one:
+    # round 10's three authored `investigation` tasks had grown the task-set
+    # line. Round 10's sweep (2026-08-24) has since moved the rest — six
+    # claude-code Python rows survive both selections, so the runs line, the
+    # round list and its keyed count grew too. The record is not edited for
+    # any of that: every line it quoted is rebuilt here from the live figures
+    # minus round 10's, required to be exactly what the note says, and what
+    # the reader prints instead was asserted above off the same counts plus
+    # round 10's.
+    recorded = [
         "  task set   tasks/first-party-v1 — "
         f"{_PYTHON_TASKS - _ROUND_10_TASKS} task(s): "
         f"{_PYTHON_CONTROLS - _ROUND_10_TASKS} control(s), "
-        f"{_PYTHON_CONSTRUCTED} constructed"
+        f"{_PYTHON_CONSTRUCTED} constructed",
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
+        f"{_PYTHON_TASKS_WITH_RUNS} task(s)",
+        "  rounds     7 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
+        "sweep round-8",
+        "             5 keyed on a sweep id, 2 on an as-of date",
+    ]
+    assert quoted.strip("\n").splitlines() == recorded, (
+        "the record no longer quotes the lines its own figures rebuild"
     )
-    quoted_lines = quoted.strip("\n").splitlines()
-    assert recorded_task_set in quoted_lines
-    for line in quoted_lines:
-        if line == recorded_task_set:
-            continue
-        assert line in printed, line
-    assert recorded_task_set not in printed
+    for line in recorded:
+        assert line not in printed, line
 
     main(["calibrate-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     calibrated = capsys.readouterr().out
@@ -1430,7 +1449,13 @@ def test_heap_one_closes_and_the_archive_round_nine_waits_on_has_grown() -> None
         for log in reconcile_v1.collect_logs([_LOGS])
         for run in firstparty_v1.load_runs(log)
     ]
-    assert len([run for run in archive if run.output]) == _ARCHIVE_NOW
+    # The archive has grown again since §75 counted it — round 10's sweep
+    # landed nine more answers on 2026-08-24 — so §75's own count is
+    # re-derived over the rows that existed then, scoped by sweep id and
+    # never by a log filename; the section's figures stay unretyped.
+    assert len(
+        [run for run in archive if run.output and run.sweep != "round-10"]
+    ) == _ARCHIVE_NOW
     assert _ARCHIVE_NOW == _ARCHIVE_BEFORE + _ROUND_8_ROWS
 
     said = prose(note_section("75. Replay, the readers, and heap 1 closed"))

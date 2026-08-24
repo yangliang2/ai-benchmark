@@ -75,7 +75,14 @@ def answers() -> list[calibration.ArchivedAnswer]:
     and machine-scored by replay, no network."""
     tasks = firstparty_v1.load_task_set(_TASKS)
     logs = reconcile_v1.collect_logs([_LOGS])
-    runs = [run for log in logs for run in load_runs(log)]
+    # This suite pins §79's run, whose inputs were the rows that existed at
+    # that run — every sweep before round 10's, which landed the first
+    # `investigation` rows on 2026-08-24. Scoped by sweep id, never by a log
+    # filename; the constants below stay §79's own, unretyped.
+    runs = [
+        run for log in logs for run in load_runs(log)
+        if run.sweep != "round-10"
+    ]
     return calibration.split(tasks, runs)
 
 
