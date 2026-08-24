@@ -45,6 +45,7 @@ from ai_benchmark.firstparty_v1 import (
     coverage_table,
     evaluate,
     lint_task_set,
+    is_point_keyed,
     live_run_limit_s,
     load_runs,
     load_task_set,
@@ -334,7 +335,7 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
 
     assert {task.category for task in tasks} == {
         "feature-dev", "refactor", "bug-fix", "fault-location", "code-review",
-        "codebase-comprehension", "test-authoring",
+        "codebase-comprehension", "test-authoring", "investigation",
     }
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:
@@ -349,6 +350,14 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
             # test path the prompt names (ADR-0004).
             assert mutant_patches(task)
             assert task.test_path
+            continue
+        if task.category == "investigation":
+            # Round 10's action ships no held-out tests either: its
+            # deliverable is one prose answer file and its verdict the point
+            # gate — a planted points key judged per point by the versioned
+            # grader instrument (ADR-0005).
+            assert is_point_keyed(task)
+            assert not task.grading_test_paths
             continue
         # Held-out tests by the task's own runner's glob: a TypeScript-only
         # task grades on .test.ts files and ships no Python check.

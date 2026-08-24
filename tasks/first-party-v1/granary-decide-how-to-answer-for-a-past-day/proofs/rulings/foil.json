@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "d0b5483c2b98a76596d1d30510def5d30e5e038780a7deea5f8111f0d4641b1e",
+  "answer_sha256": "f280f80ce6a59b36b7991348a7daaad5fc52911d69ae1b83122daab5232967e7",
+  "rulings": [
+    {
+      "point_id": "the-unjournalled-opening",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-silent-correction",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-past-stays-dark",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "journal-against-snapshot",
+      "kind": "point",
+      "covered": true,
+      "span": "Option B is the heavyweight answer. It grows the book file every single day whether or not anything moved, it duplicates state the journal already determines, and \u2014 decisively \u2014 it only answers for days after the granary starts running it. Ask about last Lady Day and a snapshot table shrugs: the history it offers begins the day it was adopted, which for this auditor is no history at all. It also puts a new obligation on the clerk (the nightly close), and a forgotten evening leaves a hole in the very record that was supposed to be authoritative.\n\nOption A costs one small, well-shaped function and nothing else. It answers for the whole span the book has ever covered, right back to the book's first line, because the journal was there all along; the auditor's question about any past day becomes a filter and a sum over lines the granary already trusts. The only real cost is compute \u2014 a fold over the movement list on every question \u2014 and at the scale of a granary's book, a linear pass over a JSON array is nothing. If the book one day grows past that, the fold's running totals can be memoised then; nothing about Option A closes that door.",
+      "verified": true
+    },
+    {
+      "point_id": "a-recommendation-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Take Option A. It is the smallest change in the repository, it is the only option that answers for the past as well as the future, and it treats the movement journal as what it is: the granary's single source of truth. The `bins` counts in the book are best understood as a cache of the journal's running totals, kept so that `stocktake` is one read \u2014 and the right way to answer a question about any other day is the same way the cache was made: replay the journal to the day the auditor names. Option B would bolt a second record onto a book that already contains the answer, and every duplicated record is a future disagreement. One journal, one fold, any day: that is the whole repair.",
+      "verified": true
+    },
+    {
+      "point_id": "replay-suffices",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "The movement lines already in the book are enough, by themselves, to reconstruct what any bin held at the close of any past day",
+      "verified": true
+    }
+  ]
+}

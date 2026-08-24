@@ -1,0 +1,69 @@
+# The corpus's first `investigation` task, and the first of round 10's three
+# (design note §82, registered §83). The deliverable is one prose file — the
+# write-up the prompt asks for at ANSWER.md — not a change to the code: the
+# repository is the evidence, the question is genuinely open, and a good
+# answer argues its way to a recommendation.
+#
+# Why it grades the way it does: held-out tests cannot grade an argument — a
+# write-up may be thorough or may be three confident paragraphs about nothing
+# — so this action's verdict is the point gate. The prompt-named answer file
+# is collected out of the workdir diff and put to a grader one planted point
+# at a time: resolved is every planted point covered by a verbatim span of
+# the answer's own text and no disqualifying claim made, binary. Hence
+# `control: true` — the task registers no difficulty prediction, and a task
+# declaring neither a construction block nor itself a control is refused —
+# and hence no grading/ suite to run: grading/ holds the points key and
+# nothing that executes, because there is no behaviour to test. The key is
+# proved both ways at authoring time (proofs/): the author's reference answer
+# resolves per point and a fluent foil answer fails, rulings archived and
+# read offline by the lint.
+#
+# The question is decidable in the closed world of the repository and the
+# prompt alone: the auditor wants any past day's holdings answered for, and
+# everything a decision turns on is in the code. The five planted points are
+# the reasoning the question cannot be honestly answered without: that
+# open_bin seeds a bin's count without a movement line, so replay from an
+# empty book comes out wrong; that set_right corrects a count without a
+# movement line, so counting backwards from today goes wrong across any
+# correction; that the past before the chosen change stays unanswerable
+# either way; that deriving history from movement lines is weighed against
+# keeping day-end counts, a cost named on each side; and that one option is
+# actually committed to and argued against another. The one disqualifier is
+# the plausible wrong claim the two silent paths refute: that the movement
+# lines already suffice to reconstruct any past day.
+id: granary-decide-how-to-answer-for-a-past-day
+category: investigation
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The granary keeps its book in one JSON file: every bin's grain and count of
+  sacks as they stand today, and a movement line for each delivery in and
+  each issue out through the door. ledger.py reads and writes the book,
+  book.py is every way the book changes, report.py is what gets read back
+  out, and cli.py is how the clerk works it.
+
+  The auditor has asked a question the book cannot answer today: what did any
+  given bin hold at the close of any given past day? The clerk can say what a
+  bin holds now, and can list the movements between two dates, but nobody can
+  say what the stocktake would have shown last Lady Day.
+
+  Work out how the granary should come to be able to answer that question,
+  and write your answer to ANSWER.md. This is an investigation of the
+  repository as it stands, and the repository is the whole of the evidence:
+  read the code, decide, and argue it. Your write-up carries three sections,
+  under these headings:
+
+  - **Options considered** — the ways the auditor's question could come to be
+    answerable, each in terms of what this code does today: at least two,
+    each described concretely enough that a reader of this repository could
+    start on it.
+  - **Trade-offs** — what each option costs and what it buys, in this
+    repository's own terms: what has to change, what stays as it is, and what
+    each option can and cannot answer for.
+  - **Recommendation** — the one option you would take, and the argument for
+    it over the others.
+
+  Leave every file of the repository as you found it: the write-up at
+  ANSWER.md is the whole deliverable.

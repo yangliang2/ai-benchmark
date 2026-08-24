@@ -576,6 +576,14 @@ _PUBLISHED = {
     "test-authoring": {
         "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "haiku-solvable (n=3)"),
     },
+    # Round 10's category, authored (#141, ticket 05) and not yet swept: one
+    # declared control, so one zero-knob row, every figure a "-" because no
+    # run exists. Same arrival as round 8's `test-authoring` above: pinning
+    # the unswept shape makes ticket 06's second and third tasks, and then
+    # ticket 07's sweep, visible as changes to this block.
+    "investigation": {
+        "(zero-knob)": ("1", "-", "-", "-"),
+    },
 }
 
 _PUBLISHED_DENOMINATORS = {
@@ -586,6 +594,7 @@ _PUBLISHED_DENOMINATORS = {
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
     "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",
+    "investigation": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other
@@ -602,6 +611,7 @@ _PUBLISHED_MIX = {
     "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
     "test-authoring": "3 single-file; 3 hand-authored",
+    "investigation": "1 single-file; 1 hand-authored",
 }
 
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
@@ -632,6 +642,7 @@ _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
         "K8=misleading": "4 single-file + 3 cross-file; 4 hand-authored + 3 vendored",
     },
     "test-authoring": {},
+    "investigation": {},
 }
 
 

@@ -6495,16 +6495,16 @@ merged dataset; the four together are the merged one record for record:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-a.jsonl --data /tmp/r8replay/a.jsonl
-  evaluated 1 runs over 130 tasks (1 resolved)
+  evaluated 1 runs over 131 tasks (1 resolved)
   merged 1 records into /tmp/r8replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-b.jsonl --data /tmp/r8replay/b.jsonl
-  evaluated 2 runs over 130 tasks (2 resolved)
+  evaluated 2 runs over 131 tasks (2 resolved)
   merged 2 records into /tmp/r8replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-c.jsonl --data /tmp/r8replay/c.jsonl
-  evaluated 3 runs over 130 tasks (3 resolved)
+  evaluated 3 runs over 131 tasks (3 resolved)
   merged 3 records into /tmp/r8replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-d.jsonl --data /tmp/r8replay/d.jsonl
-  evaluated 3 runs over 130 tasks (2 resolved)
+  evaluated 3 runs over 131 tasks (2 resolved)
   merged 3 records into /tmp/r8replay/d.jsonl (3 total)
 ```
 

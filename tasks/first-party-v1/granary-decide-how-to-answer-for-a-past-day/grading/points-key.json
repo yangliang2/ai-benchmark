@@ -1,0 +1,31 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-unjournalled-opening",
+      "text": "The answer says that open_bin sets a bin's starting count without writing any movement line, so replaying the movements from an empty book does not arrive at today's counts."
+    },
+    {
+      "id": "the-silent-correction",
+      "text": "The answer says that set_right rewrites a bin's count without writing any movement line, so working backwards from today's counts goes wrong across any correction."
+    },
+    {
+      "id": "the-past-stays-dark",
+      "text": "The answer says that past days from before the change it recommends stay unanswerable, because the book never recorded what answering for them would need."
+    },
+    {
+      "id": "journal-against-snapshot",
+      "text": "The answer weighs deriving a past day's holdings from movement lines against keeping a separate record of day-end counts, naming at least one cost of each."
+    },
+    {
+      "id": "a-recommendation-argued",
+      "text": "The answer commits to exactly one option as its recommendation and argues for it against at least one other option it considered."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "replay-suffices",
+      "text": "The answer claims that the movement lines already in the book are enough, by themselves, to reconstruct what any bin held at the close of any past day."
+    }
+  ]
+}

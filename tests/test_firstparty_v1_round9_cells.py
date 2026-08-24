@@ -813,12 +813,16 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     assert f"the corpus holds no `{_CATEGORY}` task as this is written" in counted
     assert "**disclosed zero**" in counted
 
-    # And that claim, against the corpus: no task of the action, and the
-    # coverage table still carries its zero row.
-    assert not [task for task in tasks.values() if task.category == _CATEGORY]
+    # That claim, against the corpus, was true when §77 was registered and for
+    # two rounds after: round 9 never authored its three tasks. Round 10
+    # recast them (§82.4) and landed the corpus's first, so the live half is
+    # caught up here the way round 8's file was caught up after its sweep —
+    # the zero row is gone and the action's tasks exist. No count is pinned:
+    # the tasks are round 10's, and that round's own suites count them.
+    assert [task for task in tasks.values() if task.category == _CATEGORY]
     table = firstparty_v1.coverage_table(list(tasks.values()))
-    assert (_CATEGORY, "-", "-", 0) in table
-    assert not [row for row in table if row[0] == _CATEGORY and row[3]]
+    assert (_CATEGORY, "-", "-", 0) not in table
+    assert [row for row in table if row[0] == _CATEGORY and row[3]]
 
     # No fenced block of the section is a register of task ids: an id listed
     # here before the tasks exist would be a cell nothing can sweep.
@@ -988,17 +992,18 @@ def test_the_grader_version_is_quoted_verbatim() -> None:
     assert "replay never re-calls" in counted
 
 
-def test_nothing_of_round_9_has_been_swept_and_no_task_exists_yet(
+def test_nothing_of_round_9_has_been_swept_and_the_action_landed_in_round_10(
     tasks: dict[str, firstparty_v1.Task], runs: list[firstparty_v1.Run]
 ) -> None:
-    """The forward-reading test, until the sweep lands: this is a registration
-    and not a record.
+    """The forward-reading test, caught up: round 9 registered and never swept.
 
-    Round 8's file said the same thing here until its sweep landed, and was
-    then caught up to the swept truth. Until then the claim worth pinning is
-    that the registration came first: no row carries this sweep id, no task of
-    the action exists to have produced one, and the sweep-id set the logs carry
-    is the eight rounds that precede this one.
+    This test used to say no task of the action existed either, and it was
+    right until round 10 — which recast round 9's three tasks as its own
+    (§82.4) — landed the corpus's first. The claim worth pinning now is what
+    stays true of round 9 itself: no row carries this sweep id, and the tasks
+    the action now has are a later round's, none of them produced under this
+    registration. No task count is pinned — round 10's own suites count its
+    tasks as they land.
 
     Selected by **sweep id** over every log in the directory and never by a log
     filename, which is the discipline the whole round is run under.
@@ -1007,7 +1012,7 @@ def test_nothing_of_round_9_has_been_swept_and_no_task_exists_yet(
         "a round-9 row exists: this file's last test is now the round-8 "
         "catch-up one, and the record's own suite takes the verdicts"
     )
-    assert not [task for task in tasks.values() if task.category == _CATEGORY]
+    assert [task for task in tasks.values() if task.category == _CATEGORY]
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
     assert {run.sweep for run in runs} == {

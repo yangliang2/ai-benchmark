@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "d0b5483c2b98a76596d1d30510def5d30e5e038780a7deea5f8111f0d4641b1e",
+  "answer_sha256": "87056366ddacdb42f3229bd4bb519bbf34196e4f5ebc6a3d40b460dee71fa443",
+  "rulings": [
+    {
+      "point_id": "the-unjournalled-opening",
+      "kind": "point",
+      "covered": true,
+      "span": "First, open_bin sets a bin's starting count without writing any movement line: the sacks a bin was opened with appear only in the bin's own `sacks` field, so replaying the movements from an empty book does not arrive at today's counts \u2014 every bin comes out short by its opening count.",
+      "verified": true
+    },
+    {
+      "point_id": "the-silent-correction",
+      "kind": "point",
+      "covered": true,
+      "span": "Second, set_right rewrites a bin's count without writing any movement line: the annual stocktake sets `sacks` to whatever the counting found, keeps only the day on the `counted` field, and discards the size of the drift it corrected \u2014 so working backwards from today's counts goes wrong across any correction, because the subtraction crosses a jump the movements never recorded.",
+      "verified": true
+    },
+    {
+      "point_id": "the-past-stays-dark",
+      "kind": "point",
+      "covered": true,
+      "span": "Either way, one limit has to be said out loud rather than papered over: past days from before the change stay unanswerable. The book never recorded what answering for them would need \u2014 the openings and the corrections are gone \u2014 and neither a completed journal nor a snapshot table invents them. The auditor gets the truth from the adoption day forward, and an honest \"the book cannot say\" behind it.",
+      "verified": true
+    },
+    {
+      "point_id": "journal-against-snapshot",
+      "kind": "point",
+      "covered": true,
+      "span": "Options 2 and 3 are both honest, and the choice between them is the real decision. Deriving from a complete journal (Option 2) keeps one record that cannot disagree with itself, and answers at any granularity \u2014 the close of a day, or the moment before one issue \u2014 but its cost is that every answer is a fold over the whole movement list, and its correctness depends on every future count-changing path writing its line: a fourth mutator added to `book.py` without a movement line would quietly reopen today's hole. Snapshots (Option 3) make the auditor's exact question a cheap lookup, but their cost is a second copy of state that can drift from the record that made it \u2014 the same disease `bins` versus `movements` has today, kept on purpose \u2014 and they answer only at the granularity that was snapshotted: day-end and nothing finer, forever.",
+      "verified": true
+    },
+    {
+      "point_id": "a-recommendation-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Take Option 2: journal every change of a count, and derive past holdings from the completed record. I recommend it over Option 3 because this repository already leans that way \u2014 `movements` is the record the granary trusts enough to keep line by line, and completing it fixes the root cause (count changes the journal never sees) rather than adding a second derived record that inherits it; a snapshot table would still be built over the same incomplete journal and could still be contradicted by it. Option 2 is also the smaller change to the code as it stands: two writers in `book.py` each gain one appended line, `report.py` gains one fold, and `cli.py` does not change at all. If the fold over a long book ever becomes slow, Option 3's day-end table can be added later as a cache derived from the journal \u2014 the reverse migration, deriving a journal from snapshots, is impossible. And to keep the journal complete as the code grows, the rule the two fixed writers establish \u2014 no change to a bin's `sacks` without a movement line \u2014 is cheap to assert in one place at save time, by refusing to save a book whose counts disagree with a replay of its own lines.",
+      "verified": true
+    },
+    {
+      "point_id": "replay-suffices",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

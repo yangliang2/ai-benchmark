@@ -81,10 +81,11 @@ _TYPESCRIPT_ROWS = {
 }
 
 # The Python side of the same table, which this round does not touch. It reads
-# 116 rather than round 7's 113 because round 8 authored three `test-authoring`
-# tasks into the Python column; §59.8's own prose, quoted below, is a claim
-# about what round 7 did and stays at 113.
-_PYTHON_TOTAL = 116
+# 117 rather than round 7's 113 because later rounds authored into the Python
+# column — round 8's three `test-authoring` tasks, round 10's first
+# `investigation` one; §59.8's own prose, quoted below, is a claim about what
+# round 7 did and stays at 113.
+_PYTHON_TOTAL = 117
 
 
 def note_section() -> str:
@@ -470,7 +471,9 @@ def test_the_coverage_target_is_what_the_lint_prints(
     assert typescript == _TYPESCRIPT_ROWS
 
     zeros = {row[0] for row in table if row[1:] == ("-", "-", 0)}
-    assert "investigation" in zeros, "no task in any language, so it prints as 0"
+    assert "requirement-decomposition" in zeros, (
+        "no task in any language, so it prints as 0"
+    )
     assert "test-authoring" not in zeros
     # The row's shape, not round 8's figure: what that count reads is pinned
     # once, off the printed page, in tests/test_cli.py.
@@ -507,11 +510,12 @@ def test_the_readers_corpus_count_header_reads_the_python_column(
     header counts the selected language's corpus, against a loaded set
     `eval-v1 --replay`'s own count discloses; the record (#113) says both.
 
-    Both figures are live reads of the corpus and both moved when round 8
-    authored its three `test-authoring` tasks into the Python column: 113 and
-    127 at the time §59.8 was written, 116 and 130 with those tasks checked
-    in. The section's own prose is quoted above and is unmoved — what round 7
-    did to the Python column is still nothing.
+    Both figures are live reads of the corpus and both moved as later rounds
+    authored into the Python column — round 8's three `test-authoring` tasks,
+    round 10's first `investigation` one: 113 and 127 at the time §59.8 was
+    written, 117 and 131 with those tasks checked in. The section's own prose
+    is quoted above and is unmoved — what round 7 did to the Python column is
+    still nothing.
     """
     assert len(tasks) == _PYTHON_TOTAL + sum(_COUNTS.values())
     outcomes = reconcile_v1.observed_outcomes(

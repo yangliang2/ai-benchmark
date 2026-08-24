@@ -35,7 +35,8 @@ would then read as met on text §83 never wrote.
 
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
 two tests are the forward-reading ones and they die at different tickets: no
-`round-10` row exists yet, and no `investigation` task does either.
+`round-10` row exists yet, and the corpus holds the round's first
+`investigation` task and no second or third.
 """
 
 import re
@@ -777,10 +778,14 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     assert f"corpus holds no `{_CATEGORY}` task as this is written" in counted
     assert "**disclosed zero**" in counted
 
-    # And that claim, against the corpus: the coverage table carries its zero.
+    # That claim was true of the corpus when §83 was registered and stayed
+    # true until the round's first authoring ticket landed task 1; the prose
+    # stays a record of the registration, and the live half of the claim is
+    # caught up to the landed truth: the zero row is gone, the category
+    # counts, and how many it counts is the forward-reading test's below.
     table = firstparty_v1.coverage_table(list(tasks.values()))
-    assert (_CATEGORY, "-", "-", 0) in table
-    assert not [row for row in table if row[0] == _CATEGORY and row[3]]
+    assert (_CATEGORY, "-", "-", 0) not in table
+    assert [row for row in table if row[0] == _CATEGORY and row[3]]
 
     # No fenced block of the section is a register of task ids: an id listed
     # here before the tasks exist would be a cell nothing can sweep.
@@ -903,13 +908,21 @@ def test_nothing_of_round_10_has_been_swept_yet(
     }
 
 
-def test_the_corpus_holds_no_investigation_task_yet(
+def test_the_corpus_holds_the_first_investigation_task_and_no_other_yet(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test, retired by the round's first authored
-    task.
+    """The second forward-reading test, its no-task half retired by the round's
+    first authored task.
 
-    §83.7 leaves the id register empty and says so; this is the claim that makes
-    the emptiness a fact about the corpus rather than an omission in the note.
+    This test used to say the corpus held no `investigation` task, and it was
+    right until the round's first authoring ticket landed one. What is worth
+    pinning between that ticket and the next is the caught-up claim read
+    forwards: the corpus holds task 1 of the three and no second or third yet.
+    The round's second authoring ticket replaces this with the register check
+    — the three ids §83.7 left to be filled in, against the three tasks then
+    checked in.
     """
-    assert not [task for task in tasks.values() if task.category == _CATEGORY]
+    authored = sorted(
+        task_id for task_id, task in tasks.items() if task.category == _CATEGORY
+    )
+    assert authored == ["granary-decide-how-to-answer-for-a-past-day"]
