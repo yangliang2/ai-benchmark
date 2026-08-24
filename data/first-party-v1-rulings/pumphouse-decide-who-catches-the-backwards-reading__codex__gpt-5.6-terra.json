@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "f091754c5ed225c8d23f542651b743b3eb0645002803944ad180a468714806ae",
+  "rulings": [
+    {
+      "point_id": "the-refusals-already-at-the-door",
+      "kind": "point",
+      "covered": true,
+      "span": "This fits the existing shape of the module.  `read_meter` already validates\nthe facts available at entry (known house, non-negative dial, and nondecreasing\nvisit day), `last_reading` already supplies the adjacent line, and the CLI\nsaves only after the intake operation returns.  A refused visit therefore\ndoes not get written to `book.json`.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refit-reads-lower",
+      "kind": "point",
+      "covered": true,
+      "span": "when there is a previous reading and the proposed `dial` is lower than `last[\"dial\"]`, refuse it unless the house's recorded `fitted` day is after `last[\"day\"]` and no later than the new visit's `day`. That is the exception the current `refit` documentation describes: a newly fitted meter starts at zero, so its first later reading may properly be lower.",
+      "verified": true
+    },
+    {
+      "point_id": "a-bad-line-stands-in-the-book",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "two-owners-each-costed",
+      "kind": "point",
+      "covered": true,
+      "span": "`intake.py` changes the book's invariant prospectively: every newly appended\nreading is either at least its predecessor or is the first reading after the\ncurrently recorded fitting.  The change is small and local, keeps both\nrendering functions as simple readers, and catches the mistake at the only\nnormal write entry point (`cli.py read`) before the JSON file is saved.  It\nalso protects every future consumer of the ledger, not merely bills.  Its\nlimit is that it cannot repair or expose already-corrupt JSON loaded by\n`ledger.load`, nor prevent someone who edits the JSON outside the intake\ninterface from inserting a bad line.\n\nThe fitting exception deserves care in either location.  The ledger retains\nonly one `fitted` date, not a history of refits.  Consequently the proposed\ncomparison can justify a new reading against the last reading, but cannot\nreliably explain an arbitrary old falling pair after a subsequent refit has\noverwritten that date.  `refit` itself also accepts any day and does not\nenforce its relation to readings.  Those are limits of the present data\nmodel, not reasons to silently accept a decrease.\n\n`render.py` leaves recording exactly as it is and can inspect old books when\nthey are billed, which is useful as a defensive check.  It does not stop the\nwrong reading entering or remaining in the book, however.  It detects a pair\nonly when that pair is traversed for the requested house and date range: the\ncurrent code tests the later reading's day against `[start, end]`.  Thus a\nbad line outside a particular bill's range, a house never billed, and the\n`stand` view can remain unflagged.  It also makes a read/query function\nresponsible for deciding whether stored input was admissible, and callers of\n`usage_between` must learn its new failure mode.  If it raises, the bill is\nprevented but the clerk receives the problem later and the bad JSON remains.",
+      "verified": true
+    },
+    {
+      "point_id": "one-owner-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Give the duty to `intake.read_meter`.\n\nThe backwards-reading rule is an admission rule for a visit, just like the\nthree checks already there; it is not a property of one presentation of\nusage.  `intake` is the clean seam for it: one call compares the proposed\nreading with the known predecessor, recognises the documented refit reset,\nand either appends a valid line or leaves the book untouched.  That gives the\nbook a useful prospective invariant and gives every reader of it the benefit\nwithout adding validation policy to `render`'s small calculation interface.\n\nThe present rendering code can still be hardened later as a separate\ndefence for legacy or hand-edited files, but it should not own the rule.  A\nrender-only solution is necessarily late, partial, and unable to cleanse the\nrecord that caused the negative bill; intake prevents that record from being\ncreated through the works' stated normal mechanism.",
+      "verified": true
+    },
+    {
+      "point_id": "lower-is-always-wrong",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

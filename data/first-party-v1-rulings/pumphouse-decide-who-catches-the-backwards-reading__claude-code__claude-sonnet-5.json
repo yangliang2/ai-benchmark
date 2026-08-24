@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "465ac5247d020fb5131624dc6ce2edf357ea6f294dcf1ef8679ade649bd18ae4",
+  "rulings": [
+    {
+      "point_id": "the-refusals-already-at-the-door",
+      "kind": "point",
+      "covered": true,
+      "span": "`read_meter` is already the place that decides whether one visit's line is fit to go in the book \u2014 it already refuses a house the book doesn't know, a dial below nought, and a visit dated before the house's last.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refit-reads-lower",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-bad-line-stands-in-the-book",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "two-owners-each-costed",
+      "kind": "point",
+      "covered": true,
+      "span": "*Cannot catch:* a bad reading already sitting in the book before the\n  guard existed \u2014 including, presumably, the two that prompted this\n  question. New entries are protected; the historical lines are not\n  retroactively re-validated. It also only covers visits that go through\n  `intake.read_meter` \u2014 a hand-edited `book.json` or a future import path\n  that writes readings directly would bypass it.\n\n**Owning it in `render.py`:**\n- *Changes:* new logic in `usage_between` \u2014 it would have to start\n  consulting `book[\"houses\"]` per pair, duplicating the refit-awareness\n  that `intake.refit` already half-encodes by moving `fitted` forward.\n- *Stays as is:* `intake.py`'s `read_meter` is untouched, so nothing\n  about entering a reading changes \u2014 a transposed digit, a wrong house,\n  any bad dial is still accepted into the book without complaint at the\n  moment it's called in.\n- *Catches:* a negative bill right where it would otherwise be produced,\n  and it would catch a bad pair regardless of how it got into the book \u2014\n  by hand-edit, import, or any future intake path \u2014 since every consumer\n  of a house's usage has to pass through `usage_between`.\n- *Cannot catch:* the fact that the book itself keeps carrying the bad\n  line. The wrong dial stays in `readings` forever; the same pair gets\n  re-examined, and can re-raise, every time a future bill happens to span\n  it, rather than being resolved once. It also moves the moment of\n  discovery from the reader's visit to bill time \u2014 a whole quarter later\n  by this book's own cadence \u2014 by which point tracing a negative figure\n  back to a specific mis-keyed dial is harder than it would have been on\n  the day.",
+      "verified": true
+    },
+    {
+      "point_id": "one-owner-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "`intake.py` should own the catch.\n\n`read_meter` is already the place that decides whether one visit's line\nis fit to go in the book \u2014 it already refuses a house the book doesn't\nknow, a dial below nought, and a visit dated before the house's last. A\ndial that falls below the last one without a refit between them is the\nsame kind of defect: something \"the one line shows to be wrong on its\nown\" once it's held up against the last line, which `read_meter` is\nalready holding. Putting the check there costs almost nothing, because\nthe day-order guard has already done the work of fetching `last`, and\n`entry` is already in hand from `_house`.\n\nThe deciding argument, though, is what each owner leaves behind. A guard\nin `render.py` protects the bill but leaves the book holding a line\neveryone agrees is wrong \u2014 the two incidents describe exactly that state,\na bad dial sitting in the book, discovered only when a bill happened to be\ndrawn across it. That guard has to be paid again on every future query\nthat spans the bad pair, and it only ever finds the problem after the\nquarter has closed, when the reader is long gone and the actual dial is\nhard to recover. A guard in `intake.py` closes the book against that line\never being written at all, at the one moment \u2014 the clerk keying in the\nreader's visit \u2014 when the mistake is cheapest to catch and correct.\n`render.py` is left free to stay exactly what its own name says: reading\nback out a book that's already sound, with no need to re-litigate, on\nevery bill, whether the numbers it's summing can be trusted.",
+      "verified": true
+    },
+    {
+      "point_id": "lower-is-always-wrong",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "4ff02265412847e9fc107eadc151c0b5f81d12e1db19aa599b9cee1de1000a7b",
+  "rulings": [
+    {
+      "point_id": "the-unjournalled-opening",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-silent-correction",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-past-stays-dark",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "journal-against-snapshot",
+      "kind": "point",
+      "covered": true,
+      "span": "**Option 1: Replay on Query**\n\nThis is the right first move for the granary's book.\n\n**Why:** The granary's ledger is fundamentally an immutable log of movements. Replaying that log to reconstruct the past is the most natural and robust way to answer historical questions. It requires almost no changes to the existing code, no schema migration, and no ongoing maintenance. The performance is more than adequate for typical use.\n\nThe book's structure is already clean: `movements` is the authoritative history, and `bins` is the current computed state. Treating historical queries the same way\u2014as a computation over the movement log\u2014keeps this elegance intact.\n\n**When to revisit:** If the auditor begins asking for frequent historical reports across many bins (e.g., \"give me the full balance sheet for every day in the last quarter\"), or if bins accumulate such long histories that replaying hundreds of thousands of movements becomes slow, then Option 3 (snapshot + replay) becomes attractive. Snapshots can be added incrementally at that point without changing the core logic.\n\nOption 2 is not recommended unless the granary needs to query the full state of all bins at historical dates *repeatedly* (e.g., daily reporting). The storage cost and maintenance burden of rebuilding snapshots is not justified unless that query pattern is proven.",
+      "verified": true
+    },
+    {
+      "point_id": "a-recommendation-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "**Option 1: Replay on Query**\n\nThis is the right first move for the granary's book.\n\n**Why:** The granary's ledger is fundamentally an immutable log of movements. Replaying that log to reconstruct the past is the most natural and robust way to answer historical questions. It requires almost no changes to the existing code, no schema migration, and no ongoing maintenance. The performance is more than adequate for typical use.\n\nThe book's structure is already clean: `movements` is the authoritative history, and `bins` is the current computed state. Treating historical queries the same way\u2014as a computation over the movement log\u2014keeps this elegance intact.\n\n**When to revisit:** If the auditor begins asking for frequent historical reports across many bins (e.g., \"give me the full balance sheet for every day in the last quarter\"), or if bins accumulate such long histories that replaying hundreds of thousands of movements becomes slow, then Option 3 (snapshot + replay) becomes attractive. Snapshots can be added incrementally at that point without changing the core logic.\n\nOption 2 is not recommended unless the granary needs to query the full state of all bins at historical dates *repeatedly* (e.g., daily reporting). The storage cost and maintenance burden of rebuilding snapshots is not justified unless that query pattern is proven.",
+      "verified": true
+    },
+    {
+      "point_id": "replay-suffices",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

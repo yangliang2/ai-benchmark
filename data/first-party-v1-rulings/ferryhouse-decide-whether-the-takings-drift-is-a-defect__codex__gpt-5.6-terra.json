@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "6763597a84ffad6067b1b91de659decbef0dc239acf31b8de51515f431552833",
+  "rulings": [
+    {
+      "point_id": "no-money-on-the-line",
+      "kind": "point",
+      "covered": true,
+      "span": "`cross()` calls `fare_for()` only to reject an unpriced class, then appends only `day`, `kind`, and `note`; `refund()` similarly appends `back: true` but no\n   amount.  Later, `takings_between()` calls `fare_for(book, line[\"kind\"])`\n   for every selected line.  Since `set_fare()` replaces the single value in\n   `book[\"fares\"][kind]`, changing horse from 4 to 6 makes every retained\n   horse line, including a spring line, count as 6d.",
+      "verified": true
+    },
+    {
+      "point_id": "the-table-keeps-no-dates",
+      "kind": "point",
+      "covered": true,
+      "span": "Since `set_fare()` replaces the single value in `book[\"fares\"][kind]`, changing horse from 4 to 6 makes every retained horse line, including a spring line, count as 6d. On this reading the missing contemporaneous amount is a defect: the program cannot preserve the payment or repayment that actually happened.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refund-pays-todays-fare",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-quote-and-the-record",
+      "kind": "point",
+      "covered": true,
+      "span": "It keeps fare changes simple\u2014one replacement value\u2014and lets the clerk quote the same current table through `quote`. But it cannot say how much cash was actually taken, returned, or left in the box in a past period; no line contains that fact and the old fare is discarded.",
+      "verified": true
+    },
+    {
+      "point_id": "a-ruling-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Tell the board that this is the book working as built, but that it is not a\n   takings ledger in the ordinary historical-cash sense.  The repository does\n   not merely happen to recalculate: its names and docstrings consciously make\n   the fare table current, make crossing lines non-monetary, and direct the\n   report to price them at the rate \"as it stands.\"  The new 6d spring result\n   is therefore the intended current-value figure for spring's horse traffic.\n\n   That reading is the better description of the present code than calling the\n   result an accidental defect.",
+      "verified": true
+    },
+    {
+      "point_id": "the-box-can-be-recounted",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

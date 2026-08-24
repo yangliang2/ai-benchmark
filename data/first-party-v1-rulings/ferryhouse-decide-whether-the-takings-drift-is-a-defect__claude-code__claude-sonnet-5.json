@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "2a296153a0e5824cf990c241c423a7c222943b0695dcf2a31e4b40ded8ed0cb5",
+  "rulings": [
+    {
+      "point_id": "no-money-on-the-line",
+      "kind": "point",
+      "covered": true,
+      "span": "A crossing line carries no price. `crossings.cross()` and `crossings.refund()`\nstore only `{\"day\": ..., \"kind\": ..., \"note\": ...}` (plus `\"back\": True` for a\nrefund) \u2014 `crossings.py:21,32`. The docstring says so directly: \"The line is\nthe crossing, not the money: it carries the day, the class and the note, and\nwhat the crossing cost is looked up off the fare table whenever the takings\nare counted\" (`crossings.py:14-16`).\n\n`fares.set_fare()` holds exactly one figure per class and overwrites it:\n\"setting a fare replaces whatever figure stood before, and the table carries\nno more than what every class costs now\" (`fares.py:9-11`, enacted at\n`fares.py:14`). No prior figure survives a call.\n\n`report.takings_between()` then prices every line, regardless of its `day`,\nby calling `fare_for(book, line[\"kind\"])` against whatever the table holds\n*right now* (`report.py:16`).",
+      "verified": true
+    },
+    {
+      "point_id": "the-table-keeps-no-dates",
+      "kind": "point",
+      "covered": true,
+      "span": "`fares.set_fare()` holds exactly one figure per class and overwrites it:\n\"setting a fare replaces whatever figure stood before, and the table carries\nno more than what every class costs now\" (`fares.py:9-11`, enacted at\n`fares.py:14`). No prior figure survives a call.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refund-pays-todays-fare",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-quote-and-the-record",
+      "kind": "point",
+      "covered": true,
+      "span": "the\nferry-house's book was built to answer \"what does a crossing cost now,\"\nnot \"what did the box hold then,\"",
+      "verified": true
+    },
+    {
+      "point_id": "a-ruling-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Call it working as built, not a defect \u2014 but say plainly that \"as built\" doesn't mean \"fit for what the board is asking of it.\"\n\nNothing here is inconsistent or accidental: the same present-tense framing of `fares` appears in `ledger.py`, `fares.py`, and `crossings.py` independently, and `crossings.py:14-16` doesn't just leave price out, it states the reason. A defect is where the code fails its own stated contract; here the code does exactly what three separate docstrings say it does. Calling it a bug and \"fixing\" it in place would in fact be a silent redesign wearing a bug-fix's clothes \u2014 and worse, one that can't even be made whole, since `set_fare` already overwrote fourpence and nothing in `book.json` remembers it.",
+      "verified": true
+    },
+    {
+      "point_id": "the-box-can-be-recounted",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

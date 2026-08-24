@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "00059680c8b88978993bbfe0ae97c7828cf981f415c51e03744243eba11d24b5",
+  "rulings": [
+    {
+      "point_id": "the-unjournalled-opening",
+      "kind": "point",
+      "covered": true,
+      "span": "- `open_bin` sets `bins[name] = {\"grain\", \"sacks\", \"opened\": day}` directly.\n  No movement line is written \u2014 the docstring is explicit: \"the starting\n  count is the bin's own line, not a movement... The sacks were already\n  sitting there, and the movement lines record the door.\"",
+      "verified": true
+    },
+    {
+      "point_id": "the-silent-correction",
+      "kind": "point",
+      "covered": true,
+      "span": "- `set_right` mutates `entry[\"sacks\"] = counted` and stamps\n  `entry[\"counted\"] = day` \u2014 and writes **no** line anywhere. Again by\n  design: \"A correction is not grain through the door, so no movement is\n  written.\"\n\nSo today, for a bin that has never been through `set-right`, its state on\nany past day is in fact reconstructible by hand from the existing file:\ntake the current `sacks`, and undo every `in`/`out` movement dated after\nthe day in question (or replay forward from `opened`). `report.py` doesn't\nexpose this, but the data survives.\n\nThe moment `set-right` has ever fired for a bin, that reconstruction\nbreaks permanently. The correction overwrites `sacks` to an absolute\nfigure with no trace of what it was before or by how much it moved, and\nno day-stamped line for it exists outside the single `counted` field\n(which itself gets overwritten by the next correction). Nothing in\n`book.json`, `book.py`, or `report.py` can tell you which side of a given\n`set-right` the count was in \u2014 because the book itself no longer knows.",
+      "verified": true
+    },
+    {
+      "point_id": "the-past-stays-dark",
+      "kind": "point",
+      "covered": true,
+      "span": "The moment `set-right` has ever fired for a bin, that reconstruction breaks permanently. The correction overwrites `sacks` to an absolute figure with no trace of what it was before or by how much it moved, and no day-stamped line for it exists outside the single `counted` field (which itself gets overwritten by the next correction). Nothing in `book.json`, `book.py`, or `report.py` can tell you which side of a given `set-right` the count was in \u2014 because the book itself no longer knows. That is the actual reason the auditor's question can't be answered: not missing arithmetic in `report.py`, but a write path (`set_right`, and to a lesser extent `open_bin`) that destroys the information a later query would need.",
+      "verified": true
+    },
+    {
+      "point_id": "journal-against-snapshot",
+      "kind": "point",
+      "covered": true,
+      "span": "## Trade-offs\n\n**Option A** buys an exact answer for *any* past day, forever, from the\nday it ships, without asking anyone to remember to do anything \u2014 it\nfollows straight from data already being written on every command.\nIts cost: `set_right` and `open_bin` must change to write a line each,\nwhich means either bending the documented meaning of a \"movement\" line\n(currently, deliberately, door traffic only) or introducing a second\nordered list and a second concept for `cli.py` and `report.py` to know\nabout. The query cost is O(that bin's whole history) per call, since\n`held_at` walks every relevant line up to `day` \u2014 consistent with a\ncodebase that already does `json.loads` on the whole file for every\ncommand (`ledger.load`), but a real cost if a bin's history gets long.\nIt cannot recover a `set-right` that already happened *before* this\nchange ships \u2014 that history is already gone; the fix only stops the\nbleeding going forward.\n\n**Option B** buys a lookup that costs nothing per bin's age \u2014 one\nsnapshot read regardless of how many corrections a bin has been through\n\u2014 and it needs no change to the four existing writers in `book.py`. Its\ncost is operational, not structural: `close-day` has to actually run\nevery single day, and a missed day reopens exactly the same gap Option A\ncloses, because the movements log still can't reconstruct across a\n`set-right` on its own. It also duplicates the *entire* `bins` dict \u2014\nevery bin, moved or not \u2014 into `book.json` on every call, growing the\nfile on a fixed daily cadence rather than in proportion to what actually\nhappened, unlike `movements`, which only grows when a delivery, issue,\nor (post-Option-A) correction occurs. Like Option A, it cannot answer\nfor a day before the feature existed, and unlike Option A it also can't\nanswer for any day after that was simply never snapshotted.",
+      "verified": true
+    },
+    {
+      "point_id": "a-recommendation-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Option A. The book's own documentation already claims `movements` is where \"everything the granary knows\" lives; `set_right`'s silence reads less like a deliberate scope boundary and more like the one place that promise wasn't kept, since it's precisely the operation that makes the rest of the book stop being replayable. Fixing the writers to log what they do is a small, local change (four functions in `book.py`, one function in `report.py`, one subcommand in `cli.py`) that requires no new habit from the clerk and, from the day it ships, answers the auditor's question for every day going forward without gaps. Option B's snapshot lookup is cheaper per query, but that cheapness is bought by trusting a human to run `close-day` every day without fail \u2014 and the day they don't is the day the auditor asks about. A codebase this small, run by one clerk off the command line, should not have its historical record depend on a step nobody is forced to take. If the event log in Option A ever grows long enough that replay is genuinely slow, a snapshot cache can be layered on top of it later \u2014 rebuilt at will *from* the now-complete event log \u2014 without that cache ever being the only copy of the history, which is the actual failure mode worth designing against here.",
+      "verified": true
+    },
+    {
+      "point_id": "replay-suffices",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

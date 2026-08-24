@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "6085f678f928398bd43318f7ed523a1d78d631fa96ae6b9806fdb87e0fb705b2",
+  "rulings": [
+    {
+      "point_id": "the-refusals-already-at-the-door",
+      "kind": "point",
+      "covered": true,
+      "span": "The validation philosophy of intake.py, which already checks that the house exists, the dial is non-negative, and readings arrive in day order.",
+      "verified": true
+    },
+    {
+      "point_id": "the-refit-reads-lower",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-bad-line-stands-in-the-book",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "two-owners-each-costed",
+      "kind": "point",
+      "covered": true,
+      "span": "## Trade-offs\n\n### intake.py (prevention): Costs and benefits\n\n**What changes:**\n- The clerk's workflow: when a backwards reading is submitted, they get an error and must ask the reader to verify.\n- The book never contains a backwards reading: the constraint is enforced at the boundary.\n\n**What stays the same:**\n- The ledger format, render.py, and all downstream consumers of the data \u2014 they assume the data is already valid.\n- The validation philosophy of intake.py, which already checks that the house exists, the dial is non-negative, and readings arrive in day order.\n\n**What it catches:**\n- Every backwards reading, at the moment it is entered, before it touches the book.\n- A backwards reading that represents either: (a) a mis-read by the meter-reader, or (b) a data-entry error by the clerk.\n\n**What it cannot catch:**\n- Backwards readings that have already entered an old book before this check was added.\n- Errors that occur after the reading is recorded (e.g., if the book is corrupted after saving).\n\n### render.py (detection): Costs and benefits\n\n**What changes:**\n- The render functions must now handle the possibility of invalid data.\n- Bill calculation (and any other output that subtracts dials) must decide how to handle a negative difference.\n- Multiple render functions may need to independently implement this check, or a helper must be added.\n\n**What stays the same:**\n- intake.py: the recording logic is unchanged, the book accepts any monotonic sequence of dial readings.\n- The book itself: backwards readings are stored as-is.\n\n**What it catches:**\n- Backwards readings when they are *used* to compute output, not when they are recorded.\n- Even backwards readings that snuck in (e.g., from a corrupted or manually-edited book).\n\n**What it cannot catch:**\n- The fact that the data is wrong when it is entered \u2014 the clerk has no feedback.\n- Other consumers of the book that don't go through render.py.\n- The reader's mistake in a timely way \u2014 it surfaces only when billing occurs, days or weeks later.",
+      "verified": true
+    },
+    {
+      "point_id": "one-owner-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "## Recommendation\n\n**Give the duty to intake.py.**\n\nThe core argument: a backwards dial reading is *invalid data* that should never enter the book. Water meters are mechanical \u2014 they only move forward (or reset on a refit). This is a physical constraint, not an edge case.\n\nintake.py is the right owner because:\n\n1. **It enforces domain rules.** intake.py already validates that the house exists, the dial is non-negative, and readings arrive in day order. A backwards reading is a violation of the same domain \u2014 it is invalid at the source, not at the edge.\n\n2. **It prevents propagation.** Once a backwards reading is in the book, it can affect any consumer \u2014 billing, stand, or future analysis. Better to reject it at the gate.\n\n3. **It gives immediate feedback.** The clerk can be told at the moment of entry that something is wrong. They can ask the reader to re-check the dial while they are still on site (or soon after), rather than discovering the error weeks later at bill time.\n\n4. **It is architecturally consistent.** intake.py validates *input*, render.py reads *output*. The validation should not move into render because render's job is to compute and present, not to police data. If render has to check for invalid data, the separation of concerns is broken.\n\n5. **It is simple to implement.** The check is a straightforward comparison of the current dial to the last reading's dial, accounting for refits. No ambiguity about how to handle the error \u2014 raise it.",
+      "verified": true
+    },
+    {
+      "point_id": "lower-is-always-wrong",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

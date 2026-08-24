@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "d8850d7be5a80f546f9cffe3ce98e96499cbed38da53960e519a118da7704c0e",
+  "rulings": [
+    {
+      "point_id": "no-money-on-the-line",
+      "kind": "point",
+      "covered": true,
+      "span": "The crossing records in the book intentionally carry no price. Each record stores only the day, the class of crossing (kind), whether it was refunded, and a note. When `report.takings_between()` calculates the box's takings for a period, it looks up each crossing's price off the fare table as it stands now:",
+      "verified": true
+    },
+    {
+      "point_id": "the-table-keeps-no-dates",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-refund-pays-todays-fare",
+      "kind": "point",
+      "covered": true,
+      "span": "The `fare_for()` function returns `book[\"fares\"][kind]`\u2014the current price. When the board raises the horse fare from fourpence to sixpence, the same ten spring crossings now price out to sixpence each. This is the book's own logic, working as designed: fares are singular and current, crossings are events with no price attached, and reports always price crossing events at today's rates.",
+      "verified": true
+    },
+    {
+      "point_id": "the-quote-and-the-record",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-ruling-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "## Recommendation\n\n**The book is working as built, and I would recommend the board accept this as its own way of keeping accounts.**\n\nThis is not a defect, but a design choice.",
+      "verified": true
+    },
+    {
+      "point_id": "the-box-can-be-recounted",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

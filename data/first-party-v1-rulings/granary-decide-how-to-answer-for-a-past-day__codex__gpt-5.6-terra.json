@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "f03de337ec88889691dd33971ee89fab55963b590e704588abf0c2f4bd70a659",
+  "rulings": [
+    {
+      "point_id": "the-unjournalled-opening",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-silent-correction",
+      "kind": "point",
+      "covered": true,
+      "span": "The old data retains only the current `sacks`, the opening day, and at most the latest `counted` day; it discards both the opening amount after later changes and every earlier correction. This follows directly from the overwrites in `open_bin` and `set_right`.",
+      "verified": true
+    },
+    {
+      "point_id": "the-past-stays-dark",
+      "kind": "point",
+      "covered": true,
+      "span": "None of these designs can manufacture exact historical balances from old books.  The old data retains only the current `sacks`, the opening day, and at most the latest `counted` day; it discards both the opening amount after later changes and every earlier correction.  This follows directly from the overwrites in `open_bin` and `set_right`.  A migration must therefore mark history before a chosen cutover as unavailable, unless separately preserved stocktakes can be imported.",
+      "verified": true
+    },
+    {
+      "point_id": "journal-against-snapshot",
+      "kind": "point",
+      "covered": true,
+      "span": "Snapshots make the auditor's common query a direct lookup and preserve the current read model: `report.stocktake` and `held_by_grain` can continue to use `bins` ([report.py](report.py#L8-L22)), and the movement report remains unchanged.  They cost one full copy of all bins per retained day and a clear definition of when a day is closed.  More importantly, the current CLI lets a clerk supply any date without checking order ([cli.py](cli.py#L15-L32)); a late entry for an earlier day would require recomputing every affected closing snapshot.  A snapshot answers the end-of-day question but, unless snapshots are made more often, cannot explain the intra-day position or reconstruct a corrected past snapshot.\n\nA complete event history costs changes in all four layers: `ledger.fresh` needs the new collection, each mutator must append an event as well as change the current balance, reporting needs replay logic, and `cli.py` needs a historical command and a date-order/backdating policy.  It buys the strongest audit trail: it can answer a bin's balance at every recorded date, show why it changed, and recompute current state to check the cache.  The sequence rule matters because the existing movement report sorts by day even though it stores entry order ([report.py](report.py#L25-L31)); same-day corrections and backdated entries otherwise have no unambiguous order.  Its ongoing storage grows with changes rather than with bins times days, but a distant query must replay relevant history (periodic snapshots could later be an optimisation).",
+      "verified": true
+    },
+    {
+      "point_id": "a-recommendation-argued",
+      "kind": "point",
+      "covered": true,
+      "span": "Adopt option 2: an append-only inventory-event journal, retaining `bins` as a\nderived current-balance cache initially.  The auditor is asking for a\nhistorical state, and this repository already has the beginnings of a journal\nin `movements`; completing it with opening and correction facts fixes the\nactual information loss rather than copying its result once per day.\n\nIn particular, change `set_right` from an overwrite-only operation to append\na signed adjustment event before updating the cache, and write an opening\nevent when a bin is opened.  Add a `held-on DAY BIN` CLI command whose report\nreplays those events through the close of `DAY`; reject out-of-order effective\ndates unless and until a deliberate rebuild mechanism is implemented.  Keep\nthe existing `movements` report as a filtered view of delivery/issue events,\nso its useful door-focused contract remains intact.\n\nThis has more implementation work than checkpoints, but it gives one\nconsistent source of evidence for both current and historic answers and makes\nfuture audit questions answerable without another schema exception.  It also\nleaves room for option 1 as a performance cache later, without making\nsnapshots the sole record of what happened.",
+      "verified": true
+    },
+    {
+      "point_id": "replay-suffices",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}
