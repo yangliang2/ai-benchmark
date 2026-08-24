@@ -246,8 +246,9 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     inherits. §82 (round 10's rulings, including §82.5's same-day supersession)
     is what this follows; §84 is what the A″ readings took, which the section
     said in a line so that whoever wrote them did not re-derive the frontier —
-    and they have since landed there, which is why the frontier below reads
-    §84 and the heading after this one is theirs.
+    and they have since landed there, with the round's record (§85-§93) after
+    them, which is why the heading after this one is theirs and the live
+    frontier is the round-9 suite's assertion rather than this file's.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -257,8 +258,15 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert numbered.count(82) == 1, "the round-10 rulings, spent once"
     assert numbered.count(83) == 1, "this pre-registration, spent once"
     assert numbered.count(84) == 1, "the A″ readings §83.3 sent to §84"
-    assert numbered[-1] == 84, "§84 is the frontier; §85 is still free"
-    assert [number for number in numbered if number > 68] == list(range(69, 85)), (
+    # The frontier claim this test carried — §85 still free — was spent when
+    # the round's record took §85-§93; the frontier itself is the round-9
+    # suite's to assert (one assertion, moved deliberately, never copied).
+    # What survives here is the claim that outlasts it: §83's number is spent
+    # once and the record renumbered nothing above or below it.
+    assert all(numbered.count(number) == 1 for number in range(85, 94)), (
+        "round 10's record, §85-§93, each spent once"
+    )
+    assert [number for number in numbered if number > 68] == list(range(69, 94)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

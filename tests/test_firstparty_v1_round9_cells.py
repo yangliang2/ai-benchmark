@@ -201,7 +201,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     takes what is free after it — which the section says in a line, so that
     whoever writes it does not have to re-derive the frontier.
 
-    The frontier has since moved six times: **§78 is round 9's amendment**
+    The frontier has since moved seven times: **§78 is round 9's amendment**
     — the grader re-pinned to `deepseek-v4-pro` after the round parked at its
     calibration gate — **§79 is the round's record** (the calibration verdict
     of 2026-08-23, FAILED), **§80 is the second amendment** — grader v2 by
@@ -209,9 +209,12 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     round 10's rulings** — the truth source repaired, the vendor closure
     reopened on premise failure — **§83 is round 10's pre-registration**, the
     round's one gate and its two prices written down before the first paid
-    call — and **§84 is round 10's A″ readings**, both operationalisations of
+    call — **§84 is round 10's A″ readings**, both operationalisations of
     the pointer-prose filter reported off the committed archive and gating
-    nothing. Nothing was renumbered to make room.
+    nothing — and **§85–§93 are round 10's record**: the proofs gate opened,
+    the nine cells swept and 1 of 9 resolved, each red cell read as the named
+    planted points its rulings left uncovered. Nothing was renumbered to make
+    room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -227,13 +230,18 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert numbered.count(82) == 1, "the round-10 rulings, spent once"
     assert numbered.count(83) == 1, "round 10's pre-registration, spent once"
     assert numbered.count(84) == 1, "round 10's A″ readings, spent once"
-    assert numbered[-1] == 84, (
-        "§84 is round 10's A″ readings — both operationalisations of the "
-        "pointer-prose filter, read off the committed archive at zero new paid "
-        "calls, reported as readings and gating nothing — and the frontier; "
-        "§85 is still free, and is where the round's record lands"
+    assert all(numbered.count(number) == 1 for number in range(85, 94)), (
+        "round 10's record, §85-§93, each spent once"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 85)), (
+    assert numbered[-1] == 93, (
+        "§85-§93 are round 10's record — the proofs gate certified the "
+        "instrument on production-shaped prose, the nine investigation cells "
+        "landed under sweep id round-10 with 1 of 9 resolved, and each red "
+        "cell is read as the named planted points its archived rulings left "
+        "uncovered — and §93 is the frontier; §94 is still free, and is what "
+        "whatever comes next takes"
+    )
+    assert [number for number in numbered if number > 68] == list(range(69, 94)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

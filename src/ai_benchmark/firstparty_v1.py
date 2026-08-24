@@ -3220,9 +3220,10 @@ def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
     the whole of what a zero can be said here, a populated category's missing
     *language* being disclosed by the absence of its row and by the round that
     left it empty. `test-authoring` was the registered-empty cell (design note
-    45.12) until round 8 filled its Python cell; `investigation` is one of the
-    categories reading zero today. `scale` and substrate are disclosed on a
-    task but not gridded here (design note 45.10).
+    45.12) until round 8 filled its Python cell; `investigation` read zero
+    until round 10 filled its Python cell; `requirement-decomposition` is one
+    of the categories reading zero today. `scale` and substrate are disclosed
+    on a task but not gridded here (design note 45.10).
     """
     # There is no undeclared-language column: the loader now refuses a task
     # that declares none, so no input reaches this grid without a language.
