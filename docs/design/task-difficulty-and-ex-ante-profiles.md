@@ -7828,8 +7828,9 @@ standing pipeline: these rulings, then `/to-spec` files a **new spec issue**
 — #123 is closed history and takes no third amendment — then `qap plan` cuts
 tickets on the new issue. The round's arc: the reopen and A″ registration
 (§76.1's pre-registration discipline, §77's shape), the A″ read, three
-`investigation` tasks recast from #131–#133's own texts re-pointed at the
-new sections, the proofs gate, the nine-cell sweep recast from #134 (three
+`investigation` tasks recast from #131–#132's own texts re-pointed at the
+new sections, the proofs gate, the nine-cell sweep recast from #133 and the
+record's shape from #134 (three
 tasks × the three standing columns, dry cell first, §77.5's band re-anchored
 in the new registration), and the record at the next free numbers. **#127
 (ADR-0005) does not wait**: its subject — the point-gate verdict shape — is
