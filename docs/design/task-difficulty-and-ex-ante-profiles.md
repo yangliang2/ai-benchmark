@@ -7809,7 +7809,9 @@ the filter's independence from every verdict, and its one genuinely open
 outcome is whether the mechanical filter reproduces the inspection — a
 mismatch is a loud stop before an authoring dollar moves.
 
-**82.3 Two explicit gates, in §76.1's shape.** Gate one: **A″ gates
+**82.3 Two explicit gates, in §76.1's shape.** ***Superseded in part
+2026-08-23, by §82.5: A″ does not gate — the proofs are the round's one
+gate.*** Gate one: **A″ gates
 authoring** — the re-derived bar over the filter's output, met before the
 first authoring ticket runs, the §76.1 order kept at zero marginal cost.
 Gate two: **the two-sided proofs gate the sweep** — §76.10's existing
@@ -7836,6 +7838,40 @@ in the new registration), and the record at the next free numbers. **#127
 (ADR-0005) does not wait**: its subject — the point-gate verdict shape — is
 unchanged by everything above, both gate verdicts it quotes exist, and it
 queues to `qap run` as soon as this section lands.
+
+**82.5 The preview fired the stop §82.2 armed, and the gate moves: A″ is a
+reading, the proofs are the round's one gate.** Ruled the same day, in the
+same grill, when the spec-writing session ran the mechanical filter over the
+63 stratum-A rows as a preview — before anything was registered, which is
+what the stop was armed for. What it found: the filter caught **17**, not the
+inspection's thirteen. Two of the four extra rows are true pointers the
+inspection never saw because they sat on agreeing rows — the filter is
+verdict-blind and the inspection was not, which is the filter working. The
+other two are messages that narrate their findings **by symbol alone**
+(`Book.rung_by`, `Diary.cancel`) and name no file: the file-reference
+operationalisation calls them pointer prose while the term's own semantic —
+naming no location *and no finding* — plainly does not, a divergence between
+the ruled definition and the ruled meaning. And the arithmetic lands the same
+way under either operationalisation: the overall clause sits **exactly at its
+bar** (42 of 46 against ≥ 42 file-reference; 44 of 48 against ≥ 44
+symbol-aware), and the filtered unresolved class shrinks to 4–6 answers —
+a size §77.3's own sentence disqualifies ("on a class this size a percentage
+hides how few answers separate met from failed"), failing outright at 3 of 4
+under the ruled definition.
+
+So §82.3's gate assignment is superseded in part, the same day and before
+registration: **A″ does not gate.** A gate whose verdict flips on
+tokenisation minutiae certifies nothing, and repairing the definition with
+the outcomes visible is a tuning exercise this corpus refuses — so **both
+operationalisations are reported as readings, both disclosed, and neither is
+tuned into gating**. **The two-sided proofs become the round's single hard
+gate**, before the first sweep dollar: every reference answer resolves per
+point, every foil fails, rulings archived and lint-checked offline.
+Authoring proceeds on this section's rulings — the risk §76.1's order
+protected against is bounded by the evidence in hand (the instrument's own
+residue at 2 of 63, and the A″ readings at the bar from both sides) — and
+the kill discipline keeps one uniform sentence: a failed proof stops the
+round with a record.
 
 ## Open questions (superseded list resolved 2026-08-05)
 
