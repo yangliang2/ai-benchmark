@@ -1133,7 +1133,7 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     """Section 92's refusals, each anchored to something checkable, and the
     two disclosures the ticket wants in as many words: the covered-but-
     mediocre narrowing and the transfer gap, with the owner's ~9 labels
-    recorded as not yet given — a disclosed, non-gating check whose absence
+    recorded as given 2026-08-25 — a disclosed, non-gating check whose result
     is stated rather than passed over."""
     swept = {task_id for task_id, _ in rulings}
     assert all(tasks[task_id].control for task_id in swept)
@@ -1159,13 +1159,25 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     assert "narrows the gap without closing it" in said
     assert "the proofs' truth is still the author's planted truth" in said
 
-    assert "**The owner's ~9 agree/disagree labels: not yet given.**" in said
+    # Supplied 2026-08-25, the day after the record: nine of nine agree,
+    # recorded beside the section exactly as given, per its own sentence.
+    assert (
+        "**The owner's ~9 agree/disagree labels: given 2026-08-25, one day "
+        "after this record — nine of nine agree.**"
+    ) in said
+    labels_block = [
+        block
+        for block in fenced_blocks(note_section("92. What this round cannot say"))
+        if "agree" in block
+    ]
+    assert len(labels_block) == 1, "the labels table, fenced, once"
+    assert labels_block[0].count("agree   (machine:") == 9
+    assert "disagree  " not in labels_block[0]
+    assert "the transfer gap §79.4 named did not open" in said
     assert "§76.2 ruled and §77.2 registered" in said
     assert "a disclosed, non-gating check" in said
-    assert "**have not yet been given**" in said
-    assert "records the check's absence rather than leaving it unmentioned" in said
-    assert "It gates nothing and the nine verdicts stand regardless" in said
-    assert "recorded beside this section with their date" in said
+    assert "The check gated nothing and the nine verdicts stood regardless" in said
+    assert "the owner held the universal quantifier both times" in said
 
     assert "**No cross-action difficulty comparison.**" in said
     assert "1 of 9 here is not to be read against round 8's 8 of 9" in said

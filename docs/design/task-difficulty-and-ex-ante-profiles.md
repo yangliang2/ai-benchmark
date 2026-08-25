@@ -8834,14 +8834,34 @@ still hold.
   it: the proofs' truth is still the author's planted truth, so what remains
   unproved is exactly what §79.4 named, judgment of a proposal with no truth
   behind it, and the check registered to watch it is the owner's, next.
-- **The owner's ~9 agree/disagree labels: not yet given.** §76.2 ruled and
-  §77.2 registered a disclosed, non-gating check riding the round's own
-  swept heap-3 cells: the owner labels agree/disagree on each of the nine
-  verdicts above. They were asked for when this record was written and
-  **have not yet been given**, so this section records the check's absence
-  rather than leaving it unmentioned. It gates nothing and the nine verdicts
-  stand regardless; when the owner supplies the labels they are to be
-  recorded beside this section with their date, exactly as given.
+- **The owner's ~9 agree/disagree labels: given 2026-08-25, one day after
+  this record — nine of nine agree.** §76.2 ruled and §77.2 registered a
+  disclosed, non-gating check riding the round's own swept heap-3 cells: the
+  owner labels agree/disagree on each of the nine verdicts above. They were
+  asked for when this record was written and had not been given by the day
+  it closed; the owner supplied them the next day, reading each answer file
+  in full beside its task's planted key and forming a pass/fail judgment per
+  cell before comparing it with the machine's verdict. As given:
+
+  ```
+  granary    x claude-haiku-4-5   agree   (machine: unresolved)
+  granary    x claude-sonnet-5    agree   (machine: resolved)
+  granary    x gpt-5.6-terra      agree   (machine: unresolved)
+  pumphouse  x claude-haiku-4-5   agree   (machine: unresolved)
+  pumphouse  x claude-sonnet-5    agree   (machine: unresolved)
+  pumphouse  x gpt-5.6-terra      agree   (machine: unresolved)
+  ferryhouse x claude-haiku-4-5   agree   (machine: unresolved)
+  ferryhouse x claude-sonnet-5    agree   (machine: unresolved)
+  ferryhouse x gpt-5.6-terra      agree   (machine: unresolved)
+  ```
+
+  The two 4-of-5 near-miss cells (granary and pumphouse × codex) were put
+  to the owner with the miss named, and the owner held the universal
+  quantifier both times: one planted fact of the code left unsaid is an
+  investigation left unfinished. The check gated nothing and the nine
+  verdicts stood regardless; what it adds is that on these nine cells the
+  transfer gap §79.4 named did not open — the holistic judgment and the
+  per-point gate drew the same line, resolved and unresolved alike.
 - **No cross-action difficulty comparison.** 1 of 9 here is not to be read
   against round 8's 8 of 9 or any earlier action's rate: a proposal and a
   suite are different deliverables graded by different gates, the round
