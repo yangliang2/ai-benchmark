@@ -8979,6 +8979,77 @@ now by §86's certification sentence) and heap 4's
 whatever comes next — a round's rulings, an amendment, a record — takes it
 and what follows it; nothing above is renumbered.
 
+## Round 11 rulings — 2026-08-25
+
+**94. What round 11 is: heap 3's second action, taken as the mechanical fill
+§86 licensed.** Ruled by the owner on 2026-08-25, and short because §86's
+sentence did the arguing: planted points survived contact with an open-ended
+proposal, so `requirement-decomposition` follows as a mechanical fill — no
+new design discussion, only the round's shape. The instrument is §83.2's,
+unmoved — `point_grader.GRADER_VERSION`, read from the code and never
+retyped — and the standing rule stands: a checkpoint movement discovered en
+route is a version change and stops the round for re-registration. Four
+rulings, numbered the way §82's were.
+
+**94.1 The action is `requirement-decomposition`, on Python, and
+explain-style comprehension waits.** The owner's lean at the round-10 close,
+confirmed: heap 3's second action is `requirement-decomposition` — break a
+requirement into workable pieces, not delivering any of the pieces, the
+classifier's own clause — and explain-style `codebase-comprehension` stays
+the remaining mechanical fill for a later round. Every task is Python:
+§76.10's rule that heap 3 stays on Python until the grader has a record
+behind it now has that record's first instalment behind it, this round is
+the second, and the TypeScript cell stays a disclosed zero.
+
+**94.2 The deliverable is one prose answer file, three sections in §76.9's
+institution: the pieces, the order, the risks.** The prompt names the answer
+path and requires the deliverable's parts by name, and the parts are this
+action's analog of the investigation's options/trade-offs/recommendation:
+**Pieces** — the requirement broken into workable pieces, each concrete
+enough in this repository's own terms that a reader could start on it;
+**Order and dependencies** — which pieces block which, and why the code says
+so; **Open questions and risks** — what the decomposition cannot settle from
+the repository alone, named rather than papered over. A planted point is a
+fact of the code and its consequence for the decomposition — a piece an
+honest decomposition cannot omit, a dependency the code forces, a
+consequence a fluent-but-ungrounded split misses — and the foil is exactly
+that fluent split: plausible pieces, the disqualified claim made, the
+planted facts unsaid. The key's shape is the standing one — 4–6 points, 0–2
+disqualifiers, proved both ways at authoring under the round's one gate —
+and the fine grain lands in the spec, where the owner reads it before a
+ticket is cut.
+
+**94.3 Three tasks, three kinds of requirement, the three standing columns:
+nine cells.** Task count and columns are round 10's, confirmed without
+re-argument — §68.3's reason still: the point gate is the round's one
+instrument, and a column moved beside it would confound the two. Three fresh
+Python repositories in the standing task shape, each a declared control,
+each carrying one requirement to decompose — and three *different kinds* of
+requirement, because three tasks that asked one question three times would
+measure one thing three times. The columns are `claude-code` ×
+`claude-haiku-4-5`, `claude-code` × `claude-sonnet-5`, and `codex` ×
+`gpt-5.6-terra` at reasoning `medium`. Sweep id **`round-11`**, dry cell
+first, by hand under the sweep protocol, never queued;
+`requirement-decomposition` joins no `LIVE_RUN_LIMITS_S` register and every
+cell runs at the flat default, §68.5's precedent a third time.
+
+**94.4 Delivery, down the standing pipeline, and the one gate.** These
+rulings, then `/to-spec` files a new spec issue, then `qap plan` cuts
+tickets on it; the pre-registration takes the next free section number and
+writes both prices down before the first paid call — the proofs' price
+counted over calls, and the sweep band re-anchored on the nearest swept
+rows, which are now round 10's own nine cells selected by sweep id
+(registered $2.5–5, landed $1.2089, the low miss pre-read as a finding about
+the action; the new floor anchors on what the rows actually cost). The
+round's single hard gate is the two-sided proofs, §83.4's clause kept
+verbatim: every planted point of every reference answer resolves and every
+foil fails, rulings archived and read offline by the lint, before the first
+sweep dollar. The kill discipline keeps its one sentence: a failed proof
+stops the round with a record. And the payment path is disclosed where it is
+used: the DeepSeek key is stored in the operator's session memory by the
+owner's ruling of 2026-08-23 — a disclosed exception to the stored-nowhere
+rule — and the runbook says so rather than claiming otherwise.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

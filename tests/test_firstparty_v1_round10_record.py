@@ -1406,8 +1406,12 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     )
     assert numbered.count(84) == 1
     assert all(numbered.count(number) == 1 for number in range(85, 94))
-    assert numbered[-1] == 93, "§93 is the frontier; §94 is free"
-    assert [number for number in numbered if number > 68] == list(range(69, 94))
+    # The frontier claim this test carried — §93 the frontier, §94 free — was
+    # spent when round 11's rulings took §94 (2026-08-25); the frontier itself
+    # is the round-9 suite's to assert (one assertion, moved deliberately,
+    # never copied). What survives here is that the record's nine numbers are
+    # spent once each and nothing above or below them was renumbered.
+    assert [number for number in numbered if number > 68] == list(range(69, 95))
 
     for heading in record_sections():
         assert f"### {heading}\n" in text, heading
@@ -1415,7 +1419,10 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     headings = re.findall(r"^## .+$", text, re.MULTILINE)
     record_at = headings.index("## Round 10 record — 2026-08-24")
     assert headings[record_at - 1].startswith("## Round 10 A″ readings")
-    assert headings[record_at + 1].startswith("## Open questions")
+    # The heading after the record was `## Open questions` until round 11's
+    # rulings landed there (2026-08-25); the claim that survives is that the
+    # record sits inside the note's numbered run, before the trailing headings.
+    assert headings[record_at + 1].startswith("## Round 11 rulings")
 
     opening = prose(
         note_part("Round 10 record — 2026-08-24").split("\n### ")[0]
