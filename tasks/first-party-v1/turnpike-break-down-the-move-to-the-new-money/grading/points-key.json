@@ -1,0 +1,31 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-charge-is-written-into-the-line",
+      "text": "The answer says that gate.py reckons each crossing's charge at the gate and writes it into the roll line, so the roll's existing lines hold amounts in the old money and the plan includes a piece that converts, marks or cuts over those stored lines."
+    },
+    {
+      "id": "the-audit-ties-the-roll-to-the-table",
+      "text": "The answer says that till.py's misrecorded audit compares each stored line's charge against the current table's rate for its kind, so re-rating the tariff without also dealing with that audit and the stored charges it reads makes every already-taken line read as taken down wrong."
+    },
+    {
+      "id": "nothing-names-the-money-a-roll-is-in",
+      "text": "The answer says that a saved roll carries no version or unit marker anywhere, so the plan puts a marker (or an equivalent way of telling) in place no later than the switch, because afterwards nothing in a roll file says which money its charges are in."
+    },
+    {
+      "id": "the-rates-do-not-come-out-whole",
+      "text": "The answer works out that the table's rates do not convert to whole figures in the new money, and puts the choice of the rounded new figures among its open questions rather than treating the conversion as exact."
+    },
+    {
+      "id": "the-keeper-reads-money-through-the-cli",
+      "text": "The answer includes a piece for cli.py's own money formatting — the 'd.' its takings, check and rates output is written in — tied to the tariff switch, so the keeper is not shown the old money's mark on new-money figures."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "swap-the-table-and-be-done",
+      "text": "The answer claims that setting the new rates in tariff.py's table is by itself enough to move the tollhouse to the new money, with the stored roll, the audit and the keeper-facing output needing no work of their own."
+    }
+  ]
+}

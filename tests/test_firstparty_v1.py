@@ -336,6 +336,7 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
     assert {task.category for task in tasks} == {
         "feature-dev", "refactor", "bug-fix", "fault-location", "code-review",
         "codebase-comprehension", "test-authoring", "investigation",
+        "requirement-decomposition",
     }
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:
@@ -351,11 +352,11 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
             assert mutant_patches(task)
             assert task.test_path
             continue
-        if task.category == "investigation":
-            # Round 10's action ships no held-out tests either: its
-            # deliverable is one prose answer file and its verdict the point
-            # gate — a planted points key judged per point by the versioned
-            # grader instrument (ADR-0005).
+        if task.category in ("investigation", "requirement-decomposition"):
+            # Round 10's and round 11's actions ship no held-out tests
+            # either: each deliverable is one prose answer file and its
+            # verdict the point gate — a planted points key judged per point
+            # by the versioned grader instrument (ADR-0005).
             assert is_point_keyed(task)
             assert not task.grading_test_paths
             continue

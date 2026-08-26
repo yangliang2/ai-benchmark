@@ -166,9 +166,10 @@ _HAIKU_MISSED = {
 #
 # Three of them moved after the round they record, and by later rounds' own
 # tasks: round 8 authored the corpus's `test-authoring` cell, three Python
-# tasks each declaring itself a control, and round 10 authored its three
-# `investigation` ones, Python controls all three, so the loaded Python task
-# set and its control count grew with each. Round 7's own prose is a claim about
+# tasks each declaring itself a control, round 10 authored its three
+# `investigation` ones, Python controls all three, and round 11 its first
+# `requirement-decomposition` one, a Python control too, so the loaded Python
+# task set and its control count grew with each. Round 7's own prose is a claim about
 # what round 7 did and is quoted rather than recomputed, so it stays where it
 # was — and the
 # two lines the reader prints are different counts, which is why they no longer
@@ -192,15 +193,21 @@ _ROUND_8_TASKS = 3
 _ROUND_10_TASKS = 3
 _ROUND_10_CLAUDE_CODE_RUNS = 6
 
+# And what round 11 has added so far: the corpus's first
+# `requirement-decomposition` task, a Python control graded by the point gate.
+# Its own round's suites count it; this file only has to keep the live
+# task-set arithmetic honest.
+_ROUND_11_TASKS = 1
+
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
 # Its three Codex rows are dropped by the agent selection like round 6's were.
 _ROUND_8_CLAUDE_CODE_RUNS = 6
 
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 119
+_PYTHON_TASKS = 120
 _PYTHON_TASKS_WITH_RUNS = 113
-_PYTHON_CONTROLS = 52
+_PYTHON_CONTROLS = 53
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -216,7 +223,7 @@ _TYPESCRIPT_COVERAGE = {
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
-    "investigation": 3,
+    "investigation": 3, "requirement-decomposition": 1,
 }
 
 # The two fields of a calibration block a later round moves, and the only two —
@@ -1121,13 +1128,14 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     because none was authored in TypeScript, and there is no per-language zero
     row for it because the lint was not changed to print one.
 
-    Two lines of the block have moved since, each by a later round authoring a
-    category's first tasks: round 8 filled `test-authoring`'s Python cell and
-    round 10 filled `investigation`'s, so the two categories this record
-    quotes as `- - 0` now print the Python cells those tasks fill, and each
-    one's TypeScript absence is disclosed by absence exactly as
-    `codebase-comprehension`'s is. The record is not edited for either — the
-    page it quotes is what the page was — so the lines are named below and
+    Three lines of the block have moved since, each by a later round authoring
+    a category's first tasks: round 8 filled `test-authoring`'s Python cell,
+    round 10 filled `investigation`'s and round 11 filled
+    `requirement-decomposition`'s, so the three categories this record quotes
+    as `- - 0` now print the Python cells those tasks fill, and each one's
+    TypeScript absence is disclosed by absence exactly as
+    `codebase-comprehension`'s is. The record is not edited for any of them —
+    the page it quotes is what the page was — so the lines are named below and
     every other one is still held byte for byte.
     """
     coverage = firstparty_v1.coverage_table(firstparty_v1.load_task_set(_TASKS))
@@ -1153,8 +1161,9 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     # `test-authoring` was the first of those when this round was recorded and
     # is the second now — round 8 filled its Python cell with three tasks and
     # left the TypeScript one a disclosed zero (§67.2) — so the shape is read
-    # off a category that still has no task at all.
-    assert ("requirement-decomposition", "-", "-", 0) in coverage
+    # off a category that still has no task at all: `performance-optimisation`
+    # since round 11 filled `requirement-decomposition`'s Python cell.
+    assert ("performance-optimisation", "-", "-", 0) in coverage
     assert not [
         row for row in coverage
         if row[0] == "test-authoring" and row[2] == "typescript"
@@ -1176,16 +1185,19 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     # Round 7's record is the page as it was, and this is not the round that
     # rewrites it: the block is held against today's table line for line, with
     # the lines later rounds moved named here rather than edited there.
-    # Round 8 authored the corpus's `test-authoring` tasks and round 10 its
-    # three `investigation` ones, so the two rows that read `- - 0` when this
-    # was recorded now read Python cells. Every other line is still printed
-    # byte for byte — the column widths included — which is what says round
-    # 7's own figures are unmoved.
+    # Round 8 authored the corpus's `test-authoring` tasks, round 10 its three
+    # `investigation` ones and round 11 its first `requirement-decomposition`
+    # one, so the three rows that read `- - 0` when this was recorded now read
+    # Python cells. Every other line is still printed byte for byte — the
+    # column widths included — which is what says round 7's own figures are
+    # unmoved.
     recorded_zeros = {
         "test-authoring":
             "  test-authoring             -            -           0",
         "investigation":
             "  investigation              -            -           0",
+        "requirement-decomposition":
+            "  requirement-decomposition  -            -           0",
     }
     quoted_lines = quoted.strip("\n").splitlines()
     for recorded_zero in recorded_zeros.values():
@@ -1339,11 +1351,14 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # language selection, so this is the one of ticket 06's three counts that
     # moves whenever the corpus grows — 127 when the round was recorded,
     # three more when round 8 authored the corpus's `test-authoring` tasks,
-    # and three more when round 10 authored its `investigation` ones. The
-    # record is a snapshot and is not edited for that; the live count is
+    # three more when round 10 authored its `investigation` ones, and one
+    # more when round 11 authored its first `requirement-decomposition` one.
+    # The record is a snapshot and is not edited for that; the live count is
     # asserted here beside the recorded one so the two cannot drift silently
     # apart.
-    assert tasks_in_set() == _RECORDED_TASKS + _ROUND_8_TASKS + _ROUND_10_TASKS
+    assert tasks_in_set() == (
+        _RECORDED_TASKS + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS
+    )
     printed_block = fenced_blocks(note_section(
         "66. Replay, and the published tables left where they were"
     ))[0]
@@ -1462,7 +1477,9 @@ def test_neither_reader_counts_a_round_7_row(
     # them with six claude-code rows, so the task set grew, the runs line grew
     # with it, and `sweep round-8` joined the round list; round 10 then did
     # the same with its three `investigation` tasks — the task-set line first,
-    # and the runs and round lines when its sweep landed on 2026-08-24. The
+    # and the runs and round lines when its sweep landed on 2026-08-24; round
+    # 11's first `requirement-decomposition` task then grew the task-set line
+    # again (and only it — a task authored after every sweep has no rows). The
     # record is not edited for any of that — each line it quoted is rebuilt
     # here from the recorded figures and required to be exactly what the note
     # says, and what the reader prints instead was asserted above off the same
@@ -1473,8 +1490,9 @@ def test_neither_reader_counts_a_round_7_row(
     ))[1:2]
     recorded = [
         "  task set   tasks/first-party-v1 — "
-        f"{_PYTHON_TASKS - _ROUND_8_TASKS - _ROUND_10_TASKS} "
-        f"task(s): {_PYTHON_CONTROLS - _ROUND_8_TASKS - _ROUND_10_TASKS} "
+        f"{_PYTHON_TASKS - _ROUND_8_TASKS - _ROUND_10_TASKS - _ROUND_11_TASKS} "
+        f"task(s): "
+        f"{_PYTHON_CONTROLS - _ROUND_8_TASKS - _ROUND_10_TASKS - _ROUND_11_TASKS} "
         f"control(s), {_PYTHON_CONSTRUCTED} constructed",
         f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
         f"{_PYTHON_TASKS_WITH_RUNS} task(s)",

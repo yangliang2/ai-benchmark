@@ -684,9 +684,12 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
             gaps[category] = round(sonnet / haiku, 2)
     # Round 8's sweep priced `test-authoring`, and round 10's sweep
     # (2026-08-24, the day its three tasks were authored) priced
-    # `investigation` — nothing prints "-" today; the mechanism above stays
-    # for the next category that arrives unswept.
-    assert unpriced == set()
+    # `investigation`. The next category to arrive unswept — the one the
+    # sentence above held the door for — is round 11's
+    # `requirement-decomposition` (first task authored 2026-08-26, sweep
+    # pending), so it prints "-" and stays out of the ratios until its sweep
+    # prices it.
+    assert unpriced == {"requirement-decomposition"}
     assert gaps == {
         "bug-fix": 2.64,
         "investigation": 2.81,

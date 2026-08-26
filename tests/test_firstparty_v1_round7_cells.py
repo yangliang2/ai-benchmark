@@ -81,11 +81,12 @@ _TYPESCRIPT_ROWS = {
 }
 
 # The Python side of the same table, which this round does not touch. It reads
-# 119 rather than round 7's 113 because later rounds authored into the Python
+# 120 rather than round 7's 113 because later rounds authored into the Python
 # column — round 8's three `test-authoring` tasks, round 10's three
-# `investigation` ones; §59.8's own prose, quoted below, is a claim about what
-# round 7 did and stays at 113.
-_PYTHON_TOTAL = 119
+# `investigation` ones, round 11's first `requirement-decomposition` one;
+# §59.8's own prose, quoted below, is a claim about what round 7 did and stays
+# at 113.
+_PYTHON_TOTAL = 120
 
 
 def note_section() -> str:
@@ -471,7 +472,7 @@ def test_the_coverage_target_is_what_the_lint_prints(
     assert typescript == _TYPESCRIPT_ROWS
 
     zeros = {row[0] for row in table if row[1:] == ("-", "-", 0)}
-    assert "requirement-decomposition" in zeros, (
+    assert "performance-optimisation" in zeros, (
         "no task in any language, so it prints as 0"
     )
     assert "test-authoring" not in zeros
@@ -512,8 +513,9 @@ def test_the_readers_corpus_count_header_reads_the_python_column(
 
     Both figures are live reads of the corpus and both moved as later rounds
     authored into the Python column — round 8's three `test-authoring` tasks,
-    round 10's three `investigation` ones: 113 and 127 at the time §59.8 was
-    written, 119 and 133 with those tasks checked in. The section's own prose
+    round 10's three `investigation` ones, round 11's first
+    `requirement-decomposition` one: 113 and 127 at the time §59.8 was
+    written, 120 and 134 with those tasks checked in. The section's own prose
     is quoted above and is unmoved — what round 7 did to the Python column is
     still nothing.
     """

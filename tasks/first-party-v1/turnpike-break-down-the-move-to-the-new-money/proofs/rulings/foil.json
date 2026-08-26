@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "682d4401030c7bafbd63998ac273ab572a660dc8766bf4f8f9ac08fae6bc069e",
+  "answer_sha256": "42a987c4880655172c42c781662ea13d3400b33f6cc135c4defa9eba882b5d1e",
+  "rulings": [
+    {
+      "point_id": "the-charge-is-written-into-the-line",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-audit-ties-the-roll-to-the-table",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "nothing-names-the-money-a-roll-is-in",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-rates-do-not-come-out-whole",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-keeper-reads-money-through-the-cli",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "swap-the-table-and-be-done",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "Setting the new rates in tariff.py's table is by itself enough to move the tollhouse to the new money: every other module reads the table rather than keeping figures of its own, so the stored roll, the audit and the keeper-facing output need no work of their own \u2014 they follow the table wherever it goes.",
+      "verified": true
+    }
+  ]
+}

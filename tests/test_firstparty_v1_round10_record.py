@@ -186,10 +186,16 @@ _STRATUM_A = 63
 
 # Section 90's updated CONTEXT.md sentence, pinned the way the quoted figures
 # are; the docstring's is asserted off the live function's __doc__ below.
+# Round 11 moved the sentence on when it filled
+# `requirement-decomposition`'s Python cell — the "today" exemplar is now
+# `performance-optimisation` and the filled category joined the record of
+# past zeros in the same form — so the pin is on the caught-up sentence;
+# §90's own quoted prose stays what round 10 wrote.
 _CONTEXT_SENTENCE = (
-    "(`requirement-decomposition` today; `test-authoring` was one until "
-    "round 8 authored its three Python tasks, and `investigation` was one "
-    "until round 10 filled its Python cell)"
+    "(`performance-optimisation` today; `test-authoring` was one until "
+    "round 8 authored its three Python tasks, `investigation` was one until "
+    "round 10 filled its Python cell, and `requirement-decomposition` was "
+    "one until round 11 filled its Python cell)"
 )
 
 
@@ -1014,10 +1020,14 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     sentences the round falsified, updated in round 8's recorded form.
 
     The quoted block is compared with the printed table line for line — no
-    stale line this time, because the record was written after the fill it
-    records. The `investigation × typescript` zero is disclosed as zero by
-    absence, and the docstring and CONTEXT.md sentences are pinned here the
-    way the quoted figures are, so they cannot quietly claim a zero again.
+    stale line when it was recorded, because the record was written after the
+    fill it records; one line has moved since, round 11's first
+    `requirement-decomposition` task turning the row this record quotes as
+    `- - 0` into a Python cell, and it is named below in round 7's pattern
+    rather than edited in the record. The `investigation × typescript` zero
+    is disclosed as zero by absence, and the docstring and CONTEXT.md
+    sentences are pinned here the way the quoted figures are — caught up as
+    round 11 moved them, so they cannot quietly claim a zero again.
     """
     coverage = firstparty_v1.coverage_table(firstparty_v1.load_task_set(_TASKS))
     python = {
@@ -1026,12 +1036,14 @@ def test_the_coverage_table_and_the_two_updated_sentences(
         if language == "python" and surface == "application"
     }
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
-    assert sum(python.values()) == 119
+    # 119 when §90 was recorded; round 11's first `requirement-decomposition`
+    # task moved the live column to 120.
+    assert sum(python.values()) == 120
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
     assert not [row for row in coverage if row[0] == _CATEGORY and row[3] == 0]
-    assert ("requirement-decomposition", "-", "-", 0) in coverage, (
+    assert ("performance-optimisation", "-", "-", 0) in coverage, (
         "the shape a real zero prints, and the docstring's example now"
     )
 
@@ -1041,9 +1053,20 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     [quoted] = fenced_blocks(
         note_section("90. The coverage table, as the lint prints it")
     )
-    for line in quoted.strip("\n").splitlines():
+    recorded_zero = "  requirement-decomposition  -            -           0"
+    quoted_lines = quoted.strip("\n").splitlines()
+    assert recorded_zero in quoted_lines
+    assert recorded_zero not in printed
+    for line in quoted_lines:
+        if line == recorded_zero:
+            continue
         assert line in printed, line
     assert "  investigation              application  python      3" in quoted
+    assert [
+        line.split()
+        for line in printed.splitlines()
+        if line.startswith("  requirement-decomposition")
+    ] == [["requirement-decomposition", "application", "python", "1"]]
 
     said = prose(note_section("90. The coverage table, as the lint prints it"))
     assert (
@@ -1055,15 +1078,25 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     assert "heap 3 stays on Python until the grader has a record behind it" in said
 
     # The two updated sentences, pinned as checked-in text and quoted in the
-    # record. The docstring first, read off the live function.
+    # record. The docstring first, read off the live function. Round 11 moved
+    # each sentence's "today" exemplar on to `performance-optimisation` when
+    # it filled `requirement-decomposition`'s Python cell; §90's own quoted
+    # prose below is the record of what round 10 wrote and stays unmoved.
     docstring = firstparty_v1.coverage_table.__doc__ or ""
     assert "`investigation` read zero" in docstring
     assert "until round 10 filled its Python cell" in " ".join(docstring.split())
     assert (
-        "`requirement-decomposition` is one of the categories reading zero "
+        "`requirement-decomposition` read zero until round 11 filled its "
+        "Python cell"
+    ) in " ".join(docstring.split())
+    assert (
+        "`performance-optimisation` is one of the categories reading zero "
         "today"
     ) in " ".join(docstring.split())
     assert "`investigation` is one of the categories reading zero" not in (
+        " ".join(docstring.split())
+    )
+    assert "`requirement-decomposition` is one of the categories reading" not in (
         " ".join(docstring.split())
     )
     context = _CONTEXT.read_text(encoding="utf-8")
@@ -1077,12 +1110,15 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     assert (
         "\"`investigation` was one until round 10 filled its Python cell\""
     ) in said
-    # Ticket 05's re-pointing of the three older exemplar pins, verified and
-    # not re-edited: each names the category that reads zero today.
+    # The three older exemplar pins, verified and not re-edited: each names
+    # the category that reads zero today. Round 10's ticket 05 pointed them
+    # at `requirement-decomposition`; round 11's first task re-pointed them
+    # at `performance-optimisation`, the next category with no task in any
+    # language.
     for suite, needle in (
-        ("test_firstparty_v1_round7_cells.py", "requirement-decomposition"),
-        ("test_firstparty_v1_round7_record.py", "requirement-decomposition"),
-        ("test_firstparty_v1_round8_record.py", "requirement-decomposition"),
+        ("test_firstparty_v1_round7_cells.py", "performance-optimisation"),
+        ("test_firstparty_v1_round7_record.py", "performance-optimisation"),
+        ("test_firstparty_v1_round8_record.py", "performance-optimisation"),
     ):
         assert needle in (_REPO / "tests" / suite).read_text(encoding="utf-8")
 
@@ -1324,8 +1360,27 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     [quoted] = fenced_blocks(note_section(
         "93. Replay, the readers, and heap 3 opened"
     ))[1:2]
-    for line in quoted.strip("\n").splitlines():
+    # One line of the block has moved since, and only one: round 11's first
+    # `requirement-decomposition` task, a Python control with no rows, grew
+    # the task-set line by one task and one control while the runs line
+    # stayed. The record is not edited for it — the line it quoted is named
+    # here, round 7's own pattern, and every other one is still held byte
+    # for byte.
+    recorded_task_set = (
+        "  task set   tasks/first-party-v1 — 119 task(s): 52 control(s), "
+        "67 constructed"
+    )
+    quoted_lines = quoted.strip("\n").splitlines()
+    assert recorded_task_set in quoted_lines
+    assert recorded_task_set not in printed
+    for line in quoted_lines:
+        if line == recorded_task_set:
+            continue
         assert line in printed, line
+    assert (
+        "  task set   tasks/first-party-v1 — 120 task(s): 53 control(s), "
+        "67 constructed"
+    ) in printed
     assert printed.count(f"sweep {_SWEEP}") == 1
     assert _CATEGORY not in printed, (
         "the round declared no contrast, so it reaches the report as a "

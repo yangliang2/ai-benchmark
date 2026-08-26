@@ -1,0 +1,72 @@
+# The corpus's first `requirement-decomposition` task, and the first of round
+# 11's three (design note §94, registered §95). The deliverable is one prose
+# file — the plan of work the prompt asks for at ANSWER.md — not a change to
+# the code: the repository is the evidence, the requirement is given whole,
+# and a good answer breaks it into the pieces this code actually forces, in
+# the order this code actually forces them.
+#
+# Why it grades the way it does: held-out tests cannot grade a plan — a
+# decomposition may be grounded or may be three confident headings over
+# nothing — so this action's verdict is the point gate. The prompt-named
+# answer file is collected out of the workdir diff and put to a grader one
+# planted point at a time: resolved is every planted point covered by a
+# verbatim span of the answer's own text and no disqualifying claim made,
+# binary. Hence `control: true` — the task registers no difficulty
+# prediction, and a task declaring neither a construction block nor itself a
+# control is refused — and hence no grading/ suite to run: grading/ holds the
+# points key and nothing that executes, because there is no behaviour to
+# test. The key is proved both ways at authoring time (proofs/): the author's
+# reference answer resolves per point and a fluent foil answer fails, rulings
+# archived and read offline by the lint.
+#
+# The requirement is decidable in the closed world of the repository and the
+# prompt alone: the prompt states the new money and its worth in the old, the
+# code is the whole of what the change must pass through, and nothing a piece
+# turns on is missing. It is the cross-cutting kind §94.3 asks for first: the
+# repository's own structure forces the one requirement through every module.
+# The five planted points are the reasoning an honest decomposition cannot do
+# without: that gate.py writes the reckoned charge into each roll line, so
+# the stored roll itself holds old-money amounts and some piece must convert,
+# mark or cut over them; that till.py's audit compares stored charges against
+# the current table, so the new rates cannot land as a piece on their own;
+# that a saved roll carries no version or unit marker, so a way of telling
+# old money from new must arrive no later than the switch; that the table's
+# rates do not convert to whole new-money figures, so the new figures are a
+# decision the repository cannot settle, named among the open questions; and
+# that cli.py's own money formatting is a piece of the work, tied to the
+# switch. The one disqualifier is the plausible wrong claim the code refutes:
+# that setting new rates in the table is by itself the whole move.
+id: turnpike-break-down-the-move-to-the-new-money
+category: requirement-decomposition
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The tollhouse on the turnpike keeps its roll in one JSON file: a line for
+  every crossing taken at the gate, with the day, the kind, the charge taken
+  and a note where one was worth making. roll.py reads and writes the file,
+  tariff.py is the table of tolls, gate.py is how a crossing goes onto the
+  roll, till.py is what gets read back out, and cli.py is how the keeper
+  works it.
+
+  The parish has ruled that from Lady Day the tollhouse takes the county's
+  new money. One new penny is worth two and two-fifths of the pence the
+  tollhouse charges today — a hundred new pence make the pound where two
+  hundred and forty of today's make it now — and from that day every toll
+  taken, written down and read back is to be in new pence.
+
+  Break that requirement down into a plan of work, and write your plan to
+  ANSWER.md. This is a decomposition of the work as this repository forces
+  it, and the repository is the whole of the evidence: read the code and lay
+  the work out. Your plan carries three sections, under these headings:
+
+  - **Pieces** — the requirement broken into workable pieces, each concrete
+    enough in this repository's own terms that a reader could start on it;
+  - **Order and dependencies** — which pieces block which, and why the code
+    says so;
+  - **Open questions and risks** — what the decomposition cannot settle from
+    the repository alone, named rather than papered over.
+
+  Build none of it, and leave every file of the repository as you found it:
+  the plan at ANSWER.md is the whole deliverable.

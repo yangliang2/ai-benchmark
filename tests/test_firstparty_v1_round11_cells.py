@@ -37,9 +37,8 @@ would then read as met on text §95 never wrote.
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
 two tests read the round forwards, and they are two tests rather than one
 because they die at different tickets: no `round-11` row exists yet (retired
-by the ticket that lands the sweep), and the corpus holds no
-`requirement-decomposition` task yet (retired by the ticket that lands the
-first one).
+by the ticket that lands the sweep), and the corpus holds the round's first
+`requirement-decomposition` task and no second or third.
 """
 
 import re
@@ -998,19 +997,26 @@ def test_no_round_11_row_exists_yet(runs: list[firstparty_v1.Run]) -> None:
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 
-def test_the_corpus_holds_no_requirement_decomposition_task_yet(
+def test_the_corpus_holds_the_first_requirement_decomposition_task_and_no_other_yet(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test: the tasks have not been authored.
+    """The second forward-reading test, its no-task half retired by the round's
+    first authored task.
 
-    §95.7 registers the action's zero explicitly rather than leaving it to be
-    inferred, and the claim is checked against the corpus rather than restated:
-    no task carries the category, and the coverage table still prints it as the
-    disclosed zero row §90 re-pointed at it. This is the pin that dies at the
-    ticket that lands the first task.
+    This test used to say the corpus held no `requirement-decomposition` task,
+    and it was right until the round's first authoring ticket landed one. What
+    is worth pinning between that ticket and the next is the caught-up claim
+    read forwards: the corpus holds task 1 of the three and no second or third
+    yet. The round's second authoring ticket replaces this with the register
+    check — the three ids §95.7 left to be filled in, against the three tasks
+    then checked in.
     """
-    assert [task.id for task in tasks.values() if task.category == _CATEGORY] == []
+    authored = sorted(
+        task_id for task_id, task in tasks.items() if task.category == _CATEGORY
+    )
+    assert authored == ["turnpike-break-down-the-move-to-the-new-money"]
     table = firstparty_v1.coverage_table(list(tasks.values()))
-    assert (_CATEGORY, "-", "-", 0) in table, "the disclosed zero, still zero"
+    assert (_CATEGORY, "-", "-", 0) not in table, "the zero row is gone"
+    assert [row for row in table if row[0] == _CATEGORY and row[3]]
     # And the action it follows is the one that filled its row last round.
     assert [row for row in table if row[0] == _ANCHOR_CATEGORY and row[3]]

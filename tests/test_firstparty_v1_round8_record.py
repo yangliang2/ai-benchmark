@@ -153,20 +153,21 @@ _ARCHIVED = ((_DRY_CELL, _SONNET), "pytest.ini")
 _MODULES_UNDER_TEST = ("lido.py", "playbill.py", "register.py")
 
 # Section 73's coverage figure, per language. The Python column is round 7's
-# plus this round's three; the TypeScript rows are round 7's exactly. One row
+# plus this round's three; the TypeScript rows are round 7's exactly. Two rows
 # joined after the round it records: round 10 authored its three
-# `investigation` tasks, Python controls all, and this live read moves with
-# the corpus while the note's own quoted table stays the snapshot it was.
+# `investigation` tasks and round 11 its first `requirement-decomposition`
+# one, Python controls all, and this live read moves with the corpus while
+# the note's own quoted table stays the snapshot it was.
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
-    "investigation": 3,
+    "investigation": 3, "requirement-decomposition": 1,
 }
 _TYPESCRIPT_COVERAGE = {
     "bug-fix": 3, "fault-location": 3, "feature-dev": 3, "refactor": 3,
     "code-review": 2,
 }
-_PYTHON_TASKS = 119
+_PYTHON_TASKS = 120
 # What the runs line counts instead: the Python tasks that have rows. The two
 # were one number until round 10 authored tasks after every sweep — a task
 # with no rows joins the task-set line and not this one.
@@ -179,11 +180,16 @@ _PYTHON_TASKS_WITH_RUNS = 116
 _ROUND_10_TASKS = 3
 _ROUND_10_ROWS = 9
 _ROUND_10_CLAUDE_CODE_ROWS = 6
+# And what round 11 has authored so far: the corpus's first
+# `requirement-decomposition` task, a Python control with no rows yet. Its
+# own round's suites count it; this file only keeps the live arithmetic
+# honest.
+_ROUND_11_TASKS = 1
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
 _CLAUDE_CODE_PYTHON_RUNS = 231
-_PYTHON_CONTROLS = 52
+_PYTHON_CONTROLS = 53
 _PYTHON_CONSTRUCTED = 67
 _ALL_ROWS = 306
 _ROUND_8_ROWS = 9
@@ -1091,12 +1097,13 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     zero by absence, which is all the table can express, and no per-language
     zero row exists for it because the lint was not changed to print one.
 
-    One line of the block has moved since, and only one: round 10 authored
-    its three `investigation` tasks, so the row this record quotes as
-    `- - 0` now prints the Python cell those tasks fill. The record is not
-    edited for it — the page it quotes is what the page was — so the line is
-    named below, round 7's own pattern, and every other one is still held
-    byte for byte.
+    Two lines of the block have moved since, each by a later round authoring
+    a category's first tasks: round 10 authored its three `investigation`
+    tasks and round 11 its first `requirement-decomposition` one, so the rows
+    this record quotes as `- - 0` now print the Python cells those tasks
+    fill. The record is not edited for either — the page it quotes is what
+    the page was — so the lines are named below, round 7's own pattern, and
+    every other one is still held byte for byte.
     """
     coverage = firstparty_v1.coverage_table(firstparty_v1.load_task_set(_TASKS))
 
@@ -1123,7 +1130,7 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ]
     assert not [row for row in coverage if row[0] == _CATEGORY and row[3] == 0]
-    assert ("requirement-decomposition", "-", "-", 0) in coverage, (
+    assert ("performance-optimisation", "-", "-", 0) in coverage, (
         "the shape a real zero prints"
     )
     assert not [row for row in coverage if row[3] == 0 and row[2] == "typescript"]
@@ -1135,24 +1142,28 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     [quoted] = fenced_blocks(
         note_section("73. The coverage table, as the lint prints it")
     )
-    recorded_zero = "  investigation              -            -           0"
+    recorded_zeros = {
+        "investigation":
+            "  investigation              -            -           0",
+        "requirement-decomposition":
+            "  requirement-decomposition  -            -           0",
+    }
     quoted_lines = quoted.strip("\n").splitlines()
-    assert recorded_zero in quoted_lines
+    for recorded_zero in recorded_zeros.values():
+        assert recorded_zero in quoted_lines
+        assert recorded_zero not in printed
     for line in quoted_lines:
-        if line == recorded_zero:
+        if line in recorded_zeros.values():
             continue
         assert line in printed, "the record quotes a line the lint does not print"
-    assert recorded_zero not in printed
-    assert [
-        line.split()
-        for line in printed.splitlines()
-        if line.startswith("  investigation")
-    ] == [
-        [
-            "investigation", "application", "python",
-            str(_PYTHON_COVERAGE["investigation"]),
+    for category in recorded_zeros:
+        assert [
+            line.split()
+            for line in printed.splitlines()
+            if line.startswith(f"  {category}")
+        ] == [
+            [category, "application", "python", str(_PYTHON_COVERAGE[category])]
         ]
-    ]
 
     said = prose(note_section("73. The coverage table, as the lint prints it"))
     assert (
@@ -1366,15 +1377,16 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     # round 10's three authored `investigation` tasks had grown the task-set
     # line. Round 10's sweep (2026-08-24) has since moved the rest — six
     # claude-code Python rows survive both selections, so the runs line, the
-    # round list and its keyed count grew too. The record is not edited for
-    # any of that: every line it quoted is rebuilt here from the live figures
-    # minus round 10's, required to be exactly what the note says, and what
-    # the reader prints instead was asserted above off the same counts plus
-    # round 10's.
+    # round list and its keyed count grew too — and round 11's first
+    # `requirement-decomposition` task then grew the task-set line again. The
+    # record is not edited for any of that: every line it quoted is rebuilt
+    # here from the live figures minus the later rounds', required to be
+    # exactly what the note says, and what the reader prints instead was
+    # asserted above off the same counts plus theirs.
     recorded = [
         "  task set   tasks/first-party-v1 — "
-        f"{_PYTHON_TASKS - _ROUND_10_TASKS} task(s): "
-        f"{_PYTHON_CONTROLS - _ROUND_10_TASKS} control(s), "
+        f"{_PYTHON_TASKS - _ROUND_10_TASKS - _ROUND_11_TASKS} task(s): "
+        f"{_PYTHON_CONTROLS - _ROUND_10_TASKS - _ROUND_11_TASKS} control(s), "
         f"{_PYTHON_CONSTRUCTED} constructed",
         f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
         f"{_PYTHON_TASKS_WITH_RUNS} task(s)",
@@ -1427,10 +1439,11 @@ def test_heap_one_closes_and_the_archive_round_nine_waits_on_has_grown() -> None
     assert heap_1 <= populated and heap_2 <= populated
     empty = {row[0] for row in coverage if row[3] == 0}
     # `investigation` printed in this set when the round was recorded and left
-    # it when round 10 authored heap 3's first task; the heap-1/heap-2 claim
-    # this test records is untouched by that.
+    # it when round 10 authored heap 3's first task; `requirement-decomposition`
+    # left it when round 11 authored heap 3's second action's first. The
+    # heap-1/heap-2 claim this test records is untouched by either.
     assert empty == {
-        "requirement-decomposition", "performance-optimisation", "unclassified",
+        "performance-optimisation", "unclassified",
     }
     assert not empty & (heap_1 | heap_2)
 
