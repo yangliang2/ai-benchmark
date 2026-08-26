@@ -35,6 +35,7 @@ proof archive claiming any other version is one of the negatives below.
 import hashlib
 import json
 import re
+import shutil
 import textwrap
 from collections.abc import Mapping
 from pathlib import Path
@@ -55,6 +56,7 @@ from ai_benchmark.dataset import IngestError
 from ai_benchmark.firstparty_v1 import (
     EXISTENCE_PROOFS,
     FOIL_ANSWER_FILE,
+    PROOFS_DIR,
     REFERENCE_ANSWER_FILE,
     TERRAIN_EXEMPT_ACTIONS,
     ProofSide,
@@ -140,6 +142,7 @@ def points_key_json(
 def write_task(
     root: Path,
     *,
+    category: str = "investigation",
     prompt: str = PROMPT,
     answer_path: str = ANSWER_PATH,
     points: list[dict[str, str]] | None = None,
@@ -169,7 +172,7 @@ def write_task(
     (task_dir / "task.yaml").write_text(
         textwrap.dedent(f"""\
             id: {TASK_ID}
-            category: investigation
+            category: {category}
             scale: cross-file
             surface: application
             language: python
@@ -329,6 +332,30 @@ def test_a_well_formed_point_task_declares_no_terrain_waiver(tmp_path: Path) -> 
     own — three identical action-shaped reasons in three `task.yaml` files would
     counterfeit a mechanism built to be per task and reason-per-task."""
     assert proved(tmp_path).terrain_waiver == ()
+
+
+def test_the_second_point_keyed_action_is_held_to_the_same_proof(
+    tmp_path: Path,
+) -> None:
+    """§94.2 rules `requirement-decomposition`'s key identical in shape, so the
+    action takes the same two-sided proof — one `ExistenceProof` object under
+    two registry keys rather than a sibling that could drift from it. Shown
+    through the real pipeline: a task of the second action with its proofs
+    subtree gone is refused by the lint the way an unproved investigation is,
+    which is the shared rule reached through the new key."""
+    task_dir = write_task(tmp_path, category="requirement-decomposition")
+    shutil.rmtree(task_dir / "proofs")
+
+    both_sides = problems(tmp_path)
+
+    assert len(both_sides) == 2, "the proof runs in both directions here too"
+    assert all(TASK_ID in problem for problem in both_sides)
+    assert f"{PROOFS_DIR}/{REFERENCE_ANSWER_FILE}" in both_sides[0]
+    assert f"{PROOFS_DIR}/{FOIL_ANSWER_FILE}" in both_sides[1]
+    assert (
+        EXISTENCE_PROOFS["requirement-decomposition"]
+        is EXISTENCE_PROOFS["investigation"]
+    )
 
 
 def test_the_actions_proof_form_is_registered(

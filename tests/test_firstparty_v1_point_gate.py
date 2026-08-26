@@ -504,6 +504,10 @@ def test_everything_outside_the_answer_file_is_scored_by_nothing(
 
 
 def test_a_points_key_shipped_by_any_other_action_is_refused(tmp_path: Path) -> None:
+    """Any action outside the registered set, and the refusal names the set
+    rather than one member of it: the key is the ground truth of the two prose
+    actions and of nothing else, and what the refusal is *for* — the verdict
+    swap — is what a `bug-fix` task shipping one would have bought."""
     root = tmp_path / "tasks"
     write_task(root, category="bug-fix", key=points_key_json())
 
@@ -512,6 +516,41 @@ def test_a_points_key_shipped_by_any_other_action_is_refused(tmp_path: Path) -> 
 
     assert "points-key.json" in str(refusal.value)
     assert "investigation" in str(refusal.value)
+    assert "requirement-decomposition" in str(refusal.value)
+    assert "swap this task's whole verdict" in str(refusal.value)
+
+
+def test_a_requirement_decomposition_task_shipping_a_points_key_loads(
+    tmp_path: Path,
+) -> None:
+    """The positive twin of the refusal above. Heap 3's second action is
+    registered as point-keyed (§94.1, ADR-0005's Context), so the key it ships
+    is its own ground truth and the loader takes it down the same branch an
+    `investigation` task goes down — no second gate, no second key shape."""
+    root = tmp_path / "tasks"
+    write_task(root, category="requirement-decomposition", key=points_key_json())
+
+    [task] = load_task_set(root)
+
+    assert task.category == "requirement-decomposition"
+    assert firstparty_v1.is_point_keyed(task)
+    assert task.grading_test_paths == ()
+    assert firstparty_v1.points_key(task).answer_path == ANSWER_PATH
+
+
+def test_a_requirement_decomposition_task_shipping_no_points_key_is_refused(
+    tmp_path: Path,
+) -> None:
+    """The "and must" half of the widening: the registered set says which
+    actions may ship this key *and* which have to, so the second action is held
+    to the mandatory key the first is."""
+    root = tmp_path / "tasks"
+    write_task(root, category="requirement-decomposition", key=None)
+
+    with pytest.raises(IngestError) as refusal:
+        load_task_set(root)
+
+    assert "points-key.json" in str(refusal.value)
 
 
 def test_an_investigation_task_shipping_no_points_key_is_refused(

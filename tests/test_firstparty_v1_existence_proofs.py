@@ -92,6 +92,7 @@ KEYED_ACTIONS = {
     "code-review",
     "test-authoring",
     "investigation",
+    "requirement-decomposition",
 }
 
 # A partner whose held-out tests *pass* on the starting repository the two
@@ -151,8 +152,9 @@ def checked_in_fault_location_tasks() -> tuple[tuple[Task, ...], tuple[Task, ...
 
 
 def test_every_action_that_carries_a_key_registers_a_proof_form() -> None:
-    """The registry is the whole of what is registered: four actions carry a
-    key, and each names what would prove its truth exists."""
+    """The registry is the whole of what is registered: six actions carry a
+    key, and each names what would prove its truth exists — the two whose
+    deliverable is prose sharing one form, because their keys are one shape."""
     assert set(EXISTENCE_PROOFS) == KEYED_ACTIONS
     assert all(proof.form.strip() for proof in EXISTENCE_PROOFS.values())
 

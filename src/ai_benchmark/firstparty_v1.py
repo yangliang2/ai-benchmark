@@ -121,10 +121,12 @@ terrain rules are exempted for this action and the exemption is recorded with
 its reason (`TERRAIN_EXEMPT_ACTIONS`), because what they guard against is a key
 an agent could grep out of its workdir and this key is never in one.
 
-A fifth verdict shape grades the action whose deliverable is prose with no
-code and no held-out test to run against it. An `investigation` task ships no
-grading tests and no mutants; it ships a **points key** instead
-(`points_key`), and its verdict is the **point gate** (`_point_gate`):
+A fifth verdict shape grades the actions whose deliverable is prose with no
+code and no held-out test to run against it. A point-keyed task —
+`investigation`, and `requirement-decomposition` since §94.1 ruled it in
+(`_POINT_CATEGORIES`) — ships no grading tests and no mutants; it ships a
+**points key** instead (`points_key`), and its verdict is the **point gate**
+(`_point_gate`):
 collect the one prompt-named answer file out of the workdir diff — the
 mutation gate's subtree rule narrowed to a single path — and ask a pinned,
 versioned grader one narrow question per planted point and per optional
@@ -360,17 +362,23 @@ FINDINGS_TEST_FILE = "test_findings.py"
 # the repository at large — finds it the way `REPO_DIR` is found.
 REVIEW_DIFF_FILE = "review.diff"
 
-# The one action whose verdict is the point gate, and so the only one that may
+# The actions whose verdict is the point gate, and so the only ones that may
 # ship a points key — mandatory there, because the planted points *are* the
-# ground truth of an investigation: a task with none has nothing its prose
-# could be graded against. Named apart rather than only tested for inline, the
-# way `_MUTATION_CATEGORY` is, so that a typo here is a type error rather than
-# a category nothing matches. Read at load, to say which action may ship a
-# points key and which must; every gate after that reads `is_point_keyed()` —
-# the key on disk — and never a category.
-_POINT_CATEGORY: TaskCategory = "investigation"
+# ground truth of a prose deliverable: a task with none has nothing its prose
+# could be graded against. Two rather than one since §94.1 ruled
+# `requirement-decomposition` into the corpus, which widens a category rule and
+# decides nothing new — ADR-0005's Context names that action as one of the
+# three this gate was built for, and the key, the gate and the two-sided proof
+# are the same shape under both. Named apart rather than only tested for
+# inline, the way `_MUTATION_CATEGORY` is, so that a typo here is a type error
+# rather than a category nothing matches. Read at load, to say which actions
+# may ship a points key and which must; every gate after that reads
+# `is_point_keyed()` — the key on disk — and never a category.
+_POINT_CATEGORIES: frozenset[TaskCategory] = frozenset(
+    {"investigation", "requirement-decomposition"}
+)
 
-# An `investigation` task's ground truth, inside GRADING_DIR beside the
+# A point-keyed task's ground truth, inside GRADING_DIR beside the
 # findings key's precedent and held out exactly as that one is: it stays on the
 # machine, never reaches the workdir the agent works in, and is never disclosed
 # by the prompt. Where it differs from the two keys beside it is that nothing
@@ -792,18 +800,26 @@ TERRAIN_EXEMPT_ACTIONS: dict[TaskCategory, str] = {
         "planted mutant is never in the workdir, and the prompt naming the "
         "module under test is the task's definition rather than a leak"
     ),
-    # The same exemption for the same reason, in the same words — the second
-    # action whose key is not a location an answer names, so the second whose
-    # ground truth an agent could not grep for however the prompt is worded.
-    # Registered rather than left to fall out of `_ground_truth` returning None
-    # for a points key: "no rule fired" and "this action is exempt, for this
-    # reason" are different facts, and only the second survives someone later
-    # teaching `_ground_truth` to read the points key.
-    _POINT_CATEGORY: (
+    # The two point-keyed actions, whose keys are not locations an answer
+    # names, so whose ground truth an agent could not grep for however the
+    # prompt is worded. An entry each, written out rather than iterated over
+    # `_POINT_CATEGORIES`, because a reason of its own is what an entry costs
+    # and one string keyed twice would be an action-shaped apology standing in
+    # for two. Registered rather than left to fall out of `_ground_truth`
+    # returning None for a points key: "no rule fired" and "this action is
+    # exempt, for this reason" are different facts, and only the second
+    # survives someone later teaching `_ground_truth` to read the points key.
+    "investigation": (
         "the terrain rules stop a key being grepped out of the workdir; a "
         "planted point is never in the workdir, and the prompt naming the "
         "deliverable's path and its required sections is the task's definition "
         "rather than a leak"
+    ),
+    "requirement-decomposition": (
+        "the terrain rules stop a key being grepped out of the workdir; the "
+        "deliverable is a prose decomposition graded a planted point at a "
+        "time, and a point planted about a requirement the prompt states in "
+        "full leaves the grep surface those rules guard with nothing behind it"
     ),
 }
 
@@ -1700,8 +1716,8 @@ def is_point_keyed(task: Task) -> bool:
     Read off the key on disk rather than off the category, the way `is_keyed`,
     `is_findings_keyed` and `is_mutation_keyed` are, so that the one gate whose
     ground truth is prose is reached only where that ground truth is there. The
-    one place `category` is read is the loader, which says which action may
-    ship this key and must (`_POINT_CATEGORY`).
+    one place `category` is read is the loader, which says which actions may
+    ship this key and must (`_POINT_CATEGORIES`).
     """
     return (task.grading_dir / POINTS_KEY_FILE).is_file()
 
@@ -1711,8 +1727,8 @@ def points_key(task: Task) -> PointsKey:
 
     Read here and by the gate alone, which is the one way this key differs
     from the two above: those are read a second time by a held-out grading
-    test out of the workdir the overlay copied them into, and an
-    `investigation` task ships no test that runs. The declared answer path
+    test out of the workdir the overlay copied them into, and a point-keyed
+    task ships no test that runs. The declared answer path
     lives here for the same reason theirs does — nothing may hardcode a path
     the prompt does not name.
     """
@@ -2100,15 +2116,15 @@ def _check_task_layout(task: Task) -> None:
             "other action would swap this task's whole verdict for one its "
             "grading directory was never authored for"
         )
-    if is_point_keyed(task) and task.category != _POINT_CATEGORY:
+    if is_point_keyed(task) and task.category not in _POINT_CATEGORIES:
         raise IngestError(
             f"{task.id}: a {task.category} task ships {GRADING_DIR}/"
             f"{POINTS_KEY_FILE} — the points key is the ground truth of "
-            f"{_POINT_CATEGORY}, the one action whose deliverable is prose "
-            "graded a point at a time, and which verdict shape grades a task "
-            "is read off the key being there, so a points key shipped by any "
-            "other action would swap this task's whole verdict for one its "
-            "grading directory was never authored for"
+            f"{sorted(_POINT_CATEGORIES)}, the registered actions whose "
+            "deliverable is prose graded a point at a time, and which verdict "
+            "shape grades a task is read off the key being there, so a points "
+            "key shipped by any other action would swap this task's whole "
+            "verdict for one its grading directory was never authored for"
         )
     if task.category == _MUTATION_CATEGORY:
         # Every check here is a load-time one and not the lint's, for the reason
@@ -2119,11 +2135,11 @@ def _check_task_layout(task: Task) -> None:
         # — a minimum count, disjointness from the test path, the registered
         # existence proof — is the lint's, and stays there.
         _check_mutation_gate_layout(task)
-    elif task.category == _POINT_CATEGORY:
-        # The second action that ships no held-out grading test at all: its
-        # `grading/` holds the points key and nothing that runs, because what
-        # grades it is a grader's rulings over one prose file rather than a
-        # suite. Read at load and not left to the lint, for the reason the two
+    elif task.category in _POINT_CATEGORIES:
+        # The actions that ship no held-out grading test at all: a point-keyed
+        # `grading/` holds the key and nothing that runs, because what grades
+        # it is a grader's rulings over one prose file rather than a suite.
+        # Read at load and not left to the lint, for the reason the two
         # keys above are read at load — `ai-bench run-live` loads a task set
         # and never lints it, so a task the point gate could not grade would
         # otherwise reach a paid run and come back unresolved for a reason
@@ -6007,10 +6023,25 @@ def _proof_answer(task: Task, side: ProofSide) -> str:
     return answer
 
 
-# One entry per action that carries a key. A sixth cannot be added without one:
-# `_unregistered_proof_form_problems` refuses a keyed action this dict does not
-# name, and `_existence_proof_problems` refuses the task that would have been
-# swept under it.
+# The proof both point-keyed actions take, registered under both their keys as
+# one object rather than copied: §94.2 rules the key's shape identical for
+# `requirement-decomposition`, and the rule that reads it back
+# (`_the_reference_resolves_and_the_foil_fails`) is deliberately shared, so a
+# second value here could only ever drift from this one. Nothing in the form
+# names an action, which is what makes the one object right rather than merely
+# convenient.
+_POINT_EXISTENCE_PROOF = ExistenceProof(
+    form=(
+        "the author's reference answer resolving under the point gate, per "
+        "point, and the foil answer failing it, read from archived rulings"
+    ),
+    check=_the_reference_resolves_and_the_foil_fails,
+)
+
+# One entry per action that carries a key. A seventh cannot be added without
+# one: `_unregistered_proof_form_problems` refuses a keyed action this dict does
+# not name, and `_existence_proof_problems` refuses the task that would have
+# been swept under it.
 EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
     "fault-location": ExistenceProof(
         form=(
@@ -6037,13 +6068,8 @@ EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
         ),
         check=_reference_suite_kills_every_mutant,
     ),
-    _POINT_CATEGORY: ExistenceProof(
-        form=(
-            "the author's reference answer resolving under the point gate, per "
-            "point, and the foil answer failing it, read from archived rulings"
-        ),
-        check=_the_reference_resolves_and_the_foil_fails,
-    ),
+    "investigation": _POINT_EXISTENCE_PROOF,
+    "requirement-decomposition": _POINT_EXISTENCE_PROOF,
 }
 
 # What a proof test may not be named after: the characters a finding's file and
@@ -6122,7 +6148,11 @@ def _unregistered_proof_form_problems() -> list[str]:
     whose whole job is noticing.
     """
     unregistered = sorted(
-        (_KEYED_CATEGORIES | {_FINDINGS_CATEGORY, _MUTATION_CATEGORY, _POINT_CATEGORY})
+        (
+            _KEYED_CATEGORIES
+            | {_FINDINGS_CATEGORY, _MUTATION_CATEGORY}
+            | _POINT_CATEGORIES
+        )
         - set(EXISTENCE_PROOFS)
     )
     if not unregistered:
