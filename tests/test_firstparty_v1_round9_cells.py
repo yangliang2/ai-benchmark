@@ -213,9 +213,11 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     the pointer-prose filter reported off the committed archive and gating
     nothing — **§85–§93 are round 10's record**: the proofs gate opened,
     the nine cells swept and 1 of 9 resolved, each red cell read as the named
-    planted points its rulings left uncovered — and **§94 is round 11's
+    planted points its rulings left uncovered — **§94 is round 11's
     rulings**: heap 3's second action, `requirement-decomposition`, taken as
-    the mechanical fill §86 licensed. Nothing was renumbered to make room.
+    the mechanical fill §86 licensed — and **§95 is round 11's
+    pre-registration**, the round's one gate and its two prices written down
+    before the first paid call. Nothing was renumbered to make room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -235,14 +237,16 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
         "round 10's record, §85-§93, each spent once"
     )
     assert numbered.count(94) == 1, "the round-11 rulings, spent once"
-    assert numbered[-1] == 94, (
-        "§94 is round 11's rulings — heap 3's second action, "
-        "`requirement-decomposition` on Python, taken as the mechanical fill "
-        "§86 licensed, three tasks on the three standing columns under sweep "
-        "id round-11 — and the frontier; §95 is still free, and is what "
-        "whatever comes next takes"
+    assert numbered.count(95) == 1, "round 11's pre-registration, spent once"
+    assert numbered[-1] == 95, (
+        "§95 is round 11's pre-registration — the instrument unmoved, the "
+        "two-sided proofs the round's one gate, the proofs priced over 24-48 "
+        "calls and the sweep re-anchored on round 10's own nine cells, nine "
+        "cells under sweep id round-11 with the id register left to be "
+        "filled — and the frontier; §96 is still free, and is what whatever "
+        "comes next takes"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 95)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 96)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
