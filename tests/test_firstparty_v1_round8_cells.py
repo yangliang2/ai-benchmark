@@ -622,9 +622,10 @@ def test_the_register_is_exactly_what_the_sweep_then_did(
     ]
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
-    # `round-10` joined on 2026-08-24, when heap 3's first sweep landed; this
-    # test's claim — the thing swept is the thing registered — is untouched.
+    # `round-10` joined on 2026-08-24, when heap 3's first sweep landed, and
+    # `round-11` on 2026-08-26, when its second action's did; this test's
+    # claim — the thing swept is the thing registered — is untouched.
     assert {run.sweep for run in rows.values()} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        _SWEEP, "round-10",
+        _SWEEP, "round-10", "round-11",
     }

@@ -1352,35 +1352,48 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Section 93's readers: six of the nine rows inside the default view, the
-    reconcile lines and the calibrate table exactly as printed, and the
-    earlier rounds' published tables unmoved."""
+    reconcile lines it quoted named as moved by round 11's arrivals, the
+    calibrate table exactly as printed, and the earlier rounds' published
+    tables unmoved."""
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     reconciled = capsys.readouterr().out
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
     [quoted] = fenced_blocks(note_section(
         "93. Replay, the readers, and heap 3 opened"
     ))[1:2]
-    # One line of the block has moved since, and only one: round 11's three
-    # `requirement-decomposition` tasks, Python controls with no rows, grew
-    # the task-set line by three tasks and three controls while the runs line
-    # stayed. The record is not edited for it — the line it quoted is named
-    # here, round 7's own pattern, and every other one is still held byte
-    # for byte.
-    recorded_task_set = (
+    # The whole block has moved since, in two arrivals: round 11's three
+    # `requirement-decomposition` tasks, Python controls, grew the task-set
+    # line by three tasks and three controls, and the round's sweep
+    # (2026-08-26 — nine rows, six of them claude-code Python) then grew the
+    # runs line and joined the round list. The record is not edited for any
+    # of it — each line it quoted is named here, round 7's own pattern, and
+    # what the readers print instead is asserted beside it.
+    recorded = [
         "  task set   tasks/first-party-v1 — 119 task(s): 52 control(s), "
-        "67 constructed"
-    )
+        "67 constructed",
+        "  runs       237 over 119 task(s)",
+        "  rounds     8 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
+        "sweep round-8, sweep round-10",
+        "             6 keyed on a sweep id, 2 on an as-of date",
+    ]
     quoted_lines = quoted.strip("\n").splitlines()
-    assert recorded_task_set in quoted_lines
-    assert recorded_task_set not in printed
-    for line in quoted_lines:
-        if line == recorded_task_set:
-            continue
-        assert line in printed, line
+    assert quoted_lines == recorded, (
+        "the record no longer quotes the lines its own figures rebuild"
+    )
+    for line in recorded:
+        assert line not in printed, line
     assert (
         "  task set   tasks/first-party-v1 — 122 task(s): 55 control(s), "
         "67 constructed"
     ) in printed
+    assert "  runs       243 over 122 task(s)" in printed
+    assert (
+        "  rounds     9 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
+        "sweep round-8, sweep round-10, sweep round-11"
+    ) in printed
+    assert "             7 keyed on a sweep id, 2 on an as-of date" in printed
     assert printed.count(f"sweep {_SWEEP}") == 1
     assert _CATEGORY not in printed, (
         "the round declared no contrast, so it reaches the report as a "
@@ -1423,7 +1436,13 @@ def test_nothing_from_the_round_reached_the_unified_dataset(
         ):
             assert needle not in flat, needle
 
-    archived = [run for run in runs if run.output]
+    # Round 11's sweep has since landed nine more answers (2026-08-26); §93's
+    # claim is about the archive as this round left it, so they are scoped
+    # back out by sweep id, never by a log filename, and the section's
+    # figures stay unretyped.
+    archived = [
+        run for run in runs if run.output and run.sweep != "round-11"
+    ]
     assert len(archived) == _ARCHIVE_NOW
     assert len(
         [run for run in archived if run.sweep != _SWEEP]
@@ -1431,7 +1450,7 @@ def test_nothing_from_the_round_reached_the_unified_dataset(
     stratum_a = [
         run
         for run in runs
-        if run.sweep != _SWEEP
+        if run.sweep not in {_SWEEP, "round-11"}
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
     assert len(stratum_a) == _STRATUM_A

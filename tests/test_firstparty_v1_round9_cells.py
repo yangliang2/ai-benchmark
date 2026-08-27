@@ -181,12 +181,13 @@ def stratum_a(
     is `grader_calibration_v1.split`'s own rule read here without the replay it
     does for stratum B as well. Scoped to the rows §77.2 registered — every
     sweep before round 10's, which landed the first `investigation` rows on
-    2026-08-24 — by sweep id, never by a log filename; what this fixture names
+    2026-08-24, round 11's `requirement-decomposition` rows following on
+    2026-08-26 — by sweep id, never by a log filename; what this fixture names
     is the archive the gate was read over, and that archive is spent.
     """
     return [
         run for run in runs
-        if run.sweep != "round-10"
+        if run.sweep not in {"round-10", "round-11"}
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
 
@@ -288,10 +289,13 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
     tests. That is the machine verdict the grader will be scored against, and
     computing it before the grader runs peeks at nothing the grader will see.
     """
-    # 41 files since round 10's four sweep logs joined the directory; every
-    # derivation below is scoped to the registered rows by sweep id.
-    assert len(logs) == 41
-    registered = [run for run in runs if run.sweep != "round-10"]
+    # 45 files since round 10's and round 11's four sweep logs each joined the
+    # directory; every derivation below is scoped to the registered rows by
+    # sweep id.
+    assert len(logs) == 45
+    registered = [
+        run for run in runs if run.sweep not in {"round-10", "round-11"}
+    ]
     assert len(registered) == 306
 
     by_category = {
@@ -434,7 +438,9 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
         for run in stratum_a
         if tasks[run.task_id].category == "code-review"
     )
-    registered = [run for run in runs if run.sweep != "round-10"]
+    registered = [
+        run for run in runs if run.sweep not in {"round-10", "round-11"}
+    ]
     synthetic_calls = len(registered) - len(stratum_a)
     assert (keyed_calls, review_calls, synthetic_calls) == (115, 78, 243)
     assert keyed_calls + synthetic_calls == 358
@@ -1042,8 +1048,9 @@ def test_nothing_of_round_9_has_been_swept_and_the_action_landed_in_round_10(
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
     # `round-10` joined on 2026-08-24 — the round that filled heap 3's first
-    # cells; still no `round-9`, which is this test's claim.
+    # cells — and `round-11` on 2026-08-26, the round that filled its second
+    # action's; still no `round-9`, which is this test's claim.
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", "round-10",
+        "round-8", "round-10", "round-11",
     }

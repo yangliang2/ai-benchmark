@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "97bdebb6a53d1286becd9970bbd7ca5b7ae7e5ed23a6414755390d3c5032aa75",
+  "rulings": [
+    {
+      "point_id": "the-name-is-written-into-the-entry",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-readers-match-on-the-exact-who",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "no-roll-of-numbers-exists-yet",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-door-takes-whatever-it-is-handed",
+      "kind": "point",
+      "covered": true,
+      "span": "3. **Resolve names to numbers at the one place a name is typed: `cli.py`.** The `give`, `refuse`, and `history` subcommands all take `who` from argv as a name. Before calling `door.give`/`door.refuse`/`tally.history`, `cli.py` must turn that name into a number using the roll from (1). This keeps the CLI's user-facing shape unchanged (the clerk still types \"Widow Hartley\") while what lands in `book.json` and what `tally.py` matches against is a number.",
+      "verified": true
+    },
+    {
+      "point_id": "the-notes-carry-names-in-prose",
+      "kind": "point",
+      "covered": true,
+      "span": "- **Notes can still name someone.** `door.py`'s `note` field is free text written by the clerk (the README's own example is `\"young Tunnicliffe fetched it\"`). Numbering the `who` field does nothing to stop a name from appearing in `note`, and nothing in the repository gives a mechanical way to detect or scrub that \u2014 it's a clerk-discipline problem the code can't settle, but it sits squarely inside \"the day-book is to name no one.\"",
+      "verified": true
+    },
+    {
+      "point_id": "numbers-at-the-door-and-done",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "82fe24f2b8a77fe0a94649e75721558fb99cf16c35de57888e27279ee6059416",
+  "rulings": [
+    {
+      "point_id": "the-charge-is-written-into-the-line",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-audit-ties-the-roll-to-the-table",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "nothing-names-the-money-a-roll-is-in",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-rates-do-not-come-out-whole",
+      "kind": "point",
+      "covered": true,
+      "span": "What are the new tariff rates in new pence? The conversion 1 new penny = 2.4 old pence does not yield whole numbers for the current rates (5 old pence \u00f7 2.4 \u2248 2.08, 2 \u00f7 2.4 \u2248 0.83, 1 \u00f7 2.4 \u2248 0.42). The parish must have set explicit new rates in new pence when making the changeover. These rates are not derivable from the repository alone.",
+      "verified": true
+    },
+    {
+      "point_id": "the-keeper-reads-money-through-the-cli",
+      "kind": "point",
+      "covered": true,
+      "span": "Modify `cli.py` to display amounts in the correct notation.\n- Update `pence()` to distinguish old pence (e.g., \"5d.\") from new pence (e.g., \"2d.\" or \"2p.\" depending on notation convention).\n- The formatter must know which currency a value is in; pass the day along with the amount, or handle currency/era as a parameter.\n- Ensure output to the user clearly indicates which currency is being shown (especially important for audit reports spanning both eras).",
+      "verified": false
+    },
+    {
+      "point_id": "swap-the-table-and-be-done",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

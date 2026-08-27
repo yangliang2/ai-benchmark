@@ -663,7 +663,8 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
 
     # The model gap the section reads off those denominators, computed from
     # the table rather than pinned twice: one ratio per category, and the claim
-    # that `code-review`'s is the widest is a claim about all of them.
+    # that `code-review`'s is the widest is checked over the categories the
+    # section compared.
     gaps: dict[str, float] = {}
     unpriced: set[str] = set()
     category = ""
@@ -682,14 +683,13 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
                 continue
             haiku, sonnet = figures
             gaps[category] = round(sonnet / haiku, 2)
-    # Round 8's sweep priced `test-authoring`, and round 10's sweep
-    # (2026-08-24, the day its three tasks were authored) priced
-    # `investigation`. The next category to arrive unswept — the one the
-    # sentence above held the door for — is round 11's
-    # `requirement-decomposition` (first task authored 2026-08-26, sweep
-    # pending), so it prints "-" and stays out of the ratios until its sweep
-    # prices it.
-    assert unpriced == {"requirement-decomposition"}
+    # Round 8's sweep priced `test-authoring`, round 10's sweep (2026-08-24,
+    # the day its three tasks were authored) priced `investigation`, and
+    # round 11's sweep (2026-08-26) priced `requirement-decomposition` — the
+    # category the sentence above held the door for — so every category the
+    # corpus holds has priced controls behind it again and nothing is left
+    # out of the ratios.
+    assert unpriced == set()
     assert gaps == {
         "bug-fix": 2.64,
         "investigation": 2.81,
@@ -698,9 +698,20 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
         "fault-location": 2.58,
         "feature-dev": 2.60,
         "refactor": 2.87,
+        "requirement-decomposition": 3.46,
         "test-authoring": 2.44,
     }
-    assert max(gaps, key=lambda name: gaps[name]) == "code-review"
+    # §48's widest-gap sentence compares `code-review` against the five
+    # categories the round could price, quoted below, and over those it still
+    # holds exactly. Round 11's `requirement-decomposition` (3.46) has since
+    # out-widened it — that is round 11's record's reading, named here rather
+    # than edited into a sentence §48 never wrote.
+    compared = {
+        "code-review", "refactor", "bug-fix", "feature-dev",
+        "fault-location", "codebase-comprehension",
+    }
+    assert max(compared, key=lambda name: gaps[name]) == "code-review"
+    assert max(gaps, key=lambda name: gaps[name]) == "requirement-decomposition"
 
     read = prose(note_section("48. The two new categories' rows, as printed"))
     assert (

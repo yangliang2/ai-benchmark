@@ -591,9 +591,11 @@ _PUBLISHED = {
     # because no run exists. Same arrival as round 8's `test-authoring` and
     # round 10's `investigation` above: ticket 04's second and third tasks
     # moved this count from 1 to 3, exactly as pinning the unswept shape was
-    # meant to make visible, and the round's sweep will fill the figures next.
+    # meant to make visible, and Round 11's sweep (2026-08-26, nine cells)
+    # then priced it: no cell of the nine resolved, so the rung floor reads
+    # unsolved.
     "requirement-decomposition": {
-        "(zero-knob)": ("3", "-", "-", "-"),
+        "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "unsolved (n=3)"),
     },
 }
 
@@ -606,7 +608,7 @@ _PUBLISHED_DENOMINATORS = {
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
     "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",
     "investigation": f"{_HAIKU} $0.0843 (n=3), {_SONNET} $0.2368 (n=3)",
-    "requirement-decomposition": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
+    "requirement-decomposition": f"{_HAIKU} $0.0795 (n=3), {_SONNET} $0.2751 (n=3)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other

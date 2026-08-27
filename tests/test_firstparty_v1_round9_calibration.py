@@ -77,11 +77,12 @@ def answers() -> list[calibration.ArchivedAnswer]:
     logs = reconcile_v1.collect_logs([_LOGS])
     # This suite pins §79's run, whose inputs were the rows that existed at
     # that run — every sweep before round 10's, which landed the first
-    # `investigation` rows on 2026-08-24. Scoped by sweep id, never by a log
+    # `investigation` rows on 2026-08-24, round 11's `requirement-decomposition`
+    # rows following on 2026-08-26. Scoped by sweep id, never by a log
     # filename; the constants below stay §79's own, unretyped.
     runs = [
         run for log in logs for run in load_runs(log)
-        if run.sweep != "round-10"
+        if run.sweep not in {"round-10", "round-11"}
     ]
     return calibration.split(tasks, runs)
 

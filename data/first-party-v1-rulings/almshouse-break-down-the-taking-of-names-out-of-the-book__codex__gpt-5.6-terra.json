@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "337ba96bb0fd84ba7ef9278c54fd343bc8e0bb6aba3a95bd0aafcaaaa2d2dcf3",
+  "rulings": [
+    {
+      "point_id": "the-name-is-written-into-the-entry",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-readers-match-on-the-exact-who",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "no-roll-of-numbers-exists-yet",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-door-takes-whatever-it-is-handed",
+      "kind": "point",
+      "covered": true,
+      "span": "Make `give` and `refuse` receive a person number (or a value resolved to one before they are called) and append that number instead of the supplied name.",
+      "verified": true
+    },
+    {
+      "point_id": "the-notes-carry-names-in-prose",
+      "kind": "point",
+      "covered": true,
+      "span": "- Existing names may appear outside `who`: free-text `note` is copied without validation, and the current repository gives examples of a surname in a note.  The requirement says the whole book is to name no one, but the code cannot determine whether each note identifies someone.  Trustees must set a redaction policy and provide/approve review of historical and future notes; automated structural migration alone cannot guarantee this.",
+      "verified": true
+    },
+    {
+      "point_id": "numbers-at-the-door-and-done",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

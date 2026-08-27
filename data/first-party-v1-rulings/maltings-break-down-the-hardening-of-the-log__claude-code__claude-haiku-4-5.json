@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "1c04da0ee94cf375662dc3d141eeaf25ca737e5e62a8f549f37b1b00fcf08c7b",
+  "rulings": [
+    {
+      "point_id": "one-gate-serves-the-reckonings",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-month-end-reads-past-the-gate",
+      "kind": "point",
+      "covered": true,
+      "span": "### 2. Robust JSON parsing in `monthend.carry()`\n**Current behavior:** Line 28 of `monthend.py` reads raw text and calls `json.loads()` without exception handling. A bad line during month-end carry crashes the operation and leaves the file partially rewritten (data loss violation).",
+      "verified": true
+    },
+    {
+      "point_id": "the-rewrite-can-leave-less-than-it-found",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-line-is-the-unit-of-damage",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "bad-is-wider-than-broken-json",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-catch-all-at-the-command-line",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

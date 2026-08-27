@@ -195,8 +195,12 @@ _ROUND_10_CLAUDE_CODE_RUNS = 6
 
 # And what round 11 has added: its three `requirement-decomposition` tasks,
 # Python controls graded by the point gate. Their own round's suites count
-# them; this file only has to keep the live task-set arithmetic honest.
+# them; this file only has to keep the live task-set arithmetic honest. Its
+# sweep landed on 2026-08-26 — six claude-code rows that survive both
+# selections the way rounds 8's and 10's did, and three more Codex ones that
+# do not.
 _ROUND_11_TASKS = 3
+_ROUND_11_CLAUDE_CODE_RUNS = 6
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -1389,8 +1393,9 @@ def test_neither_reader_counts_a_round_7_row(
     None of the three lines the section quotes is what the readers print today,
     and the reason is later rounds rather than this one: round 8's six
     claude-code Python rows survive both selections, the first since round 5
-    to do so, round 10's six (swept 2026-08-24) now do the same, and both
-    rounds' three tasks are in the Python task set. Section 66's claim —
+    to do so, round 10's six (swept 2026-08-24) and round 11's six (swept
+    2026-08-26) now do the same, and all three rounds' three tasks are in the
+    Python task set. Section 66's claim —
     round 7's rows are read and dropped — is checked here in full; what the
     readers print now is derived from the recorded figures and the later
     rounds' own, so that a record of what they printed that day is not edited
@@ -1402,10 +1407,10 @@ def test_neither_reader_counts_a_round_7_row(
         for run in firstparty_v1.load_runs(log)
     ]
     # Every row in the directory: the corpus's Python claude-code rows, round
-    # 6's thirty Codex ones, round 7's forty-two, round 8's nine, and round
-    # 10's nine. Two selections stand between all of them and what the
-    # readers count.
-    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9 + 9
+    # 6's thirty Codex ones, round 7's forty-two, round 8's nine, round 10's
+    # nine, and round 11's nine. Two selections stand between all of them and
+    # what the readers count.
+    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9 + 9 + 9
     assert len([run for run in everything if run.sweep == _SWEEP]) == 42
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1416,7 +1421,7 @@ def test_neither_reader_counts_a_round_7_row(
     )
     assert len(selected) == (
         _CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS
-        + _ROUND_10_CLAUDE_CODE_RUNS
+        + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS
     )
     assert not [run for run in selected if run.sweep == _SWEEP], (
         "section 66's claim: not one round-7 row survives the two selections"
@@ -1430,16 +1435,18 @@ def test_neither_reader_counts_a_round_7_row(
         f"{_PYTHON_CONTROLS} control(s), {_PYTHON_CONSTRUCTED} constructed"
     ) in reconciled
     assert (
-        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS} "
-        f"over {_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS + _ROUND_10_TASKS} "
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS} "
+        f"over "
+        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS} "
         "task(s)"
     ) in reconciled
-    # `sweep round-10` joined the round list when its sweep landed; round 7's
-    # rows are still not in it, which is the claim.
+    # `sweep round-10` joined the round list when its sweep landed, and
+    # `sweep round-11` after it; round 7's rows are still not in it, which is
+    # the claim.
     assert (
-        "  rounds     8 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     9 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10"
+        "sweep round-8, sweep round-10, sweep round-11"
     ) in reconciled
     assert "round-7" not in reconciled
     assert _TERRA not in reconciled
@@ -1478,7 +1485,7 @@ def test_neither_reader_counts_a_round_7_row(
     # the same with its three `investigation` tasks — the task-set line first,
     # and the runs and round lines when its sweep landed on 2026-08-24; round
     # 11's three `requirement-decomposition` tasks then grew the task-set line
-    # again (and only it — a task authored after every sweep has no rows). The
+    # again, and its sweep (2026-08-26) the runs and round lines. The
     # record is not edited for any of that — each line it quoted is rebuilt
     # here from the recorded figures and required to be exactly what the note
     # says, and what the reader prints instead was asserted above off the same

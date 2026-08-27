@@ -916,7 +916,8 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     """§83.9: the archive the A″ readings are derived over, held still.
 
     Landed form: the round's own sweep (2026-08-24-r10-a..d) is the one
-    arrival the registered sentence allowed, and nothing else landed.
+    arrival the registered sentence allowed, and nothing else landed before
+    it; round 11's sweep, landing after, is scoped back out by sweep id.
 
     §80.4's guardrail carried forward, for this round's own reason: §84's
     readings are a derivation over the archive as it stands, so a sweep row
@@ -931,11 +932,19 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     # Landed form: the archive grew by exactly the round's own sweep and by
     # nothing else — 37 logs and 306 rows at registration, plus the sweep's
     # four logs and nine `round-10` rows, keyed on what the rows carry.
-    assert len(logs) == 41
-    assert len(runs) == 315
+    # Round 11's sweep has since landed nine `round-11` rows in four more
+    # logs (2026-08-26); a claim about what stood between this registration
+    # and the round's own sweep scopes them back out by sweep id, never by a
+    # log filename.
+    assert len(logs) == 45
+    assert len(runs) == 324
     late = [run for run in runs if run.sweep == _SWEEP]
     assert len(late) == _CELLS * 3
-    assert len(runs) - len(late) == 306, "nothing else landed in between"
+    since = [run for run in runs if run.sweep == "round-11"]
+    assert len(since) == 9
+    assert len(runs) - len(late) - len(since) == 306, (
+        "nothing else landed in between"
+    )
 
     counted = prose()
     assert (
@@ -984,10 +993,12 @@ def test_the_round_10_cells_are_the_nine_registered(
             _RULINGS, task_id, agent, model
         ).is_file(), f"{task_id} x {agent} x {model}: archived rulings"
 
-    # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
+    # `None` is round 1, which predates `--sweep` and is keyed on `as_of`;
+    # `round-11` joined on 2026-08-26, when heap 3's second action's sweep
+    # landed.
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", _SWEEP,
+        "round-8", _SWEEP, "round-11",
     }
 
 

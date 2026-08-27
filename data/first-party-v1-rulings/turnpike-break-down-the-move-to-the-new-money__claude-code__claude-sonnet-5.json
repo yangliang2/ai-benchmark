@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "01d7234dac814c9cc120712009bea97a72fb080db0a5a7461eeddf891ac78cbe",
+  "rulings": [
+    {
+      "point_id": "the-charge-is-written-into-the-line",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-audit-ties-the-roll-to-the-table",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "nothing-names-the-money-a-roll-is-in",
+      "kind": "point",
+      "covered": true,
+      "span": "`roll.py` treats a line as an opaque `{day, kind, charge, note}` dict with no schema enforcement (`roll.py:15`, `load`/`save` at `roll.py:23-33`). Under P1\u2013P3, currency is inferred solely from comparing a line's `day` against the cutover constant, wherever that comparison is needed. This piece is the decision (and, if taken, the implementation) of whether to instead write an explicit currency/unit field onto every new line in `gate.py`, so readers don't have to re-derive it from a date comparison duplicated across `till.py` and `cli.py`. `roll.py` itself needs no code change either way \u2014 it moves whatever dict shape it's given \u2014 but the shape it's given is decided here, and P2/P3/P4 need that decision made before they can be finished, since it determines what they read and write.",
+      "verified": true
+    },
+    {
+      "point_id": "the-rates-do-not-come-out-whole",
+      "kind": "point",
+      "covered": true,
+      "span": "**What the new-penny rates actually are.** The rule gives a currency *conversion* ratio (2.4 old pence per new penny), not new rates. Dividing today's whole-pence rates by 2.4 does not produce whole numbers \u2014 5d (cart) \u2192 2.08\u2026p, 2d (horse) \u2192 0.83\u2026p, 1d (foot) \u2192 0.41\u2026p. Real decimalisations set rounded new prices rather than carrying exact fractions forever. The repository gives no rounding rule and no authority for one; P1's new table is a parish rate-setting decision the code cannot derive, only accept.",
+      "verified": true
+    },
+    {
+      "point_id": "the-keeper-reads-money-through-the-cli",
+      "kind": "point",
+      "covered": true,
+      "span": "`pence()` (`cli.py:11`) renders any charge as `f\"{amount}d.\"` or `\"free\"`, with no unit distinction. Once charges after Lady Day are new pence, this either needs a day (or the line's own currency) passed in to choose a suffix, or a decision that no suffix change is warranted \u2014 either way it's a piece of work, not a free side effect of P1\u2013P3.",
+      "verified": true
+    },
+    {
+      "point_id": "swap-the-table-and-be-done",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

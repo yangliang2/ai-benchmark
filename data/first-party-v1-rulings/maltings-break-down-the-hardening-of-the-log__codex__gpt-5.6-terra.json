@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "f6a99e8b81aa0b103f78a4eb47651eba14d3e40f75c433494a6b9421e075b96d",
+  "rulings": [
+    {
+      "point_id": "one-gate-serves-the-reckonings",
+      "kind": "point",
+      "covered": true,
+      "span": "Both reckonings currently call `log.read(path)` exclusively, so changing them before that contract exists would either retain the current exceptions or force each consumer to duplicate parsing policy.",
+      "verified": true
+    },
+    {
+      "point_id": "the-month-end-reads-past-the-gate",
+      "kind": "point",
+      "covered": true,
+      "span": "Rework `monthend.carry` to use the shared lossless reader rather than its own `read_text`/`json.loads` loop.",
+      "verified": true
+    },
+    {
+      "point_id": "the-rewrite-can-leave-less-than-it-found",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-line-is-the-unit-of-damage",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "bad-is-wider-than-broken-json",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-catch-all-at-the-command-line",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

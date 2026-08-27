@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "a0e616e00c6041a1bef506eaf183a815e9a2f72096683bb27d7a77f6620490e8",
+  "rulings": [
+    {
+      "point_id": "the-charge-is-written-into-the-line",
+      "kind": "point",
+      "covered": true,
+      "span": "## Pieces\n\n1. Define the currency boundary and representation in `roll.py`.  The roll is\n   the only persisted record and currently exposes `{\"lines\": [...]}` with\n   each `charge` a bare number.  Add a roll-level way to identify the new-pence\n   format (and a migration/normalisation path for an existing, unmarked roll),\n   so `load()` returns a roll whose recorded charges are unambiguously new\n   pence and `save()` preserves that form.  Convert historic stored charges by\n   the exact 5/12 factor (one old penny is 5/12 of a new penny); do not rely on\n   a changed tariff to reinterpret what was actually taken.\n\n2. Establish an exact new-money amount type/rounding policy and conversion\n   helpers at the currency boundary.  Existing `int` annotations and `0`\n   charges assume whole old pence, but the current rates convert to 25/12,\n   5/6, and 5/12 new pence for cart, horse, and foot.  Make the chosen exact\n   representation usable in JSON, summation, comparisons, and display, and\n   retain zero for waved-through crossings.\n\n3. Replace `tariff.py`'s old-pence table and its documentation with new-pence\n   rates, using the shared representation.  Keep `rate()` and `kinds()` as the\n   source of valid crossing kinds, but ensure their result is expressly in new\n   pence.\n\n4. Update `gate.py` to record a new-pence charge in every newly appended line.\n   `cross()` should take the new tariff rate; `wave_through()` remains zero but\n   continues to validate the kind through the new tariff.  Update type hints\n   and docstrings to state the post-Lady-Day unit.",
+      "verified": true
+    },
+    {
+      "point_id": "the-audit-ties-the-roll-to-the-table",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "nothing-names-the-money-a-roll-is-in",
+      "kind": "point",
+      "covered": true,
+      "span": "Define the currency boundary and representation in `roll.py`.  The roll is the only persisted record and currently exposes `{\"lines\": [...]}` with each `charge` a bare number.  Add a roll-level way to identify the new-pence format (and a migration/normalisation path for an existing, unmarked roll), so `load()` returns a roll whose recorded charges are unambiguously new pence and `save()` preserves that form.",
+      "verified": true
+    },
+    {
+      "point_id": "the-rates-do-not-come-out-whole",
+      "kind": "point",
+      "covered": true,
+      "span": "- What is the required treatment of fractions? Exact conversion creates fractional new pence for every current rate.  The repository offers no rounding rule, subunit, decimal notation, or constraint that a charge must remain an integer; silently rounding would change the parish's stated 2.4:1 value.",
+      "verified": true
+    },
+    {
+      "point_id": "the-keeper-reads-money-through-the-cli",
+      "kind": "point",
+      "covered": true,
+      "span": "Update `cli.py` presentation. Replace the `pence(int)` formatter and its call sites in `takings`, `check`, and `rates` so output labels and formatting identify and correctly render new pence, including any non-whole amounts permitted by the agreed representation. Preserve `free` for zero.",
+      "verified": true
+    },
+    {
+      "point_id": "swap-the-table-and-be-done",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

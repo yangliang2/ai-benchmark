@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "b329294f2adc316c5a168478187d62cebae1c9cbf9d9312ccbb7a80f3dc8341e",
+  "rulings": [
+    {
+      "point_id": "the-name-is-written-into-the-entry",
+      "kind": "point",
+      "covered": true,
+      "span": "### 3. Retrofit the entire existing book with numbers\nCreate a migration function that:\n- Loads the current `book.json` (with all existing names)\n- For each entry, looks up or assigns a number to that entry's `\"who\"` name\n- Replaces every `\"who\"` value with its assigned number\n- Saves both the updated book and the roll file\n\nThis handles the requirement that the book as it already stands goes before the visitors with no names in it.",
+      "verified": false
+    },
+    {
+      "point_id": "the-readers-match-on-the-exact-who",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "no-roll-of-numbers-exists-yet",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-door-takes-whatever-it-is-handed",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-notes-carry-names-in-prose",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "numbers-at-the-door-and-done",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

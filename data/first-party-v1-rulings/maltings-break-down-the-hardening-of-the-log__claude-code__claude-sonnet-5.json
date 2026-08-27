@@ -1,0 +1,48 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "fb150645327171e9c62f7821d896bd3d835e614a65854cf426358259497a9e79",
+  "rulings": [
+    {
+      "point_id": "one-gate-serves-the-reckonings",
+      "kind": "point",
+      "covered": true,
+      "span": "Because `reckon.py`'s own docstring says every reckoning takes its lines through `log.read` \"and nowhere else,\" this one fix covers `day()` and `standing()` together.",
+      "verified": true
+    },
+    {
+      "point_id": "the-month-end-reads-past-the-gate",
+      "kind": "point",
+      "covered": true,
+      "span": "**P4. Harden `monthend.carry`'s own parsing (`monthend.py:24-33`).** `carry` does not call `log.read` \u2014 its docstring says this is deliberate, so it \"sees the file exactly as it stands on disk\" (`monthend.py:19-20`). P2 does not cover it. The `for line in raw.splitlines(): entry = json.loads(line)` loop needs the same per-line isolation, against the same P1 definition, so a bad line anywhere in the file can't abort a carry.",
+      "verified": true
+    },
+    {
+      "point_id": "the-rewrite-can-leave-less-than-it-found",
+      "kind": "point",
+      "covered": true,
+      "span": "**P8. Make `log.rewrite` atomic (`log.py:36-40`).** `rewrite` opens\n  `path` with `\"w\"`, which truncates the file before the first replacement\n  line is written, then writes entries one at a time. An exception midway\n  (an unserializable entry, a disk-full error, the process being killed)\n  leaves the file with fewer lines than it had before the call \u2014 exactly\n  the case named in the ruling. Build the new content in a temp file in\n  the same directory, flush and `fsync` it, and swap it in with\n  `os.replace` only once it is completely and durably written, so any\n  failure before the swap leaves `steeplog.jsonl` untouched.\n\n**P9. Make `log.append` failure-safe (`log.py:30-33`).** `append` opens\n  in `\"a\"` mode and writes one line; because it never truncates, a failure\n  *before* the write starts already leaves prior content untouched. The\n  open question is a write interrupted *partway* (crash, full disk\n  mid-write), which could leave a torn trailing line after the last good\n  one. Decide what `append` must additionally guarantee (e.g.\n  `flush()`+`os.fsync()` for durability of a completed call), and confirm\n  that a torn trailing line is a P1/P2 \"line that cannot be made sense of\"\n  concern on the next read, not a loss of lines that were already there \u2014\n  which `\"a\"` mode already protects by construction.\n\n**P10. Carry P8's atomicity into `monthend.carry`.** Carry's call to\n  `log.rewrite(kept, path)` (`monthend.py:38`) is the one real code path\n  that exercises whole-file rewriting (`monthend.py:4-6`: \"the one working\n  that touches the file whole\"). Once P8 lands, confirm the full\n  read-sum-rewrite sequence leaves the file unchanged if any step fails,\n  from the initial read (P4) through the final rewrite (P8) \u2014 including\n  failure after `kept`/`summed` are computed but before or during the\n  write itself.\n\n**P11. Regression tests for both halves.** The repo has no test suite yet\n  (only a `.pytest_cache/` entry in `.gitignore` hints one is expected).\n  Add tests that: (a) feed `log.read` / `reckon.day` / `reckon.standing` /\n  `monthend.carry` a log containing a garbled line and assert the\n  reckoning still completes correctly over the good lines while the bad\n  line is accounted for somewhere; and (b) simulate a failure partway\n  through `log.rewrite` / `log.append` (e.g. monkeypatching `os.replace`,\n  or a write that raises partway) and assert `steeplog.jsonl`'s prior\n  contents are byte-for-byte intact afterward.\n\n## Order and dependencies\n\n- **P1 first.** It is the definition every read-side piece (P2, P4, and\n  the tests in P11) codes against; without it, \"cannot be made sense of\"\n  is undefined and each file would invent its own rule.\n- **P2 and P4 can proceed in parallel** once P1 is settled \u2014 different\n  functions in different files, and `monthend.py` deliberately bypasses\n  `log.read` per its own docstring, so neither blocks the other. Both do,\n  however, need P6's interface (even if not its final storage choice)\n  before they're *done*, since each needs somewhere real to report a\n  rejected line to.\n- **P3 depends on P2** \u2014 `reckon.day`/`reckon.standing` can't be updated\n  to a new `log.read` contract until that contract exists.\n- **P5 depends on P4 and P6 together** \u2014 it's specifically the question\n  of what `carry` does with a line P4 sets aside, and the answer routes\n  either back through P8/`rewrite` (kept verbatim) or into P6's store\n  (diverted), so it can't be settled before either exists.\n- **P7 depends on P3 and P4/P5** \u2014 `cli.py` can only report what\n  `reckon`/`monthend` now return, so it comes after both.\n- **P8 has no dependency on P1-P7.** It is a pure write-path fix to\n  `log.rewrite` and can be done first, independently, in parallel with\n  the whole read-side track. It gates P10.",
+      "verified": true
+    },
+    {
+      "point_id": "a-line-is-the-unit-of-damage",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "bad-is-wider-than-broken-json",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-catch-all-at-the-command-line",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

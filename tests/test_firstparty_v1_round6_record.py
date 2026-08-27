@@ -134,6 +134,12 @@ _ROUND_8_CLAUDE_CODE_RUNS = 6
 _ROUND_10_TASKS = 3
 _ROUND_10_CLAUDE_CODE_RUNS = 6
 
+# And round 11's, on 2026-08-26: three `requirement-decomposition` tasks —
+# Python controls all — swept by six claude-code rows and three more Codex
+# ones. The same shape a third time, named apart for the same reason.
+_ROUND_11_TASKS = 3
+_ROUND_11_CLAUDE_CODE_RUNS = 6
+
 
 def tasks_in_set() -> int:
     """How many tasks the checked-in set holds, as `eval-v1` counts them."""
@@ -976,7 +982,7 @@ def test_neither_reader_counts_a_codex_row(
     `gpt-5.6-terra` rows.
 
     The printed totals are no longer the ones section 58 published, and the
-    reason is not this round: rounds 8 and 10 each swept six claude-code
+    reason is not this round: rounds 8, 10 and 11 each swept six claude-code
     Python rows, which survive both selections. Section 58's claim is about
     round 6's rows and it still holds exactly; the later rounds' arrivals are
     named in the body rather than written back into a record of what the
@@ -987,17 +993,18 @@ def test_neither_reader_counts_a_codex_row(
         for log in reconcile_v1.collect_logs([_LOGS])
         for run in firstparty_v1.load_runs(log)
     ]
-    # Since section 58 was pinned, three rounds have added rows to the same
+    # Since section 58 was pinned, four rounds have added rows to the same
     # directory: round 7's forty-two — twenty-eight claude-code TypeScript ones
     # and fourteen more Codex ones — round 8's nine, six of them claude-code
-    # *Python* ones, and round 10's nine of the same shape (its sweep landed
-    # 2026-08-24). Section 58's own claim is unchanged and is what this test
-    # checks: agent selection drops every round-6 row. What has moved is the
-    # printed total, because round 8's six and round 10's six survive both
+    # *Python* ones, round 10's nine of the same shape (its sweep landed
+    # 2026-08-24), and round 11's nine of it again (2026-08-26). Section 58's
+    # own claim is unchanged and is what this test checks: agent selection
+    # drops every round-6 row. What has moved is the printed total, because
+    # round 8's six, round 10's six and round 11's six survive both
     # selections where round 7's twenty-eight did not. That is those rounds'
     # truth, pinned in their own suites and named here rather than edited into
     # a record of what round 6 printed on the day.
-    assert len(everything) == _CLAUDE_CODE_RUNS + 30 + 42 + 9 + 9
+    assert len(everything) == _CLAUDE_CODE_RUNS + 30 + 42 + 9 + 9 + 9
     assert len([run for run in everything if run.sweep == _SWEEP]) == 30
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1009,7 +1016,7 @@ def test_neither_reader_counts_a_codex_row(
     )
     assert len(selected) == (
         _CLAUDE_CODE_RUNS + _ROUND_8_CLAUDE_CODE_RUNS
-        + _ROUND_10_CLAUDE_CODE_RUNS
+        + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS
     )
     assert not [run for run in selected if run.sweep == _SWEEP]
 
@@ -1017,16 +1024,18 @@ def test_neither_reader_counts_a_codex_row(
     reconciled = capsys.readouterr().out
     assert (
         f"  runs       "
-        f"{_CLAUDE_CODE_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS}"
-        f" over {_TASKS_THE_RUNS_MENTION + _ROUND_8_TASKS + _ROUND_10_TASKS} "
+        f"{_CLAUDE_CODE_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS}"
+        f" over "
+        f"{_TASKS_THE_RUNS_MENTION + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS} "
         "task(s)"
     ) in reconciled
-    # `sweep round-10` joined the round list when its sweep landed; round 6's
-    # rows are still not in it, which is the claim.
+    # `sweep round-10` joined the round list when its sweep landed, and
+    # `sweep round-11` after it; round 6's rows are still not in it, which is
+    # the claim.
     assert (
-        "  rounds     8 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     9 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10"
+        "sweep round-8, sweep round-10, sweep round-11"
     ) in reconciled
     assert "sweep round-6" not in reconciled
     assert "sweep round-7" not in reconciled
