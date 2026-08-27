@@ -1,0 +1,31 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "one-gate-serves-the-reckonings",
+      "text": "The answer says that reckon.py's readers all take the log through log.read — the one place the file is parsed — so the tolerant, setting-aside reading lands once, at that seam, and covers those reckonings at a stroke rather than being built into each reader separately."
+    },
+    {
+      "id": "the-month-end-reads-past-the-gate",
+      "text": "The answer says that monthend.py opens and parses the log file on its own rather than through log.read, so hardening log.read alone leaves the month-end carry still stopped by a bad line — the carry must be brought through the one gate, or hardened as a piece of its own, and the plan says which."
+    },
+    {
+      "id": "the-rewrite-can-leave-less-than-it-found",
+      "text": "The answer says that log.rewrite writes the file whole, in place, so a failure partway through leaves the log holding less than it held, and the safe-write piece — writing aside and swapping, or keeping a copy first — is a piece of its own, separate from the reading side and workable independently of it."
+    },
+    {
+      "id": "a-line-is-the-unit-of-damage",
+      "text": "The answer says that the log is one JSON object per line, appended a line at a time, so damage comes by the line rather than by the file, and setting a bad line aside while the rest are reckoned is possible exactly because of that format."
+    },
+    {
+      "id": "bad-is-wider-than-broken-json",
+      "text": "The answer says that the readers index fields straight out of each line — the day, the working, the quarters — so a line that parses as JSON but lacks a field stops a reckoning just as an unparseable one does, and what log.read promises its callers about a set-aside line is a contract decided once for every reader."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "a-catch-all-at-the-command-line",
+      "text": "The answer claims that catching failures at the command line — wrapping the steward's commands so no error escapes — is by itself enough to meet the ruling, with the modules below needing no work of their own."
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+# The corpus's third `requirement-decomposition` task, round 11's task 3
+# (design note §94, registered §95): the integration/robustness requirement
+# whose pieces the code's own seams dictate, the third of §94.3's three
+# kinds. The deliverable is one prose file — the plan of work the prompt
+# asks for at ANSWER.md — not a change to the code: the repository is the
+# evidence, the requirement is given whole, and a good answer breaks it into
+# the pieces this code actually forces, in the order this code actually
+# forces them.
+#
+# Why it grades the way it does: held-out tests cannot grade a plan — a
+# decomposition may be grounded or may be three confident headings over
+# nothing — so this action's verdict is the point gate. The prompt-named
+# answer file is collected out of the workdir diff and put to a grader one
+# planted point at a time: resolved is every planted point covered by a
+# verbatim span of the answer's own text and no disqualifying claim made,
+# binary. Hence `control: true` — the task registers no difficulty
+# prediction, and a task declaring neither a construction block nor itself a
+# control is refused — and hence no grading/ suite to run: grading/ holds the
+# points key and nothing that executes, because there is no behaviour to
+# test. The key is proved both ways at authoring time (proofs/): the author's
+# reference answer resolves per point and a fluent foil answer fails, rulings
+# archived and read offline by the lint.
+#
+# The requirement is decidable in the closed world of the repository and the
+# prompt alone: the prompt states the maltster's ruling in full — a bad line
+# never again stops a reckoning, is set aside and accounted for rather than
+# dropped, and no working of the log ever leaves the file holding less than
+# it held — and the code is the whole of what the hardening must pass
+# through. It is the kind §94.3 asks for third: where the repository's
+# boundaries are is what decides what can be worked on independently, so the
+# pieces fall where the seams fall. The five planted points are the
+# reasoning an honest decomposition cannot do without: that reckon.py's
+# readers all take the log through log.read, so tolerant reading lands once
+# at that seam and covers them at a stroke; that monthend.py parses the file
+# on its own rather than through log.read, so hardening the one gate leaves
+# the carry uncovered until it is brought through or hardened apart; that
+# log.rewrite writes the file whole in place, so a failed write loses lines
+# and the safe-write piece is its own, independent of the reading side; that
+# the log is one JSON object a line, appended a line at a time, which is
+# exactly why setting aside at the line is possible; and that the readers
+# index fields straight out of each line, so "bad" is wider than broken
+# JSON and the read contract is decided once for every caller. The one
+# disqualifier is the plausible wrong claim the code refutes: that a
+# catch-all at the command line is by itself the whole hardening.
+id: maltings-break-down-the-hardening-of-the-log
+category: requirement-decomposition
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The maltings on the river keeps its steep-house log in one file: a JSON
+  line for every working the house takes — barley steeped, a floor turned,
+  a kilning drawn off — with the day, the working, the quarters it moved
+  and the pit or floor it touched. log.py reads and writes the file,
+  floorwork.py is how a working goes onto the log, reckon.py is what gets
+  read back out, monthend.py carries a finished month to the ledger, and
+  cli.py is how the steward works it.
+
+  The maltster has ruled that before the new season the log is to be
+  hardened. A line that cannot be made sense of is never again to stop a
+  reckoning: such a line is to be set aside and accounted for, not guessed
+  at and not silently dropped. And no working of the log is ever to leave
+  the file holding less than it held before — however a write fails, and
+  whatever a bad line turns out to contain.
+
+  Break that requirement down into a plan of work, and write your plan to
+  ANSWER.md. This is a decomposition of the work as this repository forces
+  it, and the repository is the whole of the evidence: read the code and lay
+  the work out. Your plan carries three sections, under these headings:
+
+  - **Pieces** — the requirement broken into workable pieces, each concrete
+    enough in this repository's own terms that a reader could start on it;
+  - **Order and dependencies** — which pieces block which, and why the code
+    says so;
+  - **Open questions and risks** — what the decomposition cannot settle from
+    the repository alone, named rather than papered over.
+
+  Build none of it, and leave every file of the repository as you found it:
+  the plan at ANSWER.md is the whole deliverable.

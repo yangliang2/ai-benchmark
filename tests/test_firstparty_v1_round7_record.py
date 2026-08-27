@@ -193,11 +193,10 @@ _ROUND_8_TASKS = 3
 _ROUND_10_TASKS = 3
 _ROUND_10_CLAUDE_CODE_RUNS = 6
 
-# And what round 11 has added so far: the corpus's first
-# `requirement-decomposition` task, a Python control graded by the point gate.
-# Its own round's suites count it; this file only has to keep the live
-# task-set arithmetic honest.
-_ROUND_11_TASKS = 1
+# And what round 11 has added: its three `requirement-decomposition` tasks,
+# Python controls graded by the point gate. Their own round's suites count
+# them; this file only has to keep the live task-set arithmetic honest.
+_ROUND_11_TASKS = 3
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -205,9 +204,9 @@ _ROUND_11_TASKS = 1
 _ROUND_8_CLAUDE_CODE_RUNS = 6
 
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 120
+_PYTHON_TASKS = 122
 _PYTHON_TASKS_WITH_RUNS = 113
-_PYTHON_CONTROLS = 53
+_PYTHON_CONTROLS = 55
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -223,7 +222,7 @@ _TYPESCRIPT_COVERAGE = {
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
-    "investigation": 3, "requirement-decomposition": 1,
+    "investigation": 3, "requirement-decomposition": 3,
 }
 
 # The two fields of a calibration block a later round moves, and the only two —
@@ -1186,8 +1185,8 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     # rewrites it: the block is held against today's table line for line, with
     # the lines later rounds moved named here rather than edited there.
     # Round 8 authored the corpus's `test-authoring` tasks, round 10 its three
-    # `investigation` ones and round 11 its first `requirement-decomposition`
-    # one, so the three rows that read `- - 0` when this was recorded now read
+    # `investigation` ones and round 11 its three `requirement-decomposition`
+    # ones, so the three rows that read `- - 0` when this was recorded now read
     # Python cells. Every other line is still printed byte for byte — the
     # column widths included — which is what says round 7's own figures are
     # unmoved.
@@ -1351,8 +1350,8 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # language selection, so this is the one of ticket 06's three counts that
     # moves whenever the corpus grows — 127 when the round was recorded,
     # three more when round 8 authored the corpus's `test-authoring` tasks,
-    # three more when round 10 authored its `investigation` ones, and one
-    # more when round 11 authored its first `requirement-decomposition` one.
+    # three more when round 10 authored its `investigation` ones, and three
+    # more when round 11 authored its `requirement-decomposition` ones.
     # The record is a snapshot and is not edited for that; the live count is
     # asserted here beside the recorded one so the two cannot drift silently
     # apart.
@@ -1478,7 +1477,7 @@ def test_neither_reader_counts_a_round_7_row(
     # with it, and `sweep round-8` joined the round list; round 10 then did
     # the same with its three `investigation` tasks — the task-set line first,
     # and the runs and round lines when its sweep landed on 2026-08-24; round
-    # 11's first `requirement-decomposition` task then grew the task-set line
+    # 11's three `requirement-decomposition` tasks then grew the task-set line
     # again (and only it — a task authored after every sweep has no rows). The
     # record is not edited for any of that — each line it quoted is rebuilt
     # here from the recorded figures and required to be exactly what the note

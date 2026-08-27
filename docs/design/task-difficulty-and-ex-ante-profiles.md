@@ -6495,16 +6495,16 @@ merged dataset; the four together are the merged one record for record:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-a.jsonl --data /tmp/r8replay/a.jsonl
-  evaluated 1 runs over 134 tasks (1 resolved)
+  evaluated 1 runs over 136 tasks (1 resolved)
   merged 1 records into /tmp/r8replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-b.jsonl --data /tmp/r8replay/b.jsonl
-  evaluated 2 runs over 134 tasks (2 resolved)
+  evaluated 2 runs over 136 tasks (2 resolved)
   merged 2 records into /tmp/r8replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-c.jsonl --data /tmp/r8replay/c.jsonl
-  evaluated 3 runs over 134 tasks (3 resolved)
+  evaluated 3 runs over 136 tasks (3 resolved)
   merged 3 records into /tmp/r8replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-d.jsonl --data /tmp/r8replay/d.jsonl
-  evaluated 3 runs over 134 tasks (2 resolved)
+  evaluated 3 runs over 136 tasks (2 resolved)
   merged 3 records into /tmp/r8replay/d.jsonl (3 total)
 ```
 
@@ -8897,16 +8897,16 @@ dataset of its own:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-a.jsonl --data /tmp/r10replay/a.jsonl
-  evaluated 1 runs over 134 tasks (0 resolved)
+  evaluated 1 runs over 136 tasks (0 resolved)
   merged 1 records into /tmp/r10replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-b.jsonl --data /tmp/r10replay/b.jsonl
-  evaluated 2 runs over 134 tasks (0 resolved)
+  evaluated 2 runs over 136 tasks (0 resolved)
   merged 2 records into /tmp/r10replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-c.jsonl --data /tmp/r10replay/c.jsonl
-  evaluated 3 runs over 134 tasks (1 resolved)
+  evaluated 3 runs over 136 tasks (1 resolved)
   merged 3 records into /tmp/r10replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-d.jsonl --data /tmp/r10replay/d.jsonl
-  evaluated 3 runs over 134 tasks (0 resolved)
+  evaluated 3 runs over 136 tasks (0 resolved)
   merged 3 records into /tmp/r10replay/d.jsonl (3 total)
 ```
 
@@ -9361,6 +9361,28 @@ it does, so there is nothing to list here: **the id register for round 11 is
 left explicitly to be filled in, in this section, before the sweep, by the
 round's task-authoring tickets** — the one that lands the last of the three,
 once all three ids exist.
+
+**Filled in 2026-08-26, by the round's second task-authoring ticket, exactly
+where this section left it.** The three are the tasks the round authored —
+each proved both ways under 95.4's gate before this line was written — read
+off `tasks/first-party-v1/` as the corpus actually holds them:
+
+```
+turnpike-break-down-the-move-to-the-new-money              (a tollhouse's roll; a cross-cutting change every module takes)
+almshouse-break-down-the-taking-of-names-out-of-the-book   (an almshouse's book; a policy change with a data migration behind it)
+maltings-break-down-the-hardening-of-the-log               (a maltings' log; a robustness requirement cut at the code's own seams)
+```
+
+**This list is the register.** Three ids, all `requirement-decomposition`, and
+they are **every `requirement-decomposition` task the corpus holds** — the
+round sweeps the action entire and re-runs nothing any combination has already
+answered. Three different kinds of requirement, deliberately, §94.3's three:
+a change the repository's own structure forces through every module, a policy
+change whose pieces and their order are dictated by what already sits on disk
+and by what must be converted before anything can read it, and an
+integration/robustness requirement whose pieces the code's own seams dictate —
+three tasks that asked one question three times would measure one thing three
+times.
 
 **How the sweep is invoked.** Sweep id **`round-11`**, on every invocation of
 it. Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry

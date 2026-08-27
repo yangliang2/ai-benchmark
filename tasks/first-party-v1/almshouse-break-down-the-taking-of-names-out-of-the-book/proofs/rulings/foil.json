@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "a8b2fff8166fe7465ba995904e08f01ebb8d1b4fb808a7218b00024e51ac3d73",
+  "answer_sha256": "689f01cee1297556bf4b4367d055df2ae91ec2f93f6b180e9cec69e7db045615",
+  "rulings": [
+    {
+      "point_id": "the-name-is-written-into-the-entry",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-readers-match-on-the-exact-who",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "no-roll-of-numbers-exists-yet",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-door-takes-whatever-it-is-handed",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-notes-carry-names-in-prose",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "numbers-at-the-door-and-done",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "Writing numbers at the door from the ruled day on is by itself the whole change: the book as already written and the reading side need no work of their own, because a book is only ever what gets written into it, and from Michaelmas what gets written will be numbers.",
+      "verified": true
+    }
+  ]
+}

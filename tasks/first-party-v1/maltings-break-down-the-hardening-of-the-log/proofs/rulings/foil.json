@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "02bc02d1f1cf05487585f7f39d61791f43501afbf57c41d235055b7899270d13",
+  "answer_sha256": "5f4cce250e62773d6e500f11e86a83814a897f815d5f811f2f3dd277310c4549",
+  "rulings": [
+    {
+      "point_id": "one-gate-serves-the-reckonings",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-month-end-reads-past-the-gate",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-rewrite-can-leave-less-than-it-found",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-line-is-the-unit-of-damage",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "bad-is-wider-than-broken-json",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-catch-all-at-the-command-line",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "Catching failures at the command line \u2014 wrapping the steward's commands so no error escapes \u2014 is by itself enough to meet the ruling: the modules below need no work of their own",
+      "verified": true
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+# The corpus's second `requirement-decomposition` task, round 11's task 2
+# (design note §94, registered §95): the policy change with a data migration
+# behind it, the second of §94.3's three kinds. The deliverable is one prose
+# file — the plan of work the prompt asks for at ANSWER.md — not a change to
+# the code: the repository is the evidence, the requirement is given whole,
+# and a good answer breaks it into the pieces this code actually forces, in
+# the order this code actually forces them.
+#
+# Why it grades the way it does: held-out tests cannot grade a plan — a
+# decomposition may be grounded or may be three confident headings over
+# nothing — so this action's verdict is the point gate. The prompt-named
+# answer file is collected out of the workdir diff and put to a grader one
+# planted point at a time: resolved is every planted point covered by a
+# verbatim span of the answer's own text and no disqualifying claim made,
+# binary. Hence `control: true` — the task registers no difficulty
+# prediction, and a task declaring neither a construction block nor itself a
+# control is refused — and hence no grading/ suite to run: grading/ holds the
+# points key and nothing that executes, because there is no behaviour to
+# test. The key is proved both ways at authoring time (proofs/): the author's
+# reference answer resolves per point and a fluent foil answer fails, rulings
+# archived and read offline by the lint.
+#
+# The requirement is decidable in the closed world of the repository and the
+# prompt alone: the prompt states the trustees' rule in full — the book
+# names no one, a number stands for each person, the naming roll is the
+# clerk's and kept apart, and the rule covers what the book already holds —
+# and the code is the whole of what the change must pass through. It is the
+# migration kind §94.3 asks for second: the pieces and their order are
+# dictated by what already sits in the book on disk and by what must be
+# converted before the readers can be trusted again. The five planted points
+# are the reasoning an honest decomposition cannot do without: that door.py
+# writes who a dole went to into each entry as handed in, so the book as
+# already written holds names and some piece must convert or close out the
+# stored entries; that tally.py's readers match and group on the exact "who"
+# string over the whole book, so a half-converted book splits one person's
+# record in two and the conversion must land with the switch; that nothing
+# in the repository maps a person to a number, so the clerk's naming roll is
+# a new piece the conversion is blocked on; that cli.py takes whoever it is
+# handed straight through, so the door-side translation is its own piece
+# tied to the switch; and that notes are free prose stored word for word, so
+# names inside them cannot be found mechanically and belong among the open
+# questions. The one disqualifier is the plausible wrong claim the code
+# refutes: that writing numbers at the door from the ruled day on is by
+# itself the whole change.
+id: almshouse-break-down-the-taking-of-names-out-of-the-book
+category: requirement-decomposition
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The almshouse by the churchyard keeps its day-book in one JSON file: an
+  entry for every dole handed out — or refused — at the door, with the day,
+  who it concerned, the kind of dole and a note where one was worth making.
+  book.py reads and writes the file, basket.py is the table of doles,
+  door.py is how an entry goes into the book, tally.py is what gets read
+  back out, and cli.py is how the clerk works it.
+
+  The trustees have ruled that from Michaelmas the day-book is to name no
+  one. Each person the almshouse helps is to stand in the book as a number,
+  and the roll that says which number is which person is to be the clerk's
+  alone, kept apart from the book and never inside it. The rule covers the
+  whole book, not only what is written from Michaelmas on: the book as it
+  already stands goes before the visitors, and it too is to name no one.
+
+  Break that requirement down into a plan of work, and write your plan to
+  ANSWER.md. This is a decomposition of the work as this repository forces
+  it, and the repository is the whole of the evidence: read the code and lay
+  the work out. Your plan carries three sections, under these headings:
+
+  - **Pieces** — the requirement broken into workable pieces, each concrete
+    enough in this repository's own terms that a reader could start on it;
+  - **Order and dependencies** — which pieces block which, and why the code
+    says so;
+  - **Open questions and risks** — what the decomposition cannot settle from
+    the repository alone, named rather than papered over.
+
+  Build none of it, and leave every file of the repository as you found it:
+  the plan at ANSWER.md is the whole deliverable.

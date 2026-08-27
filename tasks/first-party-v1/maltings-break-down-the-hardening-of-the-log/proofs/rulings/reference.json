@@ -1,0 +1,49 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "02bc02d1f1cf05487585f7f39d61791f43501afbf57c41d235055b7899270d13",
+  "answer_sha256": "a247c48e247c07e07bb525c55955c7f5bcbe7f0fa4f795a1c77aea342c236cd9",
+  "rulings": [
+    {
+      "point_id": "one-gate-serves-the-reckonings",
+      "kind": "point",
+      "covered": true,
+      "span": "`reckon.py`'s readers all take the log through `log.read` \u2014 `day` and `standing` both iterate over what it returns, and the file is parsed in that one place. So the setting-aside behaviour lands once, in `log.read`: a line that fails to parse is set aside, not raised, and the good lines come back. Landing it at that seam covers those reckonings at a stroke rather than being built into each reader separately.",
+      "verified": true
+    },
+    {
+      "point_id": "the-month-end-reads-past-the-gate",
+      "kind": "point",
+      "covered": true,
+      "span": "`monthend.carry` opens and parses the log file on its own \u2014 it reads the text off disk and `json.loads` each line itself \u2014 rather than going through `log.read`. So hardening `log.read` alone leaves the carry still stopped by a bad line. The plan's choice: bring the carry through the one gate, so Piece 1 covers it. It should be reworked to take its lines from `log.read` first, before the tolerant behaviour is called done \u2014 the alternative, hardening its private parse as a piece of its own, leaves two gates to keep honest forever.",
+      "verified": true
+    },
+    {
+      "point_id": "the-rewrite-can-leave-less-than-it-found",
+      "kind": "point",
+      "covered": true,
+      "span": "`log.rewrite` writes the file whole, in\nplace: it opens the log for writing and puts the kept lines back one by\none. A failure partway through leaves the log holding less than it held \u2014\nthe second half of the ruling, breached by the write path rather than the\nread path. The piece is a safe write \u2014 writing aside and swapping the file\nin, or keeping a copy before the rewrite begins \u2014 and it is a piece of its\nown, separate from the reading side and workable independently of it, since\nnothing in Pieces 1\u20133 touches how the file is written.",
+      "verified": true
+    },
+    {
+      "point_id": "a-line-is-the-unit-of-damage",
+      "kind": "point",
+      "covered": true,
+      "span": "The log is one JSON object per line, appended a line at a time (`log.append` writes its one line and is done), so damage comes by the line rather than by the file: a torn write or a stray hand spoils single lines, and setting a bad line aside while the rest are reckoned is possible exactly because of that format.",
+      "verified": true
+    },
+    {
+      "point_id": "bad-is-wider-than-broken-json",
+      "kind": "point",
+      "covered": true,
+      "span": "**Piece 2 \u2014 the read contract, decided with Piece 1.** *Bad* is wider than\nbroken JSON: `reckon.day` indexes `line[\"day\"]`, `line[\"working\"]` and\n`line[\"quarters\"]` straight out of each line, so a line that parses as\nJSON but lacks a field stops a reckoning just as an unparseable one does.\nWhat `log.read` promises its callers about a set-aside line \u2014 which fields\na returned line is guaranteed to carry, and how the set-aside ones are\nhanded back (a count, a second return, a side list) \u2014 is a contract decided\nonce, for every reader, and it is the design half of Piece 1 rather than a\nseparate landing.",
+      "verified": true
+    },
+    {
+      "point_id": "a-catch-all-at-the-command-line",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

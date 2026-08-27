@@ -1021,8 +1021,8 @@ def test_the_coverage_table_and_the_two_updated_sentences(
 
     The quoted block is compared with the printed table line for line — no
     stale line when it was recorded, because the record was written after the
-    fill it records; one line has moved since, round 11's first
-    `requirement-decomposition` task turning the row this record quotes as
+    fill it records; one line has moved since, round 11's three
+    `requirement-decomposition` tasks turning the row this record quotes as
     `- - 0` into a Python cell, and it is named below in round 7's pattern
     rather than edited in the record. The `investigation × typescript` zero
     is disclosed as zero by absence, and the docstring and CONTEXT.md
@@ -1036,9 +1036,9 @@ def test_the_coverage_table_and_the_two_updated_sentences(
         if language == "python" and surface == "application"
     }
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
-    # 119 when §90 was recorded; round 11's first `requirement-decomposition`
-    # task moved the live column to 120.
-    assert sum(python.values()) == 120
+    # 119 when §90 was recorded; round 11's three `requirement-decomposition`
+    # tasks moved the live column to 122.
+    assert sum(python.values()) == 122
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
@@ -1066,7 +1066,7 @@ def test_the_coverage_table_and_the_two_updated_sentences(
         line.split()
         for line in printed.splitlines()
         if line.startswith("  requirement-decomposition")
-    ] == [["requirement-decomposition", "application", "python", "1"]]
+    ] == [["requirement-decomposition", "application", "python", "3"]]
 
     said = prose(note_section("90. The coverage table, as the lint prints it"))
     assert (
@@ -1360,9 +1360,9 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     [quoted] = fenced_blocks(note_section(
         "93. Replay, the readers, and heap 3 opened"
     ))[1:2]
-    # One line of the block has moved since, and only one: round 11's first
-    # `requirement-decomposition` task, a Python control with no rows, grew
-    # the task-set line by one task and one control while the runs line
+    # One line of the block has moved since, and only one: round 11's three
+    # `requirement-decomposition` tasks, Python controls with no rows, grew
+    # the task-set line by three tasks and three controls while the runs line
     # stayed. The record is not edited for it — the line it quoted is named
     # here, round 7's own pattern, and every other one is still held byte
     # for byte.
@@ -1378,7 +1378,7 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
             continue
         assert line in printed, line
     assert (
-        "  task set   tasks/first-party-v1 — 120 task(s): 53 control(s), "
+        "  task set   tasks/first-party-v1 — 122 task(s): 55 control(s), "
         "67 constructed"
     ) in printed
     assert printed.count(f"sweep {_SWEEP}") == 1

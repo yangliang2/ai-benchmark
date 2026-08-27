@@ -1,0 +1,31 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-name-is-written-into-the-entry",
+      "text": "The answer says that door.py writes who a dole went to into each entry exactly as handed in, so the book as already written holds names entry by entry, and the plan includes a piece that converts or closes out those stored entries — writing numbers from the ruled day on does not empty the book of the names it already holds."
+    },
+    {
+      "id": "the-readers-match-on-the-exact-who",
+      "text": "The answer says that tally.py's readers match and group entries by the exact string the entry names — history compares each entry's who to the asked-for who, and often counts by it — so a book half in names and half in numbers splits one person's record in two, and the conversion of the stored entries and the switch in what is written must land together."
+    },
+    {
+      "id": "no-roll-of-numbers-exists-yet",
+      "text": "The answer says that nothing in the repository maps a person to a number — no module or file holds such a roll — so the clerk's naming roll is a piece of its own, and the conversion of the stored entries is blocked on it, because converting an entry means looking its name up in that roll."
+    },
+    {
+      "id": "the-door-takes-whatever-it-is-handed",
+      "text": "The answer includes a piece for the door side — cli.py takes who an entry concerns free on the command line and door.py writes it through unchecked — tied to the switch, so that from the ruled day what reaches the book is the number and not the name the clerk was given at the door."
+    },
+    {
+      "id": "the-notes-carry-names-in-prose",
+      "text": "The answer says that the note field is free prose stored word for word — and the repository's own examples put people's names inside notes — so names in notes cannot be found and replaced mechanically, and what to do about them is put among the open questions rather than claimed done by the conversion pass."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "numbers-at-the-door-and-done",
+      "text": "The answer claims that writing numbers at the door from the ruled day on is by itself the whole change, with the book as already written and the reading side needing no work of their own."
+    }
+  ]
+}

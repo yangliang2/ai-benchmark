@@ -155,19 +155,19 @@ _MODULES_UNDER_TEST = ("lido.py", "playbill.py", "register.py")
 # Section 73's coverage figure, per language. The Python column is round 7's
 # plus this round's three; the TypeScript rows are round 7's exactly. Two rows
 # joined after the round it records: round 10 authored its three
-# `investigation` tasks and round 11 its first `requirement-decomposition`
-# one, Python controls all, and this live read moves with the corpus while
+# `investigation` tasks and round 11 its three `requirement-decomposition`
+# ones, Python controls all, and this live read moves with the corpus while
 # the note's own quoted table stays the snapshot it was.
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 4, "code-review": 8, "test-authoring": 3,
-    "investigation": 3, "requirement-decomposition": 1,
+    "investigation": 3, "requirement-decomposition": 3,
 }
 _TYPESCRIPT_COVERAGE = {
     "bug-fix": 3, "fault-location": 3, "feature-dev": 3, "refactor": 3,
     "code-review": 2,
 }
-_PYTHON_TASKS = 120
+_PYTHON_TASKS = 122
 # What the runs line counts instead: the Python tasks that have rows. The two
 # were one number until round 10 authored tasks after every sweep — a task
 # with no rows joins the task-set line and not this one.
@@ -180,16 +180,15 @@ _PYTHON_TASKS_WITH_RUNS = 116
 _ROUND_10_TASKS = 3
 _ROUND_10_ROWS = 9
 _ROUND_10_CLAUDE_CODE_ROWS = 6
-# And what round 11 has authored so far: the corpus's first
-# `requirement-decomposition` task, a Python control with no rows yet. Its
-# own round's suites count it; this file only keeps the live arithmetic
-# honest.
-_ROUND_11_TASKS = 1
+# And what round 11 has authored: its three `requirement-decomposition`
+# tasks, Python controls with no rows yet. Their own round's suites count
+# them; this file only keeps the live arithmetic honest.
+_ROUND_11_TASKS = 3
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
 _CLAUDE_CODE_PYTHON_RUNS = 231
-_PYTHON_CONTROLS = 53
+_PYTHON_CONTROLS = 55
 _PYTHON_CONSTRUCTED = 67
 _ALL_ROWS = 306
 _ROUND_8_ROWS = 9
@@ -1099,7 +1098,7 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
 
     Two lines of the block have moved since, each by a later round authoring
     a category's first tasks: round 10 authored its three `investigation`
-    tasks and round 11 its first `requirement-decomposition` one, so the rows
+    tasks and round 11 its three `requirement-decomposition` ones, so the rows
     this record quotes as `- - 0` now print the Python cells those tasks
     fill. The record is not edited for either — the page it quotes is what
     the page was — so the lines are named below, round 7's own pattern, and

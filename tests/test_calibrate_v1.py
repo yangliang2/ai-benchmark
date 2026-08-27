@@ -586,14 +586,14 @@ _PUBLISHED = {
     "investigation": {
         "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "sonnet-only (n=3)"),
     },
-    # Round 11's category, authored (ticket 03) and not yet swept: one
-    # declared control, so one zero-knob row, every figure a "-" because no
-    # run exists. Same arrival as round 8's `test-authoring` and round 10's
-    # `investigation` above: pinning the unswept shape makes the round's
-    # second and third tasks, and then its sweep, visible as changes to this
-    # block.
+    # Round 11's category, authored (tickets 03 and 04) and not yet swept:
+    # three declared controls, so one zero-knob row, every figure a "-"
+    # because no run exists. Same arrival as round 8's `test-authoring` and
+    # round 10's `investigation` above: ticket 04's second and third tasks
+    # moved this count from 1 to 3, exactly as pinning the unswept shape was
+    # meant to make visible, and the round's sweep will fill the figures next.
     "requirement-decomposition": {
-        "(zero-knob)": ("1", "-", "-", "-"),
+        "(zero-knob)": ("3", "-", "-", "-"),
     },
 }
 
@@ -624,7 +624,7 @@ _PUBLISHED_MIX = {
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
     "test-authoring": "3 single-file; 3 hand-authored",
     "investigation": "3 single-file; 3 hand-authored",
-    "requirement-decomposition": "1 single-file; 1 hand-authored",
+    "requirement-decomposition": "3 single-file; 3 hand-authored",
 }
 
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {

@@ -37,10 +37,12 @@ would then read as met on text §95 never wrote.
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
 two tests read the round forwards, and they are two tests rather than one
 because they die at different tickets: no `round-11` row exists yet (retired
-by the ticket that lands the sweep), and the corpus holds the round's first
-`requirement-decomposition` task and no second or third.
+by the ticket that lands the sweep), and §95.7's register — filled by the
+round's second task-authoring ticket — names exactly the
+`requirement-decomposition` tasks the corpus holds, each proved both ways.
 """
 
+import json
 import re
 from pathlib import Path
 from typing import get_args
@@ -193,10 +195,11 @@ def register_blocks() -> list[dict[str, str]]:
     register form, looked for by shape rather than by position or by a quoted
     id.
 
-    §95.7 leaves the register explicitly to be filled in before the sweep, so
-    today this must find none; when the authoring ticket fills it, the same
-    shape check finds exactly one and a second id-shaped block appearing
-    anywhere in the section is caught as the ambiguity it would be.
+    §95.7 left the register explicitly to be filled in before the sweep, and
+    before the fill this found none; now that the round's second authoring
+    ticket has filled it, the same shape check finds exactly one, and a second
+    id-shaped block appearing anywhere in the section is caught as the
+    ambiguity it would be.
     """
     found: list[dict[str, str]] = []
     for block in blocks():
@@ -836,11 +839,14 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     id register left explicitly to be filled in before the sweep.
 
     What this checks is the registration's shape: the columns, the count, the
-    language, the control declaration, the sweep's invocation, and that the id
-    register is registered *as empty* rather than quietly omitted. The three
-    ids do not exist yet — the corpus check is the forward-reading test's at
-    the end of this file — so the pin here is that no id-shaped block stands in
-    the section and the section says why.
+    language, the control declaration, the sweep's invocation, and the id
+    register — registered *as empty*, said to be left for the authoring
+    tickets, and now filled exactly where the section left it, dated and
+    attributed rather than blended into the registration-time prose. What the
+    filled ids claim about the corpus is the forward-reading test's at the end
+    of this file; the pin here is that exactly one id-shaped block stands in
+    the section and each of its lines carries a gloss naming the kind of
+    requirement its task puts.
     """
     counted = prose()
 
@@ -873,8 +879,10 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     ) in counted
     assert f"`calibrate-v1` gains no `{_CATEGORY}` multiplier row" in counted
 
-    # The register: registered as empty, and said to be left for the authoring
-    # ticket to fill exactly where the section leaves it.
+    # The register: left for the authoring tickets, said to be left, and now
+    # filled where the section said it would be. The registration-time prose
+    # stays as the record it is — it was true as written — and the fill is
+    # dated and attributed rather than blended into it.
     assert "**The three task ids do not exist yet.**" in counted
     assert (
         f"**the id register for round 11 is left explicitly to be filled in, "
@@ -883,11 +891,26 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     ) in counted
     assert f"corpus holds no `{_CATEGORY}` task as this is written" in counted
     assert "**disclosed zero**" in counted
-    assert register_blocks() == [], (
-        "no fenced block of §95 is an id register yet — the fill is a later "
-        "ticket's, and a block appearing here early would be a register nobody "
-        "wrote"
-    )
+    assert (
+        "**Filled in 2026-08-26, by the round's second task-authoring ticket, "
+        "exactly where this section left it.**"
+    ) in counted
+    assert "**This list is the register.**" in counted
+    assert f"**every `{_CATEGORY}` task the corpus holds**" in counted
+    assert (
+        "the round sweeps the action entire and re-runs nothing any "
+        "combination has already answered"
+    ) in counted
+
+    # Exactly one fenced block of the section is a register of task ids — the
+    # one the fill wrote, in §68.1's form: an id a line, each with a one-line
+    # gloss naming the kind of requirement its task puts. Before the fill this
+    # asserted no such block existed; what the ids claim about the corpus is
+    # the forward-reading test's below.
+    [register] = register_blocks()
+    assert len(register) == _CELLS
+    for task_id, gloss in register.items():
+        assert gloss, f"{task_id}: a register line carries its gloss"
 
     # The invocation.
     assert f"Sweep id **`{_SWEEP}`**" in counted
@@ -1003,26 +1026,56 @@ def test_no_round_11_row_exists_yet(runs: list[firstparty_v1.Run]) -> None:
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 
-def test_the_corpus_holds_the_first_requirement_decomposition_task_and_no_other_yet(
+def test_the_register_names_every_requirement_decomposition_task_and_each_is_proved(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test, its no-task half retired by the round's
-    first authored task.
+    """The second forward-reading test, in its final form: the register check.
 
-    This test used to say the corpus held no `requirement-decomposition` task,
-    and it was right until the round's first authoring ticket landed one. What
-    is worth pinning between that ticket and the next is the caught-up claim
-    read forwards: the corpus holds task 1 of the three and no second or third
-    yet. The round's second authoring ticket replaces this with the register
-    check — the three ids §95.7 left to be filled in, against the three tasks
-    then checked in.
+    Its first form said the corpus held no `requirement-decomposition` task;
+    the round's first authoring ticket caught it up to "task 1 and no second
+    or third yet"; the second authoring ticket landed the other two and filled
+    §95.7's register, which is the form this test now holds the round to. The
+    register is read against the corpus rather than restated: the three ids
+    exist, they are exactly the `requirement-decomposition` tasks the corpus
+    holds — no fourth anywhere — every one is the Python application-surface
+    declared control §95.7 registered, and each ships a points key and a
+    two-sided proof that is green under the pinned instrument, the verdicts
+    recomputed through `_point_verdict` rather than taken on the archives'
+    word.
     """
+    [register] = register_blocks()
     authored = sorted(
         task_id for task_id, task in tasks.items() if task.category == _CATEGORY
     )
-    assert authored == ["turnpike-break-down-the-move-to-the-new-money"]
+    assert sorted(register) == authored, "the register is the corpus, whole"
+    assert len(register) == _CELLS, "and the corpus holds no fourth"
+
+    for task_id in register:
+        task = tasks[task_id]
+        assert task.category == _CATEGORY
+        assert task.language == "python"
+        assert task.surface == "application"
+        assert task.control is True
+        assert task.construction is None
+
+        key = firstparty_v1.points_key(task)
+        questions = firstparty_v1._point_questions(key)
+        for side in firstparty_v1.PROOF_SIDES:
+            answer = (task.proofs_dir / side.answer_file).read_text(
+                encoding="utf-8"
+            )
+            raw = firstparty_v1.proof_rulings_file(task, side).read_text(
+                encoding="utf-8"
+            )
+            archive = firstparty_v1.ProofRulings.model_validate(json.loads(raw))
+            assert archive.grader_version == point_grader.GRADER_VERSION
+            assert (
+                firstparty_v1._point_verdict(questions, archive, answer)
+                is side.resolves
+            ), f"{task_id}: {side.name}"
+
     table = firstparty_v1.coverage_table(list(tasks.values()))
     assert (_CATEGORY, "-", "-", 0) not in table, "the zero row is gone"
-    assert [row for row in table if row[0] == _CATEGORY and row[3]]
+    assert [row for row in table if row[0] == _CATEGORY and row[3] == _CELLS]
     # And the action it follows is the one that filled its row last round.
     assert [row for row in table if row[0] == _ANCHOR_CATEGORY and row[3]]
