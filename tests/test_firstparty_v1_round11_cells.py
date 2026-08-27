@@ -73,6 +73,11 @@ _RULINGS_HEADING = "## Round 11 rulings — 2026-08-25"
 # string typed twice in this file.
 _RECORD_HEADING = "## Round 10 record — 2026-08-24"
 
+# §96, which lands the day after §95 and supersedes 95.5's call count without
+# editing a line of it: sliced separately for the same reason §95 is, so that
+# what the amendment re-registered is never read off §95's own text.
+_AMENDMENT_HEADING = "## Round 11 amendment — 2026-08-26"
+
 _SWEEP = "round-11"
 
 # The three standing columns, unchanged from rounds 7, 8 and 10 and written
@@ -273,7 +278,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert all(numbered.count(number) == 1 for number in range(85, 94)), (
         "round 10's record, §85-§93, each spent once and not renumbered"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 96)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 97)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
@@ -282,8 +287,9 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert headings.index(_HEADING) == headings.index(_RULINGS_HEADING) + 1, (
         "§95 follows §94's own heading"
     )
-    assert headings[headings.index(_HEADING) + 1].startswith("## Open questions"), (
-        "and nothing of round 11's record has landed after it yet"
+    assert headings[headings.index(_HEADING) + 1] == _AMENDMENT_HEADING, (
+        "and what has landed after it is §96's amendment — the re-registration "
+        "of 95.5's call count, not a word of round 11's record"
     )
 
     counted = prose()

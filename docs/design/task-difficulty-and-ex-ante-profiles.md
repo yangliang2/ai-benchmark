@@ -9424,6 +9424,103 @@ print the round's own logs and nothing else. A row that appears there
 unaccounted for stops the round the way a moved split stopped §80.4's
 registration — by design, and before the sweep rather than after it.
 
+## Round 11 amendment — 2026-08-26
+
+**96. The proofs writer has no resume: ticket 03's one invocation metered 48
+calls, and the round's proofs are re-registered before the next paid one.**
+Round 11's first proof run landed on 2026-08-26 (ticket 03, which proved
+`turnpike-break-down-the-move-to-the-new-money` both ways) and cost the round
+more than it cost the task, for a reason nobody had written down. `prove_points`
+(`src/ai_benchmark/firstparty_v1.py`) iterates **every** point-keyed task of
+the set and calls live on each, and **there is no resume in it and there never
+was one**. The sentence the round-11 runbook carried twice —
+"Resume-by-deliverable-hash re-uses all rulings already archived and paid for,
+and re-asks nothing" — is **false**: the resume-by-hash it describes is the
+round-9 *calibration* archive's, not the proofs writer's, and one sentence ran
+the two together. So ticket 03's single invocation metered **48 calls**: **12**
+for the new task, inside §95.5's registered 8–16, and **36 re-asks** of round
+10's three `investigation` tasks, whose fresh rulings were discarded and whose
+committed archives were restored untouched. **No archive moved and no re-proof
+was triggered** — the money is the whole of the damage. §95.5 registered 24–48
+calls for the round; without selection, ticket 04's invocation would add ~72
+more and put the round ~2.5× outside its own registration silently, which is
+the exact thing that registration's language refuses. Nothing here is a result;
+the round's record still follows at the next free number.
+
+**96.1 The re-registration, before the next paid call: 48 spent + 16–32
+selected = 64–80 calls, and $0.05–0.6 is kept.** The fix is selection and not a
+cache: `ai-bench prove-points-v1` gains a repeatable **`--task`**, `eval-v1
+--task`'s precedent exactly, and the round's two remaining proofs are invoked
+with exactly the new task ids and re-ask nothing. Tasks 2 and 3 then cost
+§95.5's own **8–16 calls each**, so the round's metered proofs stand
+re-registered at **48 spent + 16–32 selected = 64–80 calls**. **§95 itself is
+not edited**: this section supersedes 95.5's call count the way §82.5
+superseded §82.3's gate assignment, in as many words, and every other figure of
+§95 — the instrument, the gate, the sweep's band, the cells, the limits —
+stands untouched. The **dollar range is kept at $0.05–0.6**, and the arithmetic
+is shown at 95.5's own prices, $1.32/MTok in and $3.96/MTok out, peak-hour
+cache-miss:
+
+```
+spent   48 calls x (template + point + answer), all eight answers checked in
+                                      270,238 chars / 4 =  67,559 tok  x $1.32/M = $0.0892
+        48 x 100 tok thinking                           =   4,800 tok  x $3.96/M = $0.0190
+        48 x 300 tok + every deliverable quoted whole    =  62,130 tok  x $3.96/M = $0.2460
+                                                                   spent    $0.1082 - $0.3352
+to come low   16 calls x 5,661 chars / 4                =  22,644 tok  x $1.32/M = $0.0299
+              16 x 100 tok thinking                     =   1,600 tok  x $3.96/M = $0.0063
+         high 32 calls x 9,661 chars / 4                =  77,288 tok  x $1.32/M = $0.1020
+              32 x (2,000 quoted + 300)                 =  73,600 tok  x $3.96/M = $0.2915
+                                                              round total  $0.1444 - $0.7287
+```
+
+**The spent half is no longer an assumption and the range is kept on that**:
+all eight answers of the four tasks proved so far are checked in — round 10's
+six at §87's own lengths, and this round's reference at 4,923 characters and
+foil at 2,390 — so the 48 calls' input is arithmetic over text a reader holds,
+not a bound. Carried onto the two tasks left, at what those four answers
+actually measure rather than at the registered 8,000-character ceiling, 32
+calls come to **$0.21** and the 80-call high end to **$0.55**, inside the kept
+range. **What the kept range now rests on, said plainly**: at 95.5's registered
+high the same 32 calls are $0.39 and the 80-call end is **$0.7287, outside
+$0.6**, so 95.5's own named miss — "an answer longer than 8,000 characters or
+a grader thinking longer than 300 tokens a call" — is this round's live
+exposure rather than its slack, and **the record is to say so against this line
+with the archives' own counts beside it**.
+
+**96.2 The round-10 disclosure: §87's "36 calls, counted off the archives" is
+an archive count and not a meter reading.** It is true of the archives — twelve
+questions a task, both sides, three tasks — and §87 says so in its own first
+words. What it is not is what round 10's meter saw. Round 10 proved in **two
+invocations of the same selection-less command**: ticket 05 over a corpus
+holding one heap-3 task (`granary-decide-how-to-answer-for-a-past-day`, 12
+calls), then ticket 06 over a corpus holding three, which would have re-asked
+granary's 12 alongside the two new tasks' 24. So round 10's **likely meter is
+48**, not 36 — **inside its registered 24–48** (§83.5), at the very top of it,
+which is why nothing fired and why the overage stayed invisible: a re-ask at
+temperature 0 that comes back the same rewrites the archive to the same bytes
+and leaves nothing in a commit (granary's two files are untouched in ticket
+06's). Priced the way §87 priced its own, 48 metered calls over 277,538 input
+characters come to **$0.1106–$0.3459**, still inside §83.5's registered
+$0.05–0.6 and still short of its $0.6 stop. **§87 stands as the record it is**;
+this paragraph is the disclosure in the premise-failure form, and round 10 is
+edited nowhere.
+
+**96.3 The runbook correction, named, and the closed round's document left
+alone.** `docs/agents/runbook-round-11-proofs.md` carries the false sentence in
+two places — once in its §3 as "Re-running the command re-uses everything
+already archived and paid for and re-asks nothing" and once in its §4 as the
+resume-by-deliverable-hash sentence quoted above — and **both are replaced**
+by this amendment's ticket with the truth: the writer re-asks whatever it is
+pointed at, selection is `--task` (repeatable), the round's remaining proofs
+are invoked with exactly the new task ids, and the registered call arithmetic
+is this section's rather than 95.5's. `docs/agents/runbook-round-10-proofs.md`
+carries the same false sentence and is **left as the closed round's document**:
+it records the instruction round 10 was actually run under, and its
+consequence is disclosed at 96.2 rather than patched out of the text —
+corrected there instead, it would read as a round run on an instruction that
+was never in force for it.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

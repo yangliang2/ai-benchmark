@@ -1,6 +1,6 @@
 # Runbook: The round 11 proofs (§95)
 
-This is the operational record for running the point gate's two-sided existence proofs on round 11's three `requirement-decomposition` tasks. Run by hand in the session; never queued. One paid run per planted point and per disqualifier against each of the two answers (reference and foil), 8–16 calls a task, 24–48 for the round. The session's own frontier assertion moves to §95 with the record.
+This is the operational record for running the point gate's two-sided existence proofs on round 11's three `requirement-decomposition` tasks. Run by hand in the session; never queued. One paid run per planted point and per disqualifier against each of the two answers (reference and foil), 8–16 calls a task. **The writer has no resume — it re-asks whatever it is pointed at — so every run here names its tasks with `--task`, and the round's registered call arithmetic is §96's re-registration of §95.5's: 48 spent + 16–32 selected = 64–80 calls, at the kept $0.05–0.6.** The session's own frontier assertion moves to §95 with the record.
 
 ## 1. Payment-path pre-flight: `DEEPSEEK_API_KEY` stored in session memory by owner ruling
 
@@ -42,12 +42,14 @@ Before the run starts, verify:
 Run the point gate over each task's reference answer and foil answer. For each of the three tasks, call:
 
 ```bash
-uv run ai-bench prove-points-v1
+uv run ai-bench prove-points-v1 --task <the task id this run is proving>
 ```
 
-One call per planted point and per disqualifier against each answer, 8–16 calls a task, 24–48 for the round in total. This is the one affordance in this project that calls the grader outside a run; `ai-bench lint-v1` never calls the LLM.
+One call per planted point and per disqualifier against each answer, 8–16 calls a task. This is the one affordance in this project that calls the grader outside a run; `ai-bench lint-v1` never calls the LLM.
 
-The registered call range is **8–48**, against §95's registered range. Re-running the command re-uses everything already archived and paid for and re-asks nothing.
+**`--task` is not optional here, and the reason is a bill.** The writer has **no resume**: it re-asks every question of every task it is pointed at, both sides, on every invocation, and rewrites the archive with what comes back. Left unselected it re-asks — and re-pays for — every point-keyed task in the corpus, which is what §96 records ticket 03's invocation doing: 48 metered calls, 12 for the new task and 36 re-asking round 10's three. So **each of the round's remaining proof runs names exactly the task ids it means to pay for**, repeating the flag once per id. An id naming no task, or naming a task that ships no points key, is refused before any client is constructed.
+
+The registered call arithmetic is **§96's**, which supersedes §95.5's count: **48 spent + 16–32 selected = 64–80 calls for the round**, at 8–16 a task for each of the two proofs left, against the kept dollar range of **$0.05–0.6**.
 
 ## 4. Connection-failure procedure
 
@@ -59,11 +61,11 @@ If the run fails mid-stream with a connection error:
    ```
    If this succeeds, the machine's proxy was blocking; if it fails, the vendor is down or unreachable.
 
-2. **Resume the run.** Once connectivity is restored, re-run the same command:
+2. **Re-run the same selected command.** Once connectivity is restored, re-run it with the same `--task` ids:
    ```bash
-   uv run ai-bench prove-points-v1
+   uv run ai-bench prove-points-v1 --task <the same task id>
    ```
-   Resume-by-deliverable-hash re-uses all rulings already archived and paid for, and re-asks nothing. The run will complete with no duplicate calls and no overage.
+   **This re-asks that task from the start and is paid for again — there is no resume and there never was one** (§96). What `--task` bounds is the damage: a run that dies mid-task costs that task's 8–16 calls twice and nothing else, where an unselected re-run would re-ask every archive in the corpus. Count the second attempt into the round's metered calls against §96's 64–80 and say so in the record.
 
 ## 5. The gate: what it bars
 

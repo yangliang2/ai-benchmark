@@ -5937,13 +5937,54 @@ def _and_what_it_held(uncovered: list[str], present: list[str]) -> str:
     return ", and ".join(said)
 
 
+def _tasks_to_prove(
+    tasks: Sequence[Task], select: Sequence[str] | None
+) -> list[Task]:
+    """Which tasks this invocation proves: every point-keyed one by default,
+    or exactly the ones `--task` names.
+
+    **Why selection exists at all.** The writer has no resume and never had
+    one — it re-asks whatever it is pointed at, every point and every
+    disqualifier, both sides, every invocation — so pointing it at the whole
+    corpus re-asks, and re-pays for, every archive already taken (§96). A
+    round proving its tasks one ticket at a time therefore names them, and the
+    default is left exactly as it was for the corpus-wide proof run that
+    wanted it.
+
+    Both refusals are raised here, before the caller's factory is reached, so
+    that a mistyped id costs nothing: an id naming no task in the set, and an
+    id naming a task that ships no points key and so has no existence proof to
+    take.
+
+    Corpus order, not flag order — `eval-v1 --task`'s own reason: two
+    operators naming the same ids in different orders prove the same sequence.
+    """
+    keyed = [task for task in tasks if is_point_keyed(task)]
+    if select is None:
+        return keyed
+    wanted = set(select)
+    if unknown := sorted(wanted - {task.id for task in tasks}):
+        raise IngestError(
+            f"--task names unknown task id(s) {unknown} — no task of that id "
+            "is in the task set, and nothing was proved"
+        )
+    if unkeyed := sorted(wanted - {task.id for task in keyed}):
+        raise IngestError(
+            f"--task names task(s) {unkeyed} that ship no {POINTS_KEY_FILE} — "
+            "only a point-keyed task has a two-sided existence proof to take, "
+            "and nothing was proved"
+        )
+    return [task for task in keyed if task.id in wanted]
+
+
 def prove_points(
     tasks: Sequence[Task],
     grader_factory: Callable[[], point_grader.PointGrader],
+    select: Sequence[str] | None = None,
 ) -> list[Path]:
-    """Take every point-keyed task's two-sided existence proof, live, and
-    archive it: one grader call per planted point and per disqualifier against
-    the author's reference answer, and again against the foil.
+    """Take each selected point-keyed task's two-sided existence proof, live,
+    and archive it: one grader call per planted point and per disqualifier
+    against the author's reference answer, and again against the foil.
 
     **The one affordance in this project that calls the grader outside a run,
     and the reason it is a command of its own.** `ai-bench lint-v1` never calls
@@ -5953,13 +5994,19 @@ def prove_points(
     lint then does with what this wrote is `_the_reference_resolves_and_the_
     foil_fails`, offline.
 
+    **There is no resume here and there never was one.** Every task this is
+    pointed at is re-asked in full and its archive rewritten, whatever is
+    already on disk; `select` — `--task`, repeatable — is how an invocation is
+    kept to the tasks whose proofs it means to pay for (`_tasks_to_prove`,
+    §96). `None` means the standing every-point-keyed-task behaviour.
+
     `DEEPSEEK_API_KEY` has to be exported in the invoking shell: the factory
     constructs a live client, so a proof run without it fails at auth
     resolution rather than at the bar.
 
     The grader is built once across every task and both sides rather than per
-    call, and only if there is a point-keyed task at all — so a corpus holding
-    none constructs no client and needs no key, the way a sweep with no
+    call, and only if there is a point-keyed task to prove at all — so a corpus
+    holding none constructs no client and needs no key, the way a sweep with no
     point-keyed row does.
 
     What is written is what the lint will hold it to: the rulings, the pinned
@@ -5971,9 +6018,7 @@ def prove_points(
     """
     grader: point_grader.PointGrader | None = None
     written: list[Path] = []
-    for task in tasks:
-        if not is_point_keyed(task):
-            continue
+    for task in _tasks_to_prove(tasks, select):
         key = points_key(task)
         questions = _point_questions(key)
         for side in PROOF_SIDES:

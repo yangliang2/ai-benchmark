@@ -209,7 +209,8 @@ def _lint_v1_command(args: argparse.Namespace) -> None:
 
 
 def _prove_points_v1_command(args: argparse.Namespace) -> None:
-    """Take every point-keyed task's two-sided existence proof and archive it.
+    """Take each selected point-keyed task's two-sided existence proof and
+    archive it.
 
     A command of its own rather than a flag on `lint-v1`, because `lint-v1`
     never calls the LLM and that should hold for the whole command, flags
@@ -224,9 +225,17 @@ def _prove_points_v1_command(args: argparse.Namespace) -> None:
     is a live client, so a proof run without it fails at auth resolution rather
     than at the bar, and no partial archive is written for the task that
     failed.
+
+    **`--task` is what keeps an invocation to the proofs it means to pay
+    for.** There is no resume in the writer: every task it is pointed at is
+    re-asked in full, so an unselected run over a corpus whose archives are
+    already taken and paid for re-asks all of them (§96). Repeat the flag once
+    per id; omit it for the standing every-point-keyed-task run.
     """
     tasks = firstparty_v1.load_task_set(args.tasks)
-    written = firstparty_v1.prove_points(tasks, point_grader.deepseek_point_grader)
+    written = firstparty_v1.prove_points(
+        tasks, point_grader.deepseek_point_grader, args.task
+    )
     print(f"proved {len(written) // len(firstparty_v1.PROOF_SIDES)} point-keyed task(s)")
     for path in written:
         print(f"  wrote {path}")
@@ -539,13 +548,26 @@ def main(argv: list[str] | None = None) -> None:
             "these archives back, offline, and refuses a task whose reference "
             "answer does not resolve, whose foil answer does, or whose key, "
             "answers or grader version have moved since the proof was taken: "
-            "re-proof triggers on edit, not on every lint run. "
+            "re-proof triggers on edit, not on every lint run. There is no "
+            "resume here: every task this is pointed at is re-asked in full "
+            "and charged for, which is what --task is for. "
             "DEEPSEEK_API_KEY must be exported in the invoking shell — the "
             "grader is a live client, so a run without it fails at auth "
             "resolution rather than at the bar."
         ),
     )
     prove_points_v1.add_argument("--tasks", type=Path, default=v1_tasks_default)
+    prove_points_v1.add_argument(
+        "--task",
+        action="append",
+        help="prove only this task id, by its directory name under --tasks "
+        "(repeatable; default: every point-keyed task in the set) — the "
+        "writer has no resume, so an unselected run re-asks and re-pays for "
+        "every archive already taken; the selected set is proved in corpus "
+        "order, not the order given here, and an id naming no task, or naming "
+        "a task that ships no points key, is refused before any client is "
+        "constructed",
+    )
     prove_points_v1.set_defaults(command=_prove_points_v1_command)
 
     reconcile_v1_parser = subcommands.add_parser(

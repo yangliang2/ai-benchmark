@@ -238,15 +238,17 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     )
     assert numbered.count(94) == 1, "the round-11 rulings, spent once"
     assert numbered.count(95) == 1, "round 11's pre-registration, spent once"
-    assert numbered[-1] == 95, (
-        "§95 is round 11's pre-registration — the instrument unmoved, the "
-        "two-sided proofs the round's one gate, the proofs priced over 24-48 "
-        "calls and the sweep re-anchored on round 10's own nine cells, nine "
-        "cells under sweep id round-11 with the id register left to be "
-        "filled — and the frontier; §96 is still free, and is what whatever "
+    assert numbered.count(96) == 1, "the round-11 amendment, spent once"
+    assert numbered[-1] == 96, (
+        "§96 is round 11's amendment — the proofs writer re-asks every task it "
+        "is pointed at and has no resume, ticket 03's one invocation metered "
+        "48 calls, the round's proofs re-registered at 48 spent + 16-32 "
+        "selected = 64-80 with $0.05-0.6 kept, round 10's own archive-count "
+        "disclosure beside it and the runbook's false resume sentences "
+        "replaced — and the frontier; §97 is still free, and is what whatever "
         "comes next takes"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 96)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 97)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

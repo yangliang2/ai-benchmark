@@ -72,6 +72,9 @@ from ai_benchmark.firstparty_v1 import (
 )
 
 TASK_ID = "coalyard-where-the-weight-goes-missing"
+# A second point-keyed task, built only by the selection tests below: what a
+# proof run that names one task has to leave alone, archive bytes included.
+OTHER_TASK_ID = "limekiln-where-the-burn-goes-short"
 
 PROMPT = f"""\
 A day's total is lighter than the loads that made it. Work out why, and write
@@ -142,6 +145,7 @@ def points_key_json(
 def write_task(
     root: Path,
     *,
+    task_id: str = TASK_ID,
     category: str = "investigation",
     prompt: str = PROMPT,
     answer_path: str = ANSWER_PATH,
@@ -161,7 +165,7 @@ def write_task(
     """
     points = POINTS if points is None else points
     ids = [planted["id"] for planted in points]
-    task_dir = root / TASK_ID
+    task_dir = root / task_id
     (task_dir / "repo").mkdir(parents=True)
     (task_dir / "repo" / "weights.py").write_text(WEIGHTS)
     (task_dir / "repo" / "ledger.py").write_text(LEDGER)
@@ -171,7 +175,7 @@ def write_task(
         path.write_text(source)
     (task_dir / "task.yaml").write_text(
         textwrap.dedent(f"""\
-            id: {TASK_ID}
+            id: {task_id}
             category: {category}
             scale: cross-file
             surface: application
@@ -772,3 +776,162 @@ def test_a_corpus_with_no_point_keyed_task_builds_no_grader(tmp_path: Path) -> N
     so a corpus holding no investigation task needs no key — the property
     `eval-v1` already has for a sweep with no point-keyed row."""
     assert prove_points([], explode) == []
+
+
+# --- selection: --task, and what an unselected run would have cost -------------
+#
+# The writer has no resume and never had one — it re-asks every question of
+# every task it is pointed at, both sides, every invocation — so `--task` is
+# the only thing standing between a second proof ticket and a second bill for
+# archives already paid for (§96). These tests hold the flag to that job
+# through the real writer, with the fake instrument in the live factory's
+# place.
+
+
+def both_tasks(root: Path) -> tuple[Task, Task]:
+    """The two point-keyed tasks of a selection test, in corpus order."""
+    selected, unselected = sorted(load_task_set(root), key=lambda task: task.id)
+    assert (selected.id, unselected.id) == (TASK_ID, OTHER_TASK_ID)
+    return selected, unselected
+
+
+def archive_bytes(task: Task) -> dict[str, bytes]:
+    """Both sides' archives as they sit on disk — bytes, not parsed JSON, so
+    that "untouched" means untouched and not "re-written to the same value"."""
+    return {
+        side.name: proof_rulings_file(task, side).read_bytes()
+        for side in firstparty_v1.PROOF_SIDES
+    }
+
+
+def a_grader_that_rules_differently() -> FakeGrader:
+    """A second instrument whose rulings do not match the first's, so that a
+    task it was pointed at cannot come out byte-identical by coincidence."""
+    return FakeGrader(
+        {DISQUALIFIERS[0]["id"]: (True, None)}, version=point_grader.GRADER_VERSION
+    )
+
+
+def test_prove_points_v1_task_proves_only_what_it_names(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Selection honoured through the subcommand a proof run invokes: the named
+    task is re-asked and re-archived, and the task not named is not called
+    about at all and its archive comes through byte for byte."""
+    write_task(tmp_path)
+    write_task(tmp_path, task_id=OTHER_TASK_ID)
+    prove(tmp_path)
+    selected, unselected = both_tasks(tmp_path)
+    before = archive_bytes(selected), archive_bytes(unselected)
+    grader = a_grader_that_rules_differently()
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", lambda: grader)
+
+    main(["prove-points-v1", "--tasks", str(tmp_path), "--task", TASK_ID])
+
+    assert "proved 1 point-keyed task(s)" in capsys.readouterr().out
+    assert grader.calls == [planted["id"] for planted in POINTS + DISQUALIFIERS] * 2
+    assert archive_bytes(unselected) == before[1]
+    assert archive_bytes(selected) != before[0]
+
+
+def test_prove_points_v1_task_is_repeatable_and_proves_in_corpus_order(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Named twice, both are proved — and in corpus order rather than flag
+    order, `eval-v1 --task`'s own rule, so that two operators naming the same
+    ids in different orders prove the same sequence."""
+    write_task(tmp_path)
+    write_task(tmp_path, task_id=OTHER_TASK_ID)
+    grader = pinned_grader()
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", lambda: grader)
+
+    main([
+        "prove-points-v1", "--tasks", str(tmp_path),
+        "--task", OTHER_TASK_ID, "--task", TASK_ID,
+    ])
+
+    out = capsys.readouterr().out
+    assert "proved 2 point-keyed task(s)" in out
+    assert out.index(f"{TASK_ID}/proofs") < out.index(f"{OTHER_TASK_ID}/proofs")
+
+
+def test_prove_points_v1_without_task_still_proves_every_point_keyed_task(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The standing behaviour is unchanged by the flag's arrival: no `--task`
+    means every point-keyed task in the set, re-asked in full — which is the
+    behaviour §96 discloses rather than a behaviour it removes."""
+    write_task(tmp_path)
+    write_task(tmp_path, task_id=OTHER_TASK_ID)
+    grader = pinned_grader()
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", lambda: grader)
+
+    main(["prove-points-v1", "--tasks", str(tmp_path)])
+
+    assert "proved 2 point-keyed task(s)" in capsys.readouterr().out
+    asked = [planted["id"] for planted in POINTS + DISQUALIFIERS]
+    assert grader.calls == asked * 4
+
+
+def test_prove_points_v1_refuses_a_task_id_that_names_no_task(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An id naming nothing is refused with the reason, before any client is
+    constructed — a mistyped id costs nothing rather than silently proving the
+    tasks that were spelled right."""
+    write_task(tmp_path)
+    prove(tmp_path)
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", explode)
+
+    with pytest.raises(SystemExit) as refusal:
+        main([
+            "prove-points-v1", "--tasks", str(tmp_path),
+            "--task", TASK_ID, "--task", "coalyard-where-the-weight-goes-mising",
+        ])
+
+    assert "unknown task id(s) ['coalyard-where-the-weight-goes-mising']" in str(
+        refusal.value
+    )
+
+
+def test_prove_points_v1_refuses_a_task_that_ships_no_points_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An id naming a real task with no points key is refused by name too: only
+    a point-keyed task has a two-sided existence proof to take, and a run that
+    quietly proved nothing would read as a run that proved something."""
+    write_task(tmp_path)
+    unkeyed = write_task(tmp_path, task_id=OTHER_TASK_ID, category="bug-fix")
+    # Which verdict shape grades a task is read off the key being there, so the
+    # unkeyed neighbour is a task of another action, graded by held-out tests —
+    # the loader refuses an `investigation` task with no key outright.
+    (unkeyed / "grading" / "points-key.json").unlink()
+    (unkeyed / "grading" / "test_weights.py").write_text("def test_net(): assert True\n")
+    shutil.rmtree(unkeyed / "proofs")
+    monkeypatch.setattr(point_grader, "deepseek_point_grader", explode)
+
+    with pytest.raises(SystemExit) as refusal:
+        main([
+            "prove-points-v1", "--tasks", str(tmp_path), "--task", OTHER_TASK_ID,
+        ])
+
+    said = str(refusal.value)
+    assert f"names task(s) ['{OTHER_TASK_ID}']" in said
+    assert "points-key.json" in said
+
+
+def test_prove_points_has_no_resume_and_re_asks_what_it_is_pointed_at(
+    tmp_path: Path,
+) -> None:
+    """The premise failure §96 records, pinned as behaviour so that no runbook
+    can claim otherwise again: a second invocation over a task whose archive is
+    already on disk re-asks every question of it and re-writes the archive. The
+    only thing that stops a call being paid for twice is not asking for it."""
+    write_task(tmp_path)
+    asked = [planted["id"] for planted in POINTS + DISQUALIFIERS]
+    assert prove(tmp_path).calls == asked * 2
+
+    again = pinned_grader()
+    prove_points(load_task_set(tmp_path), lambda: again)
+
+    assert again.calls == asked * 2
