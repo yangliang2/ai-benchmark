@@ -1,0 +1,35 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-standard-list-itself-not-a-copy",
+      "text": "The answer says that a standard hamper's contents is the standard list object itself rather than a copy of it."
+    },
+    {
+      "id": "the-extra-appended-in-place",
+      "text": "The answer says that adding an extra appends it into the hamper's contents list in place."
+    },
+    {
+      "id": "one-list-across-the-standard-hampers",
+      "text": "The answer says that every standard hamper made up in the run holds the very same contents list."
+    },
+    {
+      "id": "the-dockets-written-after-the-whole-book",
+      "text": "The answer says that the dockets are written only after every order in the book has been made up."
+    },
+    {
+      "id": "the-bespoke-hamper-packed-fresh",
+      "text": "The answer says that a bespoke hamper is packed into a fresh list built from its order's own wants."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "a-copy-per-hamper",
+      "text": "The answer claims that each standard hamper starts from its own copy of the standard list."
+    },
+    {
+      "id": "an-extra-on-the-wrong-hamper",
+      "text": "The answer claims that the cordial reached Mrs Beech's hamper through a mix-up of orders or an extra applied to the wrong hamper."
+    }
+  ]
+}

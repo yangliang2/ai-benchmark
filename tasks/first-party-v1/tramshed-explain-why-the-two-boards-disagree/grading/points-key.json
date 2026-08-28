@@ -1,0 +1,35 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-town-board-orders-by-the-written-time",
+      "text": "The answer says that the town board sorts its cars by the chalked time string itself."
+    },
+    {
+      "id": "text-order-puts-10-05-before-9-40",
+      "text": "The answer says that comparing the times as text puts \"10:05\" before \"9:40\" because the character \"1\" sorts before \"9\"."
+    },
+    {
+      "id": "the-quay-board-orders-in-minutes",
+      "text": "The answer says that the quay board sorts its cars by the time converted into minutes past midnight."
+    },
+    {
+      "id": "one-workings-list-behind-both-boards",
+      "text": "The answer says that both boards are set from the same workings list in the one book."
+    },
+    {
+      "id": "the-time-kept-exactly-as-chalked",
+      "text": "The answer says that the book keeps each time exactly as entered, with no zero padding applied anywhere."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "two-separately-kept-lists",
+      "text": "The answer claims that the two boards disagree because they read different or separately kept lists of workings."
+    },
+    {
+      "id": "listed-in-the-order-entered",
+      "text": "The answer claims that either board lists its cars in the order the workings were entered into the book."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "workings": [
+    {
+      "car": 7,
+      "end": "town",
+      "leaves": "9:40"
+    },
+    {
+      "car": 12,
+      "end": "town",
+      "leaves": "10:05"
+    },
+    {
+      "car": 3,
+      "end": "quay",
+      "leaves": "9:40"
+    },
+    {
+      "car": 9,
+      "end": "quay",
+      "leaves": "10:05"
+    }
+  ]
+}

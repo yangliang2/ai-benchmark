@@ -1,0 +1,56 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "0f50016ca90b4a24c38a0d510e9e8983f7e31c8bd6515a8ba8b6ecf6a4dc5b2d",
+  "answer_sha256": "9ea05e3f9c4eeb7e58464ef208c17059c0cc6dee3366423ccc23d68fd205c0e6",
+  "rulings": [
+    {
+      "point_id": "the-town-board-orders-by-the-written-time",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "text-order-puts-10-05-before-9-40",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-quay-board-orders-in-minutes",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "one-workings-list-behind-both-boards",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-time-kept-exactly-as-chalked",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "two-separately-kept-lists",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "the two boards disagree because they read different, separately kept lists of workings",
+      "verified": true
+    },
+    {
+      "point_id": "listed-in-the-order-entered",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "it lists its cars in the order the workings were entered into the book",
+      "verified": true
+    }
+  ]
+}

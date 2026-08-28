@@ -156,19 +156,19 @@ _MODULES_UNDER_TEST = ("lido.py", "playbill.py", "register.py")
 # plus this round's three; the TypeScript rows are round 7's exactly. Two rows
 # joined after the round it records: round 10 authored its three
 # `investigation` tasks and round 11 its three `requirement-decomposition`
-# ones, Python controls all — and round 12's first explain-style task then
+# ones, Python controls all — and round 12's three explain-style tasks then
 # grew `codebase-comprehension`'s row — and this live read moves with the
 # corpus while the note's own quoted table stays the snapshot it was.
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
-    "codebase-comprehension": 5, "code-review": 8, "test-authoring": 3,
+    "codebase-comprehension": 7, "code-review": 8, "test-authoring": 3,
     "investigation": 3, "requirement-decomposition": 3,
 }
 _TYPESCRIPT_COVERAGE = {
     "bug-fix": 3, "fault-location": 3, "feature-dev": 3, "refactor": 3,
     "code-review": 2,
 }
-_PYTHON_TASKS = 123
+_PYTHON_TASKS = 125
 # What the runs line counts instead: the Python tasks that have rows. The two
 # were one number until round 10 authored tasks after every sweep — a task
 # with no rows joins the task-set line and not this one.
@@ -189,15 +189,15 @@ _ROUND_10_CLAUDE_CODE_ROWS = 6
 _ROUND_11_TASKS = 3
 _ROUND_11_ROWS = 9
 _ROUND_11_CLAUDE_CODE_ROWS = 6
-# And round 12's first explain-style `codebase-comprehension` task, a Python
-# control graded by the point gate, unswept as yet: it moves the task-set
+# And round 12's three explain-style `codebase-comprehension` tasks, Python
+# controls graded by the point gate, unswept as yet: they move the task-set
 # line and the category's coverage row and neither runs line.
-_ROUND_12_TASKS = 1
+_ROUND_12_TASKS = 3
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
 _CLAUDE_CODE_PYTHON_RUNS = 231
-_PYTHON_CONTROLS = 56
+_PYTHON_CONTROLS = 58
 _PYTHON_CONSTRUCTED = 67
 _ALL_ROWS = 306
 _ROUND_8_ROWS = 9
@@ -1109,8 +1109,8 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     authoring tasks: round 10 authored its three `investigation` tasks and
     round 11 its three `requirement-decomposition` ones, so the rows this
     record quotes as `- - 0` now print the Python cells those tasks fill, and
-    round 12's first explain-style task grew `codebase-comprehension`'s row
-    from 4 to 5. The record is not edited for any of them — the page it
+    round 12's three explain-style tasks grew `codebase-comprehension`'s row
+    from 4 to 7. The record is not edited for any of them — the page it
     quotes is what the page was — so the lines are named below, round 7's own
     pattern, and every other one is still held byte for byte.
     """
@@ -1157,8 +1157,8 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
         "requirement-decomposition":
             "  requirement-decomposition  -            -           0",
     }
-    # The row round 12's first explain-style task grew, no zero when this
-    # was recorded: it read the four locate-style tasks and now reads five.
+    # The row round 12's three explain-style tasks grew, no zero when this
+    # was recorded: it read the four locate-style tasks and now reads seven.
     recorded_moved = {
         "codebase-comprehension":
             "  codebase-comprehension     application  python      4",
@@ -1402,8 +1402,8 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     # claude-code Python rows survive both selections, so the runs line, the
     # round list and its keyed count grew too — and round 11's first
     # `requirement-decomposition` task then grew the task-set line again, as
-    # round 12's first explain-style `codebase-comprehension` task did after
-    # it. The
+    # round 12's three explain-style `codebase-comprehension` tasks did
+    # after it. The
     # record is not edited for any of that: every line it quoted is rebuilt
     # here from the live figures minus the later rounds', required to be
     # exactly what the note says, and what the reader prints instead was

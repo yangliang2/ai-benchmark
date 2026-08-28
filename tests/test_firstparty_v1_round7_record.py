@@ -202,10 +202,10 @@ _ROUND_10_CLAUDE_CODE_RUNS = 6
 _ROUND_11_TASKS = 3
 _ROUND_11_CLAUDE_CODE_RUNS = 6
 
-# And round 12's first explain-style `codebase-comprehension` task, a Python
-# control graded by the point gate, unswept as yet: it moves the live Python
+# And round 12's three explain-style `codebase-comprehension` tasks, Python
+# controls graded by the point gate, unswept as yet: they move the live Python
 # task count and the category's coverage row below and nothing else here.
-_ROUND_12_TASKS = 1
+_ROUND_12_TASKS = 3
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -213,9 +213,9 @@ _ROUND_12_TASKS = 1
 _ROUND_8_CLAUDE_CODE_RUNS = 6
 
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 123
+_PYTHON_TASKS = 125
 _PYTHON_TASKS_WITH_RUNS = 113
-_PYTHON_CONTROLS = 56
+_PYTHON_CONTROLS = 58
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -230,7 +230,7 @@ _TYPESCRIPT_COVERAGE = {
 }
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
-    "codebase-comprehension": 5, "code-review": 8, "test-authoring": 3,
+    "codebase-comprehension": 7, "code-review": 8, "test-authoring": 3,
     "investigation": 3, "requirement-decomposition": 3,
 }
 
@@ -1180,7 +1180,7 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
         row for row in coverage
         if row[0] == "codebase-comprehension" and row[2] == "typescript"
     ]
-    assert ("codebase-comprehension", "application", "python", 5) in coverage
+    assert ("codebase-comprehension", "application", "python", 7) in coverage
     assert not [row for row in coverage if row[3] == 0 and row[2] == "typescript"]
 
     main(["lint-v1", "--tasks", str(_TASKS)])
@@ -1209,7 +1209,7 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
     }
     # And one row that was no zero when this was recorded has moved since:
     # `codebase-comprehension` read 4 — its four locate-style tasks — until
-    # round 12's first explain-style task grew the row to 5. Named here in
+    # round 12's three explain-style tasks grew the row to 7. Named here in
     # the same pattern rather than edited in the record.
     recorded_moved = {
         "codebase-comprehension":
@@ -1370,8 +1370,8 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # three more when round 8 authored the corpus's `test-authoring` tasks,
     # three more when round 10 authored its `investigation` ones, three
     # more when round 11 authored its `requirement-decomposition` ones, and
-    # one more when round 12 authored its first explain-style
-    # `codebase-comprehension` one.
+    # three more when round 12 authored its explain-style
+    # `codebase-comprehension` ones.
     # The record is a snapshot and is not edited for that; the live count is
     # asserted here beside the recorded one so the two cannot drift silently
     # apart.
@@ -1503,7 +1503,7 @@ def test_neither_reader_counts_a_round_7_row(
     # and the runs and round lines when its sweep landed on 2026-08-24; round
     # 11's three `requirement-decomposition` tasks then grew the task-set line
     # again, and its sweep (2026-08-26) the runs and round lines; round 12's
-    # first explain-style `codebase-comprehension` task grew the task-set
+    # three explain-style `codebase-comprehension` tasks grew the task-set
     # line once more, unswept as yet. The
     # record is not edited for any of that — each line it quoted is rebuilt
     # here from the recorded figures and required to be exactly what the note

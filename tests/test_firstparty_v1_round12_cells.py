@@ -40,15 +40,17 @@ two tests read the round forwards, and they are two tests rather than one
 because they die at different tickets: no `round-12` row exists yet (retired by
 the ticket that lands the sweep), and — as originally written — no
 `codebase-comprehension` task was point-keyed yet. That second half was
-retired by the ticket that landed the round's first task, and its caught-up
-form below says what is true now: the corpus holds task 1 and no second or
-third yet, until the ticket that lands tasks 2 and 3 replaces it with the
-register check. The claim is still written **by key shape and never as a task
-count of the category**, because the four locate-style comprehension tasks
-stay where they are and a count would go red on their account rather than on
-the explain shape's.
+retired by the ticket that landed the round's first task, caught up to "task 1
+and no second or third yet", and then replaced by the ticket that landed tasks
+2 and 3 with its final form: §107.8's register — filled by that same ticket —
+names exactly the point-keyed `codebase-comprehension` tasks the corpus holds,
+each proved both ways and each carrying its kind of question. The claim is
+still written **by key shape and never as a task count of the category**,
+because the four locate-style comprehension tasks stay where they are and a
+count would go red on their account rather than on the explain shape's.
 """
 
+import json
 import re
 from pathlib import Path
 from typing import get_args
@@ -210,9 +212,11 @@ def register_blocks() -> list[dict[str, str]]:
     register form, looked for by shape rather than by position or by a quoted
     id.
 
-    §107.8 leaves the register explicitly to be filled in before the sweep, by
-    the round's task-authoring tickets, so before the fill this finds none. The
-    same shape check is what the filling ticket's own pin then reads.
+    §107.8 left the register explicitly to be filled in before the sweep, and
+    before the fill this found none; now that the round's second authoring
+    ticket has filled it, the same shape check finds exactly one, and a second
+    id-shaped block appearing anywhere in the section is caught as the
+    ambiguity it would be.
     """
     found: list[dict[str, str]] = []
     for block in blocks():
@@ -1046,15 +1050,18 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_11_rows(
 def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     """§107.8: three tasks × three columns, the three kinds of question, the
     sweep id, the dry cell, and the id register left explicitly to be filled in
-    before the sweep.
+    before the sweep — and now filled exactly where the section left it.
 
     What this checks is the registration's shape: the columns, the count, the
     three kinds of question §106.4 fixes, the language, the control
     declaration, the sweep's invocation, and the id register — registered *as
-    empty*, said to be left for the authoring tickets, with round 7's
-    prefix pin named as the check the authoring runs first. What fills it is
-    the round's task-authoring ticket, and that ticket's own pin is what will
-    read the filled block.
+    empty*, said to be left for the authoring tickets, with round 7's prefix
+    pin named as the check the authoring runs first, and filled by the
+    round's second task-authoring ticket, dated and attributed rather than
+    blended into the registration-time prose. What the filled ids claim about
+    the corpus is the forward-reading test's at the end of this file; the pin
+    here is that exactly one id-shaped block stands in the section and each
+    of its lines carries a gloss naming the kind of question its task asks.
     """
     counted = prose()
 
@@ -1097,9 +1104,10 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     ) in counted
     assert "`calibrate-v1` gains no explain-style multiplier row" in counted
 
-    # The register: left for the authoring tickets, and said to be left. No
-    # id-shaped block stands in the section yet, which is what "left to be
-    # filled in" has to mean in the text as well as in the prose.
+    # The register: left for the authoring tickets, said to be left, and now
+    # filled where the section said it would be. The registration-time prose
+    # stays as the record it is — it was true as written — and the fill is
+    # dated and attributed rather than blended into it.
     assert "**The three task ids do not exist yet.**" in counted
     assert (
         f"**The id register for round 12 is left explicitly to be filled in, "
@@ -1112,7 +1120,28 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     ) in counted
     assert "**Round 7's pin is the check the authoring runs first**" in counted
     assert "no task id may share a repo prefix with an existing task" in counted
-    assert register_blocks() == [], "the register is registered as empty"
+    assert (
+        "**Filled in 2026-08-28, by the round's second task-authoring ticket, "
+        "exactly where this section left it.**"
+    ) in counted
+    assert "**This list is the register.**" in counted
+    assert (
+        f"**every point-keyed `{_CATEGORY}` task the corpus holds**"
+    ) in counted
+    assert (
+        "the round sweeps the action entire and re-runs nothing any "
+        "combination has already answered"
+    ) in counted
+
+    # Exactly one fenced block of the section is a register of task ids — the
+    # one the fill wrote, in §68.1's form: an id a line, each with a one-line
+    # gloss naming the kind of question its task asks. Before the fill this
+    # asserted no such block existed; what the ids claim about the corpus is
+    # the forward-reading test's below.
+    [register] = register_blocks()
+    assert len(register) == _CELLS
+    for task_id, gloss in register.items():
+        assert gloss, f"{task_id}: a register line carries its gloss"
 
     # The invocation.
     assert f"Sweep id **`{_SWEEP}`**" in counted
@@ -1232,33 +1261,83 @@ def test_no_round_12_row_exists_yet(runs: list[firstparty_v1.Run]) -> None:
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 
-def test_the_corpus_holds_the_first_task_and_no_second_or_third_yet(
+def test_the_register_names_every_point_keyed_comprehension_task_and_each_is_proved(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test, caught up by the ticket that landed
-    the round's first task: exactly one point-keyed `codebase-comprehension`
-    task is in the corpus — task 1, the end-to-end-mechanism kind — and no
-    second or third yet. The ticket that lands tasks 2 and 3 replaces this
-    with the register check against §107.8's filled block.
+    """The second forward-reading test, in its final form: the register check.
+
+    Its first form said no `codebase-comprehension` task was point-keyed yet;
+    the round's first authoring ticket caught it up to "task 1 and no second
+    or third yet"; the second authoring ticket landed the other two and filled
+    §107.8's register, which is the form this test now holds the round to. The
+    register is read against the corpus rather than restated: the three ids
+    exist, they are exactly the point-keyed `codebase-comprehension` tasks the
+    corpus holds — no fourth anywhere — every one is the Python
+    application-surface declared control §107.8 registered, each carries its
+    kind of question in its register gloss, §106.4's three kinds each carried
+    exactly once, and each ships a points key and a two-sided proof that is
+    green under the pinned instrument, the verdicts recomputed through
+    `_point_verdict` rather than taken on the archives' word.
 
     Still selected **by key shape and never as a task count of the
     category**. The category's four locate-style tasks on an accepted-answer
     key are staying, so a count would go red on their account rather than on
-    the thing this test watches — how many *point-keyed* comprehension tasks
-    have landed.
+    the thing this test watches — the explain shape the register names.
     """
     comprehension = [
         task for task in tasks.values() if task.category == _CATEGORY
     ]
-    assert len(comprehension) > 1, (
+    assert len(comprehension) > len(
+        [task for task in comprehension if firstparty_v1.is_point_keyed(task)]
+    ), (
         "the corpus carries the category's locate-style tasks beside the "
         "explain shape"
     )
-    assert [
+
+    [register] = register_blocks()
+    authored = sorted(
         task.id for task in comprehension if firstparty_v1.is_point_keyed(task)
-    ] == ["ropewalk-explain-how-an-order-becomes-a-coil"], (
-        "round 12's task 1 and no second or third yet"
     )
+    assert sorted(register) == authored, (
+        "the register is the corpus's point-keyed comprehension set, whole"
+    )
+    assert len(register) == _CELLS, "and the corpus holds no fourth"
+
+    # Each register line's gloss names its task's kind of question, §106.4's
+    # three kinds, each carried exactly once across the three lines.
+    kinds = ("end-to-end mechanism", "surprising behaviour", "divergence")
+    for kind in kinds:
+        assert [
+            task_id for task_id, gloss in register.items() if kind in gloss
+        ], f"one register gloss names {kind!r}"
+    for task_id, gloss in register.items():
+        assert [kind for kind in kinds if kind in gloss], (
+            f"{task_id}: its gloss names its kind of question"
+        )
+
+    for task_id in register:
+        task = tasks[task_id]
+        assert task.category == _CATEGORY
+        assert task.language == "python"
+        assert task.surface == "application"
+        assert task.control is True
+        assert task.construction is None
+
+        key = firstparty_v1.points_key(task)
+        questions = firstparty_v1._point_questions(key)
+        for side in firstparty_v1.PROOF_SIDES:
+            answer = (task.proofs_dir / side.answer_file).read_text(
+                encoding="utf-8"
+            )
+            raw = firstparty_v1.proof_rulings_file(task, side).read_text(
+                encoding="utf-8"
+            )
+            archive = firstparty_v1.ProofRulings.model_validate(json.loads(raw))
+            assert archive.grader_version == point_grader.GRADER_VERSION
+            assert (
+                firstparty_v1._point_verdict(questions, archive, answer)
+                is side.resolves
+            ), f"{task_id}: {side.name}"
 
     # The loader has been taught the shape — §106.5's move, landed by the
     # round's loader ticket ahead of any task, and §107.5 registers it as the

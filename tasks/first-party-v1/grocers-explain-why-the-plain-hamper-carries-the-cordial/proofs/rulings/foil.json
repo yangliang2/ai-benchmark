@@ -1,0 +1,56 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "f8c361273d299a8af88ccf5debc4a75b27b6741600c24be93adc9a1619826d7d",
+  "answer_sha256": "c758c4af90b7992773f2758f3c3beb602a4ce869667bcc2cf1528a2b6d786401",
+  "rulings": [
+    {
+      "point_id": "the-standard-list-itself-not-a-copy",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-extra-appended-in-place",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "one-list-across-the-standard-hampers",
+      "kind": "point",
+      "covered": true,
+      "span": "each standard hamper starts from its own copy of the standard list - tea, sugar, fruit cake, marmalade",
+      "verified": true
+    },
+    {
+      "point_id": "the-dockets-written-after-the-whole-book",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-bespoke-hamper-packed-fresh",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-copy-per-hamper",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "each standard hamper starts from its own copy of the standard list - tea, sugar, fruit cake, marmalade",
+      "verified": true
+    },
+    {
+      "point_id": "an-extra-on-the-wrong-hamper",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "The cordial reached Mrs Beech's hamper through a mix-up of orders - the extra was applied to the wrong hamper of the two look-alikes, landing one basket over from where the book pointed.",
+      "verified": true
+    }
+  ]
+}

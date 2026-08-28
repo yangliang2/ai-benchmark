@@ -1201,8 +1201,8 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
     task before the sweep, verified here rather than re-edited.
 
     No stale line when it was recorded: the record was written after the
-    fill it records. One line has moved since — round 12's first
-    explain-style task growing `codebase-comprehension`'s row from 4 to 5 —
+    fill it records. One line has moved since — round 12's three
+    explain-style tasks growing `codebase-comprehension`'s row from 4 to 7 —
     and it is named below in round 7's pattern rather than edited in the
     record. The `requirement-decomposition × typescript` zero is disclosed
     as zero by absence, and `performance-optimisation` still prints the
@@ -1215,9 +1215,9 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
         if language == "python" and surface == "application"
     }
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
-    # 122 when §102 was recorded; round 12's first explain-style
-    # `codebase-comprehension` task moved the live column to 123.
-    assert sum(python.values()) == 123
+    # 122 when §102 was recorded; round 12's three explain-style
+    # `codebase-comprehension` tasks moved the live column to 125.
+    assert sum(python.values()) == 125
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
@@ -1233,8 +1233,8 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
         note_section("102. The coverage table, as the lint prints it")
     )
     # One line has moved since §102 was recorded, named here in round 7's
-    # pattern rather than edited in the record: round 12's first
-    # explain-style task grew `codebase-comprehension`'s row from 4 to 5.
+    # pattern rather than edited in the record: round 12's three
+    # explain-style tasks grew `codebase-comprehension`'s row from 4 to 7.
     moved = "  codebase-comprehension     application  python      4"
     quoted_lines = quoted.strip("\n").splitlines()
     assert moved in quoted_lines
@@ -1247,7 +1247,7 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
         line.split()
         for line in printed.splitlines()
         if line.startswith("  codebase-comprehension")
-    ] == [["codebase-comprehension", "application", "python", "5"]]
+    ] == [["codebase-comprehension", "application", "python", "7"]]
     assert (
         "  requirement-decomposition  application  python      3"
     ) in quoted
@@ -1551,7 +1551,7 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
 ) -> None:
     """Section 105's readers: six of the nine rows inside the default view,
     the reconcile lines quoted as the reader printed them when the record was
-    written — the task-set line has moved since, round 12's first task, and
+    written — the task-set line has moved since, round 12's three tasks, and
     is named inside rather than edited — the calibrate table exactly as
     printed, its rung floor reading `unsolved`, and the earlier rounds'
     published tables unmoved."""
@@ -1562,10 +1562,10 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         "105. Replay, the readers, and heap 3's second cell filled"
     ))[1:2]
     # One line of the block has moved since the record was written, named
-    # here in round 7's pattern rather than edited there: round 12's first
-    # explain-style `codebase-comprehension` task, a Python control, grew
-    # the task-set line by one task and one control. The runs line has not
-    # moved — the task is unswept, so no row counts it.
+    # here in round 7's pattern rather than edited there: round 12's three
+    # explain-style `codebase-comprehension` tasks, Python controls, grew
+    # the task-set line by three tasks and three controls. The runs line has
+    # not moved — the tasks are unswept, so no row counts them.
     stale = (
         "  task set   tasks/first-party-v1 — 122 task(s): 55 control(s), "
         "67 constructed"
@@ -1578,7 +1578,7 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
             continue
         assert line in printed, line
     assert (
-        "  task set   tasks/first-party-v1 — 123 task(s): 56 control(s), "
+        "  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), "
         "67 constructed"
     ) in printed
     assert "  runs       243 over 122 task(s)" in quoted

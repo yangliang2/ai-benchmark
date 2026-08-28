@@ -1,0 +1,81 @@
+# The third of round 12's three explain-style `codebase-comprehension`
+# tasks (design note §106, registered §107): the divergence kind, §106.4's
+# third — why two paths that look alike land differently. The two departure
+# boards are set from the same book by two functions a reader would expect
+# to agree, and the deliverable is one prose file — the explanation the
+# prompt asks for at ANSWER.md — not a change to the code: the repository is
+# the whole of the evidence and is left unmodified, and a good answer names
+# the one line of difference between the two boards and what that
+# difference does to the same pair of chalked times.
+#
+# Why it grades the way it does: this category's four locate-style tasks are
+# graded on an accepted-answer key, because their deliverable is a location
+# — a (file, symbol) a checked-in test can compare. An explanation has no
+# such key: held-out tests cannot grade a walk through the code — an
+# explanation may be grounded or may be three confident paragraphs over
+# nothing — so this task's verdict is the point gate, dispatched by the key
+# on disk (§106.5's loader move). The prompt-named answer file is collected
+# out of the workdir diff and put to a grader one planted point at a time:
+# resolved is every planted point covered by a verbatim span of the answer's
+# own text and no disqualifying claim made, binary. Hence `control: true` —
+# the task registers no difficulty prediction, and a task declaring neither
+# a construction block nor itself a control is refused — and hence no
+# grading/ suite to run: grading/ holds the points key and nothing that
+# executes, because there is no behaviour to test. The key is proved both
+# ways at authoring time (proofs/): the author's reference answer resolves
+# per point and a fluent foil answer fails, rulings archived and read
+# offline by the lint.
+#
+# The question is decidable in the closed world of the repository and the
+# prompt alone: the book is checked in, both boards are two short functions
+# over it, and the whole of the disagreement is one sort key against
+# another — no external fact, no web research, nothing missing. The five
+# planted points are §106.1's kind, one fact of the code each, a single
+# evidence span apiece, with the consequence planted as its own point: that
+# the town board sorts its cars by the chalked time string itself; that —
+# the text ordering's consequence, its own point and never a trailing
+# clause — comparing the times as text puts "10:05" before "9:40" because
+# the character "1" sorts before "9"; that the quay board sorts by the time
+# converted into minutes past midnight; that both boards are set from the
+# same workings list in the one book; and that the book keeps each time
+# exactly as entered, with no zero padding applied anywhere. The two
+# disqualifiers are the plausible misreadings the code refutes: that the
+# boards read different or separately kept lists that fell out of step, and
+# that either board lists its cars in the order the workings were entered.
+id: tramshed-explain-why-the-two-boards-disagree
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The tram shed keeps the day's workings in one JSON file: each working
+  is a car, the end of the line it runs from, and the time it leaves,
+  kept as the foreman chalks it. shedbook.py reads and writes the book,
+  boards.py sets the two departure boards — one for the town end, one
+  for the quay end — and cli.py is how the shed works it.
+
+  Today's book holds a 9:40 car and a 10:05 car from each end of the
+  line. Run `python cli.py town` and the town board lists the 10:05 car
+  above the 9:40 one; run `python cli.py quay` and the quay board lists
+  its 9:40 car first. Explain why the two boards, set from the same
+  book on the same day, do not agree: what each board does with the
+  chalked times, and the code's own reason the same pair of times lands
+  in two different orders.
+
+  Write your explanation to ANSWER.md. This is a reading of the
+  repository as it stands, and the repository is the whole of the
+  evidence: trace the code and account for it. Your explanation carries
+  three sections, under these headings:
+
+  - **What happens** — the setting of the two boards, traced through
+    the code step by step in the repository's own terms;
+  - **Why it comes out that way** — the specific decisions in the code
+    that produce it, the load-bearing facts named one by one;
+  - **Boundaries and edge behavior** — what the mechanism does at the
+    edges and on the paths the question did not name, decided from the
+    code where the code decides it, and what the repository alone
+    cannot settle named rather than papered over.
+
+  Leave every file of the repository as you found it: the explanation
+  at ANSWER.md is the whole deliverable.

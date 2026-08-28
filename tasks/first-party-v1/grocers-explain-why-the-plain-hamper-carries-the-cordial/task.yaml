@@ -1,0 +1,85 @@
+# The second of round 12's three explain-style `codebase-comprehension`
+# tasks (design note §106, registered §107): the surprising-behaviour kind,
+# §106.4's second — why *this* input comes out *that* way, a result the code
+# genuinely produces and a careless reader would get wrong. The deliverable
+# is one prose file — the explanation the prompt asks for at ANSWER.md — not
+# a change to the code: the repository is the whole of the evidence and is
+# left unmodified, and a good answer follows the cordial into the plain
+# hamper through the specific decisions in the code that put it there.
+#
+# Why it grades the way it does: this category's four locate-style tasks are
+# graded on an accepted-answer key, because their deliverable is a location
+# — a (file, symbol) a checked-in test can compare. An explanation has no
+# such key: held-out tests cannot grade a walk through the code — an
+# explanation may be grounded or may be three confident paragraphs over
+# nothing — so this task's verdict is the point gate, dispatched by the key
+# on disk (§106.5's loader move). The prompt-named answer file is collected
+# out of the workdir diff and put to a grader one planted point at a time:
+# resolved is every planted point covered by a verbatim span of the answer's
+# own text and no disqualifying claim made, binary. Hence `control: true` —
+# the task registers no difficulty prediction, and a task declaring neither
+# a construction block nor itself a control is refused — and hence no
+# grading/ suite to run: grading/ holds the points key and nothing that
+# executes, because there is no behaviour to test. The key is proved both
+# ways at authoring time (proofs/): the author's reference answer resolves
+# per point and a fluent foil answer fails, rulings archived and read
+# offline by the lint.
+#
+# The question is decidable in the closed world of the repository and the
+# prompt alone: the order book is checked in, the run is one command, and
+# every step from the book to the docket is written in the code — no
+# external fact, no web research, nothing missing. The careless reading is
+# that each standard hamper starts from its own copy of the standard list;
+# the code says otherwise, and the five planted points are §106.1's kind,
+# one fact of the code each, a single evidence span apiece, with the
+# consequence planted as its own point: that a standard hamper's contents is
+# the standard list object itself and not a copy; that adding an extra
+# appends into the hamper's contents list in place; that — the aliasing's
+# consequence, its own point and never a trailing clause — every standard
+# hamper of the run holds the very same contents list; that the dockets are
+# written only after the whole book has been made up; and that a bespoke
+# hamper is packed into a fresh list of its own. The two disqualifiers are
+# the plausible misreadings the code refutes: that each standard hamper is
+# packed from its own copy of the standard list, and that the cordial
+# reached the plain hamper through a mix-up of orders or an extra applied to
+# the wrong hamper.
+id: grocers-explain-why-the-plain-hamper-carries-the-cordial
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The grocer's back room makes up the day's hampers from one order
+  book: orders.json lists every order as it came in, hampers.py is
+  where a hamper is packed, docket.py writes the docket that rides in
+  the basket, and cli.py is how the back room works the book.
+
+  Today's book holds three orders: Mrs Beech asks for the standard
+  hamper as it comes, Col. Ashton asks for the standard hamper with a
+  bottle of cordial slipped in, and Dr Vane sends his own list. The
+  back room runs `python cli.py make-up` — and Mrs Beech's docket comes
+  out naming a bottle of cordial and counting five items, though her
+  order asked for the plain standard hamper and nothing else.
+
+  Explain why Mrs Beech's docket comes out that way: what her hamper
+  holds by the time the dockets are written, which decisions in the
+  code put the cordial there, and what the same run's other dockets
+  say.
+
+  Write your explanation to ANSWER.md. This is a reading of the
+  repository as it stands, and the repository is the whole of the
+  evidence: trace the code and account for it. Your explanation carries
+  three sections, under these headings:
+
+  - **What happens** — the run of the book, traced through the code
+    step by step in the repository's own terms;
+  - **Why it comes out that way** — the specific decisions in the code
+    that produce it, the load-bearing facts named one by one;
+  - **Boundaries and edge behavior** — what the mechanism does at the
+    edges and on the paths the question did not name, decided from the
+    code where the code decides it, and what the repository alone
+    cannot settle named rather than papered over.
+
+  Leave every file of the repository as you found it: the explanation
+  at ANSWER.md is the whole deliverable.

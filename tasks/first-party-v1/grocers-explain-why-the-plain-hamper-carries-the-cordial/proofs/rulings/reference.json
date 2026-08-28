@@ -1,0 +1,56 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "f8c361273d299a8af88ccf5debc4a75b27b6741600c24be93adc9a1619826d7d",
+  "answer_sha256": "875df4b78742d3140e64ef438257c98a8c406a8847705cc5b941653fc7da23bf",
+  "rulings": [
+    {
+      "point_id": "the-standard-list-itself-not-a-copy",
+      "kind": "point",
+      "covered": true,
+      "span": "a standard hamper's contents is the standard list object itself rather than a copy of it",
+      "verified": true
+    },
+    {
+      "point_id": "the-extra-appended-in-place",
+      "kind": "point",
+      "covered": true,
+      "span": "adding an extra appends it into the hamper's contents list in place",
+      "verified": true
+    },
+    {
+      "point_id": "one-list-across-the-standard-hampers",
+      "kind": "point",
+      "covered": true,
+      "span": "- Because every standard order goes through that same assignment, every standard hamper made up in the run holds the very same contents list - Mrs Beech's and Col. Ashton's `contents` are one object, not two equal ones.",
+      "verified": true
+    },
+    {
+      "point_id": "the-dockets-written-after-the-whole-book",
+      "kind": "point",
+      "covered": true,
+      "span": "The dockets are written only after every order in the book has been made up",
+      "verified": true
+    },
+    {
+      "point_id": "the-bespoke-hamper-packed-fresh",
+      "kind": "point",
+      "covered": true,
+      "span": "a bespoke hamper is packed into a fresh list built from its order's own wants",
+      "verified": true
+    },
+    {
+      "point_id": "a-copy-per-hamper",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "an-extra-on-the-wrong-hamper",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

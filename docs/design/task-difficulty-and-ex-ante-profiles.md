@@ -6495,16 +6495,16 @@ merged dataset; the four together are the merged one record for record:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-a.jsonl --data /tmp/r8replay/a.jsonl
-  evaluated 1 runs over 137 tasks (1 resolved)
+  evaluated 1 runs over 139 tasks (1 resolved)
   merged 1 records into /tmp/r8replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-b.jsonl --data /tmp/r8replay/b.jsonl
-  evaluated 2 runs over 137 tasks (2 resolved)
+  evaluated 2 runs over 139 tasks (2 resolved)
   merged 2 records into /tmp/r8replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-c.jsonl --data /tmp/r8replay/c.jsonl
-  evaluated 3 runs over 137 tasks (3 resolved)
+  evaluated 3 runs over 139 tasks (3 resolved)
   merged 3 records into /tmp/r8replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-d.jsonl --data /tmp/r8replay/d.jsonl
-  evaluated 3 runs over 137 tasks (2 resolved)
+  evaluated 3 runs over 139 tasks (2 resolved)
   merged 3 records into /tmp/r8replay/d.jsonl (3 total)
 ```
 
@@ -8897,16 +8897,16 @@ dataset of its own:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-a.jsonl --data /tmp/r10replay/a.jsonl
-  evaluated 1 runs over 137 tasks (0 resolved)
+  evaluated 1 runs over 139 tasks (0 resolved)
   merged 1 records into /tmp/r10replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-b.jsonl --data /tmp/r10replay/b.jsonl
-  evaluated 2 runs over 137 tasks (0 resolved)
+  evaluated 2 runs over 139 tasks (0 resolved)
   merged 2 records into /tmp/r10replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-c.jsonl --data /tmp/r10replay/c.jsonl
-  evaluated 3 runs over 137 tasks (1 resolved)
+  evaluated 3 runs over 139 tasks (1 resolved)
   merged 3 records into /tmp/r10replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-d.jsonl --data /tmp/r10replay/d.jsonl
-  evaluated 3 runs over 137 tasks (0 resolved)
+  evaluated 3 runs over 139 tasks (0 resolved)
   merged 3 records into /tmp/r10replay/d.jsonl (3 total)
 ```
 
@@ -10114,16 +10114,16 @@ dataset of its own:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-a.jsonl --data /tmp/r11replay/a.jsonl
-  evaluated 1 runs over 137 tasks (0 resolved)
+  evaluated 1 runs over 139 tasks (0 resolved)
   merged 1 records into /tmp/r11replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-b.jsonl --data /tmp/r11replay/b.jsonl
-  evaluated 2 runs over 137 tasks (0 resolved)
+  evaluated 2 runs over 139 tasks (0 resolved)
   merged 2 records into /tmp/r11replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-c.jsonl --data /tmp/r11replay/c.jsonl
-  evaluated 3 runs over 137 tasks (0 resolved)
+  evaluated 3 runs over 139 tasks (0 resolved)
   merged 3 records into /tmp/r11replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-d.jsonl --data /tmp/r11replay/d.jsonl
-  evaluated 3 runs over 137 tasks (0 resolved)
+  evaluated 3 runs over 139 tasks (0 resolved)
   merged 3 records into /tmp/r11replay/d.jsonl (3 total)
 ```
 
@@ -10715,6 +10715,28 @@ one that lands the last of the three, once all three ids exist. **Round 7's pin
 is the check the authoring runs first**: no task id may share a repo prefix
 with an existing task, and the three prefixes are checked against every task
 the corpus holds before a repository is written.
+
+**Filled in 2026-08-28, by the round's second task-authoring ticket, exactly
+where this section left it.** The three are the tasks the round authored —
+each proved both ways under 107.5's gate before this line was written — read
+off `tasks/first-party-v1/` as the corpus actually holds them:
+
+```
+ropewalk-explain-how-an-order-becomes-a-coil               (a ropewalk's yard; the end-to-end mechanism, an asking to a coil)
+grocers-explain-why-the-plain-hamper-carries-the-cordial   (a grocer's back room; the surprising behaviour, one shared list)
+tramshed-explain-why-the-two-boards-disagree               (a tram shed's boards; the divergence, text order against clock order)
+```
+
+**This list is the register.** Three ids, all point-keyed
+`codebase-comprehension`, and they are **every point-keyed
+`codebase-comprehension` task the corpus holds** — the category's four
+locate-style tasks stand beside them on their own key and are no part of this
+round: the round sweeps the action entire and re-runs nothing any combination
+has already answered. Three different kinds of question, deliberately,
+§106.4's three: how the repository carries a thing from one end to the other,
+why this input comes out that way, and why two paths that look alike land
+differently — three tasks that asked one question three times would measure
+one thing three times.
 
 **How the sweep is invoked.** Sweep id **`round-12`**, on every invocation of
 it. Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry

@@ -1,0 +1,15 @@
+{
+  "orders": [
+    {
+      "customer": "Mrs Beech"
+    },
+    {
+      "customer": "Col. Ashton",
+      "extras": ["a bottle of cordial"]
+    },
+    {
+      "customer": "Dr Vane",
+      "wants": ["potted ham", "a box of walnuts"]
+    }
+  ]
+}
