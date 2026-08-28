@@ -1324,8 +1324,9 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     """Section 104's refusals, each anchored to something checkable, and the
     disclosures the ticket wants in as many words: the covered-but-mediocre
     narrowing, the transfer gap, and the owner's ~9 labels recorded as
-    **asked for and not yet given** — the absence stated, §92's precedent,
-    with the addendum form named for when they arrive."""
+    **given 2026-08-27** — seven of nine agree, two disagree, the
+    orchestrator-assistance provenance disclosed, the transfer gap read as
+    opened on two cells in one direction."""
     swept = {task_id for task_id, _ in rulings}
     assert all(tasks[task_id].control for task_id in swept)
     assert not [
@@ -1352,26 +1353,42 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     ) in said
     assert "The proofs' truth is still the author's planted truth" in said
 
-    # The labels: asked for at record time, not yet given, and said so —
-    # the check gates nothing and the section names the addendum form.
+    # The labels: supplied 2026-08-27, the day after the record — seven of
+    # nine agree, two disagree — recorded beside the section exactly as
+    # given, per its own sentence, with the assistance provenance disclosed.
     assert (
-        "**The owner's ~9 agree/disagree labels: asked for when this record "
-        "was written, and not yet given.**"
+        "**The owner's ~9 agree/disagree labels: given 2026-08-27, the day "
+        "after this record — seven of nine agree, two disagree.**"
     ) in said
-    assert "chose to supply the labels later" in said
-    assert "absent here rather than unmentioned" in said
-    assert "The check gates nothing and the nine verdicts stand regardless" in said
-    assert "a dated addendum beside this section, exactly as given" in said
-    assert "§92's addendum set" in said
+    assert "chose to supply them later" in said
+    assert (
+        "**these labels were formed with the orchestrator's assistance and "
+        "not by an unaided read**"
+    ) in said
+    assert "the owner adopted the recommendations" in said
     assert "§76.2 ruled and §77.2 registered" in said
-    # No labels table stands in the section yet: the addendum, when it comes,
-    # is dated — recording nine labels now would be recording something the
-    # owner has not given.
-    assert not [
+    labels_block = [
         block
         for block in fenced_blocks(note_section("104. What this round cannot say"))
         if "agree" in block
-    ], "no labels block until the owner supplies the labels"
+    ]
+    assert len(labels_block) == 1, "the labels table, fenced, once"
+    assert labels_block[0].count("(machine: unresolved)") == 9
+    assert labels_block[0].count("disagree  (machine:") == 2
+    assert labels_block[0].count("agree     (machine:") == 7
+    # The two disagreements are both sonnet cells, and the gap is read as
+    # opened — on two of nine, in one direction, a recall shape the
+    # two-sided proofs cannot catch.
+    for line in labels_block[0].splitlines():
+        if "disagree" in line:
+            assert "claude-sonnet-5" in line
+    assert (
+        "the transfer gap §79.4 named opened, on two of nine and in one "
+        "direction"
+    ) in said
+    assert "a recall shape the two-sided proofs cannot catch" in said
+    assert "The check gated nothing and the nine verdicts stand regardless" in said
+    assert "the owner held the universal quantifier" in said
 
     assert "**No cross-action difficulty comparison.**" in said
     assert "0 of 9 here is not to be read against round 10's 1 of 9" in said

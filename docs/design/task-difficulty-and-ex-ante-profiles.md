@@ -10024,17 +10024,59 @@ they all still hold.
   remains unproved is exactly what §79.4 named — judgment of a proposal with
   no truth behind it — and the check registered to watch it is the owner's,
   below.
-- **The owner's ~9 agree/disagree labels: asked for when this record was
-  written, and not yet given.** §76.2 ruled and §77.2 registered a
-  disclosed, non-gating check riding the round's own swept heap-3 cells:
-  the owner labels agree/disagree on each of the nine verdicts above,
-  reading each answer file beside its task's planted key. The owner was
-  asked when this record was written and chose to supply the labels later,
-  so they are absent here rather than unmentioned — §92's own situation at
-  its close. The check gates nothing and the nine verdicts stand
-  regardless; when the labels are given they will be recorded in a dated
-  addendum beside this section, exactly as given, which is the form §92's
-  addendum set (round 10's nine, given 2026-08-25, nine of nine agree).
+- **The owner's ~9 agree/disagree labels: given 2026-08-27, the day after
+  this record — seven of nine agree, two disagree.** §76.2 ruled and §77.2
+  registered a disclosed, non-gating check riding the round's own swept
+  heap-3 cells: the owner labels agree/disagree on each of the nine
+  verdicts above, reading each answer file beside its task's planted key.
+  They were asked for when this record was written and the owner chose to
+  supply them later; the owner gave them the next day, and one disclosure
+  precedes the table: **these labels were formed with the orchestrator's
+  assistance and not by an unaided read** — the orchestrator put each
+  refused point back to its answer's own text, cell by cell, and
+  recommended a label per cell with the borderline cells named, and the
+  owner adopted the recommendations. The provenance is named so the check
+  is read for what it was, and the labels are recorded exactly as given:
+
+  ```
+  turnpike   x claude-haiku-4-5   agree     (machine: unresolved)
+  turnpike   x claude-sonnet-5    agree     (machine: unresolved)
+  turnpike   x gpt-5.6-terra      agree     (machine: unresolved)
+  almshouse  x claude-haiku-4-5   agree     (machine: unresolved)
+  almshouse  x claude-sonnet-5    disagree  (machine: unresolved)
+  almshouse  x gpt-5.6-terra      agree     (machine: unresolved)
+  maltings   x claude-haiku-4-5   agree     (machine: unresolved)
+  maltings   x claude-sonnet-5    disagree  (machine: unresolved)
+  maltings   x gpt-5.6-terra      agree     (machine: unresolved)
+  ```
+
+  The two disagreements are one finding twice, and both are
+  `claude-sonnet-5` cells. On `almshouse` the three points the gate
+  refused are each stated in the answer's own text — door.py writing the
+  name in verbatim with the module's docstring quoted, tally.py matching
+  on exact string equality, "no roll file" in as many words — but stated
+  in its opening trace of the code rather than under the piece that names
+  the change; on `maltings` the refused
+  `bad-is-wider-than-broken-json` is that answer's own first piece: the
+  three keys named, the readers dereferencing them unconditionally, the
+  read contract decided once for every reader. Reading each answer whole
+  beside its key, both cells covered every planted point and made no
+  disqualified claim, so the holistic judgment says resolved where the
+  gate said unresolved. **On these nine cells the transfer gap §79.4
+  named opened, on two of nine and in one direction**: the gate
+  under-covered planted facts that a production deliverable states
+  outside the section naming the change — a multi-clause point met by no
+  single evidence span — a recall shape the two-sided proofs cannot
+  catch, because a reference answer states each point in one tight
+  sentence. The check gated nothing and the nine verdicts stand
+  regardless; what it adds rides to the next round's planning as the
+  first paid evidence of the gap's direction. The seven agreements
+  include the round's closest miss, `turnpike` × `gpt-5.6-terra` at four
+  of five, put to the owner with the miss named: the answer's "the table
+  cannot safely change independently" is the planted tie's shadow and not
+  its consequence — every already-taken line reading as taken down
+  wrong — and the owner held the universal quantifier, §92's situation
+  exactly.
 - **No cross-action difficulty comparison.** 0 of 9 here is not to be read
   against round 10's 1 of 9 or round 8's 8 of 9: a decomposition, a
   proposal and a suite are different deliverables graded by different keys,
