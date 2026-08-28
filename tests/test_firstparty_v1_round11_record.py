@@ -1200,11 +1200,13 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
     checked-in sentences the round falsified — moved by the round's first
     task before the sweep, verified here rather than re-edited.
 
-    Unlike §90's suite there is no stale line to except: the record was
-    written after the fill it records, and the quoted block is compared with
-    the printed table verbatim. The `requirement-decomposition × typescript`
-    zero is disclosed as zero by absence, and `performance-optimisation`
-    still prints the `- - 0` shape a real zero prints.
+    No stale line when it was recorded: the record was written after the
+    fill it records. One line has moved since — round 12's first
+    explain-style task growing `codebase-comprehension`'s row from 4 to 5 —
+    and it is named below in round 7's pattern rather than edited in the
+    record. The `requirement-decomposition × typescript` zero is disclosed
+    as zero by absence, and `performance-optimisation` still prints the
+    `- - 0` shape a real zero prints.
     """
     coverage = firstparty_v1.coverage_table(firstparty_v1.load_task_set(_TASKS))
     python = {
@@ -1213,7 +1215,9 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
         if language == "python" and surface == "application"
     }
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
-    assert sum(python.values()) == 122
+    # 122 when §102 was recorded; round 12's first explain-style
+    # `codebase-comprehension` task moved the live column to 123.
+    assert sum(python.values()) == 123
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
@@ -1228,9 +1232,22 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
     [quoted] = fenced_blocks(
         note_section("102. The coverage table, as the lint prints it")
     )
-    assert quoted.strip("\n") in printed, (
-        "the record quotes the table exactly as the lint prints it"
-    )
+    # One line has moved since §102 was recorded, named here in round 7's
+    # pattern rather than edited in the record: round 12's first
+    # explain-style task grew `codebase-comprehension`'s row from 4 to 5.
+    moved = "  codebase-comprehension     application  python      4"
+    quoted_lines = quoted.strip("\n").splitlines()
+    assert moved in quoted_lines
+    assert moved not in printed
+    for line in quoted_lines:
+        if line == moved:
+            continue
+        assert line in printed, line
+    assert [
+        line.split()
+        for line in printed.splitlines()
+        if line.startswith("  codebase-comprehension")
+    ] == [["codebase-comprehension", "application", "python", "5"]]
     assert (
         "  requirement-decomposition  application  python      3"
     ) in quoted
@@ -1533,21 +1550,37 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Section 105's readers: six of the nine rows inside the default view,
-    the reconcile lines quoted as the reader prints them today, the calibrate
-    table exactly as printed — its rung floor reading `unsolved` — and the
-    earlier rounds' published tables unmoved."""
+    the reconcile lines quoted as the reader printed them when the record was
+    written — the task-set line has moved since, round 12's first task, and
+    is named inside rather than edited — the calibrate table exactly as
+    printed, its rung floor reading `unsolved`, and the earlier rounds'
+    published tables unmoved."""
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     reconciled = capsys.readouterr().out
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
     [quoted] = fenced_blocks(note_section(
         "105. Replay, the readers, and heap 3's second cell filled"
     ))[1:2]
-    for line in quoted.strip("\n").splitlines():
-        assert line in printed, line
-    assert (
+    # One line of the block has moved since the record was written, named
+    # here in round 7's pattern rather than edited there: round 12's first
+    # explain-style `codebase-comprehension` task, a Python control, grew
+    # the task-set line by one task and one control. The runs line has not
+    # moved — the task is unswept, so no row counts it.
+    stale = (
         "  task set   tasks/first-party-v1 — 122 task(s): 55 control(s), "
         "67 constructed"
-    ) in quoted
+    )
+    quoted_block_lines = quoted.strip("\n").splitlines()
+    assert stale in quoted_block_lines
+    assert stale not in printed
+    for line in quoted_block_lines:
+        if line == stale:
+            continue
+        assert line in printed, line
+    assert (
+        "  task set   tasks/first-party-v1 — 123 task(s): 56 control(s), "
+        "67 constructed"
+    ) in printed
     assert "  runs       243 over 122 task(s)" in quoted
     assert "sweep round-10, sweep round-11" in quoted
     assert "             7 keyed on a sweep id, 2 on an as-of date" in quoted

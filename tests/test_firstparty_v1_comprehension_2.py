@@ -336,16 +336,19 @@ def test_declared_scale_matches_the_reference_solution(task_id: str) -> None:
     assert task.scale == "single-file"
 
 
-def test_the_category_cell_is_filled_by_four_tasks_of_one_shape() -> None:
-    """What the ticket asks to be checked before it closes, checked here so it
-    stays true: the coverage table `ai-bench lint-v1` prints holds one
-    `codebase-comprehension` row, and it counts four tasks."""
+def test_the_category_cell_counts_two_shapes_in_one_row() -> None:
+    """What the ticket asked to be checked before it closed, caught up as the
+    row moved: the coverage table `ai-bench lint-v1` prints still holds one
+    `codebase-comprehension` row, and since round 12's first explain-style
+    task it counts five tasks of two shapes — this round's four locate-style
+    tasks on an accepted-answer key, and the point-keyed explain shape beside
+    them (§106.2)."""
     comprehension = [
         row for row in coverage_table(load_task_set(TASKS))
         if row[0] == "codebase-comprehension"
     ]
 
-    assert comprehension == [("codebase-comprehension", "application", "python", 4)]
+    assert comprehension == [("codebase-comprehension", "application", "python", 5)]
 
 
 @pytest.mark.parametrize("task_id", TASK_IDS)

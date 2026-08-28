@@ -1,0 +1,56 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "points_key_sha256": "dc6b001b8ed96d37e4feacb954dcf0e1ed898e97c8b7693b766808fd360c6677",
+  "answer_sha256": "4971a1e33e40f723454b447bd6b814d9e2f0f1b9e54e580c71922ed9e014d644",
+  "rulings": [
+    {
+      "point_id": "the-round-up-to-whole-hauls",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-yarn-once-per-strand",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-rack-checked-before-any-draw",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-front-of-the-rack-first",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "the-price-on-the-walked-fathoms",
+      "kind": "point",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "cut-to-the-asked-length",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "the customer walks away with a tagged coil of the fifty fathoms they asked for",
+      "verified": true
+    },
+    {
+      "point_id": "a-short-rack-makes-what-it-can",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "The interesting edge is a thin rack: because the walk draws as it goes, an order the rack cannot fully cover is walked short from whatever yarn is there - the walk uses up the store and lays up what it managed, and the book's entry shows the shortfall for the clerk to make right when the next delivery comes.",
+      "verified": true
+    }
+  ]
+}

@@ -38,11 +38,15 @@ would then read as met on text §107 never wrote.
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
 two tests read the round forwards, and they are two tests rather than one
 because they die at different tickets: no `round-12` row exists yet (retired by
-the ticket that lands the sweep), and no `codebase-comprehension` task is
-point-keyed yet (retired by the ticket that lands the round's first task).
-That second claim is written **by key shape and never as a task count**,
-because the four locate-style comprehension tasks stay where they are and a
-count would go red on their account rather than on the explain shape's.
+the ticket that lands the sweep), and — as originally written — no
+`codebase-comprehension` task was point-keyed yet. That second half was
+retired by the ticket that landed the round's first task, and its caught-up
+form below says what is true now: the corpus holds task 1 and no second or
+third yet, until the ticket that lands tasks 2 and 3 replaces it with the
+register check. The claim is still written **by key shape and never as a task
+count of the category**, because the four locate-style comprehension tasks
+stay where they are and a count would go red on their account rather than on
+the explain shape's.
 """
 
 import re
@@ -479,13 +483,14 @@ def test_the_recall_ruling_is_registered_as_a_forward_only_authoring_rule(
     assert "§76.2's owner-labels check rides this round's nine cells" in recall
 
     # And the older keys really are still on disk, unedited by this round:
-    # every point-keyed task the corpus holds belongs to the two earlier
-    # actions, which is what "forward-only" has to mean in the corpus.
+    # the point-keyed set spans the two earlier actions the ruling reaches
+    # back over — which "forward-only" leaves untouched — plus, since the
+    # round's first task landed, this round's own category beside them.
     keyed = {
         task.category for task in tasks.values()
         if firstparty_v1.is_point_keyed(task)
     }
-    assert keyed == {"investigation", _ANCHOR_CATEGORY}
+    assert keyed == {"investigation", _ANCHOR_CATEGORY, _CATEGORY}
 
 
 def test_the_deliverable_is_one_answer_file_with_three_named_sections(
@@ -822,15 +827,24 @@ def test_the_checked_in_proof_answers_are_what_the_input_half_is_measured_at(
     That is a claim about the corpus, so it is recomputed from the corpus
     rather than read off the prose — a figure that drifted as tasks were
     revised would otherwise sit in the register unchallenged.
+
+    Recomputed over the answers the registration measured: the two earlier
+    actions' twelve. The round's own proof answers land after this
+    registration was written and are what the assumption is spent on, not
+    part of what it rested on — so they are excluded here by category.
     """
+    measured = [
+        task for task in tasks.values()
+        if firstparty_v1.is_point_keyed(task) and task.category != _CATEGORY
+    ]
     lengths = sorted(
         len((task.proofs_dir / side.answer_file).read_text(encoding="utf-8"))
-        for task in tasks.values() if firstparty_v1.is_point_keyed(task)
+        for task in measured
         for side in firstparty_v1.PROOF_SIDES
     )
     references = sorted(
         len((task.proofs_dir / side.answer_file).read_text(encoding="utf-8"))
-        for task in tasks.values() if firstparty_v1.is_point_keyed(task)
+        for task in measured
         for side in firstparty_v1.PROOF_SIDES if side.resolves
     )
     assert (len(lengths), len(references)) == (12, 6)
@@ -1218,31 +1232,40 @@ def test_no_round_12_row_exists_yet(runs: list[firstparty_v1.Run]) -> None:
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 
-def test_no_comprehension_task_is_point_keyed_yet(
+def test_the_corpus_holds_the_first_task_and_no_second_or_third_yet(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test: the explain shape is not in the corpus.
+    """The second forward-reading test, caught up by the ticket that landed
+    the round's first task: exactly one point-keyed `codebase-comprehension`
+    task is in the corpus — task 1, the end-to-end-mechanism kind — and no
+    second or third yet. The ticket that lands tasks 2 and 3 replaces this
+    with the register check against §107.8's filled block.
 
-    Written **by key shape and never as a task count**. The category already
-    carries four locate-style tasks on an accepted-answer key and they are
-    staying, so a count would go red on their account rather than on the thing
-    this test exists to watch — whether a *point-keyed* comprehension task has
-    landed. It is retired by the ticket that lands the round's first task.
+    Still selected **by key shape and never as a task count of the
+    category**. The category's four locate-style tasks on an accepted-answer
+    key are staying, so a count would go red on their account rather than on
+    the thing this test watches — how many *point-keyed* comprehension tasks
+    have landed.
     """
     comprehension = [
         task for task in tasks.values() if task.category == _CATEGORY
     ]
-    assert comprehension, "the corpus carries the category's locate-style tasks"
-    assert not [
-        task for task in comprehension if firstparty_v1.is_point_keyed(task)
-    ], "no point-keyed `codebase-comprehension` task yet"
+    assert len(comprehension) > 1, (
+        "the corpus carries the category's locate-style tasks beside the "
+        "explain shape"
+    )
+    assert [
+        task.id for task in comprehension if firstparty_v1.is_point_keyed(task)
+    ] == ["ropewalk-explain-how-an-order-becomes-a-coil"], (
+        "round 12's task 1 and no second or third yet"
+    )
 
     # The loader has been taught the shape — §106.5's move, landed by the
     # round's loader ticket ahead of any task, and §107.5 registers it as the
     # form the gate will take. What it taught the loader is *point-optional*
-    # membership and nothing more: the category may ship a points key, the two
-    # actions above it must, and the corpus asserted just now still holds no
-    # task that does.
+    # membership and nothing more: the category may ship a points key — task 1
+    # asserted just now is the first that does — and the two actions above it
+    # must.
     assert _CATEGORY in firstparty_v1._POINT_CATEGORIES
     assert _CATEGORY == firstparty_v1._POINT_OPTIONAL_CATEGORY
     assert _CATEGORY not in firstparty_v1._POINT_REQUIRED_CATEGORIES

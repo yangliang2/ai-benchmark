@@ -81,12 +81,12 @@ _TYPESCRIPT_ROWS = {
 }
 
 # The Python side of the same table, which this round does not touch. It reads
-# 122 rather than round 7's 113 because later rounds authored into the Python
+# 123 rather than round 7's 113 because later rounds authored into the Python
 # column — round 8's three `test-authoring` tasks, round 10's three
-# `investigation` ones, round 11's three `requirement-decomposition` ones;
-# §59.8's own prose, quoted below, is a claim about what round 7 did and stays
-# at 113.
-_PYTHON_TOTAL = 122
+# `investigation` ones, round 11's three `requirement-decomposition` ones,
+# round 12's first explain-style `codebase-comprehension` one; §59.8's own
+# prose, quoted below, is a claim about what round 7 did and stays at 113.
+_PYTHON_TOTAL = 123
 
 
 def note_section() -> str:
@@ -483,7 +483,7 @@ def test_the_coverage_target_is_what_the_lint_prints(
     ]
     assert "codebase-comprehension" not in zeros
     assert [row for row in table if row[0] == "codebase-comprehension"] == [
-        ("codebase-comprehension", "application", "python", 4)
+        ("codebase-comprehension", "application", "python", 5)
     ]
 
     python_rows = {row for row in table if row[2] == "python"}
@@ -514,9 +514,10 @@ def test_the_readers_corpus_count_header_reads_the_python_column(
     Both figures are live reads of the corpus and both moved as later rounds
     authored into the Python column — round 8's three `test-authoring` tasks,
     round 10's three `investigation` ones, round 11's three
-    `requirement-decomposition` ones: 113 and 127 at the time §59.8 was
-    written, 122 and 136 with those tasks checked in. The section's own prose
-    is quoted above and is unmoved — what round 7 did to the Python column is
+    `requirement-decomposition` ones, round 12's first explain-style
+    `codebase-comprehension` one: 113 and 127 at the time §59.8 was written,
+    123 and 137 with those tasks checked in. The section's own prose is
+    quoted above and is unmoved — what round 7 did to the Python column is
     still nothing.
     """
     assert len(tasks) == _PYTHON_TOTAL + sum(_COUNTS.values())

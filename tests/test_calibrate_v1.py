@@ -525,8 +525,13 @@ _PUBLISHED = {
     "code-review": {
         "(zero-knob)": ("8", "1.00x (n=8)", "1.00x (n=8)", "haiku-solvable (n=8)"),
     },
+    # Round 12's first explain-style task joined the category's declared
+    # controls (tasks column, a `Cell`'s members being every task of the set
+    # with this key, swept or not) while the per-model means and the rung
+    # floor stay row-derived over the four swept locate-style tasks until the
+    # round's sweep lands — the same arrival shape as round 11's first task.
     "codebase-comprehension": {
-        "(zero-knob)": ("4", "1.00x (n=4)", "1.00x (n=4)", "haiku-solvable (n=4)"),
+        "(zero-knob)": ("5", "1.00x (n=4)", "1.00x (n=4)", "haiku-solvable (n=4)"),
     },
     "fault-location": {
         "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
@@ -621,7 +626,7 @@ _PUBLISHED_MIX = {
     "bug-fix": "6 single-file; 6 hand-authored",
     "fault-location": "6 single-file; 6 hand-authored",
     "code-review": "8 single-file; 8 hand-authored",
-    "codebase-comprehension": "4 single-file; 4 hand-authored",
+    "codebase-comprehension": "5 single-file; 5 hand-authored",
     "feature-dev": "6 single-file + 5 cross-file; 11 hand-authored",
     "refactor": "5 single-file + 6 cross-file; 11 hand-authored",
     "test-authoring": "3 single-file; 3 hand-authored",

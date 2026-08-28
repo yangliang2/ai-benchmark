@@ -1021,10 +1021,12 @@ def test_the_coverage_table_and_the_two_updated_sentences(
 
     The quoted block is compared with the printed table line for line — no
     stale line when it was recorded, because the record was written after the
-    fill it records; one line has moved since, round 11's three
+    fill it records; two lines have moved since — round 11's three
     `requirement-decomposition` tasks turning the row this record quotes as
-    `- - 0` into a Python cell, and it is named below in round 7's pattern
-    rather than edited in the record. The `investigation × typescript` zero
+    `- - 0` into a Python cell, and round 12's first explain-style task
+    growing `codebase-comprehension`'s row — and each is named below in
+    round 7's pattern rather than edited in the record. The
+    `investigation × typescript` zero
     is disclosed as zero by absence, and the docstring and CONTEXT.md
     sentences are pinned here the way the quoted figures are — caught up as
     round 11 moved them, so they cannot quietly claim a zero again.
@@ -1037,8 +1039,9 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     }
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
     # 119 when §90 was recorded; round 11's three `requirement-decomposition`
-    # tasks moved the live column to 122.
-    assert sum(python.values()) == 122
+    # tasks moved the live column to 122, and round 12's first explain-style
+    # `codebase-comprehension` task to 123.
+    assert sum(python.values()) == 123
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
@@ -1053,12 +1056,21 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     [quoted] = fenced_blocks(
         note_section("90. The coverage table, as the lint prints it")
     )
-    recorded_zero = "  requirement-decomposition  -            -           0"
+    # The two lines that have moved since §90 was recorded, each named in
+    # round 7's pattern rather than edited in the record: round 11's first
+    # `requirement-decomposition` task turned the zero row this record quotes
+    # into a Python cell, and round 12's first explain-style task grew
+    # `codebase-comprehension`'s row from 4 to 5.
+    moved = {
+        "  requirement-decomposition  -            -           0",
+        "  codebase-comprehension     application  python      4",
+    }
     quoted_lines = quoted.strip("\n").splitlines()
-    assert recorded_zero in quoted_lines
-    assert recorded_zero not in printed
+    for line in moved:
+        assert line in quoted_lines, line
+        assert line not in printed, line
     for line in quoted_lines:
-        if line == recorded_zero:
+        if line in moved:
             continue
         assert line in printed, line
     assert "  investigation              application  python      3" in quoted
@@ -1067,6 +1079,11 @@ def test_the_coverage_table_and_the_two_updated_sentences(
         for line in printed.splitlines()
         if line.startswith("  requirement-decomposition")
     ] == [["requirement-decomposition", "application", "python", "3"]]
+    assert [
+        line.split()
+        for line in printed.splitlines()
+        if line.startswith("  codebase-comprehension")
+    ] == [["codebase-comprehension", "application", "python", "5"]]
 
     said = prose(note_section("90. The coverage table, as the lint prints it"))
     assert (
@@ -1361,13 +1378,15 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     [quoted] = fenced_blocks(note_section(
         "93. Replay, the readers, and heap 3 opened"
     ))[1:2]
-    # The whole block has moved since, in two arrivals: round 11's three
+    # The whole block has moved since, in three arrivals: round 11's three
     # `requirement-decomposition` tasks, Python controls, grew the task-set
-    # line by three tasks and three controls, and the round's sweep
-    # (2026-08-26 — nine rows, six of them claude-code Python) then grew the
-    # runs line and joined the round list. The record is not edited for any
-    # of it — each line it quoted is named here, round 7's own pattern, and
-    # what the readers print instead is asserted beside it.
+    # line by three tasks and three controls, the round's sweep (2026-08-26
+    # — nine rows, six of them claude-code Python) then grew the runs line
+    # and joined the round list, and round 12's first explain-style
+    # `codebase-comprehension` task grew the task-set line once more. The
+    # record is not edited for any of it — each line it quoted is named
+    # here, round 7's own pattern, and what the readers print instead is
+    # asserted beside it.
     recorded = [
         "  task set   tasks/first-party-v1 — 119 task(s): 52 control(s), "
         "67 constructed",
@@ -1384,7 +1403,7 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     for line in recorded:
         assert line not in printed, line
     assert (
-        "  task set   tasks/first-party-v1 — 122 task(s): 55 control(s), "
+        "  task set   tasks/first-party-v1 — 123 task(s): 56 control(s), "
         "67 constructed"
     ) in printed
     assert "  runs       243 over 122 task(s)" in printed

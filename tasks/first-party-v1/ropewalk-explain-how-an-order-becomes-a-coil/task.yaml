@@ -1,0 +1,80 @@
+# The corpus's first explain-style `codebase-comprehension` task, and the
+# first of round 12's three (design note §106, registered §107): the
+# end-to-end-mechanism kind, §106.4's first — how the repository carries a
+# thing from one end to the other. The deliverable is one prose file — the
+# explanation the prompt asks for at ANSWER.md — not a change to the code:
+# the repository is the whole of the evidence and is left unmodified, and a
+# good answer traces the passage of one order through it and accounts for
+# what the code decides on the way.
+#
+# Why it grades the way it does: this category's four locate-style tasks are
+# graded on an accepted-answer key, because their deliverable is a location
+# — a (file, symbol) a checked-in test can compare. An explanation has no
+# such key: held-out tests cannot grade a walk through the code — an
+# explanation may be grounded or may be three confident paragraphs over
+# nothing — so this task's verdict is the point gate, dispatched by the key
+# on disk (§106.5's loader move). The prompt-named answer file is collected
+# out of the workdir diff and put to a grader one planted point at a time:
+# resolved is every planted point covered by a verbatim span of the answer's
+# own text and no disqualifying claim made, binary. Hence `control: true` —
+# the task registers no difficulty prediction, and a task declaring neither
+# a construction block nor itself a control is refused — and hence no
+# grading/ suite to run: grading/ holds the points key and nothing that
+# executes, because there is no behaviour to test. The key is proved both
+# ways at authoring time (proofs/): the author's reference answer resolves
+# per point and a fluent foil answer fails, rulings archived and read
+# offline by the lint.
+#
+# The question is decidable in the closed world of the repository and the
+# prompt alone: one order goes in at the counter and comes out as an entry
+# in the dispatch book, and every step of that passage is written in the
+# code — no external fact, no web research, nothing missing. The five
+# planted points are §106.1's kind, one fact of the code each, a single
+# evidence span apiece, with the consequence planted as its own point:
+# that the counter rounds an asking up to whole 20-fathom hauls; that the
+# walk draws the walked fathoms once per strand of the lay; that the whole
+# yarn requirement is checked against the rack before any bundle comes
+# down; that bundles are drawn from the front of the rack in the order they
+# were put up; and — the round-up's consequence, its own point and never a
+# trailing clause — that the book prices the coil over the walked fathoms
+# rather than the asked ones. The two disqualifiers are the plausible
+# misreadings the code refutes: that the coil is walked or charged at
+# exactly the asked length, and that an order the rack cannot cover is
+# walked short from what is there.
+id: ropewalk-explain-how-an-order-becomes-a-coil
+category: codebase-comprehension
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The ropewalk takes its orders at the counter and keeps its record in one
+  JSON file: the yarn bundles standing on the rack, the dispatch book of
+  every coil that has left the yard, and the number the next tag will
+  carry. stores.py reads and writes the file and keeps the rack,
+  counter.py is where an order is taken, walk.py is the walk itself,
+  book.py is the dispatch book, and cli.py is how the clerk works it.
+
+  A customer comes to the counter and asks for fifty fathoms of
+  hawser-laid rope. Explain how this repository carries that asking from
+  one end to the other — from the order taken at the counter to the entry
+  standing in the dispatch book: what gets walked, what comes off the rack
+  and in what order, what the coil leaves as, and what the book then says
+  about it.
+
+  Write your explanation to ANSWER.md. This is a reading of the repository
+  as it stands, and the repository is the whole of the evidence: trace the
+  code and account for it. Your explanation carries three sections, under
+  these headings:
+
+  - **What happens** — the passage of the order, traced through the code
+    step by step in the repository's own terms;
+  - **Why it comes out that way** — the specific decisions in the code
+    that produce it, the load-bearing facts named one by one;
+  - **Boundaries and edge behavior** — what the mechanism does at the
+    edges and on the paths the question did not name, decided from the
+    code where the code decides it, and what the repository alone cannot
+    settle named rather than papered over.
+
+  Leave every file of the repository as you found it: the explanation at
+  ANSWER.md is the whole deliverable.

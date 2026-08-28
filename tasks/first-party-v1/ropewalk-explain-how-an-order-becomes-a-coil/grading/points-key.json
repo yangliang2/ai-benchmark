@@ -1,0 +1,35 @@
+{
+  "answer_path": "ANSWER.md",
+  "points": [
+    {
+      "id": "the-round-up-to-whole-hauls",
+      "text": "The answer says that the counter rounds the asked fathoms up to a whole number of 20-fathom hauls before the order is walked."
+    },
+    {
+      "id": "the-yarn-once-per-strand",
+      "text": "The answer says that the yarn the walk draws comes to the walked fathoms multiplied by the strand count of the lay."
+    },
+    {
+      "id": "the-rack-checked-before-any-draw",
+      "text": "The answer says that the whole yarn requirement is checked against the rack's total holding before any bundle is taken down."
+    },
+    {
+      "id": "the-front-of-the-rack-first",
+      "text": "The answer says that yarn bundles are drawn from the front of the rack in the order they were put up."
+    },
+    {
+      "id": "the-price-on-the-walked-fathoms",
+      "text": "The answer says that the book prices the coil over the walked fathoms rather than the fathoms the customer asked for."
+    }
+  ],
+  "disqualifiers": [
+    {
+      "id": "cut-to-the-asked-length",
+      "text": "The answer claims that the coil is walked, cut or charged at exactly the length the customer asked for."
+    },
+    {
+      "id": "a-short-rack-makes-what-it-can",
+      "text": "The answer claims that an order the rack cannot fully cover is walked short from whatever yarn is there."
+    }
+  ]
+}
