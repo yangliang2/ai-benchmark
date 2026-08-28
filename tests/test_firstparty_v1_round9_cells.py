@@ -202,7 +202,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     takes what is free after it — which the section says in a line, so that
     whoever writes it does not have to re-derive the frontier.
 
-    The frontier has since moved eight times: **§78 is round 9's amendment**
+    The frontier has since moved nine times: **§78 is round 9's amendment**
     — the grader re-pinned to `deepseek-v4-pro` after the round parked at its
     calibration gate — **§79 is the round's record** (the calibration verdict
     of 2026-08-23, FAILED), **§80 is the second amendment** — grader v2 by
@@ -227,7 +227,9 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     rulings**: heap 3's last action, explain-style comprehension, ruled
     behind the recall fork §104's addendum opened — planted points
     one-clause-tight from this round on, author-side and forward-only, the
-    instrument unmoved. Nothing was renumbered to make room.
+    instrument unmoved — and **§107 is round 12's pre-registration**, the
+    round's one gate and its two prices written down before the first paid
+    call. Nothing was renumbered to make room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -253,13 +255,14 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
         "round 11's record, §97-§105, each spent once"
     )
     assert numbered.count(106) == 1, "the round-12 rulings, spent once"
-    assert numbered[-1] == 106, (
-        "§106 is round 12's rulings — heap 3's last action behind the recall "
-        "ruling, one-clause-tight points author-side and forward-only — and "
-        "the frontier; §107 is still free, and is what whatever comes next "
-        "takes"
+    assert numbered.count(107) == 1, "round 12's pre-registration, spent once"
+    assert numbered[-1] == 107, (
+        "§107 is round 12's pre-registration — the instrument, the one gate, "
+        "both prices and the nine cells, written down before the first paid "
+        "call — and the frontier; §108 is still free, and is what whatever "
+        "comes next takes"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 107)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 108)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

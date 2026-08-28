@@ -1639,8 +1639,9 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     # deliberately not copied here; what this test owns is that the record's
     # nine numbers are spent once each and nothing above or below them was
     # renumbered — a claim the contiguity range extends over §106 (round 12's
-    # rulings, 2026-08-28) to keep making.
-    assert [number for number in numbered if number > 68] == list(range(69, 107))
+    # rulings) and §107 (round 12's pre-registration, both 2026-08-28) to keep
+    # making.
+    assert [number for number in numbered if number > 68] == list(range(69, 108))
 
     for heading in record_sections():
         assert f"### {heading}\n" in text, heading

@@ -1,22 +1,23 @@
-"""Round 11's pre-registration, pinned: what section 95 of the design note
+"""Round 12's pre-registration, pinned: what section 107 of the design note
 commits to before the round's first paid call.
 
-Round 11 is one half rather than two, the way round 10 was. §86 certified the
-instrument on production-shaped prose, so there is no paid experiment to
-register in front of the authoring — what §95 registers is the instrument the
-round runs on, the action and the sentence that licenses it, the deliverable's
-shape, the round's one hard gate (the two-sided proofs), both prices, the nine
-cells, the limits in force and the guardrail on the anchor. §46 did the
-one-half job for round 5, §52 for round 6, §59 for round 7, §68 for round 8
-and §83 for round 10; §77 did the two-half job for round 9, and the shape here
-is §83's a round on.
+Round 12 is one half rather than two, the way rounds 10 and 11 were. §103
+confirmed the instrument's record on heap 3's second action, so there is no
+paid experiment to register in front of the authoring — what §107 registers is
+the instrument the round runs on, the action and the sentence that licenses it,
+§106.1's recall ruling as an authoring rule, the deliverable's shape, the
+round's one hard gate (the two-sided proofs), both prices, the nine cells, the
+limits in force and the guardrail on the anchor. §46 did the one-half job for
+round 5, §52 for round 6, §59 for round 7, §68 for round 8, §83 for round 10
+and §95 for round 11; §77 did the two-half job for round 9, and the shape here
+is §95's a round on.
 
-Three disciplines are inherited from `test_firstparty_v1_round10_cells.py`
+Three disciplines are inherited from `test_firstparty_v1_round11_cells.py`
 rather than re-argued.
 
 **The register is the design note**, not a constant in code — the note is what
 a reader of the round consults and what a reviewer holds the round to — so
-every test below parses section 95's own fenced blocks and its own prose and
+every test below parses section 107's own fenced blocks and its own prose and
 then re-derives each claim from the corpus: from the task set, from the price
 table, from the live grader module and from the checked-in run logs. A
 registration whose arithmetic cannot be reproduced is a number somebody wrote
@@ -28,21 +29,22 @@ and rows are keyed on what they carry — a task, an agent, a model, a sweep
 id — which is the sweep protocol's rule after the first pass of the round-1
 analysis silently dropped two paid cells by filtering on a name.
 
-**The section is sliced deliberately**, from §95's own top-level heading to the
-next top-level heading, and never to `## Open questions`
+**The section is sliced deliberately**, from §107's own top-level heading to
+the next top-level heading, and never to `## Open questions`
 (`docs/agents/runbook-grader-v2-gate.md:153`): a slice that runs to the note's
 trailing headings swallows whole sections silently, and every pin in this file
-would then read as met on text §95 never wrote.
+would then read as met on text §107 never wrote.
 
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
 two tests read the round forwards, and they are two tests rather than one
-because they die at different tickets: no `round-11` row exists yet (retired
-by the ticket that lands the sweep), and §95.7's register — filled by the
-round's second task-authoring ticket — names exactly the
-`requirement-decomposition` tasks the corpus holds, each proved both ways.
+because they die at different tickets: no `round-12` row exists yet (retired by
+the ticket that lands the sweep), and no `codebase-comprehension` task is
+point-keyed yet (retired by the ticket that lands the round's first task).
+That second claim is written **by key shape and never as a task count**,
+because the four locate-style comprehension tasks stay where they are and a
+count would go red on their account rather than on the explain shape's.
 """
 
-import json
 import re
 from pathlib import Path
 from typing import get_args
@@ -62,28 +64,26 @@ from ai_benchmark.schema import TaskCategory
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
-_RULINGS = _REPO / "data" / "first-party-v1-rulings"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
-_HEADING = "## Round 11 cells and cost — registered 2026-08-26"
+_HEADING = "## Round 12 cells and cost — registered 2026-08-28"
 
-# The rulings §95 registers, sliced the same deliberate way so that anything
-# §95 claims §94 ruled is checked against §94's own words.
-_RULINGS_HEADING = "## Round 11 rulings — 2026-08-25"
+# The rulings §107 registers, sliced the same deliberate way so that anything
+# §107 claims §106 ruled is checked against §106's own words.
+_RULINGS_HEADING = "## Round 12 rulings — 2026-08-28"
 
-# The record §95.2's licence sentence is quoted out of: §86 lives inside round
-# 10's record, and the quote is held against that record rather than against a
-# string typed twice in this file.
-_RECORD_HEADING = "## Round 10 record — 2026-08-24"
+# The record §107.2's licence sentence is quoted out of: §103 lives inside
+# round 11's record, and the quote is held against that record rather than
+# against a string typed twice in this file.
+_RECORD_HEADING = "## Round 11 record — 2026-08-27"
 
-# §96, which lands the day after §95 and supersedes 95.5's call count without
-# editing a line of it: sliced separately for the same reason §95 is, so that
-# what the amendment re-registered is never read off §95's own text.
-_AMENDMENT_HEADING = "## Round 11 amendment — 2026-08-26"
+# Round 11's own pre-registration, which this section is a round on: sliced
+# only to keep the two apart, never read as if it were this round's text.
+_PREVIOUS_HEADING = "## Round 11 cells and cost — registered 2026-08-26"
 
-_SWEEP = "round-11"
+_SWEEP = "round-12"
 
-# The three standing columns, unchanged from rounds 7, 8 and 10 and written
+# The three standing columns, unchanged from rounds 7, 8, 10 and 11 and written
 # agent-first because that is what a combination is.
 _COMBINATIONS = (
     ("claude-code", "claude-haiku-4-5"),
@@ -92,70 +92,80 @@ _COMBINATIONS = (
 )
 
 # The round the sweep's per-cell anchor comes from, named by its sweep id
-# because that is what identifies a round. Round 10 swept nine cells of heap
-# 3's first action, so it is the nearest anchor and it is one round back.
-_ANCHOR_ROUND = "round-10"
+# because that is what identifies a round. Round 11 swept nine cells of heap
+# 3's second action, so it is the nearest anchor and it is one round back.
+_ANCHOR_ROUND = "round-11"
 
 # The action the round sweeps, and how many tasks of it it authors. Typed as
 # the corpus's own category literal, because it indexes registries keyed on it.
-_CATEGORY: TaskCategory = "requirement-decomposition"
-_ANCHOR_CATEGORY: TaskCategory = "investigation"
+# The category is not new to the corpus — it carries locate-style tasks today —
+# and what this round adds is its explain shape, on a points key.
+_CATEGORY: TaskCategory = "codebase-comprehension"
+_ANCHOR_CATEGORY: TaskCategory = "requirement-decomposition"
 _CELLS = 3
 
-# The one number in force for every cell of this round, reached by the fallback
-# rather than by a row: `requirement-decomposition` registers nothing.
+# The one number in force for every cell of this round, and — unlike round
+# 11's action — reached by the category's own registered row rather than by the
+# fallback. It is numerically the flat default's own value.
 _LIMIT_S = 600
 
 # The four categories `LIVE_RUN_LIMITS_S` carries, which this registration does
-# not touch: round 4's two by §37 and round 5's two by §46.
+# not touch: round 4's two by §37 and round 5's two by §46. This round's action
+# is already one of them, so the pin is that nothing moves.
 _REGISTERED_LIMITS = {"bug-fix", "fault-location", "code-review",
                       "codebase-comprehension"}
 
 # The convention the proofs' token arithmetic is done at.
 _CHARS_PER_TOKEN = 4
 
-# What the pricing page's `deepseek-v4-pro` column said when §95.5's pinned
+# What the pricing page's `deepseek-v4-pro` column said when §107.6's pinned
 # `curl` was run, per million tokens. **Peak-hour** prices, which is what the
 # round is registered at — the conservative end of the vendor's peak/off-peak
 # schedule — and the **cache-miss** input price, which is the conservative end
 # a second time. The section carries the URL and the as-of date beside them,
-# and both are asserted to be inside §95's own slice.
+# and both are asserted to be inside §107's own slice.
 _DEEPSEEK_INPUT_PER_MTOK = 1.32
 _DEEPSEEK_OUTPUT_PER_MTOK = 3.96
 _DEEPSEEK_CACHE_HIT_PER_MTOK = 0.044
 _PRICING_URL = "https://api-docs.deepseek.com/quick_start/pricing"
-_AS_OF = "2026-08-26"
-# §83.5's own fetch date. This round's prices had to be fetched again rather
-# than carried, so the date §95 records must be this round's and not that one's
-# — the figures being unchanged is exactly why a stale date would go unnoticed.
-_PREVIOUS_AS_OF = "2026-08-23"
+_AS_OF = "2026-08-28"
+# §95.5's own fetch date. This round's prices had to be fetched again rather
+# than carried, so the date §107 records must be this round's and not that
+# one's — the figures coming back unchanged is exactly why a stale date would
+# go unnoticed.
+_PREVIOUS_AS_OF = "2026-08-26"
 
-# §95.5's per-call character assumptions, reused from §83.5 unchanged: a proof
-# answer at 4,000 characters low and 8,000 high, and a 200-character point
-# beside the template. The template's own length is **not** a literal here —
-# it is read from `point_grader.PROMPT`, which is what §95.5 registers.
+# §107.6's per-call character assumptions, reused from §83.5 unchanged for the
+# third round running: a proof answer at 4,000 characters low and 8,000 high,
+# and a 200-character point beside the template. The template's own length is
+# **not** a literal here — it is read from `point_grader.PROMPT`, which is what
+# §107.6 registers.
 _PROOF_ANSWER_LOW = 4000
 _PROOF_ANSWER_HIGH = 8000
 _POINT_CHARS = 200
 
-# The deliverable §94.2 ruled and §95.3 registers: one prose answer file at the
-# standing heap-3 path, three sections required by name.
+# The deliverable §106.3 ruled and §107.4 registers: one prose answer file at
+# the standing heap-3 path, three sections required by name.
 _ANSWER_PATH = "ANSWER.md"
-_SECTIONS = ("Pieces", "Order and dependencies", "Open questions and risks")
+_SECTIONS = (
+    "What happens",
+    "Why it comes out that way",
+    "Boundaries and edge behavior",
+)
 
 # §80.5's freezing rule, carried forward in one line: this suite reaches the
 # live `point_grader.GRADER_VERSION` and `point_grader.PROMPT`, so when the
 # instrument next moves it freezes to the tuple and the template length this
 # registration was written under — literals with a comment naming this section,
-# exactly as §83's suite froze to v2's.
+# exactly as §95's suite carried §83's rule forward.
 
 
 def note_section() -> str:
-    """Section 95, from its own heading to the next top-level one.
+    """Section 107, from its own heading to the next top-level one.
 
     Deliberately sliced: a slice that ran to `## Open questions` would swallow
     every section written after this one, and each pin below would then pass on
-    text §95 never wrote. `docs/agents/runbook-grader-v2-gate.md:153` is where
+    text §107 never wrote. `docs/agents/runbook-grader-v2-gate.md:153` is where
     that rule is written down, after §79's suite came within one section of the
     accident.
     """
@@ -192,15 +202,13 @@ _REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
 
 
 def register_blocks() -> list[dict[str, str]]:
-    """Every fenced block of §95 whose every line is an id line — §83.7's
+    """Every fenced block of §107 whose every line is an id line — §83.7's
     register form, looked for by shape rather than by position or by a quoted
     id.
 
-    §95.7 left the register explicitly to be filled in before the sweep, and
-    before the fill this found none; now that the round's second authoring
-    ticket has filled it, the same shape check finds exactly one, and a second
-    id-shaped block appearing anywhere in the section is caught as the
-    ambiguity it would be.
+    §107.8 leaves the register explicitly to be filled in before the sweep, by
+    the round's task-authoring tickets, so before the fill this finds none. The
+    same shape check is what the filling ticket's own pin then reads.
     """
     found: list[dict[str, str]] = []
     for block in blocks():
@@ -215,27 +223,27 @@ def register_blocks() -> list[dict[str, str]]:
     return found
 
 
-_ITEM = re.compile(r"^\*\*95\.(\d*) ", re.MULTILINE)
+_ITEM = re.compile(r"^\*\*107\.(\d*) ", re.MULTILINE)
 
 
 def item(number: str) -> str:
-    """One numbered item of §95, collapsed, from its own bold number to the
+    """One numbered item of §107, collapsed, from its own bold number to the
     next one — so that a claim registered about the proofs gate can be checked
     *inside the proofs gate's clause* rather than anywhere in the section."""
     section = note_section()
     found = list(_ITEM.finditer(section))
-    assert found, "§95 numbers its items"
+    assert found, "§107 numbers its items"
     for index, match in enumerate(found):
         if (match.group(1) or "0") != number:
             continue
         end = found[index + 1].start() if index + 1 < len(found) else len(section)
         return " ".join(section[match.start():end].split())
-    raise AssertionError(f"§95 carries no item {number!r}")
+    raise AssertionError(f"§107 carries no item {number!r}")
 
 
 def other_section(heading: str) -> str:
     """Another top-level section of the note, sliced the same deliberate way
-    and collapsed — so a sentence §95 says it quotes is checked against the
+    and collapsed — so a sentence §107 says it quotes is checked against the
     section that actually wrote it."""
     body = _NOTE.read_text(encoding="utf-8").split(f"{heading}\n")
     assert len(body) == 2, f"the note carries exactly one {heading!r}"
@@ -261,69 +269,67 @@ def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
 
 
 def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> None:
-    """§95 is the next free number, it is a pre-registration, and it sits where
-    a section of the note goes.
+    """§107 is the next free number, it is a pre-registration, and it sits
+    where a section of the note goes.
 
     The note numbers its sections once and never renumbers them, so a section
     taking a number already spent is a citation collision every later record
-    inherits. §94 (round 11's rulings) is what this follows, and the round's
+    inherits. §106 (round 12's rulings) is what this follows, and the round's
     record takes what is free after it — which the section says in a line, so
     that whoever writes it does not have to re-derive the frontier. The live
     frontier itself is the round-9 suite's one moved assertion and is
-    deliberately not copied here.
+    deliberately not copied here; this suite carries the contiguity claim
+    instead, extended over §107, which is the round-11 cells suite's own
+    pattern.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
         {int(match) for match in re.findall(r"^### (\d+)\.", text, re.MULTILINE)}
         | {int(match) for match in re.findall(r"^\*\*(\d+)\. ", text, re.MULTILINE)}
     )
-    assert numbered.count(94) == 1, "the round-11 rulings, spent once"
-    assert numbered.count(95) == 1, "this pre-registration, spent once"
-    assert all(numbered.count(number) == 1 for number in range(85, 94)), (
-        "round 10's record, §85-§93, each spent once and not renumbered"
+    assert numbered.count(106) == 1, "the round-12 rulings, spent once"
+    assert numbered.count(107) == 1, "this pre-registration, spent once"
+    assert all(numbered.count(number) == 1 for number in range(97, 106)), (
+        "round 11's record, §97-§105, each spent once and not renumbered"
     )
-    # §97-§105 (round 11's record, 2026-08-27), §106 (round 12's rulings) and
-    # §107 (round 12's pre-registration, both 2026-08-28) have since landed
-    # after the amendment: the contiguity claim extends over them, and the
-    # live frontier stays the round-9 suite's one moved assertion.
     assert [number for number in numbered if number > 68] == list(range(69, 108)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
-    # And it lands before the note's trailing headings rather than after them.
+    # And it lands after §106's own heading and before the note's trailing
+    # headings rather than after them.
     headings = re.findall(r"^## .+$", text, re.MULTILINE)
     assert headings.index(_HEADING) == headings.index(_RULINGS_HEADING) + 1, (
-        "§95 follows §94's own heading"
+        "§107 follows §106's own heading"
     )
-    assert headings[headings.index(_HEADING) + 1] == _AMENDMENT_HEADING, (
-        "and what has landed after it is §96's amendment — the re-registration "
-        "of 95.5's call count, not a word of round 11's record"
+    assert headings[headings.index(_HEADING) + 1].startswith("## Open questions"), (
+        "and nothing of round 12's own record has landed after it yet"
     )
 
     counted = prose()
-    assert "This is round 11's pre-registration and nothing else" in counted
+    assert "This is round 12's pre-registration and nothing else" in counted
     assert "written down before the first paid call" in counted
     assert "**no paid experiment at all**" in counted
     assert "**No argument is reopened here.**" in counted
-    assert "**the next free section numbers**, §96 onward" in counted
+    assert "**the next free section numbers**, §108 onward" in counted
     assert "nothing below is a result, and nothing above is renumbered" in counted
 
 
 def test_the_instrument_is_quoted_from_the_code_and_does_not_move() -> None:
-    """§95.1: the pinned tuple, read out of `point_grader.GRADER_VERSION`.
+    """§107.1: the pinned tuple, read out of `point_grader.GRADER_VERSION`.
 
-    §94's opening paragraph says the instrument is §83.2's, unmoved, so this
+    §106's opening paragraph says the instrument is §83.2's, unmoved, so this
     round registers what that section registered — the same alias, the same
     announced checkpoint, the same prompt hash — and the register's honesty is
     that the string was read rather than retyped. That is what is checked: the
     fenced block equals the live tuple, and its three parts equal the module's
     own three constants.
 
-    The stop is the other half. This vendor's API takes only a moving alias, so
-    a checkpoint that moves under it is a version change, and a version change
-    mid-round would forfeit this round's own asset — round 10's archived proof
-    rulings and nine graded cells, readable only while the version they were
-    archived under is the version in force, and §86's certification with them.
+    The other half is what the round declined. §106.1 considered the
+    instrument-side widening of the coverage question and refused it at
+    §77.8's price, so this registration touches no part of the grader, and the
+    section has to say so — a round that quietly moved the instrument beside a
+    new action would confound the two.
     """
     registered = block_holding(point_grader.GRADER_MODEL).strip()
     assert registered == point_grader.GRADER_VERSION
@@ -349,14 +355,24 @@ def test_the_instrument_is_quoted_from_the_code_and_does_not_move() -> None:
     assert "**low reasoning effort, temperature 0, JSON output**" in quoted
     assert "nothing about it moves" in quoted
 
+    # The declined widening, registered as declined and not re-argued.
+    assert (
+        "**The instrument-side widening was considered and declined**, at "
+        "§106.1"
+    ) in quoted
+    assert "**nothing in this round touches the grader**" in quoted
+    rulings = other_section(_RULINGS_HEADING)
+    assert "is declined at its own price" in rulings, "§106.1's own words"
+
     # The stop, and what a movement would cost this round.
     assert (
         "**checkpoint movement discovered en route is a version change**"
     ) in quoted
     assert "**stops the round for re-registration**" in quoted
     assert (
-        "**round 10's proof rulings and its nine graded cells stay readable "
-        "under the version string they were archived under**"
+        "**round 10's and round 11's proof rulings and their eighteen graded "
+        "cells stay readable under the version string they were archived "
+        "under**"
     ) in quoted
     assert "opens a new rulings file (§77.8)" in quoted
 
@@ -373,54 +389,110 @@ def test_the_instrument_is_quoted_from_the_code_and_does_not_move() -> None:
 
 
 def test_the_action_and_its_licence_are_registered_without_reopening_them() -> None:
-    """§95.2: the action, §86's licensing sentence quoted, and the disclosed
-    TypeScript zero.
+    """§107.2: the action, §103's licensing sentence quoted, and the two
+    disclosed zeros.
 
-    §94 is short because §86's sentence did the arguing, and this registration
-    is shorter still: it names the action, quotes the licence and says what
-    stays a zero. What makes the quote a quote is checked rather than trusted —
-    the sentence is read out of round 10's own record slice and asserted to be
-    a verbatim substring of it, so a paraphrase drifting into §95 fails here
-    instead of standing as a quotation of words §86 never used.
+    §106.2 is short because §103's sentence did the arguing, and this
+    registration is shorter still: it names the action, quotes the licence and
+    says what stays a zero. What makes the quote a quote is checked rather than
+    trusted — the sentence is read out of round 11's own record slice and
+    asserted to be a verbatim substring of it, so a paraphrase drifting into
+    §107 fails here instead of standing as a quotation of words §103 never
+    used.
 
     The two disclosed zeros are the other half, and they are zeros of different
-    kinds: explain-style comprehension is an action this round does not take,
-    and `requirement-decomposition × typescript` is a cell §76.10 keeps shut
-    until the grader has a record behind it.
+    kinds: `codebase-comprehension × typescript` is a cell §76.10 keeps shut
+    until the grader has a record behind it, and `performance-optimisation` is
+    a whole heap this round does not take — the coverage table's own zero row,
+    which is where that claim is checked.
     """
     action = item("2")
     record = other_section(_RECORD_HEADING)
 
     licence = (
-        "planted points survived contact with an open-ended proposal, so "
-        "`requirement-decomposition` and explain-style "
-        "`codebase-comprehension` can follow as mechanical fills"
+        "the instrument's record is confirmed, so explain-style "
+        "`codebase-comprehension` follows as the last mechanical fill"
     )
-    assert licence in record, "§86's own words"
-    assert f'"{licence}"' in action, "§95.2 quotes them, marked as a quotation"
+    assert licence in record, "§103's own words"
+    assert f'"{licence}"' in action, "§107.2 quotes them, marked as a quotation"
 
-    assert f"`{_CATEGORY}`, on Python" in action
-    assert "heap 3's second action" in action
-    assert "the mechanical fill §86's certification sentence licensed" in action
+    assert f"Explain-style `{_CATEGORY}`, on Python" in action
+    assert "heap 3's **last** action" in action
+    assert "the mechanical fill §103's certification sentence licensed" in action
     assert "**No design argument is reopened by this registration**" in action
+    assert "**Heap 3 closes with this action**" in action
 
     # The two zeros, each named as the kind of zero it is.
-    assert (
-        "Explain-style `codebase-comprehension` stays the **remaining "
-        "mechanical fill for a later round**"
-    ) in action
     assert f"`{_CATEGORY} × typescript` stays a **disclosed zero**" in action
     assert "§76.10's rule keeps heap 3 on Python" in action
-    assert "§85–§93 is that record's first instalment" in action
+    assert (
+        "`performance-optimisation` stays the **disclosed zero row it is**"
+    ) in action
 
     # And the category is the corpus's own literal, not a phrase in prose.
     assert _CATEGORY in get_args(TaskCategory)
+    assert "performance-optimisation" in get_args(TaskCategory)
+
+
+def test_the_recall_ruling_is_registered_as_a_forward_only_authoring_rule(
+    tasks: dict[str, firstparty_v1.Task],
+) -> None:
+    """§107.3: one-clause-tight points, held by nobody's lint and applied to
+    nothing already written.
+
+    §106.1 ruled the author's side of the recall fork, and the danger in
+    registering it is that a reader takes it for machinery — a rule the lint
+    enforces, or a rule that reaches back over round 10's and round 11's keys.
+    It is neither, and the section has to say both: it is policed where
+    authoring is already policed, and it is forward-only, with §104's addendum
+    left standing as the permanent disclosure of the gap the older keys carry.
+
+    The rule's own sentence is checked against §106.1's text rather than
+    retyped, the same way §107.2's licence is.
+    """
+    recall = item("3")
+    rulings = other_section(_RULINGS_HEADING)
+
+    rule = (
+        "from this round on, a planted point is written one-clause-tight — "
+        "one point is one fact of the code that a single evidence span can "
+        "hit, and a consequence is its own point, never a trailing clause."
+    )
+    assert rule in rulings, "§106.1's own words"
+    assert f"**{rule}**" in recall, "§107.3 registers the sentence in full"
+
+    # Authoring-side, and held by no machinery.
+    assert "**No lint rule holds it** this round" in recall
+    assert "it is an authoring discipline" in recall
+    assert "the spec review and the two-sided proofs" in recall
+    assert "this registration adds no machinery for it and no code" in recall
+
+    # Forward-only, with the permanent disclosure named.
+    assert "it is **forward-only**" in recall
+    assert (
+        "round 10's and round 11's keys, proofs, records and labels **stand "
+        "as written**"
+    ) in recall
+    assert (
+        "**§104's addendum remains the permanent disclosure**"
+    ) in recall
+    assert "§76.2's owner-labels check rides this round's nine cells" in recall
+
+    # And the older keys really are still on disk, unedited by this round:
+    # every point-keyed task the corpus holds belongs to the two earlier
+    # actions, which is what "forward-only" has to mean in the corpus.
+    keyed = {
+        task.category for task in tasks.values()
+        if firstparty_v1.is_point_keyed(task)
+    }
+    assert keyed == {"investigation", _ANCHOR_CATEGORY}
 
 
 def test_the_deliverable_is_one_answer_file_with_three_named_sections(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """§95.3: `ANSWER.md`, three sections by name, and the key's 4-6 / 0-2 shape.
+    """§107.4: `ANSWER.md`, three sections by name, and the key's 4-6 / 0-2
+    shape.
 
     The path is not this round's invention and the register says so: it is the
     standing `answer_path` of every heap-3 task the corpus already holds, so
@@ -433,7 +505,7 @@ def test_the_deliverable_is_one_answer_file_with_three_named_sections(
     three sections are different registrations, and the key is written against
     the second.
     """
-    deliverable = item("3")
+    deliverable = item("4")
 
     keyed = [task for task in tasks.values() if firstparty_v1.is_point_keyed(task)]
     assert keyed, "the corpus holds heap-3 tasks to read the standing path off"
@@ -450,26 +522,45 @@ def test_the_deliverable_is_one_answer_file_with_three_named_sections(
     assert "requires the deliverable's parts **by name**, three of them" in deliverable
     for name in _SECTIONS:
         assert f"**{name}**" in deliverable, name
-    # In order, and in the order §94.2 ruled them.
+    # In order, and in the order §106.3 ruled them.
     positions = [deliverable.index(f"**{name}**") for name in _SECTIONS]
-    assert positions == sorted(positions), "the three sections in §94.2's order"
+    assert positions == sorted(positions), "the three sections in §106.3's order"
     rulings = other_section(_RULINGS_HEADING)
     for name in _SECTIONS:
-        assert f"**{name}**" in rulings, f"§94.2 named it first: {name}"
+        assert f"**{name}**" in rulings, f"§106.3 named it first: {name}"
 
-    # The key's shape, and that it is proved both ways at authoring.
+    # The key's shape, written under 107.3's discipline, and proved both ways.
     assert (
-        "**a fact of the code and its consequence for the decomposition**"
+        "**one fact of the code a single evidence span can hit**"
     ) in deliverable
-    assert "the foil is **exactly that fluent split**" in deliverable
+    assert (
+        "with consequences planted as points of their own"
+    ) in deliverable
+    assert (
+        "**the plausible misreading the code refutes**"
+    ) in deliverable
+    assert (
+        "**the fluent explanation that reads well and misses the planted "
+        "facts**"
+    ) in deliverable
     assert "**4–6 planted points and 0–2 disqualifiers**" in deliverable
     assert "**proved both ways at authoring**" in deliverable
 
+    # The repository is the evidence and stays unmodified: the write-up is all
+    # of the deliverable.
+    assert (
+        "**The repository is the whole of the evidence and is left "
+        "unmodified.**"
+    ) in deliverable
+    assert "**the write-up is the entire deliverable**" in deliverable
+    assert "no edit to the repository is asked for, none is graded" in deliverable
+
 
 def test_the_proofs_are_the_rounds_one_gate_stated_as_a_quantifier() -> None:
-    """§95.4: the round's single hard gate, and the bar it is read at.
+    """§107.5: the round's single hard gate, the bar it is read at, and the
+    shape-aware form the category gets.
 
-    §94.4 keeps §83.4's clause verbatim, and a proofs gate has one property no
+    §106.5 keeps §83.4's clause verbatim, and a proofs gate has one property no
     calibration bar ever had: it is a **universal quantifier**, so there is
     nothing in it to round and nothing in it to tune. Writing it as a
     percentage would give it both back, which is why no `%` belongs anywhere in
@@ -477,15 +568,19 @@ def test_the_proofs_are_the_rounds_one_gate_stated_as_a_quantifier() -> None:
 
     The check is not new code and this test proves it is not: the rule the
     section names is a live function registered in the lint's own proof
-    registry, and the lint that calls it is offline by construction.
+    registry, and the lint that calls it is offline by construction. What *is*
+    new this round is the dispatch — the category carries locate-style tasks
+    today and takes point-keyed ones next, so its existence proof is decided by
+    the key on disk — and the registration has to name both halves before a
+    task is authored, which is what is checked here.
     """
-    gate = item("4")
+    gate = item("5")
 
     assert (
         "The round's single hard gate: the two-sided proofs, before the first "
         "sweep dollar.**"
     ) in gate
-    assert "it is the only gate round 11 has" in gate
+    assert "it is the only gate round 12 has" in gate
     assert "stated as a quantifier and never as a percentage" in gate
     assert (
         "**every planted point of every task's reference answer resolves, and "
@@ -513,22 +608,38 @@ def test_the_proofs_are_the_rounds_one_gate_stated_as_a_quantifier() -> None:
         category for category, proof in firstparty_v1.EXISTENCE_PROOFS.items()
         if proof.check is firstparty_v1._the_reference_resolves_and_the_foil_fails
     ]
-    assert registered, "the rule §95.4 names is registered in the lint's registry"
+    assert registered, "the rule §107.5 names is registered in the lint's registry"
     assert hasattr(firstparty_v1, "prove_points"), (
         "and the writer the archived rulings come from"
     )
+    # And the category already has an entry, which is the thing the round's
+    # loader ticket makes shape-aware rather than adds.
+    assert _CATEGORY in firstparty_v1.EXISTENCE_PROOFS
+
+    # The shape-aware form, both halves named.
+    assert "**dispatched by the key on disk**" in gate
+    assert (
+        "**every accepted location resolving in the starting repository**"
+    ) in gate
+    assert "**`investigation`'s registered two-sided form**" in gate
+    assert f"`{_CATEGORY}` joins `_POINT_CATEGORIES`" in gate
+    assert "**point-optional**" in gate
+    assert (
+        "refused as two ground truths for one deliverable"
+    ) in gate
 
     # The kill discipline, in its one standing sentence, written for this
     # round's action.
     assert (
         "**The kill discipline, in its one standing sentence: a failed proof "
-        f"stops the round with a record, `{_CATEGORY}` stays a disclosed "
-        "zero.**"
+        f"stops the round with a record, explain-style `{_CATEGORY}` stays "
+        "absent.**"
     ) in gate
 
 
-def test_the_proofs_are_priced_over_counted_calls_at_prices_that_were_fetched() -> None:
-    """§95.5: 24-48 calls, priced from the fetched page, with both ends stated.
+def test_the_proofs_are_priced_over_counted_metered_calls_at_fetched_prices() -> None:
+    """§107.6: 24-48 metered calls, priced from the fetched page, with both
+    ends stated and §96's two amendments in force.
 
     The unit is the **call**, because the writer calls once per planted point
     *and* once per disqualifier against each of the two answers. The call range
@@ -537,15 +648,21 @@ def test_the_proofs_are_priced_over_counted_calls_at_prices_that_were_fetched() 
     count in the register: a task that declares a third puts the round outside
     this registration instead of being absorbed by it.
 
+    §96's amendments are what makes the count a count of the meter rather than
+    of the archives: the writer has no resume, so every invocation carries
+    `--task`, and a re-ask that rewrites an archive to the same bytes is still
+    money. Round 11 then missed its own re-registered line on operational
+    retries, so this round registers those as counted rather than as slack.
+
     The characters are re-derived from `point_grader.PROMPT` rather than
-    carried from §83.5, because a price counted over a stale template is a
+    carried from §95.5, because a price counted over a stale template is a
     price for a different instrument. §80.5's freezing rule applies to that
     read: when the instrument next moves, this figure freezes to a literal with
-    a comment naming §95.
+    a comment naming §107.
 
     A model's memory of a pricing page is not a source, so the URL and the date
-    are asserted to be inside §95's own slice — and the date is asserted to be
-    **this round's** fetch and not §83.5's, because the figures came back
+    are asserted to be inside §107's own slice — and the date is asserted to be
+    **this round's** fetch and not §95.5's, because the figures came back
     unchanged and a stale date is exactly what that would hide.
     """
     # The call range, re-derived from the registered assumption.
@@ -573,17 +690,35 @@ def test_the_proofs_are_priced_over_counted_calls_at_prices_that_were_fetched() 
     ) in counts
 
     counted = prose()
+    assert "counted over metered calls" in counted
     assert "**The assumed disqualifier count is 0–2 a task**" in counted
     assert "forces a re-registration rather than being absorbed by it" in counted
 
+    # §96's two amendments, restated in the same paragraph as the count.
+    priced = item("6")
+    assert "The proofs writer **has no resume**" in priced
+    assert (
+        "**every invocation of this round's proofs carries `--task`**"
+    ) in priced
+    assert (
+        "a count of **metered calls, not of archived rulings**"
+    ) in priced
+    assert (
+        "**Operational retries are expected and are counted against this "
+        "line**"
+    ) in priced
+    assert "the way §99 read round 11's overage" in priced
+
     # The fetch itself, pinned as the command that was run.
     assert block_holding(_PRICING_URL).strip() == f"curl -sL {_PRICING_URL}"
-    priced = item("5")
     assert f"`source_url`: `{_PRICING_URL}`" in priced
     assert f"`as_of`: **{_AS_OF}**" in priced
     assert f"Fetched on **{_AS_OF}**" in priced
-    assert _PREVIOUS_AS_OF not in priced, (
-        "the recorded as-of is this round's fetch, not §83.5's"
+    assert _PREVIOUS_AS_OF not in note_section(), (
+        "the recorded as-of is this round's fetch, not §95.5's"
+    )
+    assert _PREVIOUS_AS_OF in other_section(_PREVIOUS_HEADING), (
+        "and that date is round 11's, where it belongs"
     )
     assert f"column **{point_grader.GRADER_MODEL}**" in counted
     assert f"**${_DEEPSEEK_INPUT_PER_MTOK} / MTok** peak input on a cache" in counted
@@ -651,14 +786,13 @@ def test_the_proofs_are_priced_over_counted_calls_at_prices_that_were_fetched() 
 
     assert "The proofs' price: $0.05–0.6" in counted
     assert "at peak-hour list price" in counted
-    assert "counted over calls" in counted
     assert "the registered range is **$0.05–0.6**" in counted
 
-    # Which half is an assumption, named — and this round both halves are,
-    # because the answers the input half is counted over do not exist yet.
+    # Which half is an assumption, named — and the input half's reuse is now
+    # measured against every proof answer the corpus holds.
     assert (
-        "**Which half is an assumption, named — and this round both halves "
-        "are.**"
+        "**Which half is an assumption, named — and the input half now has "
+        "two rounds behind it.**"
     ) in counted
     assert "are **not written yet**" in counted
     assert f"at **{_PROOF_ANSWER_LOW:,} characters** at the low end" in counted
@@ -667,26 +801,72 @@ def test_the_proofs_are_priced_over_counted_calls_at_prices_that_were_fetched() 
     assert "The high end is a bound and not an expectation" in counted
     assert "**never enter `unified.jsonl`**" in counted
 
+    # The payment path, disclosed where the key is used.
+    assert (
+        "**The payment path, disclosed where it is used.**"
+    ) in counted
+    assert "**session memory**" in counted
+    assert "the owner's ruling of **2026-08-23**" in counted
+    assert "a disclosed exception to the stored-nowhere rule" in counted
+    assert "**never printed**" in counted
 
-def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
+
+def test_the_checked_in_proof_answers_are_what_the_input_half_is_measured_at(
+    tasks: dict[str, firstparty_v1.Task],
+) -> None:
+    """§107.6's named assumption, re-derived from the answers on disk.
+
+    The section reuses §83.5's 4,000/8,000 character assumption for a third
+    round, and says what the reuse now rests on: twelve checked-in proof
+    answers across six point-keyed tasks, none of them near the 8,000 ceiling.
+    That is a claim about the corpus, so it is recomputed from the corpus
+    rather than read off the prose — a figure that drifted as tasks were
+    revised would otherwise sit in the register unchallenged.
+    """
+    lengths = sorted(
+        len((task.proofs_dir / side.answer_file).read_text(encoding="utf-8"))
+        for task in tasks.values() if firstparty_v1.is_point_keyed(task)
+        for side in firstparty_v1.PROOF_SIDES
+    )
+    references = sorted(
+        len((task.proofs_dir / side.answer_file).read_text(encoding="utf-8"))
+        for task in tasks.values() if firstparty_v1.is_point_keyed(task)
+        for side in firstparty_v1.PROOF_SIDES if side.resolves
+    )
+    assert (len(lengths), len(references)) == (12, 6)
+
+    counted = prose()
+    assert (
+        "the corpus now holds **twelve** checked-in proof answers across six "
+        "point-keyed tasks"
+    ) in counted
+    assert f"between **{min(lengths):,}** and **{max(lengths):,}**" in counted
+    assert f"between {min(references):,} and {max(references):,}" in counted
+    assert max(lengths) < _PROOF_ANSWER_HIGH, (
+        "the 8,000 ceiling has never been approached, which is what the "
+        "section says it rests on"
+    )
+
+
+def test_the_sweep_range_is_derived_from_the_checked_in_round_11_rows(
     runs: list[firstparty_v1.Run],
 ) -> None:
-    """§95.6's arithmetic, recomputed from the rows it claims to read.
+    """§107.7's arithmetic, recomputed from the rows it claims to read.
 
-    Round 10 swept nine cells of heap 3's first action, so the anchor is one
+    Round 11 swept nine cells of heap 3's second action, so the anchor is one
     round back — the same three combinations over the same nine-cell shape,
     graded under the same point gate — selected by **sweep id** over every log
     in the directory and never by a log filename. Every figure the section
-    quotes is re-derived here rather than lifted from §87, which is the whole
+    quotes is re-derived here rather than lifted from §99, which is the whole
     point of re-deriving it there too: a registration that copied a record
     would inherit that record's arithmetic without ever checking that the
     anchor rows still say it.
 
-    Both ends of the bound are recomputed too. Round 11 sweeps three cells on
-    the Codex column and round 10 swept three, so the projection is that
+    Both ends of the bound are recomputed too. Round 12 sweeps three cells on
+    the Codex column and round 11 swept three, so the projection is that
     round's own token totals rather than a rate scaled up, and the caching
     split is the only thing that moves between the two ends. The ceiling's
-    multiple is re-derived as well, because §95.6 justifies its width by
+    multiple is re-derived as well, because §107.7 justifies its width by
     §59.4's shape rather than by precedent, and a justification that is
     arithmetic can be checked as arithmetic.
     """
@@ -707,26 +887,34 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
         for combination, found in anchor.items()
     }
     assert totals == {
-        ("claude-code", "claude-haiku-4-5"): 0.2529,
-        ("claude-code", "claude-sonnet-5"): 0.7103,
-        ("codex", "gpt-5.6-terra"): 0.2458,
+        ("claude-code", "claude-haiku-4-5"): 0.2385,
+        ("claude-code", "claude-sonnet-5"): 0.8253,
+        ("codex", "gpt-5.6-terra"): 0.2568,
     }
     per_cell = {
         combination: round(sum(run.cost_usd for run in found) / len(found), 4)
         for combination, found in anchor.items()
     }
     assert per_cell == {
-        ("claude-code", "claude-haiku-4-5"): 0.0843,
-        ("claude-code", "claude-sonnet-5"): 0.2368,
-        ("codex", "gpt-5.6-terra"): 0.0819,
+        ("claude-code", "claude-haiku-4-5"): 0.0795,
+        ("claude-code", "claude-sonnet-5"): 0.2751,
+        ("codex", "gpt-5.6-terra"): 0.0856,
     }
     per_task = round(sum(per_cell.values()), 4)
-    assert per_task == 0.4030
+    assert per_task == 0.4402
     flat = round(per_task * _CELLS, 4)
-    assert flat == 1.2090
+    assert flat == 1.3206
     landed = round(sum(sum(run.cost_usd for run in found)
                        for found in anchor.values()), 4)
-    assert landed == 1.2089, "what the rows actually cost, summed before rounding"
+    assert landed == flat, (
+        "this round's rounded per-cell figures reproduce the landed total "
+        "exactly, unlike §95.6's pair"
+    )
+
+    # The figures §106.5 named, reproduced rather than adopted: the derivation
+    # above is what the section registers, and it agrees with the ruling.
+    rulings = other_section(_RULINGS_HEADING)
+    assert f"${landed:.4f} landed" in rulings
 
     # §68.4's summed-columns form, against the same arithmetic.
     summed = block_holding("total", "claude-code x claude-haiku-4-5")
@@ -741,6 +929,7 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
         combination: round(figure * _CELLS, 4)
         for combination, figure in per_cell.items()
     }
+    assert columns == totals, "the rounded columns are the rows' own totals"
     assert round(sum(columns.values()), 4) == flat
     assert f"total        ${flat:.4f}" in summed
 
@@ -748,36 +937,35 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
     codex = anchor[("codex", "gpt-5.6-terra")]
     tokens_in = sum(run.tokens_in for run in codex)
     tokens_out = sum(run.tokens_out for run in codex)
-    assert (tokens_in, tokens_out) == (333948, 7370)
+    assert (tokens_in, tokens_out) == (312819, 7547)
 
     table = pricing.load_price_table(_REPO / "data" / "price-table.json")
     prices = table.models["gpt-5.6-terra"]
     logged = sum(run.cost_usd for run in codex)
     effective = (logged - tokens_out * prices.output_per_token) / tokens_in
-    assert round(effective * 1e6, 4) == 0.4711
+    assert round(effective * 1e6, 4) == 0.5314
 
     output_cost = tokens_out * prices.output_per_token
     uncached = tokens_in * prices.input_uncached_per_token
     cached = tokens_in * prices.input_cached_per_token
-    assert round(output_cost, 4) == 0.0884
-    assert round(uncached, 4) == 0.6679
-    assert round(cached, 4) == 0.0668
+    assert round(output_cost, 4) == 0.0906
+    assert round(uncached, 4) == 0.6256
+    assert round(cached, 4) == 0.0626
     assert (round(cached + output_cost, 2), round(uncached + output_cost, 2)) == (
-        0.16, 0.76
+        0.15, 0.72
     )
-    assert round(tokens_in * effective + output_cost, 2) == 0.25
+    assert round(tokens_in * effective + output_cost, 2) == 0.26
 
     claude = round(sum(columns[combination] for combination in _COMBINATIONS[:2]), 4)
-    assert claude == 0.9633
+    assert claude == 1.0638
     low = round(claude + cached + output_cost, 2)
     high = round(claude + uncached + output_cost, 2)
-    assert (low, high) == (1.12, 1.72)
+    assert (low, high) == (1.22, 1.78)
 
     # The registered band, re-derived: the floor is the flat extrapolation
-    # rounded down to a round number, and the ceiling is the first round number
-    # that keeps §59.4's shape — the all-uncached end inside the band and below
-    # its middle.
-    floor, ceiling = 1.2, 2.5
+    # rounded down to a round number, and the ceiling keeps §59.4's shape — the
+    # all-uncached end inside the band and below its middle.
+    floor, ceiling = 1.3, 2.5
     assert floor == round(flat - flat % 0.1, 1), "the floor is the anchor, rounded down"
     assert floor <= high <= ceiling, (
         "the all-uncached bound must sit inside the registered range rather "
@@ -785,39 +973,41 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
         "6's error"
     )
     assert high < (floor + ceiling) / 2, "and below its middle, which is §59.4's shape"
-    # And §83.6's 1.8× would not have kept that shape, which is the section's
-    # own stated reason for the wider band.
+    # And unlike round 11, §83.6's standing 1.8× multiple would itself have
+    # kept that shape this round, which is the section's stated reason for a
+    # narrower headroom than §95.6's.
     narrow = round(flat * 1.8, 2)
-    assert (floor + narrow) / 2 < high, "1.8× this anchor puts its middle under the bound"
+    assert (floor + narrow) / 2 > high, "1.8× this anchor keeps its middle above the bound"
+    assert ceiling >= narrow, "the ceiling is the first round number at or above it"
 
     counted = prose()
-    assert "The sweep's price: $1.2–2.5" in counted
-    assert "re-anchored on round 10's own nine cells" in counted
+    assert "The sweep's price: $1.3–2.5" in counted
+    assert "re-anchored on round 11's own nine cells" in counted
     assert (
-        "**Round 10 is the nearest anchor this corpus has and it is one round "
+        "**Round 11 is the nearest anchor this corpus has and it is one round "
         "back**"
     ) in counted
     assert f"selected by sweep id `{_ANCHOR_ROUND}`" in counted
     assert "**never by a log's filename**" in counted
-    assert "**$0.2529** on `claude-haiku-4-5`" in counted
-    assert "**$0.7103** on `claude-sonnet-5`" in counted
-    assert "**$0.2458** on `codex` × `gpt-5.6-terra`" in counted
-    assert "**$0.0843**, **$0.2368** and **$0.0819** a cell" in counted
-    assert "**$0.4030 a task across the three combinations**" in counted
+    assert "**$0.2385** on `claude-haiku-4-5`" in counted
+    assert "**$0.8253** on `claude-sonnet-5`" in counted
+    assert "**$0.2568** on `codex` × `gpt-5.6-terra`" in counted
+    assert "**$0.0795**, **$0.2751** and **$0.0856** a cell" in counted
+    assert "**$0.4402 a task across the three combinations**" in counted
     assert f"three tasks come to **${flat:.4f}**" in counted
-    assert f"round 10's own **${landed:.4f}**" in counted
-    assert "**333,948** input tokens and wrote **7,370**" in counted
-    assert "**$0.16 all-cached to $0.76 all-uncached**" in counted
-    assert "**$0.4711/M**" in counted
-    assert "expected figure near **$0.25**" in counted
-    assert "**$0.9633** together" in counted
-    assert "**$1.12 all-cached to $1.72 all-uncached**" in counted
+    assert f"round 11's own **${landed:.4f}**" in counted
+    assert "with no disagreement to flag" in counted
+    assert "**312,819** input tokens and wrote **7,547**" in counted
+    assert "**$0.15 all-cached to $0.72 all-uncached**" in counted
+    assert "**$0.5314/M**" in counted
+    assert "expected figure near **$0.26**" in counted
+    assert "**$1.0638** together" in counted
+    assert "**$1.22 all-cached to $1.78 all-uncached**" in counted
 
     # The headroom's width, justified by §59.4's shape rather than by precedent.
-    assert "roughly **2.1×** the flat extrapolation rather than §83.6's 1.8×" in counted
-    assert f"1.8× this anchor is ${narrow:.2f}" in counted
-    assert "the middle of $1.2–2.2 is $1.70" in counted
-    assert f"the ceiling is set at **${ceiling:.1f}**" in counted
+    assert f"§83.6's **1.8×** multiple is ${narrow:.2f}" in counted
+    assert f"the middle of $1.3–{narrow:.2f} is **$1.84**" in counted
+    assert f"The ceiling is set at **${ceiling:.1f}**" in counted
 
     # Both miss directions, pre-read before the sweep.
     assert "The **low** miss is again the likelier" in counted
@@ -825,7 +1015,7 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
     assert "a finding about the action and not an accounting surprise" in counted
     assert "**$0.08 under the floor**" in counted
     assert (
-        "a decomposition that re-reads the repository for every piece it names"
+        "an explanation that re-reads the repository for every edge it names"
     ) in counted
     assert "**$2.5 is where the record is to stop and say so**" in counted
 
@@ -840,18 +1030,17 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_10_rows(
 
 
 def test_the_nine_cells_and_the_invocation_are_registered() -> None:
-    """§95.7: three tasks × three columns, the sweep id, the dry cell, and the
-    id register left explicitly to be filled in before the sweep.
+    """§107.8: three tasks × three columns, the three kinds of question, the
+    sweep id, the dry cell, and the id register left explicitly to be filled in
+    before the sweep.
 
     What this checks is the registration's shape: the columns, the count, the
-    language, the control declaration, the sweep's invocation, and the id
-    register — registered *as empty*, said to be left for the authoring
-    tickets, and now filled exactly where the section left it, dated and
-    attributed rather than blended into the registration-time prose. What the
-    filled ids claim about the corpus is the forward-reading test's at the end
-    of this file; the pin here is that exactly one id-shaped block stands in
-    the section and each of its lines carries a gloss naming the kind of
-    requirement its task puts.
+    three kinds of question §106.4 fixes, the language, the control
+    declaration, the sweep's invocation, and the id register — registered *as
+    empty*, said to be left for the authoring tickets, with round 7's
+    prefix pin named as the check the authoring runs first. What fills it is
+    the round's task-authoring ticket, and that ticket's own pin is what will
+    read the filled block.
     """
     counted = prose()
 
@@ -861,61 +1050,55 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
         "`claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`"
     ) in counted
     assert (
-        "**the three standing columns, unchanged from rounds 7, 8 and 10**"
+        "**the three standing columns, unchanged from rounds 7, 8, 10 and 11**"
     ) in counted
     assert "three tasks × three combinations = **nine cells**" in counted
-    assert f"three `{_CATEGORY}` tasks × the three standing columns" in counted
+    assert f"three explain-style `{_CATEGORY}` tasks × the three standing columns" in counted
 
     # The two Claude columns are the ladder the reader already has; the Codex
     # one is the second harness and is deliberately not in it.
     assert reconcile_v1.LADDER_MODELS == ("claude-haiku-4-5", "claude-sonnet-5")
 
     assert "Each of the three is **Python**" in counted
-    assert "**one requirement to decompose**" in counted
-    assert "**three different kinds of requirement**" in counted
+    assert "**one closed-world question to explain**" in counted
+    assert "**three different kinds of question**" in counted
+    # §106.4's three kinds, each named and each checked against the ruling.
+    rulings = other_section(_RULINGS_HEADING)
+    for kind in (
+        "one end-to-end mechanism",
+        "one surprising behaviour",
+        "one divergence",
+    ):
+        assert f"**{kind}**" in counted, kind
+        assert kind in rulings, f"§106.4 named it first: {kind}"
+
     assert "Each is a **declared control**" in counted
     assert (
         "`control: true`, no construction block, no knob activation, no "
         "prediction"
     ) in counted
     assert (
-        "**round 11 moves no knob's counter and the kill discipline does not "
+        "**round 12 moves no knob's counter and the kill discipline does not "
         "count it**"
     ) in counted
-    assert f"`calibrate-v1` gains no `{_CATEGORY}` multiplier row" in counted
+    assert "`calibrate-v1` gains no explain-style multiplier row" in counted
 
-    # The register: left for the authoring tickets, said to be left, and now
-    # filled where the section said it would be. The registration-time prose
-    # stays as the record it is — it was true as written — and the fill is
-    # dated and attributed rather than blended into it.
+    # The register: left for the authoring tickets, and said to be left. No
+    # id-shaped block stands in the section yet, which is what "left to be
+    # filled in" has to mean in the text as well as in the prose.
     assert "**The three task ids do not exist yet.**" in counted
     assert (
-        f"**the id register for round 11 is left explicitly to be filled in, "
+        f"**The id register for round 12 is left explicitly to be filled in, "
         f"in this section, before the sweep, by the round's task-authoring "
         f"tickets**"
     ) in counted
-    assert f"corpus holds no `{_CATEGORY}` task as this is written" in counted
-    assert "**disclosed zero**" in counted
     assert (
-        "**Filled in 2026-08-26, by the round's second task-authoring ticket, "
-        "exactly where this section left it.**"
+        f"holds **four locate-style `{_CATEGORY}` tasks and no point-keyed "
+        "one**"
     ) in counted
-    assert "**This list is the register.**" in counted
-    assert f"**every `{_CATEGORY}` task the corpus holds**" in counted
-    assert (
-        "the round sweeps the action entire and re-runs nothing any "
-        "combination has already answered"
-    ) in counted
-
-    # Exactly one fenced block of the section is a register of task ids — the
-    # one the fill wrote, in §68.1's form: an id a line, each with a one-line
-    # gloss naming the kind of requirement its task puts. Before the fill this
-    # asserted no such block existed; what the ids claim about the corpus is
-    # the forward-reading test's below.
-    [register] = register_blocks()
-    assert len(register) == _CELLS
-    for task_id, gloss in register.items():
-        assert gloss, f"{task_id}: a register line carries its gloss"
+    assert "**Round 7's pin is the check the authoring runs first**" in counted
+    assert "no task id may share a repo prefix with an existing task" in counted
+    assert register_blocks() == [], "the register is registered as empty"
 
     # The invocation.
     assert f"Sweep id **`{_SWEEP}`**" in counted
@@ -936,34 +1119,38 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     assert "--model claude-haiku-4-5" in command
 
 
-def test_every_cell_runs_at_the_flat_default_and_no_row_is_registered() -> None:
-    """§95.8: one ceiling over the round, reached by the fallback.
+def test_every_cell_runs_at_the_registered_limit_and_no_entry_moves() -> None:
+    """§107.9: one ceiling over the round, reached by the category's own row.
 
-    `requirement-decomposition` joins no `LIVE_RUN_LIMITS_S` row, so its nine
-    cells run at the flat default — numerically the same 600 seconds the four
-    registered categories carry, which is what keeps the round free of a
-    ceiling difference and free of a cross-round caveat. The distinction
-    matters anyway, because only a registered category's cell can later be
-    described as running "under the registered 600 s", and the record is to say
-    "at the flat default" instead.
+    Unlike round 11's action, this one is already in `LIVE_RUN_LIMITS_S` and
+    has been since round 5, so the registration's whole content is that
+    **nothing moves**: no row is added, no number is changed, and no code is
+    touched. The nine cells therefore run at 600 seconds *under the
+    registration the category already carries* — a description only a
+    registered category's cell can be given — while 600 is also the flat
+    default's own value, which is why no cross-round caveat arises.
 
-    Registering is a deliberate act: §94.3 rules the action into no register,
-    and §68.5's precedent is that a new action joins none for exactly that
-    reason. So this is a test that a row was *not* added.
+    So this is a test that an entry was *not* moved, and that the number the
+    section quotes for the fallback is still the number the runner holds.
     """
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == _REGISTERED_LIMITS, (
         "this registration adds nothing new"
     )
-    assert _CATEGORY not in firstparty_v1.LIVE_RUN_LIMITS_S
+    assert firstparty_v1.LIVE_RUN_LIMITS_S[_CATEGORY] == _LIMIT_S
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {_LIMIT_S}
     assert firstparty.RUN_TIMEOUT_S == _LIMIT_S, "the flat default is the same number"
 
     counted = prose()
-    assert f"**`{_CATEGORY}` joins none of them**" in counted
-    assert "This ticket adds no row and **changes no code**" in counted
-    assert "`test-authoring` joined no register" in counted
-    assert f"`{_ANCHOR_CATEGORY}` joined none last round" in counted
-    assert "all nine cells run at the **flat default**" in counted
+    assert (
+        f"**`{_CATEGORY}` is already one of them, at {_LIMIT_S}, and has been "
+        "since round 5**"
+    ) in counted
+    assert "**No entry moves**" in counted
+    assert "**changes no code**" in counted
+    assert (
+        f"all nine cells run at **{_LIMIT_S} seconds under the registration "
+        "the category already carries**"
+    ) in counted
     assert "§46's registered sense of the distinction" in counted
     assert "**no cross-round caveat arises**" in counted
     assert "its grader calls are no part of the 600" in counted
@@ -979,13 +1166,10 @@ def test_every_cell_runs_at_the_flat_default_and_no_row_is_registered() -> None:
 def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     logs: list[Path], runs: list[firstparty_v1.Run]
 ) -> None:
-    """§95.9: the anchor the sweep's band is derived over, held still.
+    """§107.10: the anchor the sweep's band is derived over, held still.
 
-    Landed form: the round's own sweep (2026-08-26-r11-a..d) is the one
-    arrival the registered sentence allowed, and nothing else landed.
-
-    §80.4's guardrail carried forward, for this round's own reason: §95.6's
-    band is derived over the nine `round-10` rows as they stand, so a sweep row
+    §80.4's guardrail carried forward, for this round's own reason: §107.7's
+    band is derived over the nine `round-11` rows as they stand, so a sweep row
     landing between this registration and the round's own sweep would move the
     anchor out from under a range already registered against it.
 
@@ -994,14 +1178,8 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     section's prose, which is what makes the registered sentence a claim about
     the corpus and not about itself.
     """
-    # Landed form: the archive grew by exactly the round's own sweep and by
-    # nothing else — 41 logs and 315 rows at registration, plus the sweep's
-    # four logs and nine `round-11` rows, keyed on what the rows carry.
     assert len(logs) == 45
     assert len(runs) == 324
-    late = [run for run in runs if run.sweep == _SWEEP]
-    assert len(late) == _CELLS * 3
-    assert len(runs) - len(late) == 315, "nothing else landed in between"
     assert len([run for run in runs if run.sweep == _ANCHOR_ROUND]) == _CELLS * 3
 
     counted = prose()
@@ -1019,93 +1197,54 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     assert check == f"find data/first-party-v1-runs -type f -newermt {_AS_OF}"
 
 
-def test_the_round_11_cells_are_the_nine_registered(
-    runs: list[firstparty_v1.Run],
-    tasks: dict[str, firstparty_v1.Task],
-) -> None:
-    """The first forward-reading test, in its landed form.
+def test_no_round_12_row_exists_yet(runs: list[firstparty_v1.Run]) -> None:
+    """The first forward-reading test: nothing of this round has been swept.
 
-    Its first form said no `round-11` row existed yet — a registration, not a
-    record — and was retired by the sweep it foresaw (2026-08-26-r11-a..d,
-    dry cell first). What it holds the round to now is the landed version of
-    the same claim: the cells carrying sweep id `round-11` are exactly the
-    nine §95 registered — the register's three tasks under the three
-    standing combinations — none repeated, and every one has archived
-    per-run rulings, so its verdict is a pure function of what is checked in.
+    A pre-registration is a claim made before the money, so the claim it makes
+    about the corpus is that the corpus holds none of the round's rows. This
+    test is retired by the ticket that lands the sweep, which replaces it with
+    the landed form — the nine cells carrying sweep id `round-12` being exactly
+    the nine registered.
 
     Selected by **sweep id** over every log in the directory and never by a log
     filename, which is the discipline the whole round is run under.
     """
-    swept = [run for run in runs if run.sweep == _SWEEP]
-    cells = {(run.task_id, run.agent, run.model) for run in swept}
-    assert len(swept) == len(cells) == _CELLS * 3, "nine cells, none repeated"
-    [register] = register_blocks()
-    assert cells == {
-        (task_id, agent, model)
-        for task_id in register
-        for agent, model in _COMBINATIONS
-    }
-    for task_id, agent, model in sorted(cells):
-        assert firstparty_v1.rulings_file(
-            _RULINGS, task_id, agent, model
-        ).is_file(), f"{task_id} x {agent} x {model}: archived rulings"
-
+    assert not [run for run in runs if run.sweep == _SWEEP], (
+        "§107 is a registration and not a record: no `round-12` row yet"
+    )
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", _ANCHOR_ROUND, _SWEEP,
+        "round-8", "round-10", _ANCHOR_ROUND,
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 
-def test_the_register_names_every_requirement_decomposition_task_and_each_is_proved(
+def test_no_comprehension_task_is_point_keyed_yet(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The second forward-reading test, in its final form: the register check.
+    """The second forward-reading test: the explain shape is not in the corpus.
 
-    Its first form said the corpus held no `requirement-decomposition` task;
-    the round's first authoring ticket caught it up to "task 1 and no second
-    or third yet"; the second authoring ticket landed the other two and filled
-    §95.7's register, which is the form this test now holds the round to. The
-    register is read against the corpus rather than restated: the three ids
-    exist, they are exactly the `requirement-decomposition` tasks the corpus
-    holds — no fourth anywhere — every one is the Python application-surface
-    declared control §95.7 registered, and each ships a points key and a
-    two-sided proof that is green under the pinned instrument, the verdicts
-    recomputed through `_point_verdict` rather than taken on the archives'
-    word.
+    Written **by key shape and never as a task count**. The category already
+    carries four locate-style tasks on an accepted-answer key and they are
+    staying, so a count would go red on their account rather than on the thing
+    this test exists to watch — whether a *point-keyed* comprehension task has
+    landed. It is retired by the ticket that lands the round's first task.
     """
-    [register] = register_blocks()
-    authored = sorted(
-        task_id for task_id, task in tasks.items() if task.category == _CATEGORY
-    )
-    assert sorted(register) == authored, "the register is the corpus, whole"
-    assert len(register) == _CELLS, "and the corpus holds no fourth"
+    comprehension = [
+        task for task in tasks.values() if task.category == _CATEGORY
+    ]
+    assert comprehension, "the corpus carries the category's locate-style tasks"
+    assert not [
+        task for task in comprehension if firstparty_v1.is_point_keyed(task)
+    ], "no point-keyed `codebase-comprehension` task yet"
 
-    for task_id in register:
-        task = tasks[task_id]
-        assert task.category == _CATEGORY
-        assert task.language == "python"
-        assert task.surface == "application"
-        assert task.control is True
-        assert task.construction is None
-
-        key = firstparty_v1.points_key(task)
-        questions = firstparty_v1._point_questions(key)
-        for side in firstparty_v1.PROOF_SIDES:
-            answer = (task.proofs_dir / side.answer_file).read_text(
-                encoding="utf-8"
-            )
-            raw = firstparty_v1.proof_rulings_file(task, side).read_text(
-                encoding="utf-8"
-            )
-            archive = firstparty_v1.ProofRulings.model_validate(json.loads(raw))
-            assert archive.grader_version == point_grader.GRADER_VERSION
-            assert (
-                firstparty_v1._point_verdict(questions, archive, answer)
-                is side.resolves
-            ), f"{task_id}: {side.name}"
-
-    table = firstparty_v1.coverage_table(list(tasks.values()))
-    assert (_CATEGORY, "-", "-", 0) not in table, "the zero row is gone"
-    assert [row for row in table if row[0] == _CATEGORY and row[3] == _CELLS]
-    # And the action it follows is the one that filled its row last round.
-    assert [row for row in table if row[0] == _ANCHOR_CATEGORY and row[3]]
+    # The loader has been taught the shape — §106.5's move, landed by the
+    # round's loader ticket ahead of any task, and §107.5 registers it as the
+    # form the gate will take. What it taught the loader is *point-optional*
+    # membership and nothing more: the category may ship a points key, the two
+    # actions above it must, and the corpus asserted just now still holds no
+    # task that does.
+    assert _CATEGORY in firstparty_v1._POINT_CATEGORIES
+    assert _CATEGORY == firstparty_v1._POINT_OPTIONAL_CATEGORY
+    assert _CATEGORY not in firstparty_v1._POINT_REQUIRED_CATEGORIES
+    assert _ANCHOR_CATEGORY in firstparty_v1._POINT_CATEGORIES
+    assert _ANCHOR_CATEGORY in firstparty_v1._POINT_REQUIRED_CATEGORIES
