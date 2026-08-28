@@ -202,7 +202,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     takes what is free after it — which the section says in a line, so that
     whoever writes it does not have to re-derive the frontier.
 
-    The frontier has since moved seven times: **§78 is round 9's amendment**
+    The frontier has since moved eight times: **§78 is round 9's amendment**
     — the grader re-pinned to `deepseek-v4-pro` after the round parked at its
     calibration gate — **§79 is the round's record** (the calibration verdict
     of 2026-08-23, FAILED), **§80 is the second amendment** — grader v2 by
@@ -220,11 +220,14 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     pre-registration**, the round's one gate and its two prices written down
     before the first paid call — **§96 is round 11's amendment**: the proofs
     writer has no resume, ticket 03's invocation metered 48 calls and the
-    round's proofs re-registered at 64–80 — and **§97–§105 are round 11's
+    round's proofs re-registered at 64–80 — **§97–§105 are round 11's
     record**: the gate opened on all three keys, the nine cells swept and
     0 of 9 resolved, each red cell read as its named uncovered points and
-    two covered rulings demoted by the span rule. Nothing was renumbered to
-    make room.
+    two covered rulings demoted by the span rule — and **§106 is round 12's
+    rulings**: heap 3's last action, explain-style comprehension, ruled
+    behind the recall fork §104's addendum opened — planted points
+    one-clause-tight from this round on, author-side and forward-only, the
+    instrument unmoved. Nothing was renumbered to make room.
     """
     text = _NOTE.read_text(encoding="utf-8")
     numbered = sorted(
@@ -249,13 +252,14 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert all(numbered.count(number) == 1 for number in range(97, 106)), (
         "round 11's record, §97-§105, each spent once"
     )
-    assert numbered[-1] == 105, (
-        "§105 is the last section of round 11's record — replay with the "
-        "network unplugged, the readers counting the round with no flag, and "
-        "heap 3's second cell filled — and the frontier; §106 is still free, "
-        "and is what whatever comes next takes"
+    assert numbered.count(106) == 1, "the round-12 rulings, spent once"
+    assert numbered[-1] == 106, (
+        "§106 is round 12's rulings — heap 3's last action behind the recall "
+        "ruling, one-clause-tight points author-side and forward-only — and "
+        "the frontier; §107 is still free, and is what whatever comes next "
+        "takes"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 106)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 107)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

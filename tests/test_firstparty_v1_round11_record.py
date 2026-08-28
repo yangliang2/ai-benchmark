@@ -1635,11 +1635,12 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     )
     assert numbered.count(96) == 1
     assert all(numbered.count(number) == 1 for number in range(97, 106))
-    # The live frontier — §105 the last number spent, §106 free — is the
-    # round-9 suite's one moved assertion and is deliberately not copied
-    # here; what this test owns is that the record's nine numbers are spent
-    # once each and nothing above or below them was renumbered.
-    assert [number for number in numbered if number > 68] == list(range(69, 106))
+    # The live frontier is the round-9 suite's one moved assertion and is
+    # deliberately not copied here; what this test owns is that the record's
+    # nine numbers are spent once each and nothing above or below them was
+    # renumbered — a claim the contiguity range extends over §106 (round 12's
+    # rulings, 2026-08-28) to keep making.
+    assert [number for number in numbered if number > 68] == list(range(69, 107))
 
     for heading in record_sections():
         assert f"### {heading}\n" in text, heading
@@ -1647,10 +1648,12 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     headings = re.findall(r"^## .+$", text, re.MULTILINE)
     record_at = headings.index("## Round 11 record — 2026-08-27")
     assert headings[record_at - 1].startswith("## Round 11 amendment")
-    # The next landmark after the record is the note's trailing headings
-    # today; when a later round lands there, this adjacency pin moves in the
-    # ticket that lands it, exactly as round 10's did.
-    assert headings[record_at + 1].startswith("## Open questions")
+    # The heading after the record was `## Open questions` until round 12's
+    # rulings landed there (2026-08-28); the claim that survives is that the
+    # record sits inside the note's numbered run, before the trailing
+    # headings — this adjacency pin moved in the commit that landed §106,
+    # exactly as round 10's did when §94 landed.
+    assert headings[record_at + 1].startswith("## Round 12 rulings")
 
     opening = prose(
         note_part("Round 11 record — 2026-08-27").split("\n### ")[0]

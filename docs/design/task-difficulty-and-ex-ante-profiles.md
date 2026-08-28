@@ -10195,6 +10195,129 @@ next free section number**, and whatever comes next — a round's rulings, an
 amendment, a record — takes it and what follows it; nothing above is
 renumbered.
 
+## Round 12 rulings — 2026-08-28
+
+**106. What round 12 is: heap 3's last action, taken as the mechanical fill
+§103's sentence licensed — behind one ruling that stands in front of it.**
+Ruled by the owner on 2026-08-28. §103 said the second action confirmed the
+instrument's record, so explain-style `codebase-comprehension` follows as
+heap 3's last mechanical fill — but §104's addendum landed first paid
+evidence of the transfer gap's direction, and that evidence is a design
+decision, not a detail a fill may absorb silently. So this round's rulings
+open with the recall fork and take the standing four after it. The
+instrument is §83.2's, unmoved — `point_grader.GRADER_VERSION`, read from
+the code and never retyped — and the standing rule stands: a checkpoint
+movement discovered en route is a version change and stops the round for
+re-registration. Five rulings, numbered the way §94's were.
+
+**106.1 The recall ruling: author-side, one-clause-tight, forward-only.**
+§104's addendum found the gate refusing planted points the answers state in
+their own text but outside the piece naming the change — a multi-clause
+point met by no single evidence span, two cells of nine, both
+`claude-sonnet-5`, one finding twice, one direction: under-coverage on
+production prose, a shape the two-sided proofs cannot catch because a
+reference answer states each point in one tight sentence. The owner rules
+the author's side of the fork: **from this round on, a planted point is
+written one-clause-tight — one point is one fact of the code that a single
+evidence span can hit, and a consequence is its own point, never a trailing
+clause.** No machine lint holds it: it is an authoring discipline, written
+into the authoring ticket's own text and policed where authoring is already
+policed — the spec review and the two-sided proofs. The instrument's side —
+letting the coverage question draw on more than one span — is declined at
+its own price: under §77.8's sentence that is a different instrument, a new
+version tuple, a new rulings file and a paid re-proof of all six point-keyed
+tasks, bought against two cells of one-directional evidence to gain exactly
+the ability one-clause-tight authoring makes unnecessary. If the shape
+reappears under the new discipline, that reappearance is the evidence the
+instrument path would need; nothing here forecloses it. And the ruling is
+**forward-only**: round 10 and round 11's keys, proofs, records and labels
+stand as written — §104's addendum is the permanent disclosure of the gap
+those keys carry — because re-authoring an old point is re-proving its task
+for no change in any published reading. §76.2's owner-labels check rides
+this round's nine cells as it rode the last two rounds', and doubles as the
+discipline's first test: under one-clause-tight keys the false-red shape
+should not recur.
+
+**106.2 The action is explain-style `codebase-comprehension`, on Python,
+and heap 3 closes.** §76.8 declined this action for round 9 because its
+quasi-ground-truth — the code itself — made it the *easy* case, and passing
+there would have left the heap's real question untested. That question is
+now tested twice — an open proposal (§85–§93), a decomposition (§97–§105) —
+so the reason to wait is spent and the easy case is what a mechanical fill
+is. Every task is Python, §76.10's rule carried again; the TypeScript cell
+stays a disclosed zero. The category is the one `locate a fault`'s
+neighbour already inhabits: `codebase-comprehension` carries locate-style
+tasks on an accepted-answer key today, and this round adds its explain
+shape on a points key — superseding the loader comment that once expected
+explain-style to be graded by held-out tests, which §103's confirmation of
+the point gate has overtaken.
+
+**106.3 The deliverable is one prose answer file, three sections: the walk,
+the mechanism, the edges.** §76.9's institution continued: the prompt names
+the answer path and requires the parts by name, and the parts are this
+action's analog of the decomposition's pieces/order/risks — **What
+happens** — the behaviour the question names, traced through the code step
+by step in the repository's own terms; **Why it comes out that way** — the
+specific decisions in the code that produce the behaviour, the load-bearing
+facts named one by one; **Boundaries and edge behavior** — what the
+mechanism does at the edges and on the paths the question did not name,
+decided from the code where the code decides it, and what the repository
+alone cannot settle named rather than papered over. A planted point is
+106.1's kind and no other: one fact of the code a single span can hit — a
+line that writes what the explanation must account for, an interaction an
+honest walk cannot omit — with consequences planted as points of their own.
+The disqualifier is the plausible misreading the code refutes, and the foil
+is the fluent explanation that reads well and misses the planted facts. The
+key's shape is the standing one — 4–6 points, 0–2 disqualifiers, proved
+both ways at authoring under the round's one gate — and the fine grain
+lands in the spec, where the owner reads it before a ticket is cut.
+
+**106.4 Three tasks, three kinds of question, the three standing columns:
+nine cells.** Task count and columns are the last two rounds', confirmed
+without re-argument — §68.3's reason still. Three fresh stdlib-only Python
+repositories in the standing task shape, each a declared control, each
+holding one closed-world question to explain — and three *different kinds*
+of question: one end-to-end mechanism (how the repository carries a thing
+from one end to the other), one surprising behaviour (why this input comes
+out that way), one divergence (why two paths that look alike land
+differently). Task-id prefixes checked against every existing task before
+authoring, round 7's pin. The columns are `claude-code` ×
+`claude-haiku-4-5`, `claude-code` × `claude-sonnet-5`, and `codex` ×
+`gpt-5.6-terra` at reasoning `medium`. Sweep id **`round-12`**, dry cell
+first, by hand under the sweep protocol, never queued; and no
+`LIVE_RUN_LIMITS_S` entry moves — `codebase-comprehension` has sat in that
+register since round 5, at 600, the flat default's own value, so every cell
+runs at 600 s under the registration the category already carries and no
+cross-round caveat arises.
+
+**106.5 Delivery, down the standing pipeline, and the loader's one move.**
+These rulings, then `/to-spec` files a new spec issue, then `qap plan` cuts
+tickets on it; the pre-registration takes the next free section number and
+writes both prices down before the first paid call — DeepSeek prices
+fetched fresh with source and date, the proofs' price counted over metered
+calls with `--task` selection mandatory (§96's amendment: the writer has no
+resume), and the sweep band anchored on the nearest swept rows, round 11's
+own nine cells by sweep id, $1.3206 landed. The round's single hard gate is
+the two-sided proofs, §83.4's clause kept verbatim, before the first sweep
+dollar; the kill discipline keeps its one sentence. The loader's move is
+named here so the spec carries it whole, and it has two parts:
+`codebase-comprehension` joins `_POINT_CATEGORIES` as that set's first
+*point-optional* member — the category already carries locate-style tasks
+under the answer key's own required/optional distinction, so the same
+distinction arrives on the points side: `investigation` and
+`requirement-decomposition` must ship a points key,
+`codebase-comprehension` may, the key on disk decides the shape (§45.6's
+rule, already the file's own sentence), and a task shipping both an
+accepted-answer key and a points key is refused as two ground truths for
+one deliverable. And the category's `EXISTENCE_PROOFS` entry — today the
+locate-style form alone, every accepted location resolving in the starting
+repository — becomes shape-aware the same way: a point-keyed
+comprehension task's existence proof is the two-sided proof, exactly
+`investigation`'s registered form, dispatched by the key on disk. And the payment path is disclosed where it is used: the
+DeepSeek key is stored in the operator's session memory by the owner's
+ruling of 2026-08-23 — a disclosed exception to the stored-nowhere rule —
+and the runbook says so rather than claiming otherwise.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
