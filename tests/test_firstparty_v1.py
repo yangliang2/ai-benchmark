@@ -353,11 +353,23 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
             assert task.test_path
             continue
         if task.category in ("investigation", "requirement-decomposition"):
-            # Round 10's and round 11's actions ship no held-out tests
-            # either: each deliverable is one prose answer file and its
+            # The two actions whose points key is mandatory rather than
+            # optional: the loader refuses one of them that ships none, and
+            # this is the corpus saying so from the outside.
+            assert is_point_keyed(task)
+        if is_point_keyed(task):
+            # A point-keyed task of any registered action ships no held-out
+            # tests either: its deliverable is one prose answer file and its
             # verdict the point gate — a planted points key judged per point
             # by the versioned grader instrument (ADR-0005).
-            assert is_point_keyed(task)
+            #
+            # Read off the key on disk rather than off a category tuple, which
+            # is §106.5's loader move seen from the corpus: since
+            # `codebase-comprehension` became `_POINT_CATEGORIES`' first
+            # point-optional member, the category alone no longer says which
+            # verdict shape a task takes — a locate-style comprehension task
+            # falls through to the held-out-tests assertion below and an
+            # explain-style one is caught here.
             assert not task.grading_test_paths
             continue
         # Held-out tests by the task's own runner's glob: a TypeScript-only

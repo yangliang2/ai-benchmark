@@ -42,6 +42,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from test_firstparty_v1_codebase_comprehension import ANSWER_PATH as LOCATE_ANSWER_PATH
+from test_firstparty_v1_codebase_comprehension import (
+    fixture_task as locate_style_fixture,
+)
 from test_firstparty_v1_point_gate import (
     ANSWER_PATH,
     LEDGER,
@@ -360,6 +364,108 @@ def test_the_second_point_keyed_action_is_held_to_the_same_proof(
         EXISTENCE_PROOFS["requirement-decomposition"]
         is EXISTENCE_PROOFS["investigation"]
     )
+
+
+def test_an_explain_style_comprehension_task_is_terrain_exempt_by_key_shape(
+    tmp_path: Path,
+) -> None:
+    """§106.5's point-optional action gets the exemption its two point-keyed
+    siblings have, and gets it with a reason of its own rather than one string
+    keyed three times. Asserted through `_terrain_problems` as well as through
+    the registry, because what the entry buys is the rules not firing."""
+    task = proved(tmp_path, category="codebase-comprehension")
+
+    assert firstparty_v1.is_point_keyed(task)
+    assert _terrain_problems(task) == []
+    reason = TERRAIN_EXEMPT_ACTIONS["codebase-comprehension"]
+    assert "never in the workdir" in reason
+    assert "the sections the explanation must carry" in reason
+    assert reason != TERRAIN_EXEMPT_ACTIONS["investigation"]
+
+
+def test_a_locate_style_comprehension_task_keeps_all_three_terrain_rules(
+    tmp_path: Path,
+) -> None:
+    """The half of the category the exemption must not reach. A locate-style
+    task's accepted-answer key *is* a set of greppable locations, which is the
+    very thing these rules were written for, so the category's entry is read by
+    key shape and never wholesale — a task keyed on accepted answers is held to
+    all three exactly as it was before this round.
+
+    Shown by firing each rule in turn on the shared fixture, and through
+    `_terrain_problems` rather than by reading the registry: what would be lost
+    if the exemption were taken wholesale is the firing, not the entry."""
+    keyed = locate_style_fixture(tmp_path / "clean")
+
+    assert not firstparty_v1.is_point_keyed(keyed)
+    assert firstparty_v1.is_keyed(keyed)
+    assert _terrain_problems(keyed) == []
+
+    named = locate_style_fixture(
+        tmp_path / "named",
+        prompt=(
+            "Say where EmailChannel.notify sends its message. Do not change any "
+            f"code. Write your answer to {LOCATE_ANSWER_PATH} as a JSON object "
+            'with "file" and "symbol".\n'
+        ),
+    )
+    lone = locate_style_fixture(
+        tmp_path / "lone",
+        accepted=[{"file": "sms.py", "symbol": "SmsChannel"}],
+        rejected=[{"file": "messaging.py", "symbol": "EmailChannel"}],
+    )
+
+    assert any(
+        "prompt-names-a-key-location" in problem for problem in _terrain_problems(named)
+    )
+    assert any(
+        "accepted-class-is-the-only-class" in problem
+        for problem in _terrain_problems(lone)
+    )
+
+
+def test_an_explain_style_comprehension_task_takes_the_two_sided_proof(
+    tmp_path: Path,
+) -> None:
+    """The category's registered existence proof is one entry covering two
+    shapes, and which one a task takes is read off the key on disk (§106.5). A
+    point-keyed comprehension task takes `investigation`'s two-sided form —
+    both directions, reference and foil — which is shown here the way the second
+    point-keyed action's is: through the real pipeline, with the proofs subtree
+    gone, so what is asserted is the shared rule being reached rather than the
+    registry holding a value."""
+    task_dir = write_task(tmp_path, category="codebase-comprehension")
+    shutil.rmtree(task_dir / "proofs")
+
+    both_sides = problems(tmp_path)
+
+    assert len(both_sides) == 2, "the proof runs in both directions here too"
+    assert all(TASK_ID in problem for problem in both_sides)
+    assert f"{PROOFS_DIR}/{REFERENCE_ANSWER_FILE}" in both_sides[0]
+    assert f"{PROOFS_DIR}/{FOIL_ANSWER_FILE}" in both_sides[1]
+    # And the registered form says both shapes, quoting the point-keyed one off
+    # the object `investigation` registers rather than restating it.
+    form = EXISTENCE_PROOFS["codebase-comprehension"].form
+    assert EXISTENCE_PROOFS["investigation"].form in form
+    assert "every accepted (file, symbol) resolving" in form
+
+
+def test_a_locate_style_comprehension_task_still_takes_the_locate_proof(
+    tmp_path: Path,
+) -> None:
+    """The other direction of the same entry, and the behaviour this round does
+    not change: a task keyed on accepted answers is proved by those locations
+    resolving in the starting repository. Read through the lint's output, which
+    is where a task with a location that resolves nowhere is refused."""
+    unresolvable = locate_style_fixture(
+        tmp_path / "unresolvable",
+        accepted=[{"file": "push.py", "symbol": "PushChannel"}],
+    )
+
+    assert any(
+        "push.py" in problem for problem in lint_task_set([unresolvable])
+    )
+    assert lint_task_set([locate_style_fixture(tmp_path / "clean")]) == []
 
 
 def test_the_actions_proof_form_is_registered(

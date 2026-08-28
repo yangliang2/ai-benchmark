@@ -505,9 +505,14 @@ def test_everything_outside_the_answer_file_is_scored_by_nothing(
 
 def test_a_points_key_shipped_by_any_other_action_is_refused(tmp_path: Path) -> None:
     """Any action outside the registered set, and the refusal names the set
-    rather than one member of it: the key is the ground truth of the two prose
-    actions and of nothing else, and what the refusal is *for* — the verdict
-    swap — is what a `bug-fix` task shipping one would have bought."""
+    rather than one member of it: the key is the ground truth of the registered
+    prose actions and of nothing else, and what the refusal is *for* — the
+    verdict swap — is what a `bug-fix` task shipping one would have bought.
+
+    The set named grew by one when §106.5 ruled `codebase-comprehension` in as
+    its point-optional member, and the refusal names all three, because a
+    refusal that named two of three would send an author of the third looking
+    for a rule that does not exist."""
     root = tmp_path / "tasks"
     write_task(root, category="bug-fix", key=points_key_json())
 
@@ -517,6 +522,7 @@ def test_a_points_key_shipped_by_any_other_action_is_refused(tmp_path: Path) -> 
     assert "points-key.json" in str(refusal.value)
     assert "investigation" in str(refusal.value)
     assert "requirement-decomposition" in str(refusal.value)
+    assert "codebase-comprehension" in str(refusal.value)
     assert "swap this task's whole verdict" in str(refusal.value)
 
 
@@ -601,6 +607,102 @@ def test_a_point_keyed_task_shipping_no_held_out_test_loads(tmp_path: Path) -> N
     assert task.grading_test_paths == ()
     assert firstparty_v1.is_point_keyed(task)
     assert firstparty_v1.points_key(task).answer_path == ANSWER_PATH
+
+
+# --- the point-optional action: one category, two shapes, the key says which ---
+
+
+def test_an_explain_style_comprehension_task_loads_and_grades_under_this_gate(
+    tmp_path: Path,
+) -> None:
+    """§106.5's loader move, in the direction that lands the round's action:
+    `codebase-comprehension` is `_POINT_CATEGORIES`' first *point-optional*
+    member, so a task of it shipping a points key and no held-out test at all
+    loads — and the verdict it then grades under is this gate's, unchanged.
+
+    Asserted through `evaluate`, the seam a sweep runs through, rather than at
+    the loader alone: what membership buys is that the point gate reaches the
+    task, and a test that only loaded it would pass however unwired the gate
+    was. The instrument is the fake, as everywhere in this suite."""
+    root = tmp_path / "tasks"
+    write_task(root, category="codebase-comprehension", key=points_key_json())
+
+    [task] = load_task_set(root)
+
+    assert task.category == "codebase-comprehension"
+    assert firstparty_v1.is_point_keyed(task)
+    assert not firstparty_v1.is_keyed(task)
+    assert task.grading_test_paths == ()
+    assert firstparty_v1.points_key(task).answer_path == ANSWER_PATH
+
+    covered = [p["id"] for p in POINTS]
+    rulings = tmp_path / "rulings"
+    resolved = workdir_diff(task, wrote({ANSWER_PATH: answer(*covered)}))
+    short = workdir_diff(task, wrote({ANSWER_PATH: answer(*covered[:1])}))
+
+    assert evaluated(task, resolved, rulings=rulings, factory=FakeFactory()) == 1.0
+    assert evaluated(
+        task, short, rulings=rulings, factory=FakeFactory(), model="claude-haiku-4-5"
+    ) == 0.0
+
+
+def test_a_comprehension_task_shipping_both_keys_is_refused(tmp_path: Path) -> None:
+    """Two ground truths for one deliverable, and the only action this is
+    reachable for: `codebase-comprehension` stands in both key registries, so it
+    is the one action that could ship an accepted-answer key and a points key at
+    once. Which verdict shape grades a task is read off the key on disk, and
+    there is nothing to choose between two of them by — so the refusal names
+    both keys rather than picking one."""
+    root = tmp_path / "tasks"
+    write_task(
+        root,
+        category="codebase-comprehension",
+        key=points_key_json(),
+        grading={
+            firstparty_v1.ANSWER_KEY_FILE: json.dumps(
+                {
+                    "answer_path": "ANSWER.json",
+                    "accepted": [{"file": "weights.py", "symbol": "net"}],
+                    "rejected": [{"file": "ledger.py", "symbol": "total"}],
+                },
+                indent=2,
+            )
+        },
+    )
+
+    with pytest.raises(IngestError) as refusal:
+        load_task_set(root)
+
+    assert firstparty_v1.ANSWER_KEY_FILE in str(refusal.value)
+    assert firstparty_v1.POINTS_KEY_FILE in str(refusal.value)
+    assert "no single ground truth" in str(refusal.value)
+
+
+def test_a_comprehension_task_shipping_neither_key_loads_as_it_did(
+    tmp_path: Path,
+) -> None:
+    """The optional half of "may": membership in `_POINT_CATEGORIES` says a
+    points key is *allowed* here and never that it is owed, so a comprehension
+    task carrying no key of either shape is exactly as loadable as it was
+    before this round — held to the held-out suite every other action is held
+    to, and refused by neither key's branch."""
+    root = tmp_path / "tasks"
+    write_task(
+        root,
+        category="codebase-comprehension",
+        key=None,
+        grading={"test_weights.py": (
+            "from weights import net\n\n\n"
+            "def test_net_subtracts_the_tare():\n"
+            "    assert net(10, 4) == 6\n"
+        )},
+    )
+
+    [task] = load_task_set(root)
+
+    assert not firstparty_v1.is_point_keyed(task)
+    assert not firstparty_v1.is_keyed(task)
+    assert task.grading_test_paths == ("test_weights.py",)
 
 
 # --- the default archive, and the callers that thread no argument --------------

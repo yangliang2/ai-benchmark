@@ -123,8 +123,10 @@ an agent could grep out of its workdir and this key is never in one.
 
 A fifth verdict shape grades the actions whose deliverable is prose with no
 code and no held-out test to run against it. A point-keyed task —
-`investigation`, and `requirement-decomposition` since §94.1 ruled it in
-(`_POINT_CATEGORIES`) — ships no grading tests and no mutants; it ships a
+`investigation`, `requirement-decomposition` since §94.1 ruled it in, and an
+explain-style `codebase-comprehension` task since §106.5 made that category
+`_POINT_CATEGORIES`' first point-optional member — ships no grading tests and
+no mutants; it ships a
 **points key** instead (`points_key`), and its verdict is the **point gate**
 (`_point_gate`):
 collect the one prompt-named answer file out of the workdir diff — the
@@ -304,8 +306,15 @@ ANSWER_TEST_FILE = "test_answer.py"
 # `fault-location` task does: the location *is* the deliverable, so a task of
 # that action with no key has no ground truth at all and the loader refuses
 # it. Only *some* `codebase-comprehension` tasks do — carrying a key is what
-# makes one locate-style, while an explain-this-module task of the same
-# category is graded by its own held-out tests and keys nothing. So this set
+# makes one locate-style. What the other shape of that category is has since
+# been settled the other way round from how this paragraph first read it: §103
+# confirmed the point gate on a second action and §106.2 ruled the explain
+# shape onto it, so an explain-this-module task is not graded by held-out tests
+# of its own but by a **points key** (§106.5), and the category is now the
+# point-optional member of `_POINT_CATEGORIES` below exactly as it is the
+# optional member here. One category, two shapes, and the key on disk says
+# which: an accepted-answer key makes a task locate-style, a points key makes
+# it explain-style, and a task shipping both is refused at load. So this set
 # is read at load, to say which actions may ship a key and which must; every
 # gate after that reads `is_keyed()`, the key on disk, and never a category
 # (design note §45.6: locate-style tasks are discovered from their keys, never
@@ -363,20 +372,42 @@ FINDINGS_TEST_FILE = "test_findings.py"
 REVIEW_DIFF_FILE = "review.diff"
 
 # The actions whose verdict is the point gate, and so the only ones that may
-# ship a points key — mandatory there, because the planted points *are* the
-# ground truth of a prose deliverable: a task with none has nothing its prose
-# could be graded against. Two rather than one since §94.1 ruled
-# `requirement-decomposition` into the corpus, which widens a category rule and
-# decides nothing new — ADR-0005's Context names that action as one of the
-# three this gate was built for, and the key, the gate and the two-sided proof
-# are the same shape under both. Named apart rather than only tested for
-# inline, the way `_MUTATION_CATEGORY` is, so that a typo here is a type error
-# rather than a category nothing matches. Read at load, to say which actions
-# may ship a points key and which must; every gate after that reads
-# `is_point_keyed()` — the key on disk — and never a category.
-_POINT_CATEGORIES: frozenset[TaskCategory] = frozenset(
+# ship a points key. Two of them *must*, because the planted points are the
+# ground truth of a prose deliverable and a task of those actions with none has
+# nothing its prose could be graded against. Two rather than one since §94.1
+# ruled `requirement-decomposition` into the corpus, which widens a category
+# rule and decides nothing new — ADR-0005's Context names that action as one of
+# the three this gate was built for, and the key, the gate and the two-sided
+# proof are the same shape under both.
+#
+# The third *may*: §106.5 rules `codebase-comprehension` in as this set's first
+# **point-optional** member, and it is optional here for the very reason it is
+# optional in `_KEYED_CATEGORIES` above. That category carries two shapes of
+# task and the key on disk says which — an accepted-answer key makes one
+# locate-style, a points key makes one explain-style (§106.2) — so membership
+# here cannot mean "must ship a points key" the way it does for the two above.
+# The two rules are named apart rather than only listed, the way
+# `_KEY_REQUIRED_CATEGORY` and `_KEY_OPTIONAL_CATEGORY` are and for the same two
+# reasons: the loader can say which of the two it is applying, and a typo in
+# either is a type error rather than a category nothing matches. It names the
+# same category `_KEY_OPTIONAL_CATEGORY` does, and is spelled out again rather
+# than aliased to it, because the two are separate facts about one action that
+# happen to coincide — that they do is what makes a task shipping both keys
+# reachable at all, and the loader refuses that below.
+#
+# The union keeps the name every existing consumer reads it by — the load-time
+# refusal of a points key on an unregistered action and the set that refusal
+# names, and `_unregistered_proof_form_problems`' union of the keyed actions.
+# Read at load, to say which actions may ship a points key and which must;
+# every gate after that reads `is_point_keyed()` — the key on disk — and never
+# a category.
+_POINT_REQUIRED_CATEGORIES: frozenset[TaskCategory] = frozenset(
     {"investigation", "requirement-decomposition"}
 )
+_POINT_OPTIONAL_CATEGORY: TaskCategory = "codebase-comprehension"
+_POINT_CATEGORIES: frozenset[TaskCategory] = _POINT_REQUIRED_CATEGORIES | {
+    _POINT_OPTIONAL_CATEGORY
+}
 
 # A point-keyed task's ground truth, inside GRADING_DIR beside the
 # findings key's precedent and held out exactly as that one is: it stays on the
@@ -782,12 +813,17 @@ TerrainRule = Literal[
 
 TERRAIN_RULES: tuple[TerrainRule, ...] = get_args(TerrainRule)
 
-# The actions the terrain rules do not apply to at all, each with the reason
-# (design note §67.6). An entry here is a whole action's exemption, which is a
-# different thing from a `TerrainWaiver`: a waiver is per task, names the exact
-# token it silences, and costs its author a reason of that task's own, so an
-# action whose every task would carry one identical action-shaped reason would
-# be counterfeiting the per-task mechanism rather than using it.
+# The actions the terrain rules do not apply to, each with the reason (design
+# note §67.6). An entry here is an action-level exemption, which is a different
+# thing from a `TerrainWaiver`: a waiver is per task, names the exact token it
+# silences, and costs its author a reason of that task's own, so an action whose
+# every task would carry one identical action-shaped reason would be
+# counterfeiting the per-task mechanism rather than using it.
+#
+# Three of the four entries are their whole action; the fourth is an action's
+# point-keyed half, because `codebase-comprehension` carries two shapes of task
+# and only one of them keys nothing greppable. Which is why the consultation is
+# `_terrain_exemption` and not a bare membership test.
 #
 # Recorded rather than inherited. A `test-authoring` task carries no
 # accepted-answer key and no findings key, so `_ground_truth` returns None and
@@ -800,10 +836,11 @@ TERRAIN_EXEMPT_ACTIONS: dict[TaskCategory, str] = {
         "planted mutant is never in the workdir, and the prompt naming the "
         "module under test is the task's definition rather than a leak"
     ),
-    # The two point-keyed actions, whose keys are not locations an answer
-    # names, so whose ground truth an agent could not grep for however the
-    # prompt is worded. An entry each, written out rather than iterated over
-    # `_POINT_CATEGORIES`, because a reason of its own is what an entry costs
+    # The two actions whose every task is point-keyed, whose keys are not
+    # locations an answer names, so whose ground truth an agent could not grep
+    # for however the prompt is worded. An entry each, written out rather than
+    # iterated over `_POINT_CATEGORIES`, because a reason of its own is what an
+    # entry costs
     # and one string keyed twice would be an action-shaped apology standing in
     # for two. Registered rather than left to fall out of `_ground_truth`
     # returning None for a points key: "no rule fired" and "this action is
@@ -820,6 +857,19 @@ TERRAIN_EXEMPT_ACTIONS: dict[TaskCategory, str] = {
         "deliverable is a prose decomposition graded a planted point at a "
         "time, and a point planted about a requirement the prompt states in "
         "full leaves the grep surface those rules guard with nothing behind it"
+    ),
+    # The third point-keyed action, and the one whose entry is *not* its whole
+    # action: `codebase-comprehension` also carries locate-style tasks, whose
+    # accepted-answer key is a set of greppable locations and is precisely what
+    # these rules exist for. So this entry is consulted by key shape
+    # (`_terrain_exemption`) and reaches an explain-style task alone. Its own
+    # reason, written out like the three above rather than borrowed from them,
+    # because a reason of its own is what an entry costs.
+    _POINT_OPTIONAL_CATEGORY: (
+        "the terrain rules stop a key being grepped out of the workdir; a "
+        "planted point is never in the workdir, and the prompt naming the "
+        "deliverable's path and the sections the explanation must carry is the "
+        "task's definition rather than a leak"
     ),
 }
 
@@ -2126,6 +2176,27 @@ def _check_task_layout(task: Task) -> None:
             "key shipped by any other action would swap this task's whole "
             "verdict for one its grading directory was never authored for"
         )
+    if is_keyed(task) and is_point_keyed(task):
+        # Two ground truths for one deliverable. Only reachable for
+        # `codebase-comprehension`, the one action that stands in both key
+        # registries — the refusals above and below have already turned away
+        # either key on any other action — and it stands beside those two
+        # wrong-action refusals because it is the same kind of refusal: which
+        # verdict shape grades a task is read off the key on disk, so a task
+        # carrying both keys names no single ground truth for its answer file
+        # and there is nothing to choose between them by. Raised here, ahead of
+        # the branch below, so that what the author is told is the both-keys
+        # fault rather than whichever of the two keys happened to be parsed
+        # first.
+        raise IngestError(
+            f"{task.id}: a {task.category} task ships both {GRADING_DIR}/"
+            f"{ANSWER_KEY_FILE} and {GRADING_DIR}/{POINTS_KEY_FILE} — the "
+            "accepted-answer key is a locate-style task's ground truth and the "
+            "points key is an explain-style task's, which verdict shape grades "
+            "a task is read off the key on disk, and a task carrying both "
+            "names no single ground truth for the one answer file its prompt "
+            "asks for. Ship the key of the shape this task is and no other"
+        )
     if task.category == _MUTATION_CATEGORY:
         # Every check here is a load-time one and not the lint's, for the reason
         # the keys above are read at load: `ai-bench run-live` loads a task set
@@ -2135,10 +2206,18 @@ def _check_task_layout(task: Task) -> None:
         # — a minimum count, disjointness from the test path, the registered
         # existence proof — is the lint's, and stays there.
         _check_mutation_gate_layout(task)
-    elif task.category in _POINT_CATEGORIES:
-        # The actions that ship no held-out grading test at all: a point-keyed
+    elif is_point_keyed(task) or task.category in _POINT_REQUIRED_CATEGORIES:
+        # The tasks that ship no held-out grading test at all: a point-keyed
         # `grading/` holds the key and nothing that runs, because what grades
         # it is a grader's rulings over one prose file rather than a suite.
+        # Read off the key on disk, plus the actions whose key is mandatory,
+        # exactly as the accepted-answer key's branch below is read — §45.6's
+        # rule and already this file's own sentence: the key on disk decides
+        # the shape, so a `codebase-comprehension` task shipping no points key
+        # is simply not the explain-style form and falls through to the
+        # held-out-suite branch, while an `investigation` or
+        # `requirement-decomposition` task shipping none is refused by
+        # `points_key()` right here.
         # Read at load and not left to the lint, for the reason the two
         # keys above are read at load — `ai-bench run-live` loads a task set
         # and never lints it, so a task the point gate could not grade would
@@ -3113,10 +3192,12 @@ def lint_task_set(
     task, in six copies, so that a seventh keyed task inherited none of it.
     The hash gate (`_hash_gate_problems`) is here for the same reason and was
     moved here from the same place: a keyed task asks for a location and not a
-    repair, and it used to be four tasks' own suites that said so. Two actions
+    repair, and it used to be four tasks' own suites that said so. Four actions
     are exempt from the terrain rules at the action level and with their reason
     recorded (`TERRAIN_EXEMPT_ACTIONS`) rather than exempt by the accident of
-    having no greppable key.
+    having no greppable key — one of the four by key shape rather than
+    wholesale, because `codebase-comprehension`'s locate-style tasks key
+    exactly the greppable locations those rules exist for.
 
     The construction invariants are read rather than run, but belong here for
     the same reason: an undeclared knob, an unregistered prediction, a family
@@ -4800,6 +4881,28 @@ def _lone_accepted_classes(task: Task, key: KeyedGroundTruth) -> dict[str, str]:
     return lone
 
 
+def _terrain_exemption(task: Task) -> str | None:
+    """This task's action-level exemption from the terrain rules, and the reason
+    it is exempt — or None, which is every task the rules apply to.
+
+    A registry lookup for three of the four entries, and a lookup gated on the
+    key on disk for the fourth. `codebase-comprehension` is registered because
+    an explain-style task of it keys planted points, which are nowhere in the
+    workdir to be grepped; but the category's locate-style tasks key accepted
+    *locations*, which is the very thing these rules guard, so reading the
+    category's entry for them would silence all three rules on the four live
+    tasks that most need them. Which shape a task is is read off its key, never
+    off a list (§45.6, §106.5), which is what keeps this right for the
+    explain-style task authored after this was written.
+    """
+    reason = TERRAIN_EXEMPT_ACTIONS.get(task.category)
+    if reason is None:
+        return None
+    if task.category == _POINT_OPTIONAL_CATEGORY and not is_point_keyed(task):
+        return None
+    return reason
+
+
 def _terrain_problems(task: Task) -> list[str]:
     """The three terrain rules, applied to every task carrying a key of either
     shape, and the waivers a task declares against them.
@@ -4822,15 +4925,21 @@ def _terrain_problems(task: Task) -> list[str]:
     properties reach a review task unchanged, because the waiver is read
     against what the rule fired on and never against the key it fired over.
 
-    Two actions are exempt from all three at the action level rather than by
-    waiver (`TERRAIN_EXEMPT_ACTIONS`, design note §67.6 and §76.10), and the
-    exemption is consulted here rather than left to fall out of those actions
-    having no key to grep for: what these rules protect is a key an agent could
-    read out of the workdir, and neither a `test-authoring` task's key — its
-    planted mutants — nor an `investigation` task's — its planted points — is
-    in the workdir at all.
+    Four actions are exempt from all three at the action level rather than by
+    waiver (`TERRAIN_EXEMPT_ACTIONS`, design note §67.6, §76.10 and §106.5),
+    and the exemption is consulted here rather than left to fall out of those
+    actions having no key to grep for: what these rules protect is a key an
+    agent could read out of the workdir, and neither a `test-authoring` task's
+    key — its planted mutants — nor a point-keyed task's — its planted points —
+    is in the workdir at all.
+
+    One of those four exemptions is read by key shape rather than by category
+    (`_terrain_exemption`): `codebase-comprehension` carries locate-style tasks
+    whose accepted-answer key *is* a set of greppable locations, and taking the
+    category's entry wholesale would lift all three rules off exactly the tasks
+    they were written for.
     """
-    if task.category in TERRAIN_EXEMPT_ACTIONS:
+    if _terrain_exemption(task) is not None:
         return []
     fired: dict[TerrainRule, dict[str, str]] = {rule: {} for rule in TERRAIN_RULES}
     try:
@@ -5506,8 +5615,10 @@ def _proof_test_per_planted_finding(
 def _accepted_locations_resolve(
     task: Task, tasks: Sequence[Task], timeout_s: int
 ) -> list[str]:
-    """`codebase-comprehension`'s proof form: every accepted (file, symbol)
-    resolves in the starting repository.
+    """The locate-style half of `codebase-comprehension`'s proof form, and the
+    whole of it for a task keyed on accepted answers: every accepted (file,
+    symbol) resolves in the starting repository. Which half a task takes is
+    `_the_comprehension_proof_the_key_on_disk_asks_for`'s.
 
     The one form that runs nothing, and the one that was already a rule before
     this registry existed — `_answer_key_problems` reads it over both halves of
@@ -6084,6 +6195,41 @@ _POINT_EXISTENCE_PROOF = ExistenceProof(
     check=_the_reference_resolves_and_the_foil_fails,
 )
 
+
+def _the_comprehension_proof_the_key_on_disk_asks_for(
+    task: Task, tasks: Sequence[Task], timeout_s: int
+) -> list[str]:
+    """`codebase-comprehension`'s proof form, which of two it is being decided
+    by the key the task ships (§106.5).
+
+    The category carries two shapes of task and what proves each one's planted
+    truth exists is not the same thing: a locate-style task's accepted
+    locations have to resolve in the starting repository, and an explain-style
+    one's reference answer has to resolve under the point gate per planted
+    point with its foil failing. Neither proof means anything about the other
+    shape — there are no accepted locations in a points key to resolve, and no
+    archived rulings beside a locate-style task to read.
+
+    **Why the dispatch is here and not in `_existence_proof_problems`.** That
+    reader takes the whole registry as its one list of forms, and a second
+    shape-aware lookup beside it would be a form nobody could find by reading
+    `EXISTENCE_PROOFS` — while `_unregistered_proof_form_problems` refuses a
+    keyed action the registry does not *name*, which is a rule about the keys
+    of that dict and not about how many shapes one entry covers. So the
+    category keeps exactly one entry, its `form` names both shapes, and the
+    branch is this function: the registry stays the whole of what is
+    registered, and the dispatch is read at the one address the registry
+    points at.
+
+    The point-keyed side is `investigation`'s registered check, called through
+    the object it registers rather than copied, for the reason that object is
+    shared in the first place: a second value could only ever drift from it.
+    """
+    if is_point_keyed(task):
+        return _POINT_EXISTENCE_PROOF.check(task, tasks, timeout_s)
+    return _accepted_locations_resolve(task, tasks, timeout_s)
+
+
 # One entry per action that carries a key. A seventh cannot be added without
 # one: `_unregistered_proof_form_problems` refuses a keyed action this dict does
 # not name, and `_existence_proof_problems` refuses the task that would have
@@ -6103,9 +6249,17 @@ EXISTENCE_PROOFS: dict[TaskCategory, ExistenceProof] = {
         ),
         check=_proof_test_per_planted_finding,
     ),
-    "codebase-comprehension": ExistenceProof(
-        form="every accepted (file, symbol) resolving in the starting repository",
-        check=_accepted_locations_resolve,
+    # One entry covering the category's two shapes, because one action gets one
+    # entry: the locate-style form first, still readable as the whole sentence
+    # it was, then the point-keyed form quoted off `investigation`'s own
+    # registration rather than restated, so the two cannot come to differ.
+    _POINT_OPTIONAL_CATEGORY: ExistenceProof(
+        form=(
+            "for a locate-style task, every accepted (file, symbol) resolving "
+            "in the starting repository; for a point-keyed one, "
+            f"{_POINT_EXISTENCE_PROOF.form}"
+        ),
+        check=_the_comprehension_proof_the_key_on_disk_asks_for,
     ),
     _MUTATION_CATEGORY: ExistenceProof(
         form=(
