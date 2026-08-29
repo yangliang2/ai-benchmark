@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "6522f10d0937b606a2e116ac3d80de287df1bc92f8e6cbc1a0d7857dd6fd8ca7",
+  "rulings": [
+    {
+      "point_id": "the-standard-list-itself-not-a-copy",
+      "kind": "point",
+      "covered": true,
+      "span": "This assigns a reference to the module-level STANDARD list, not a copy",
+      "verified": true
+    },
+    {
+      "point_id": "the-extra-appended-in-place",
+      "kind": "point",
+      "covered": true,
+      "span": "hampers.add_extra(hamper, \"a bottle of cordial\") calls hamper[\"contents\"].append(\"a bottle of cordial\")",
+      "verified": true
+    },
+    {
+      "point_id": "one-list-across-the-standard-hampers",
+      "kind": "point",
+      "covered": true,
+      "span": "**All standard orders share a single list.**",
+      "verified": true
+    },
+    {
+      "point_id": "the-dockets-written-after-the-whole-book",
+      "kind": "point",
+      "covered": true,
+      "span": "The three hampers are now written out by `docket.docket()`:",
+      "verified": true
+    },
+    {
+      "point_id": "the-bespoke-hamper-packed-fresh",
+      "kind": "point",
+      "covered": true,
+      "span": "- Line 27 of hampers.py executes: `contents = list(wants)` (because wants is not None)\n- This creates a new list from the wants list (a copy, not a reference)\n- hamper is now `{\"customer\": \"Dr Vane\", \"contents\": [\"potted ham\", \"a box of walnuts\"]}`",
+      "verified": true
+    },
+    {
+      "point_id": "a-copy-per-hamper",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "an-extra-on-the-wrong-hamper",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "This appends to the list object. Since Mrs Beech's hamper also points to that same list object, the append modifies what Mrs Beech's hamper contains.",
+      "verified": true
+    }
+  ]
+}

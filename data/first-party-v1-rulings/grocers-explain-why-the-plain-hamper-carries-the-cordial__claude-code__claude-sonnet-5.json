@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "44330354786c96d856c61695323255ee1f4fcc80d55f0cbb153391235bb54dfc",
+  "rulings": [
+    {
+      "point_id": "the-standard-list-itself-not-a-copy",
+      "kind": "point",
+      "covered": true,
+      "span": "sets `contents = STANDARD` \u2014 not a copy of `STANDARD`, but the very list object `STANDARD` itself.",
+      "verified": true
+    },
+    {
+      "point_id": "the-extra-appended-in-place",
+      "kind": "point",
+      "covered": true,
+      "span": "- **`add_extra` mutates in place:** `hamper[\"contents\"].append(item)` (`hampers.py:35`) appends to whatever list object `contents` happens to be, with no check for whether that object is private to this hamper or shared.",
+      "verified": true
+    },
+    {
+      "point_id": "one-list-across-the-standard-hampers",
+      "kind": "point",
+      "covered": true,
+      "span": "- **Every standard order in a run shares the same object.** Mrs Beech's and\n  Col. Ashton's hampers are `is`-identical in their `\"contents\"` list,\n  because both took the aliasing branch against the same `STANDARD` global.",
+      "verified": true
+    },
+    {
+      "point_id": "the-dockets-written-after-the-whole-book",
+      "kind": "point",
+      "covered": true,
+      "span": "- **The book is made up entirely before any docket is written**",
+      "verified": true
+    },
+    {
+      "point_id": "the-bespoke-hamper-packed-fresh",
+      "kind": "point",
+      "covered": true,
+      "span": "Contrast with the bespoke branch, `contents = list(wants)` (`hampers.py:27`), which *does* copy",
+      "verified": true
+    },
+    {
+      "point_id": "a-copy-per-hamper",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "an-extra-on-the-wrong-hamper",
+      "kind": "disqualifier",
+      "covered": true,
+      "span": "Mrs Beech's hamper dict still holds a reference to `STANDARD` \u2014 the same object Col. Ashton's order mutated \u2014 so her docket enumerates all five items, cordial included",
+      "verified": true
+    }
+  ]
+}

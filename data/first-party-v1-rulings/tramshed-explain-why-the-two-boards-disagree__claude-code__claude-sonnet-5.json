@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "a5bb0d4eaef81599a311b38de77599be89ba5cc1571b0e08a07eb0d5178eb02d",
+  "rulings": [
+    {
+      "point_id": "the-town-board-orders-by-the-written-time",
+      "kind": "point",
+      "covered": true,
+      "span": "**`town_board` sorts on the string itself.**",
+      "verified": true
+    },
+    {
+      "point_id": "text-order-puts-10-05-before-9-40",
+      "kind": "point",
+      "covered": true,
+      "span": "Python's string ordering compares `\"10:05\"` and `\"9:40\"` character by character: `\"1\"` (0x31) is less than `\"9\"` (0x39), so `\"10:05\"` sorts before `\"9:40\"` regardless of what the numbers mean.",
+      "verified": true
+    },
+    {
+      "point_id": "the-quay-board-orders-in-minutes",
+      "kind": "point",
+      "covered": true,
+      "span": "sorts with `key=lambda w: minutes_past(w[\"leaves\"])`. `minutes_past` splits the string on `:`, converts both halves to `int`, and returns `hour * 60 + minute`",
+      "verified": true
+    },
+    {
+      "point_id": "one-workings-list-behind-both-boards",
+      "kind": "point",
+      "covered": true,
+      "span": "`python cli.py town` and `python cli.py quay` both start the same way. `cli.py` loads the one book (`shedbook.load`), which hands back exactly the JSON that's on disk \u2014 `book.json` holds four workings, two from each end, each kept as a dict with `car`, `end`, and `leaves` fields where `leaves` is a string: `\"9:40\"` and `\"10:05\"` for both town and quay.",
+      "verified": true
+    },
+    {
+      "point_id": "the-time-kept-exactly-as-chalked",
+      "kind": "point",
+      "covered": true,
+      "span": "`enter` only checks the shape of the string (`hour.isdigit()`, two-digit minute) and then appends it unchanged \u2014 no zero-padding, no conversion to a number.",
+      "verified": true
+    },
+    {
+      "point_id": "two-separately-kept-lists",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "listed-in-the-order-entered",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

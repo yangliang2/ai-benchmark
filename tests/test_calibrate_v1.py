@@ -527,11 +527,12 @@ _PUBLISHED = {
     },
     # Round 12's three explain-style tasks joined the category's declared
     # controls (tasks column, a `Cell`'s members being every task of the set
-    # with this key, swept or not) while the per-model means and the rung
-    # floor stay row-derived over the four swept locate-style tasks until the
-    # round's sweep lands — the same arrival shape as round 11's tasks.
+    # with this key, swept or not), and the round's sweep (2026-08-28, nine
+    # cells) then priced them: the per-model means and the rung floor are
+    # row-derived over all seven swept controls, the four locate-style and
+    # the three explain-style.
     "codebase-comprehension": {
-        "(zero-knob)": ("7", "1.00x (n=4)", "1.00x (n=4)", "haiku-solvable (n=4)"),
+        "(zero-knob)": ("7", "1.00x (n=7)", "1.00x (n=7)", "haiku-solvable (n=7)"),
     },
     "fault-location": {
         "(zero-knob)": ("6", "1.00x (n=6)", "1.00x (n=6)", "haiku-solvable (n=6)"),
@@ -608,7 +609,7 @@ _PUBLISHED_DENOMINATORS = {
     "bug-fix": f"{_HAIKU} $0.0805 (n=6), {_SONNET} $0.2128 (n=6)",
     "fault-location": f"{_HAIKU} $0.0706 (n=6), {_SONNET} $0.1819 (n=6)",
     "code-review": f"{_HAIKU} $0.0923 (n=8), {_SONNET} $0.3089 (n=8)",
-    "codebase-comprehension": f"{_HAIKU} $0.0603 (n=4), {_SONNET} $0.1281 (n=4)",
+    "codebase-comprehension": f"{_HAIKU} $0.0646 (n=7), {_SONNET} $0.1381 (n=7)",
     "feature-dev": f"{_HAIKU} $0.0711 (n=11), {_SONNET} $0.1846 (n=11)",
     "refactor": f"{_HAIKU} $0.0572 (n=11), {_SONNET} $0.1643 (n=11)",
     "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",

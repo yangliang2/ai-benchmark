@@ -203,9 +203,11 @@ _ROUND_11_TASKS = 3
 _ROUND_11_CLAUDE_CODE_RUNS = 6
 
 # And round 12's three explain-style `codebase-comprehension` tasks, Python
-# controls graded by the point gate, unswept as yet: they move the live Python
-# task count and the category's coverage row below and nothing else here.
+# controls graded by the point gate. Its sweep landed on 2026-08-28 — six
+# claude-code rows that survive both selections the way rounds 8's, 10's and
+# 11's did, and three more Codex ones that do not.
 _ROUND_12_TASKS = 3
+_ROUND_12_CLAUDE_CODE_RUNS = 6
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -1410,9 +1412,9 @@ def test_neither_reader_counts_a_round_7_row(
     None of the three lines the section quotes is what the readers print today,
     and the reason is later rounds rather than this one: round 8's six
     claude-code Python rows survive both selections, the first since round 5
-    to do so, round 10's six (swept 2026-08-24) and round 11's six (swept
-    2026-08-26) now do the same, and all three rounds' three tasks are in the
-    Python task set. Section 66's claim —
+    to do so, round 10's six (swept 2026-08-24), round 11's six (swept
+    2026-08-26) and round 12's six (swept 2026-08-28) now do the same, and all
+    four rounds' three tasks are in the Python task set. Section 66's claim —
     round 7's rows are read and dropped — is checked here in full; what the
     readers print now is derived from the recorded figures and the later
     rounds' own, so that a record of what they printed that day is not edited
@@ -1425,9 +1427,9 @@ def test_neither_reader_counts_a_round_7_row(
     ]
     # Every row in the directory: the corpus's Python claude-code rows, round
     # 6's thirty Codex ones, round 7's forty-two, round 8's nine, round 10's
-    # nine, and round 11's nine. Two selections stand between all of them and
-    # what the readers count.
-    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9 + 9 + 9
+    # nine, round 11's nine, and round 12's nine. Two selections stand between
+    # all of them and what the readers count.
+    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9 + 9 + 9 + 9
     assert len([run for run in everything if run.sweep == _SWEEP]) == 42
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1439,6 +1441,7 @@ def test_neither_reader_counts_a_round_7_row(
     assert len(selected) == (
         _CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS
         + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS
+        + _ROUND_12_CLAUDE_CODE_RUNS
     )
     assert not [run for run in selected if run.sweep == _SWEEP], (
         "section 66's claim: not one round-7 row survives the two selections"
@@ -1452,18 +1455,18 @@ def test_neither_reader_counts_a_round_7_row(
         f"{_PYTHON_CONTROLS} control(s), {_PYTHON_CONSTRUCTED} constructed"
     ) in reconciled
     assert (
-        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS} "
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS + _ROUND_12_CLAUDE_CODE_RUNS} "
         f"over "
-        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS} "
+        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS + _ROUND_12_TASKS} "
         "task(s)"
     ) in reconciled
     # `sweep round-10` joined the round list when its sweep landed, and
-    # `sweep round-11` after it; round 7's rows are still not in it, which is
-    # the claim.
+    # `sweep round-11` and `sweep round-12` after it; round 7's rows are
+    # still not in it, which is the claim.
     assert (
-        "  rounds     9 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     10 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10, sweep round-11"
+        "sweep round-8, sweep round-10, sweep round-11, sweep round-12"
     ) in reconciled
     assert "round-7" not in reconciled
     assert _TERRA not in reconciled
@@ -1477,6 +1480,11 @@ def test_neither_reader_counts_a_round_7_row(
     calibrated = capsys.readouterr().out
     assert _TERRA not in calibrated
     assert "typescript" not in calibrated
+    # Round 12's sweep (2026-08-28) re-priced `codebase-comprehension` over
+    # seven controls, so §48's block for it is the first of these quotes the
+    # table no longer prints. It is named stale here rather than the record
+    # being edited; the other quoted blocks still print as published, and
+    # the moved category's own suites pin what prints instead.
     for quoted in (
         fenced_blocks(note_section("39. The two new categories' rows, as printed"))
         + fenced_blocks(note_section("48. The two new categories' rows, as printed"))
@@ -1484,6 +1492,11 @@ def test_neither_reader_counts_a_round_7_row(
         for block in ["category " + rest for rest in quoted.split("\ncategory ")[1:]] or [
             quoted
         ]:
+            if block.strip("\n").startswith("category codebase-comprehension"):
+                assert counts_written_out(block).strip("\n") not in (
+                    counts_written_out(calibrated)
+                ), "the moved block is back: round 12's re-pricing was undone"
+                continue
             assert counts_written_out(block).strip("\n") in counts_written_out(
                 calibrated
             ), (
@@ -1504,7 +1517,7 @@ def test_neither_reader_counts_a_round_7_row(
     # 11's three `requirement-decomposition` tasks then grew the task-set line
     # again, and its sweep (2026-08-26) the runs and round lines; round 12's
     # three explain-style `codebase-comprehension` tasks grew the task-set
-    # line once more, unswept as yet. The
+    # line once more, and its sweep (2026-08-28) the runs and round lines. The
     # record is not edited for any of that — each line it quoted is rebuilt
     # here from the recorded figures and required to be exactly what the note
     # says, and what the reader prints instead was asserted above off the same

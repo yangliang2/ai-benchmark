@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "ccd6c61fb866f0dcf4d5b12aff14996191325218cf267bb2b83559336d1e28a8",
+  "rulings": [
+    {
+      "point_id": "the-round-up-to-whole-hauls",
+      "kind": "point",
+      "covered": true,
+      "span": "At the counter, fifty is not the finished length.  `counter.hauls_for(50)` rounds the asking up to three hauls.  With `HAUL_FATHOMS == 20`, the order walked is therefore 60 fathoms.",
+      "verified": true
+    },
+    {
+      "point_id": "the-yarn-once-per-strand",
+      "kind": "point",
+      "covered": true,
+      "span": "`yarn_for` multiplies length by strands, which makes the rack draw 60 \u00d7 3 = 180 fathoms; no twist allowance or reduction is applied.",
+      "verified": true
+    },
+    {
+      "point_id": "the-rack-checked-before-any-draw",
+      "kind": "point",
+      "covered": true,
+      "span": "It first checks that the total rack holds at least 180 fathoms. If it does, `stores.draw(yard, 180)` takes exactly 180 fathoms from the front of `yard[\"bundles\"]`.",
+      "verified": true
+    },
+    {
+      "point_id": "the-front-of-the-rack-first",
+      "kind": "point",
+      "covered": true,
+      "span": "* `draw` always reads index zero.  It subtracts from that front bundle when\n  a partial draw suffices, otherwise removes it with `pop(0)`, establishing\n  first-in, first-out consumption and the stated treatment of a partial\n  final bundle.  Its returned mark list is coil metadata only: the dispatch\n  entry does not preserve it.",
+      "verified": true
+    },
+    {
+      "point_id": "the-price-on-the-walked-fathoms",
+      "kind": "point",
+      "covered": true,
+      "span": "* `enter` prices `coil[\"fathoms\"]`, not `asked`; `PENCE_PER_FATHOM[\"hawser\"]` is 9. That is why the price is 540d rather than 450d.",
+      "verified": true
+    },
+    {
+      "point_id": "cut-to-the-asked-length",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-short-rack-makes-what-it-can",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "2df1454c236c3537ee20679d02ba4791e84886c03a32265af5929a9f1690b577",
+  "rulings": [
+    {
+      "point_id": "the-standard-list-itself-not-a-copy",
+      "kind": "point",
+      "covered": true,
+      "span": "In the standard branch of `make_up`, `contents = STANDARD` assigns that list itself; it does not make a copy.",
+      "verified": true
+    },
+    {
+      "point_id": "the-extra-appended-in-place",
+      "kind": "point",
+      "covered": true,
+      "span": "`add_extra` mutates its argument's list in place with `hamper[\"contents\"].append(item)`. Col. Ashton's cordial consequently appends to the shared `STANDARD` list, not just to a private Col. Ashton list.",
+      "verified": true
+    },
+    {
+      "point_id": "one-list-across-the-standard-hampers",
+      "kind": "point",
+      "covered": true,
+      "span": "2. In the standard branch of `make_up`, `contents = STANDARD` assigns that list itself; it does not make a copy. Mrs Beech's and Col. Ashton's `contents` therefore refer to the same list.",
+      "verified": true
+    },
+    {
+      "point_id": "the-dockets-written-after-the-whole-book",
+      "kind": "point",
+      "covered": true,
+      "span": "`cli.py` makes up the whole book before producing any dockets.",
+      "verified": true
+    },
+    {
+      "point_id": "the-bespoke-hamper-packed-fresh",
+      "kind": "point",
+      "covered": true,
+      "span": "Dr Vane has a `wants` list, so `make_up` copies that list and makes a two-item bespoke hamper: potted ham and a box of walnuts.",
+      "verified": true
+    },
+    {
+      "point_id": "a-copy-per-hamper",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "an-extra-on-the-wrong-hamper",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

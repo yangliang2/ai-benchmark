@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "9b8f4f90c22272ed82695ad2a4b3148ebac6bb96205e8a4cbe9f589152120757",
+  "rulings": [
+    {
+      "point_id": "the-town-board-orders-by-the-written-time",
+      "kind": "point",
+      "covered": true,
+      "span": "`town_board()` uses `key=lambda w: w[\"leaves\"]`.  Python therefore compares the characters of the chalked strings, not their clock meanings.",
+      "verified": true
+    },
+    {
+      "point_id": "text-order-puts-10-05-before-9-40",
+      "kind": "point",
+      "covered": true,
+      "span": "At the first character, `\"10:05\"` has `\"1\"` and `\"9:40\"` has `\"9\"`; `\"1\"` sorts before `\"9\"`. Town consequently puts 10:05 above 9:40.",
+      "verified": true
+    },
+    {
+      "point_id": "the-quay-board-orders-in-minutes",
+      "kind": "point",
+      "covered": true,
+      "span": "For each one it calls `minutes_past()`, which splits at the first colon and calculates `int(hour) * 60 + int(minute)`. Thus `\"9:40\"` becomes 580 and `\"10:05\"` becomes 605. Sorting ascending by those numbers gives:",
+      "verified": true
+    },
+    {
+      "point_id": "one-workings-list-behind-both-boards",
+      "kind": "point",
+      "covered": true,
+      "span": "`python cli.py town` parses `town` as the command, loads `book.json`\nthrough `shedbook.load()`, and passes the resulting book to\n`boards.town_board()`.  That board first keeps only workings whose\n`end` is exactly `\"town\"`: car 7 at `\"9:40\"` and car 12 at `\"10:05\"`.\nIt then sorts those workings using `w[\"leaves\"]` itself as the key.\nThe command prints the returned list, so the town display is:\n\n```\ncar 12  leaves 10:05\ncar 7  leaves 9:40\n```\n\n`python cli.py quay` takes the same loading path, but calls\n`boards.quay_board()`.",
+      "verified": true
+    },
+    {
+      "point_id": "the-time-kept-exactly-as-chalked",
+      "kind": "point",
+      "covered": true,
+      "span": "`shedbook.enter()` likewise appends the supplied `leaves` string\n   unchanged after only checking its broad `hour:minutes` spelling.\n   The module documentation explicitly says that neither padding nor\n   trimming is done later.",
+      "verified": true
+    },
+    {
+      "point_id": "two-separately-kept-lists",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "listed-in-the-order-entered",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

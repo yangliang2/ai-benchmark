@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "1350c8b4c92bbb351207356d5559a7c612a46fb848ee73601d0ca9fd9de11f0f",
+  "rulings": [
+    {
+      "point_id": "the-town-board-orders-by-the-written-time",
+      "kind": "point",
+      "covered": true,
+      "span": "The town board uses `key=lambda w: w[\"leaves\"]`, passing the chalked time string directly to sort.",
+      "verified": true
+    },
+    {
+      "point_id": "text-order-puts-10-05-before-9-40",
+      "kind": "point",
+      "covered": true,
+      "span": "The string `\"10:05\"` begins with `\"1\"`, which is less than `\"9\"` in ASCII order, so `\"10:05\"` sorts before `\"9:40\"`.",
+      "verified": true
+    },
+    {
+      "point_id": "the-quay-board-orders-in-minutes",
+      "kind": "point",
+      "covered": true,
+      "span": "The quay board uses `key=lambda w: minutes_past(w[\"leaves\"])`, converting the chalked time to minutes past midnight first.",
+      "verified": true
+    },
+    {
+      "point_id": "one-workings-list-behind-both-boards",
+      "kind": "point",
+      "covered": true,
+      "span": "Both boards read from the same book and encounter the same pairs of times, but they process and sort those times in different ways.",
+      "verified": true
+    },
+    {
+      "point_id": "the-time-kept-exactly-as-chalked",
+      "kind": "point",
+      "covered": true,
+      "span": "**Leading zeros in hours:** The comment in `shedbook.py:5\u20136` notes that times are \"kept as chalked\" without padding or trimming. If the foreman writes `\"04:25\"` and another writes `\"4:25\"`, both are stored as written.",
+      "verified": true
+    },
+    {
+      "point_id": "two-separately-kept-lists",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "listed-in-the-order-entered",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

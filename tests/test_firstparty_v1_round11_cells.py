@@ -997,11 +997,19 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     # Landed form: the archive grew by exactly the round's own sweep and by
     # nothing else — 41 logs and 315 rows at registration, plus the sweep's
     # four logs and nine `round-11` rows, keyed on what the rows carry.
-    assert len(logs) == 45
-    assert len(runs) == 324
+    # Round 12's sweep has since landed nine `round-12` rows in four more
+    # logs (2026-08-28); a claim about what stood between this registration
+    # and the round's own sweep scopes them back out by sweep id, never by a
+    # log filename.
+    assert len(logs) == 49
+    assert len(runs) == 333
     late = [run for run in runs if run.sweep == _SWEEP]
     assert len(late) == _CELLS * 3
-    assert len(runs) - len(late) == 315, "nothing else landed in between"
+    since = [run for run in runs if run.sweep == "round-12"]
+    assert len(since) == 9
+    assert len(runs) - len(late) - len(since) == 315, (
+        "nothing else landed in between"
+    )
     assert len([run for run in runs if run.sweep == _ANCHOR_ROUND]) == _CELLS * 3
 
     counted = prose()
@@ -1052,7 +1060,7 @@ def test_the_round_11_cells_are_the_nine_registered(
 
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", _ANCHOR_ROUND, _SWEEP,
+        "round-8", _ANCHOR_ROUND, _SWEEP, "round-12",
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 

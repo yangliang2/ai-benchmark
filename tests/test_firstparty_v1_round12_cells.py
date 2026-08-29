@@ -37,8 +37,11 @@ would then read as met on text §107 never wrote.
 
 Nothing here calls the grader, runs a live cell or spends a dollar. The last
 two tests read the round forwards, and they are two tests rather than one
-because they die at different tickets: no `round-12` row exists yet (retired by
-the ticket that lands the sweep), and — as originally written — no
+because they die at different tickets: no `round-12` row exists yet — retired
+by the ticket that landed the sweep (2026-08-28-r12-a..d, dry cell first) and
+replaced with the landed form of the same claim, the nine cells carrying sweep
+id `round-12` being exactly the nine §107 registered — and, as originally
+written, no
 `codebase-comprehension` task was point-keyed yet. That second half was
 retired by the ticket that landed the round's first task, caught up to "task 1
 and no second or third yet", and then replaced by the ticket that landed tasks
@@ -70,6 +73,7 @@ from ai_benchmark.schema import TaskCategory
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
+_RULINGS = _REPO / "data" / "first-party-v1-rulings"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _HEADING = "## Round 12 cells and cost — registered 2026-08-28"
@@ -1211,6 +1215,9 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
 ) -> None:
     """§107.10: the anchor the sweep's band is derived over, held still.
 
+    Landed form: the round's own sweep (2026-08-28-r12-a..d) is the one
+    arrival the registered sentence allowed, and nothing else landed.
+
     §80.4's guardrail carried forward, for this round's own reason: §107.7's
     band is derived over the nine `round-11` rows as they stand, so a sweep row
     landing between this registration and the round's own sweep would move the
@@ -1221,8 +1228,14 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     section's prose, which is what makes the registered sentence a claim about
     the corpus and not about itself.
     """
-    assert len(logs) == 45
-    assert len(runs) == 324
+    # Landed form: the archive grew by exactly the round's own sweep and by
+    # nothing else — 45 logs and 324 rows at registration, plus the sweep's
+    # four logs and nine `round-12` rows, keyed on what the rows carry.
+    assert len(logs) == 49
+    assert len(runs) == 333
+    late = [run for run in runs if run.sweep == _SWEEP]
+    assert len(late) == _CELLS * 3
+    assert len(runs) - len(late) == 324, "nothing else landed in between"
     assert len([run for run in runs if run.sweep == _ANCHOR_ROUND]) == _CELLS * 3
 
     counted = prose()
@@ -1240,24 +1253,39 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     assert check == f"find data/first-party-v1-runs -type f -newermt {_AS_OF}"
 
 
-def test_no_round_12_row_exists_yet(runs: list[firstparty_v1.Run]) -> None:
-    """The first forward-reading test: nothing of this round has been swept.
+def test_the_round_12_cells_are_the_nine_registered(
+    runs: list[firstparty_v1.Run],
+) -> None:
+    """The first forward-reading test, in its landed form.
 
-    A pre-registration is a claim made before the money, so the claim it makes
-    about the corpus is that the corpus holds none of the round's rows. This
-    test is retired by the ticket that lands the sweep, which replaces it with
-    the landed form — the nine cells carrying sweep id `round-12` being exactly
-    the nine registered.
+    Its first form said no `round-12` row existed yet — a registration, not a
+    record — and was retired by the sweep it foresaw (2026-08-28-r12-a..d,
+    dry cell first). What it holds the round to now is the landed version of
+    the same claim: the cells carrying sweep id `round-12` are exactly the
+    nine §107.8 registered — the register's three tasks under the three
+    standing combinations — none repeated, and every one has archived
+    per-run rulings, so its verdict is a pure function of what is checked in.
 
     Selected by **sweep id** over every log in the directory and never by a log
     filename, which is the discipline the whole round is run under.
     """
-    assert not [run for run in runs if run.sweep == _SWEEP], (
-        "§107 is a registration and not a record: no `round-12` row yet"
-    )
+    swept = [run for run in runs if run.sweep == _SWEEP]
+    cells = {(run.task_id, run.agent, run.model) for run in swept}
+    assert len(swept) == len(cells) == _CELLS * 3, "nine cells, none repeated"
+    [register] = register_blocks()
+    assert cells == {
+        (task_id, agent, model)
+        for task_id in register
+        for agent, model in _COMBINATIONS
+    }
+    for task_id, agent, model in sorted(cells):
+        assert firstparty_v1.rulings_file(
+            _RULINGS, task_id, agent, model
+        ).is_file(), f"{task_id} x {agent} x {model}: archived rulings"
+
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", "round-10", _ANCHOR_ROUND,
+        "round-8", "round-10", _ANCHOR_ROUND, _SWEEP,
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 

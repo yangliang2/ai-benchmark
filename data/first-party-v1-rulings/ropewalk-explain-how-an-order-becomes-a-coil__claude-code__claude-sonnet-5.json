@@ -1,0 +1,55 @@
+{
+  "grader_version": "deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be",
+  "deliverable_sha256": "43c21c69c009e29df27d77ea11836cd8427f26682782b1759ac518c187ab1190",
+  "rulings": [
+    {
+      "point_id": "the-round-up-to-whole-hauls",
+      "kind": "point",
+      "covered": true,
+      "span": "**The counter, not the walk, decides length.** `HAUL_FATHOMS = 20` and `hauls_for` live in `counter.py`; `walk.py` only ever sees a fathom figure it is told to lay. The comment at the top of `counter.py` is explicit about this: the walk \"cannot lay a part of a haul,\" so the rounding-up has to happen before the walk is asked for anything.",
+      "verified": true
+    },
+    {
+      "point_id": "the-yarn-once-per-strand",
+      "kind": "point",
+      "covered": true,
+      "span": "`yarn_for` (`walk.py:16`) is `fathoms * strands`",
+      "verified": true
+    },
+    {
+      "point_id": "the-rack-checked-before-any-draw",
+      "kind": "point",
+      "covered": true,
+      "span": "- **The whole draw is checked before any of it happens.** `walk_out`\n  computes `needed` and checks it against `stores.on_hand(yard)` in one\n  shot before calling `stores.draw` at all (`walk.py:29-35`), so \"an\n  order the rack cannot cover is refused here, whole, and the rack is\n  left exactly as it stood.\" Nothing is drawn and put back; the check\n  simply happens before the draw, not during it.",
+      "verified": true
+    },
+    {
+      "point_id": "the-front-of-the-rack-first",
+      "kind": "point",
+      "covered": true,
+      "span": "draw (`stores.py:42`) takes yarn off the *front* of the rack, in the order bundles were put up: it looks at `yard[\"bundles\"][0]`, records its mark, and either consumes it whole and pops it off (if the bundle holds no more than what's still needed) or subtracts what's needed from it and leaves it sitting at the front, partly used (if the bundle holds more than what's left).",
+      "verified": true
+    },
+    {
+      "point_id": "the-price-on-the-walked-fathoms",
+      "kind": "point",
+      "covered": true,
+      "span": "- **The book bills the walk, not the asking.** `book.enter`'s docstring states the rule directly: \"every fathom on the tag was laid, and the book charges for what was walked\" (`book.py:23`). `price_pence` is `coil[\"fathoms\"] * PENCE_PER_FATHOM[lay]` \u2014 `coil[\"fathoms\"]` is the *walked* 60, never the asked 50. The entry keeps `asked` too, so the gap between what was requested and what was billed is visible on the book, not hidden.",
+      "verified": true
+    },
+    {
+      "point_id": "cut-to-the-asked-length",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    },
+    {
+      "point_id": "a-short-rack-makes-what-it-can",
+      "kind": "disqualifier",
+      "covered": false,
+      "span": null,
+      "verified": false
+    }
+  ]
+}

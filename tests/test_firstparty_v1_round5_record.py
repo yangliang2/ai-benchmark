@@ -636,12 +636,32 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     out = capsys.readouterr().out
 
     quoted = fenced_block(note_section("48. The two new categories' rows, as printed"))
+    # Round 12's sweep (2026-08-28) re-priced `codebase-comprehension` over
+    # seven controls — the four locate-style plus its three explain-style
+    # tasks — so that block is the first §48 published that the table no
+    # longer prints. It is named stale here, round 7's pattern for
+    # reconcile's moved lines, rather than the record being edited; what the
+    # table prints instead is asserted beside it, and `code-review`'s block
+    # still prints as quoted.
     for block in quoted.split("\ncategory ")[0:1] + [
         "category " + rest for rest in quoted.split("\ncategory ")[1:]
     ]:
+        if block.strip("\n").startswith("category codebase-comprehension"):
+            assert counts_written_out(block.strip("\n")) not in counts_written_out(
+                out
+            ), "the moved block is back: round 12's re-pricing has been undone"
+            continue
         assert counts_written_out(block.strip("\n")) in counts_written_out(out), (
             "a quoted block of the note is not what the table prints:\n" + block
         )
+    assert (
+        "   baseline mean cost   claude-haiku-4-5 $0.0646 (n=7), "
+        "claude-sonnet-5 $0.1381 (n=7)"
+    ) in out
+    assert (
+        "   (zero-knob)  7      1.00x (n=7)       1.00x (n=7)      "
+        "haiku-solvable (n=7)"
+    ) in out
     # Named again here, so that a note edited to match a changed table still
     # has to face the numbers the round actually published.
     assert (
@@ -688,13 +708,15 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     # round 11's sweep (2026-08-26) priced `requirement-decomposition` — the
     # category the sentence above held the door for — so every category the
     # corpus holds has priced controls behind it again and nothing is left
-    # out of the ratios.
+    # out of the ratios. Round 12's sweep (2026-08-28) then moved
+    # `codebase-comprehension`'s denominators from n=4 to n=7, so its live
+    # ratio below is the seven controls' and no longer the 2.12 §48 quoted.
     assert unpriced == set()
     assert gaps == {
         "bug-fix": 2.64,
         "investigation": 2.81,
         "code-review": 3.35,
-        "codebase-comprehension": 2.12,
+        "codebase-comprehension": 2.14,
         "fault-location": 2.58,
         "feature-dev": 2.60,
         "refactor": 2.87,
