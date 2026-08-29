@@ -260,12 +260,13 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert all(numbered.count(number) == 1 for number in range(108, 117)), (
         "round 12's record, §108-§116, each spent once"
     )
-    assert numbered[-1] == 116, (
-        "§116 is the round-12 record's last section — replay, the readers, "
-        "and heap 3 closed — and the frontier; §117 is still free, and is "
-        "what whatever comes next takes"
+    assert numbered[-1] == 117, (
+        "§117 is the round-13 rulings — heap 4's one action taken from "
+        "behind the verdict-shape fork, the complexity-proxy verdict ruled "
+        "and the disqualifier rule registered — and the frontier; §118 is "
+        "still free, and is what whatever comes next takes"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 117)), (
+    assert [number for number in numbered if number > 68] == list(range(69, 118)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

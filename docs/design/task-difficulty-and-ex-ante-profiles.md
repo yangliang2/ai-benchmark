@@ -11483,6 +11483,148 @@ next — a round's rulings, an amendment, a record, this round's owner-labels
 addendum being a dated addendum beside §115 rather than a numbered section —
 takes it and what follows it; nothing above is renumbered.
 
+## Round 13 rulings — 2026-08-29
+
+**117. What round 13 is: heap 4's one action, `performance-optimisation`,
+taken from behind the fork it was parked for.** Ruled by the owner on
+2026-08-29, the day round 12's labels landed. Heap 4 was parked last because
+its ground truth is the hardest question the corpus had left — what is the
+truth of an "optimisation"? — and no verdict shape was registered for it
+anywhere: the fork was genuinely open, and §115's addendum put a second
+ruling in front of any point-keyed reuse besides. So this round's rulings
+open with the fork, take the disqualifier rule after it, and the standing
+items after that. Six rulings, numbered the way §106's were. And one
+sentence locates the instrument before any ruling moves: **the point gate is
+not run by this round** — no verdict below asks it anything, so no ruling
+below reads `point_grader.GRADER_VERSION`, and round 13 is the first round
+since round 9 whose verdict path spends no grader dollar.
+
+**117.1 The verdict shape: deterministic complexity proxies — two held-out
+suites, and `resolved` is both passing.** The truth of an optimisation is
+ruled to be **asserted growth behaviour, not measured time**: the held-out
+tests instrument the hot path through seams the task repository already owns
+— a comparator that counts its calls, a stub ledger that counts its reads —
+and assert an algorithmic fact: operation counts across held-out input
+sizes, ratio-bounded or ceiling-bounded, beside a behaviour suite proving
+correctness unchanged. `resolved` is computed, not spoken — both suites
+pass, binary, execution-verified — and **wall-clock never enters the verdict
+path**. The proof of the planted proxy's honesty is two-sided and both
+sides are invariants the lint already runs: the author's reference
+(optimised) solution passes both suites, and **the starting repository
+passes behaviour and fails complexity** — the behaviour side is `refactor`'s
+own behaviour-tests-pass-on-pristine invariant reaching a second category,
+and the complexity side is the standing
+grading-must-not-pass-on-pristine invariant doing for a slow start
+exactly what it does for a buggy one. A proxy the unoptimised code
+already satisfies is refused at authoring, before any agent meets it. Three shapes were put and two declined at their own
+price. **Measured speedup** (wall-clock thresholds) is honest to the
+action's name and declined: measurement noise on shared hardware is a
+confounder no earlier round has priced, a threshold is a tuning knob, and a
+verdict that re-times on replay can flip — against the replay-exactness
+every round since round 5 has kept. **Point-keyed
+explain-the-optimisation** reuses R9–R12's instrument and is declined by
+§76.8's own method: it grades the explanation, not the speedup, so heap 4's
+real question — can the gate catch a fake optimisation? — goes untested,
+and a fake optimisation with a good essay resolves; §115's addendum has
+just opened a live false-red mechanism on that instrument besides. The
+hybrid — B's verdict with a non-gating point-keyed rider — is declined
+under §6's one-new-instrument-per-round discipline: the rider buys paid
+proofs and grader calls for a reading that gates nothing, and it may queue
+for a later round.
+
+**117.2 An ADR is owed: ADR-0006, the complexity-proxy verdict shape.**
+The shape is a new verdict shape, not heap 1's extended — a new question
+form (growth behaviour asserted where every earlier held-out suite asserted
+functional behaviour), the behaviour/structural split carried past
+`refactor` for the first time with the structural half a complexity
+assertion, and a new authoring discipline (the honest-proxy rule: the
+counter counts a fact of the algorithm through seams the repository owns,
+never a wall-clock and never an implementation constant) — and ADR-0004's
+precedent holds: the decision
+and the alternatives' rejection are recorded permanently, beside the
+mutation gate's and the point gate's. The ADR lands with the machinery
+ticket, and the round prices its machinery honestly rather than as a fill.
+
+**117.3 The prompt names the observable requirement and never the
+instrument's numbers.** §76.9's institution, cast for this action: the
+prompt names the hot operation and the scale the repository must handle in
+behavioural terms — which listing must stay fast as which ledger grows —
+and never the counter's input sizes, ratios or ceilings. A prompt silent on
+performance grades telepathy and punishes a defensible different
+optimisation; a prompt naming the bound outright grades whether the agent
+can implement a named algorithm rather than find the optimisation. The
+observable middle is ruled, and the held-out suites stay held out.
+
+**117.4 The disqualifier rule: surface-disjoint, author-side,
+forward-only.** §115's addendum priced it and this ruling registers it —
+§106.1's exact analog on the key's other half: **from this round on, a
+point-key disqualifier must name the wrong route in words surface-disjoint
+from the true mechanism's own** — the disqualified claim's operative
+content stated so that a correct statement of the true mechanism cannot
+match it. Author-side: an authoring discipline written into the authoring
+ticket's own text and policed where authoring is already policed — the spec
+review and the two-sided proofs — no machinery, no grader change. The
+instrument's side — teaching the grader to separate route from arrival —
+is declined at §77.8's price, the same sentence that declined the widening
+at §106.1: a new version tuple, a new rulings file and a paid re-proof of
+all nine point-keyed tasks, bought against two cells of one-directional
+evidence; if false reds recur under the new discipline, that reappearance
+is the evidence the instrument path would need, and nothing here forecloses
+it. And **forward-only**: round 10, 11 and 12's keys, proofs, records and
+labels stand as written, §115's addendum is the permanent disclosure of the
+adjacency the grocers key carries, because re-authoring an old disqualifier
+is re-proving its task for no change in any published reading. This round
+authors no point-keyed task, so the rule binds future authoring only and
+costs this round nothing.
+
+**117.5 Three tasks, the three standing columns: nine cells, and the last
+zero row leaves the table.** Task count and columns are the standing
+shape, confirmed without re-argument — §68.3's reason still, and R8 the
+exact precedent for a new-verdict-shape round running it whole. Three
+fresh-authored stdlib-only Python repositories in the standing task shape,
+each a declared control, each holding one performance question whose
+intended optimisation is closed-world-decidable from the repository alone;
+task-id prefixes checked against every existing task before authoring,
+round 7's pin; the fine grain — the three hot paths and what distinguishes
+them — lands in the spec, where the owner reads it before a ticket is cut.
+The columns are `claude-code` × `claude-haiku-4-5`, `claude-code` ×
+`claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`.
+Sweep id **`round-13`**, dry cell first, by hand under the sweep protocol,
+never queued. Heap 4 closes with this round if the machinery proves out,
+and with it the coverage table's last `- - 0` row.
+
+**117.6 The limit, and delivery down the standing pipeline.**
+`performance-optimisation` joins `LIVE_RUN_LIMITS_S` explicitly at **600**
+— the flat default's own value, §68.5's flat-until-priced precedent, the
+same envelope `bug-fix` ran its code-change-plus-tests loop in — registered
+before the sweep and never adjusted per cell; a tier granted on no evidence
+could never be walked back honestly. Delivery: these rulings, then
+`/to-spec` files a new spec issue, then `qap plan` cuts tickets on it; the
+pre-registration takes the next free section number and writes the round's
+prices down before the first paid call — **agent-run prices alone**, since
+no grader dollar is in the verdict path and no DeepSeek fetch is owed where
+no DeepSeek call is priced — anchored on the nearest swept rows, round 12's
+nine cells by sweep id, $0.9185 landed, with the anchor's honest caveat
+named: a perf cell makes a real code change and runs tests, so it may run
+longer and dearer than an explain cell, and the band prices that rather
+than assuming the anchor transfers. The loader's move is named here so the
+spec carries it whole, and it is one move: **the behaviour/structural
+grading split — today `refactor`'s alone, held there by the loader's own
+two validators — extends to `performance-optimisation`**, the behaviour
+tests named per task and required to pass on the pristine repository, the
+structural half being the complexity suite the standing
+must-not-pass-on-pristine invariant then holds to failing on the start.
+The category ships no key, so **`EXISTENCE_PROOFS` — the keyed actions'
+registry — gains no entry and owes none**, and the category **joins no
+point machinery**: not `_POINT_CATEGORIES`, no points key, no terrain
+exemption. And the exemplar cascade is named in advance: the first
+task landing removes the coverage table's last zero row, so every
+checked-in sentence that uses `performance-optimisation` as the zero-row
+exemplar changes shape with **no successor category to point at** — the
+`coverage_table` docstring, `CONTEXT.md`'s glossary entry, and the
+round-7/8 and round-10 pin suites — and the spec's pin-break inventory
+carries each site by coordinate.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

@@ -304,10 +304,11 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert all(numbered.count(number) == 1 for number in range(97, 106)), (
         "round 11's record, §97-§105, each spent once and not renumbered"
     )
-    # §108-§116 (round 12's record, 2026-08-28) have since landed after this
-    # pre-registration: the contiguity claim extends over them, and the live
-    # frontier stays the round-9 suite's one moved assertion.
-    assert [number for number in numbered if number > 68] == list(range(69, 117)), (
+    # §108-§116 (round 12's record, 2026-08-28) and §117 (round 13's
+    # rulings, 2026-08-29) have since landed after this pre-registration:
+    # the contiguity claim extends over them, and the live frontier stays
+    # the round-9 suite's one moved assertion.
+    assert [number for number in numbered if number > 68] == list(range(69, 118)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 

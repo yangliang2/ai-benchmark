@@ -1707,8 +1707,9 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     # The live frontier is the round-9 suite's one moved assertion and is
     # deliberately not copied here; what this test owns is that the record's
     # nine numbers are spent once each and nothing above or below them was
-    # renumbered.
-    assert [number for number in numbered if number > 68] == list(range(69, 117))
+    # renumbered — a claim the contiguity range extends over §117 (round
+    # 13's rulings, 2026-08-29) to keep making.
+    assert [number for number in numbered if number > 68] == list(range(69, 118))
 
     for heading in record_sections():
         assert f"### {heading}\n" in text, heading
@@ -1718,9 +1719,13 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     assert headings[record_at - 1] == (
         "## Round 12 cells and cost — registered 2026-08-28"
     )
-    assert headings[record_at + 1].startswith("## Open questions"), (
-        "the record is the note's last numbered part, before the trailing "
-        "headings"
+    # The heading after the record was `## Open questions` until round 13's
+    # rulings landed there (2026-08-29); the claim that survives is that the
+    # record sits inside the note's numbered run, before the trailing
+    # headings — this adjacency pin moved in the commit that landed §117,
+    # exactly as round 11's did when §106 landed.
+    assert headings[record_at + 1].startswith("## Round 13 rulings"), (
+        "round 13's rulings are what landed after it"
     )
 
     opening = prose(
