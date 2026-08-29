@@ -409,6 +409,45 @@ _POINT_CATEGORIES: frozenset[TaskCategory] = _POINT_REQUIRED_CATEGORIES | {
     _POINT_OPTIONAL_CATEGORY
 }
 
+# The actions whose grading suite is split in two: a behaviour half, named per
+# task in the `grading` block and required to *pass* on the pristine starting
+# repository, and everything else in `grading/`, which the standing
+# must-not-pass-on-pristine invariant holds to *failing* on it. Membership is
+# required in both directions — a task of one of these actions naming no
+# behaviour tests is refused, and a task of any other action naming them is —
+# because the split is not a convenience but the two-sided proof each of these
+# verdict shapes rides on, and a task of any other action naming behaviour
+# tests would be exempting them from the must-fail-on-pristine invariant.
+#
+# `refactor` has been here since round 3: the restructuring must preserve
+# behaviour, so behaviour working before is what "preserved" is measured
+# against. Round 13 (design note 117.1, 117.6) extends the split to
+# `performance-optimisation` and ADR-0006 records why: the structural half is
+# that action's **complexity suite** — operation counts through seams the task
+# repository already owns — so the two invariants together say the reference
+# solution's speedup is real and the starting repository does not already have
+# it. Same machinery, second category; nothing about either invariant changes.
+#
+# What the extension deliberately does *not* touch, said here because a reader
+# arriving from ADR-0006 will look for it: `performance-optimisation` carries
+# no key of any shape, so `EXISTENCE_PROOFS` gains no entry and owes none
+# (`_unregistered_proof_form_problems` subtracts registered proofs from the
+# *keyed* actions, and this action is in none of those sets), and the category
+# joins no point machinery — not `_POINT_CATEGORIES` above, no points key, no
+# terrain exemption. The split is the round's one machinery move.
+# Ordered oldest first, so the prose below reads in the order the rounds
+# ruled it and a reader meets `refactor` where every earlier message put it.
+_SPLIT_CATEGORIES_IN_ORDER: tuple[TaskCategory, ...] = (
+    "refactor",
+    "performance-optimisation",
+)
+_SPLIT_CATEGORIES: frozenset[TaskCategory] = frozenset(_SPLIT_CATEGORIES_IN_ORDER)
+
+# The set's own name for a message, so a refusal names both actions rather than
+# saying "refactor" where the code means two things — and so a third member
+# could never be added without every message it appears in widening with it.
+_SPLIT_CATEGORIES_PROSE = " or ".join(_SPLIT_CATEGORIES_IN_ORDER)
+
 # A point-keyed task's ground truth, inside GRADING_DIR beside the
 # findings key's precedent and held out exactly as that one is: it stays on the
 # machine, never reaches the workdir the agent works in, and is never disclosed
@@ -1109,7 +1148,9 @@ class Task(BaseModel):
 
     @property
     def behaviour_test_paths(self) -> tuple[str, ...]:
-        """The behaviour half of the suite, empty outside refactor tasks."""
+        """The behaviour half of the suite, empty outside the split
+        categories (`_SPLIT_CATEGORIES`: `refactor` and, from round 13,
+        `performance-optimisation`)."""
         return tuple(sorted(self.grading.behaviour_tests))
 
     @model_validator(mode="after")
@@ -1119,16 +1160,17 @@ class Task(BaseModel):
                 "first-party tasks are classified up front — they exist to fill "
                 "known capability-matrix cells"
             )
-        if self.category == "refactor" and not self.grading.behaviour_tests:
+        if self.category in _SPLIT_CATEGORIES and not self.grading.behaviour_tests:
             raise ValueError(
-                "a refactor task must name its behaviour tests: they are what "
-                "must still pass on the pristine repo"
+                f"a {self.category} task must name its behaviour tests: they are "
+                "what must still pass on the pristine repo"
             )
-        if self.category != "refactor" and self.grading.behaviour_tests:
+        if self.category not in _SPLIT_CATEGORIES and self.grading.behaviour_tests:
             raise ValueError(
-                f"only refactor tasks split grading into behaviour and structural "
-                f"tests; {self.category} names behaviour_tests, which would exempt "
-                "them from the must-fail-on-pristine invariant"
+                f"only {_SPLIT_CATEGORIES_PROSE} tasks split grading into "
+                f"behaviour and structural tests; {self.category} names "
+                "behaviour_tests, which would exempt them from the "
+                "must-fail-on-pristine invariant"
             )
         return self
 
@@ -3303,7 +3345,8 @@ def lint_task_set(
         ):
             problems.append(
                 f"{task.id}: the behaviour tests fail on the pristine repo — a "
-                "refactor task must start from behaviour that already works"
+                f"{_SPLIT_CATEGORIES_PROSE} task must start from behaviour that "
+                "already works"
             )
     return problems
 
@@ -6843,11 +6886,25 @@ _COMMIT_IDENTITY = {
 # convention and no cell of the round runs under a ceiling different from the
 # one it would have had unregistered. No cross-round caveat arises against
 # round 4.
+#
+# Round 13 (design note 117.6, 118.9) registers `performance-optimisation`,
+# again at 600, the flat default's own value and the same envelope `bug-fix`
+# ran its code-change-plus-tests loop in. The entry is registration, not
+# tuning: `live_run_limit_s` falls back to `RUN_TIMEOUT_S` — the same 600 —
+# for a category with no row, so behaviour is identical either way and the
+# entry buys no seconds and takes none away. What it buys is that the number
+# is a considered commitment rather than an inherited convention, set before
+# the sweep and never adjusted per cell, because a tier granted on no evidence
+# could never be walked back honestly. No cross-round caveat arises against
+# round 12 or any earlier round: 600 was the number in force for every cell of
+# all of them. The limit bounds the agent's run alone — the two held-out
+# suites run afterwards, over the collected diff, and are no part of the 600.
 LIVE_RUN_LIMITS_S: dict[TaskCategory, int] = {
     "bug-fix": 600,
     "fault-location": 600,
     "code-review": 600,
     "codebase-comprehension": 600,
+    "performance-optimisation": 600,
 }
 
 

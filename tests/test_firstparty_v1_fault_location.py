@@ -573,9 +573,11 @@ def test_an_accepted_answer_naming_a_line_number_fails_loudly(
 def test_a_fault_location_task_naming_behaviour_tests_fails_loudly(
     tmp_path: Path,
 ) -> None:
-    """The behaviour/structural split stays reserved to refactor: a
-    fault-location task exempting a grading test from the must-fail-on-pristine
-    invariant would be exempting the one test that reads the answer."""
+    """The behaviour/structural split stays reserved to the two categories
+    that carry it — `refactor` and `performance-optimisation` — and reaches no
+    third: a fault-location task exempting a grading test from the
+    must-fail-on-pristine invariant would be exempting the one test that reads
+    the answer."""
     write_fixture(
         tmp_path, grading={"behaviour_tests": [ANSWER_TEST_FILE]}
     )

@@ -48,6 +48,13 @@ _LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _SWEEP = "round-7"
+
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
 _HAIKU = "claude-haiku-4-5"
 _SONNET = "claude-sonnet-5"
 _TERRA = "gpt-5.6-terra"
@@ -740,7 +747,7 @@ def test_the_limits_in_force_were_the_same_600_everywhere_and_never_reached(
     is the number in force for every cell of this round and every earlier one,
     no cross-round caveat arises.
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == {
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == {
         "bug-fix", "fault-location", "code-review", "codebase-comprehension"
     }
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {600}

@@ -11634,6 +11634,418 @@ where that is the truer claim. The sites — the `coverage_table` docstring,
 `CONTEXT.md`'s glossary entry, and the round-7/8 and round-10 pin suites —
 are carried by coordinate in the spec's pin-break inventory.
 
+## Round 13 cells and cost — registered 2026-08-29
+
+**118. Round 13 written down before the first paid call: the round with no
+instrument, heap 4's one action, the complexity-proxy verdict shape, the
+lint's two pristine invariants as the round's one gate, three authoring
+disciplines, one machinery move, the nine cells and one price range.** This is
+round 13's pre-registration and nothing else: §46 did it for round 5, §52 for
+round 6, §59 for round 7, §68 for round 8, §77 for round 9, §83 for round 10,
+§95 for round 11 and §107 for round 12, and the shape below is §107's a round
+on. Like rounds 10, 11 and 12 this round has **no paid experiment at all**, and
+unlike any of them it has **no paid instrument either**, so what is left to
+pre-register is the authoring-and-sweep half alone: the verdict shape the round
+is built on, the one hard gate that stands before the first sweep dollar, the
+authoring disciplines §117 ruled, the single machinery move, the nine cells and
+the one price range. **No argument is reopened here.** §117 ruled the round and
+this section registers it; where the two could differ, §117 is the authority
+and this is the arithmetic. The round's record — whether the gate opened and
+what the sweep then did — follows at **the next free section numbers**, §119
+onward; nothing below is a result, and nothing above is renumbered.
+
+**118.1 The instrument, which this round does not have.** The round's verdict
+path is **execution-only**: **no cell is point-graded**, no ruling of §117
+reads the grader's pinned version string and no line of this section quotes
+it, and **round 13 is the first round since round 9 whose verdict path spends
+no grader dollar** — §117's own opening sentence, registered here rather than
+re-argued. Every verdict this round produces is computed by running two
+held-out suites against a collected diff, which is offline, replayable and
+free.
+
+**The consequence for the standing checkpoint-movement stop, registered rather
+than left to be inferred.** §78.3's rule, §80.4's practice and §83.2's stop —
+a checkpoint movement discovered en route is a version change, and a version
+change **stops the round for re-registration** rather than being absorbed into
+it (§77.8) — **cannot stop this round**, because no ruling of it depends on
+the instrument. Round 10's, round 11's and round 12's proof rulings and their
+twenty-seven graded cells keep whatever they had to lose by a moved
+checkpoint; **this round has nothing in that ledger**, neither an archived
+ruling nor a graded cell nor a dollar, and a checkpoint that moves during it
+leaves every verdict below exactly where it was. This is registered as a
+statement about **this round's** verdict path and about nothing else: the stop
+stands unmoved for the next round that runs the gate.
+
+**118.2 What the round is: heap 4's one action, taken from behind the fork
+§117.1 ruled.** `performance-optimisation` on **Python** — the corpus's last
+unfilled action, parked behind a verdict-shape question no earlier round had
+answered, and taken now that §117.1 has answered it. **Three fresh tasks**, in
+the standing task shape, each holding one performance question whose intended
+optimisation is closed-world-decidable from the repository alone. **Heap 4
+closes with this round if the machinery proves out**, and with it the coverage
+table's last **authorable** `- - 0` row. After this round the only `- - 0` row
+the table prints is **`unclassified`'s**, and that row is **permanent and
+structural**: the loader refuses the category outright
+(`classified_and_split_by_category`), so no task may ever fill it and no round
+may ever close it. This section therefore does **not** claim the table goes
+zero-row-free — the plan review's correction of 2026-08-29, the same one
+§117.5's and §117.6's own "last zero row" phrasing took the same day.
+`performance-optimisation` in **any non-Python language stays out of scope**
+and is disclosed as a zero **by the absence of its row**, the standing form a
+populated category's missing language is disclosed in.
+
+**118.3 The verdict shape: two held-out suites, `resolved` is both passing, and
+wall-clock is prohibited.** §117.1's ruling, quoted and not re-argued. Each
+task ships **two held-out suites**:
+
+- a **behaviour suite** — correctness unchanged — which **must pass on the
+  pristine repository and on the reference solution**;
+- a **complexity suite** — operation counts across held-out input sizes,
+  ratio-bounded or ceiling-bounded, instrumented through **seams the task
+  repository already owns** — which **must fail on the pristine repository and
+  pass on the reference solution**.
+
+`resolved` is **both suites passing**: binary, execution-verified, computed
+rather than spoken, and replayable offline from the archived diff.
+
+**Wall-clock never enters the verdict path, and that is registered as a
+prohibition rather than as a preference.** **No wall-clock reading is taken
+anywhere this round** — not in a held-out suite, not in a grading helper, and
+**not even as a disclosed non-gating reading beside the verdict**. A reading
+nobody gates on is still a reading a later round would be tempted to gate on,
+and the replay-exactness every round since round 5 has kept is what the
+prohibition protects.
+
+**The three shapes §117.1 put, and the two it declined at their own price.**
+**Measured speedup** — thresholds over elapsed time — is honest to the action's
+name and is declined three times over: measurement noise on shared hardware is
+a confounder no earlier round has priced, a threshold is a tuning knob, and a
+verdict that re-times on replay can flip. **Point-keyed
+explain-the-optimisation** reuses R9–R12's instrument and is declined by
+§76.8's own method: it grades the explanation and not the optimisation, so heap
+4's real question — can the gate catch a fake optimisation? — goes untested,
+and a fake optimisation with a good essay resolves; §115's addendum has opened
+a live false-red mechanism on that instrument besides. And the **hybrid** —
+this shape's verdict with a non-gating point-keyed rider — is declined under
+§6's **one-new-instrument-per-round discipline**: the rider would buy paid
+proofs and grader calls for a reading that gates nothing. It is **free to queue
+for a later round**, and nothing here forecloses it.
+
+**ADR-0006 is owed for this shape** (§117.2) and **lands with the machinery
+ticket**, beside ADR-0004's mutation gate and ADR-0005's point gate: the
+decision and the two rejected alternatives are recorded permanently, because
+this is a new verdict shape and not heap 1's extended.
+
+**118.4 The round's single hard gate: the task-set lint's two pristine
+invariants, over all three tasks, before the first sweep dollar.** §117.1's
+two-sided proof, registered as the round's one explicit gate and the only gate
+round 13 has.
+
+**The bar is stated as a universal quantifier and never as a percentage.** For
+**every one of the three `performance-optimisation` tasks**, both of these
+hold: the **whole grading suite must not pass** on the pristine repository, and
+the **named behaviour half must pass** on it. Every task, both invariants — no
+fraction met, no proportion computed, no threshold anywhere in the clause.
+There is nothing here to round and nothing to tune, which is what §82.5 wanted
+of a gate.
+
+**Both are invariants the lint already runs.** They are the two checks that
+close `lint_task_set`'s per-task tail (`src/ai_benchmark/firstparty_v1.py`),
+named by symbol and never by a line number, §83.4's precedent: the first is the
+standing **grading-must-not-pass-on-pristine** rule — "the grading tests
+already pass on the pristine repo — there is nothing left for an agent to do" —
+doing for a slow start exactly what it does for a buggy one, and the second is
+`refactor`'s **behaviour-tests-pass-on-pristine** rule — "the behaviour tests
+fail on the pristine repo — a refactor task must start from behaviour that
+already works" — reaching a second category through the loader move of 118.8.
+So §117.1's two-sided proof is **standing machinery and not new machinery**:
+this round adds no gate, and **the lint never calls an LLM**, opens no client
+and needs no key.
+
+**The kill discipline, in its one standing sentence: a failed gate stops the
+round with a record, and `performance-optimisation` stays absent.** §76.1's
+sentence, written for this round's action.
+
+**118.5 The honest-proxy rule, registered as an authoring discipline.**
+§117.2's rule, in full: **the counter counts a fact of the algorithm through a
+seam the repository owns — a comparator that counts its calls, a stub ledger
+that counts its reads — never a wall-clock and never an implementation
+constant.** **No machine lint holds it** this round: it is an authoring
+discipline, written into the authoring ticket's own text and policed where
+authoring is already policed — the spec review, and the two pristine
+invariants of 118.4, which catch the degenerate cases mechanically. **A proxy
+the unoptimised repository already satisfies is refused before any agent meets
+the task**, and the must-fail-on-pristine half of the gate is what makes that
+refusal mechanical rather than a matter of taste.
+
+**118.6 The prompt rule: the observable requirement, never the counter's
+numbers.** §117.3's ruling, which is §76.9's institution cast for this action.
+The prompt **names the hot operation and the scale requirement in observable
+behavioural terms** — which listing must stay fast as which ledger grows — and
+**never the counter's input sizes, ratios or ceilings**. Both failure modes it
+steers between are registered rather than left implied: a prompt **silent on
+performance grades telepathy** and punishes a defensible different
+optimisation, and a prompt **naming the bound outright grades whether the agent
+can implement a named algorithm** rather than find the optimisation. The
+held-out suites stay held out. And **the deliverable is the code change
+itself**, not a write-up: no answer file is asked for, none is collected, and
+the diff is the whole of what is graded.
+
+**118.7 The disqualifier surface-disjoint rule, registered forward-only.**
+§117.4's ruling, registered in the sentence it was ruled in: **from this round
+on, a point-key disqualifier must name the wrong route in words
+surface-disjoint from the true mechanism's own** — the disqualified claim's
+operative content stated so that a correct statement of the true mechanism
+cannot match it. It is **author-side**: an authoring discipline policed by the
+spec review and the two-sided proofs, and **no machinery moves for it** — no
+grader change, no new version tuple, no lint rule. And it is **forward-only**:
+**round 10's, round 11's and round 12's keys, proofs, records and labels stand
+as written**, and **§115's addendum remains the permanent disclosure** of the
+adjacency the grocers key carries, because re-authoring an old disqualifier is
+re-proving its task for no change in any published reading. **This round
+authors no point key**, so the rule costs this round nothing and binds future
+point-keyed authoring tickets' text.
+
+**118.8 The machinery, and that it is one move.** §117.6's loader move, whole:
+the **behaviour/structural grading split — today `refactor`'s alone, held there
+by the loader's own two category validators — extends to
+`performance-optimisation`**, the behaviour tests named per task and required
+to pass on the pristine repository, the structural half being the complexity
+suite the standing must-not-pass-on-pristine invariant then holds to failing on
+the start. **The split's semantics are untouched**: the same two validators,
+the same two invariants, one more category allowed through them.
+
+**Two things explicitly do not move.** **`EXISTENCE_PROOFS` gains no entry and
+owes none**: the category ships **no key of any shape** — no accepted-answer
+key, no findings key, no mutant set, no points key — and
+`_unregistered_proof_form_problems` computes the keyed actions minus the
+registered ones, so an action with no key is not in its union and is neither
+refused nor exempt. And the category **joins no point machinery**: not
+`_POINT_CATEGORIES`, no points key, no terrain exemption.
+
+**No new subcommand, no new flag**, no change to the runner, the readers, the
+point gate or the proofs writer. One move, in the loader, and this section
+registers it as one.
+
+**118.9 The run-time limit, registered before the sweep.** `LIVE_RUN_LIMITS_S`
+(`src/ai_benchmark/firstparty_v1.py`) carries four entries today — `bug-fix`,
+`fault-location`, `code-review` and `codebase-comprehension`, round 4's two by
+§37 and round 5's two by §46 — and gains a fifth:
+**`performance-optimisation: 600`**. That is the flat default's own value
+(`RUN_TIMEOUT_S`, `src/ai_benchmark/firstparty.py:247`), the same envelope
+`bug-fix` ran its code-change-plus-tests loop in, and §68.5's
+flat-until-priced precedent.
+
+**The entry is registration, not tuning.** Behaviour is identical either way —
+`live_run_limit_s()` falls back to the same 600 for a category with no row —
+so the entry buys no seconds and takes none away; what it buys is that the
+number is a considered commitment rather than an inherited convention. It is
+set **before the sweep** and **never adjusted per cell**: a tier granted on no
+evidence could never be walked back honestly. **No cross-round caveat arises**
+against round 12 or against any earlier round, because 600 is the number in
+force for every cell of every one of them. And the limit bounds **the agent's
+run**; the two held-out suites run afterwards, over the collected diff, and are
+no part of the 600.
+
+**This ticket changes no code.** The entry is landed by the round's machinery
+ticket, beside the loader move of 118.8 and ADR-0006; this section registers
+the number the ticket must land, before a dollar is spent under it.
+
+**118.10 The cells: three `performance-optimisation` tasks × the three standing
+columns = nine cells, and the id register is left to be filled in before the
+sweep.** The combinations are `claude-code` × `claude-haiku-4-5`, `claude-code`
+× `claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS`) — **the three standing columns,
+unchanged from rounds 7, 8, 10, 11 and 12**, taken here without re-argument for
+§68.3's reason: the complexity-proxy verdict is the round's one new thing and
+changing a column beside it would confound the two. So the round is three tasks
+× three combinations = **nine cells**.
+
+Each of the three is **Python** (§117.5: `performance-optimisation` in any
+other language stays out of scope this round), and each is a **declared
+control** — `control: true`, no construction block, no knob activation, no
+prediction. The same two things follow as in §68.2, §77.6, §83.7, §95.7 and
+§107.8 and for the same reasons: the corpus's first `performance-optimisation`
+rows land in a cell that can be read against their own category's baseline,
+and because no task here declares a contrast, **round 13 moves no knob's
+counter and the kill discipline does not count it**; `calibrate-v1` gains no
+`performance-optimisation` multiplier row from this round, and that absence is
+the design rather than a gap in it.
+
+**The three tasks put three different performance questions**, and **this
+section does not fix which three**. What is registered here is the
+**requirement that they differ** — three tasks that asked one performance
+question three times would measure one thing three times — and the fine grain
+lands in the spec, where the owner reads it before a ticket is cut. **The three
+task ids do not exist yet**: the corpus holds **no `performance-optimisation`
+task at all** as this is written, which is why the category's coverage row
+reads `- - 0`, so there is nothing to list here. **The id register for round 13
+is left explicitly to be filled in, in this section, before the sweep, by the
+round's task-authoring tickets** — the one that lands the last of the three,
+once all three ids exist — **together with the three questions' one-line
+descriptions**, so that what distinguishes the three is on the record beside
+their ids. **Round 7's pin is the check the authoring runs first**: no task id
+may share a repo prefix with an existing task, and the three prefixes are
+checked against every task the corpus holds before a repository is written.
+
+**How the sweep is invoked.** Sweep id **`round-13`**, on every invocation of
+it. Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry
+cell first**, in its own invocation and **graded alone before the other
+eight**: one `claude-code` × `claude-haiku-4-5` cell, the cheapest of the nine,
+so that a mis-shaped verdict is discovered on **one paid cell rather than
+nine**. §59.6's dry-cell rule is kept rather than re-argued, and this round has
+the strongest case for it any round has had: the verdict shape itself is new
+and has never graded anything. It is a real, paid run and one of the round's
+nine; it is **not** a rehearsal to be re-run, because a task × agent × model
+cell is only ever swept once. Its log is named like any other log of the sweep:
+the sweep protocol **bans `-dry` in a log's name**. The cells are chosen on the
+command line with **`--task`**, repeated once per id, and never by staging a
+cut-down worktree, so the dry cell is
+
+```
+uv run ai-bench eval-v1 --live --sweep round-13 --agent claude-code \
+  --model claude-haiku-4-5 --task <one of the three> --log <a normally-named log>
+```
+
+and each further invocation is the same line with the remaining ids, the other
+model and the other agent, and a fresh `--log` path, the runner refusing to
+append to a log that already exists. **Nothing is re-run**: the round sweeps
+the three tasks it authors and no cell any combination has already answered.
+
+**118.11 The sweep's price: $0.9–2.8, at list price, anchored on round 12's own
+nine cells — and the round's only cost range.** Contingent on 118.4's gate.
+
+**No DeepSeek price fetch is performed and none is owed.** No grader call is
+priced because none is made (§117.6, 118.1), so this round registers
+**agent-run prices alone** and carries **no `source_url`/`as_of` pricing block**
+of the kind §107.6 carried. The one price table this section reads is
+`data/price-table.json`, which is checked in and read rather than fetched.
+
+**The band is re-derived from the checked-in round-12 rows** — not copied from
+§117.6 and not copied from §116 — selected by **sweep id `round-12`** over
+every log in `data/first-party-v1-runs/` and **never by a log's filename**.
+**Round 12 is the nearest anchor this corpus has and it is one round back**:
+the same three combinations, the same nine-cell shape, three freshly authored
+Python repositories, each a declared control. Its nine cells came to
+**$0.2113** on `claude-haiku-4-5`, **$0.4543** on `claude-sonnet-5` and
+**$0.2529** on `codex` × `gpt-5.6-terra`, over three cells each, which is
+**$0.0704**, **$0.1514** and **$0.0843** a cell. That is **$0.3061 a task
+across the three combinations**, so three tasks come to **$0.9183**, if an
+optimisation costs what an explanation did. In §68.4's summed-columns form,
+
+```
+claude-code x claude-haiku-4-5   3 x $0.0704 = $0.2112
+claude-code x claude-sonnet-5    3 x $0.1514 = $0.4542
+codex x gpt-5.6-terra            3 x $0.0843 = $0.2529
+                                 total        $0.9183
+```
+
+**The derivation disagrees with the figure §117.6 and the round's spec name,
+and the disagreement is flagged rather than absorbed.** The three column totals
+reproduce exactly — **$0.2113**, **$0.4543** and **$0.2529** — but the landed
+total does not: **$117.6 names $0.9185**, which is those three *rounded*
+columns added, while **the rows' own costs sum to $0.9184** and the
+rounded-per-cell derivation above comes to **$0.9183**. The three differ by the
+hundredth of a cent the rounding costs, exactly as §95.6's pair did and unlike
+§107.7's, which agreed. **What this section registers is what the rows say —
+$0.9184 landed, $0.9183 flat-extrapolated** — and §117.6's $0.9185 is recorded
+here as the rounded-columns reading it is, so that a reader holding the printed
+cents can redo either and find neither surprising.
+
+**The bound is caching-aware and both ends of it are registered**, §59.4's rule
+kept. Round 12's three Codex cells read **361,796** input tokens and wrote
+**7,851**, and round 13 sweeps three cells on the same column, so the
+projection is that round's own totals rather than a rate scaled up. At
+`data/price-table.json`'s `gpt-5.6-terra` prices the output is **$0.0942**
+whatever happens, and the input is **$0.7236 all-uncached** against **$0.0724
+all-cached**; the Codex column is registered at **$0.17 all-cached to $0.82
+all-uncached**, with round 12's own observed effective input rate of
+**$0.4385/M** putting the expected figure near **$0.25**. The two Claude
+columns are **vendor-reported** and carry no such split: **$0.2112** on haiku
+and **$0.4542** on sonnet, **$0.6654** together. Added up at round-12-equal
+token counts the whole sweep is **$0.83 all-cached to $1.48 all-uncached**.
+
+**The anchor's honest caveat, in as many words: a perf cell makes a real code
+change and runs tests, so it may run longer and dearer than an explain cell,
+and the band prices that rather than assuming the anchor transfers.** Round
+12's cells read a repository and wrote prose; this round's cells edit a
+repository, run its tests, read what failed and edit again — the
+code-change-plus-tests loop, which is why 118.9 registers `bug-fix`'s own
+envelope for them. The corpus prices that difference twice over, and both
+comparators are read off the checked-in rows rather than guessed. Across every
+row the corpus holds, a **`bug-fix`** cell costs **$0.0949**, **$0.2201** and
+**$0.1103** on the three columns — **$0.4253 a task**, so **$1.2759** for three
+tasks, about **1.4×** the round-12 anchor. And **round 8's nine
+`test-authoring` cells** — the dearest write-code-and-run-tests round the
+corpus holds, on these same three columns — cost **$0.2412**, **$0.5893** and
+**$0.0899** a cell, **$0.9204 a task**, so **$2.7612** for three tasks, about
+**3×** the anchor.
+
+**The band, and how its two ends are set.** The **floor is $0.9**: the flat
+extrapolation off round 12's rows, rounded down to a round number, which is
+what §95.6 and §107.7 both did. The **ceiling is $2.8**, the first round number
+at or above **$2.7612** — the `test-authoring` comparator above, the corpus's
+own upper end for three tasks of an action that writes code and runs tests. It
+is a **bound and not an expectation**. §83.6's standing **1.8×** multiple would
+not have done this round: 1.8× the anchor is **$1.65**, and the middle of
+$0.9–1.65 is **$1.2750**, which sits **below** the $1.48 all-uncached end of
+the envelope — the shape §59.4 refuses, exactly as it refused §83.6's multiple
+for round 11. At $0.9–2.8 the middle is **$1.8500** and the all-uncached end
+sits **inside** the band and **below** its middle, which is the shape §59.4
+asks for.
+
+**The two ways this range misses, pre-read before the sweep.** The **low** miss
+has two routes and neither is an accounting surprise. The range's floor *is*
+the flat extrapolation rounded down, so the sweep falls under **$0.9** if nine
+`performance-optimisation` cells cost less a cell than round 12's nine
+explain-style `codebase-comprehension` ones — which, given that this action
+edits and re-runs where that one only read and wrote, would be a genuine
+finding about the action and the caveat above read backwards. And the Codex
+column can produce the same miss on its own: the all-cached end of the envelope
+is **$0.83**, **$0.07 under the floor**, so a cache-friendlier Codex column
+than round 12's puts the round under $0.9 with the action doing nothing at all,
+and the record is to separate the two rather than report one as the other. The
+**high** miss is what the headroom buys watching: an optimisation loop that
+re-runs a slow suite after every edit, or an agent that rewrites a module twice
+before the complexity suite goes green, is an input bill no anchor here has
+priced, and **$2.8 is where the record is to stop and say so**.
+
+**Why those are list prices and not a bill.** Unchanged from §68.4, §77.5,
+§83.6, §95.6 and §107.7, and stated again because the price above carries it.
+The operator's Codex is authenticated by **ChatGPT login**, not by an API key,
+so a Codex run is **not billed per token** at all and every Codex figure above
+is a **list-price equivalent** — tokens × `data/price-table.json`, stamped
+`cost_source: table-derived` — and not an invoice anyone received, which is the
+sweep protocol's own item 2 (`docs/agents/sweep-protocol.md`). The two
+claude-code columns are `cost_source: vendor-reported`. **There is no third
+kind of spend this round**, because there are no metered calls at all.
+
+**118.12 No new sweep row lands between this registration and the round's own
+sweep.** §80.4's guardrail, carried forward for this round's own reason.
+118.11's band is derived over the **nine `round-12` rows as they stand**, and a
+sweep row landing under `data/first-party-v1-runs/` between now and the round's
+sweep would move the anchor out from under a range already registered against
+it. So the rows the band is computed over are **the rows this section
+registers**, and the check is one command:
+
+```
+find data/first-party-v1-runs -type f -newermt 2026-08-29
+```
+
+Run before the round's own sweep it must print nothing; run after it, it must
+print the round's own logs and nothing else. A row that appears there
+unaccounted for stops the round the way a moved split stopped §80.4's
+registration — by design, and before the sweep rather than after it.
+
+**118.13 The payment path, stated by its absence.** **No `DEEPSEEK_API_KEY` is
+needed by any column and no cell is point-graded**, so the standing
+session-memory storage disclosure — the owner's ruling of **2026-08-23**, a
+disclosed exception to the stored-nowhere rule — is **not owed by this round**
+and stays where it was used, in the round-10, round-11 and round-12 runbooks
+and records. It is said here rather than left unmentioned, because a
+disclosure that simply stops appearing reads like an omission and this one is
+an absence of spend.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

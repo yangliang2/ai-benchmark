@@ -1038,10 +1038,19 @@ def test_only_a_code_review_task_may_ship_a_findings_key(tmp_path: Path) -> None
 
 
 def test_a_code_review_task_names_no_behaviour_tests(tmp_path: Path) -> None:
-    """Only a refactor splits its grading suite: behaviour tests are exempt
-    from must-fail-on-pristine, and a review task naming one would exempt the
-    only test its verdict is made of."""
-    with pytest.raises(IngestError, match="only refactor tasks split grading"):
+    """Only the two split categories — `refactor` and, from round 13,
+    `performance-optimisation` — split their grading suite: behaviour tests are
+    exempt from must-fail-on-pristine, and a review task naming one would
+    exempt the only test its verdict is made of.
+
+    The match string moved with round 13's widening of the refusal itself
+    (design note 117.6): the message names both actions now, because prose
+    saying "refactor" where the code means two things is prose that misleads
+    the next author of a third."""
+    with pytest.raises(
+        IngestError,
+        match="only refactor or performance-optimisation tasks split grading",
+    ):
         fixture_task(
             tmp_path, grading={"behaviour_tests": [FINDINGS_TEST_FILE]}
         )

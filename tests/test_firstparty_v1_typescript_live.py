@@ -138,7 +138,17 @@ def test_a_held_out_test_importing_an_agent_installed_package_fails_at_grade_tim
 
 
 def test_no_new_limit_is_registered_this_round() -> None:
-    assert firstparty_v1.LIVE_RUN_LIMITS_S == {
+    """Round 13 (design note 118.9) registered `performance-optimisation` at
+    the same 600 after this round ran; it is subtracted here rather than
+    swallowed, so the claim stays about the rows in force for round 7's cells
+    and a further addition is a visible edit."""
+    live = {
+        category: limit
+        for category, limit in firstparty_v1.LIVE_RUN_LIMITS_S.items()
+        if category != "performance-optimisation"
+    }
+
+    assert live == {
         "bug-fix": 600,
         "fault-location": 600,
         "code-review": 600,

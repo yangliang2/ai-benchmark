@@ -44,6 +44,13 @@ _LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _SWEEP = "round-6"
+
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
 _AGENT = "codex"
 _AGENT_VERSION = "codex-cli 0.147.0"
 _AS_OF = "2026-08-18"
@@ -525,7 +532,7 @@ def test_the_limits_in_force_were_the_same_600_everywhere_and_never_reached(
     caveat arises. The second half is the round's own evidence that no verdict
     is a timeout in disguise.
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == {
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == {
         "bug-fix", "fault-location", "code-review", "codebase-comprehension"
     }
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {600}

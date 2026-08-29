@@ -72,10 +72,17 @@ _LIMIT_S = 600
 _CATEGORY = "test-authoring"
 _CELLS = 3
 
-# The four categories `LIVE_RUN_LIMITS_S` carries, which this ticket does not
-# touch: round 4's two by §37 and round 5's two by §46.
+# The four categories `LIVE_RUN_LIMITS_S` carried when this round ran, which
+# this ticket does not touch: round 4's two by §37 and round 5's two by §46.
 _REGISTERED_LIMITS = {"bug-fix", "fault-location", "code-review",
                       "codebase-comprehension"}
+
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
 
 # The mutant counts the register's own parenthesised notes carry, spelled the
 # way the note spells them.
@@ -333,7 +340,7 @@ def test_every_cell_runs_at_the_flat_default_and_no_row_is_registered(
     category alone and handed to the adapter, so a suite gets no more seconds
     than a patch and the gate that grades it afterwards is no part of the 600.
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == _REGISTERED_LIMITS, (
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == _REGISTERED_LIMITS, (
         "this ticket registers nothing new"
     )
     assert _CATEGORY not in firstparty_v1.LIVE_RUN_LIMITS_S

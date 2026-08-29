@@ -555,8 +555,9 @@ def test_behaviour_test_naming_a_missing_file_fails_loudly(tmp_path: Path) -> No
 
 
 def test_feature_dev_task_naming_behaviour_tests_fails_loudly(tmp_path: Path) -> None:
-    """Only refactor tasks split their suite; anywhere else the split would
-    quietly exempt those files from the must-fail-pristine invariant."""
+    """Only the split categories — `refactor` and `performance-optimisation` —
+    split their suite; anywhere else the split would quietly exempt those files
+    from the must-fail-pristine invariant."""
     task_dir = clone_seed(tmp_path, FEATURE_SEED, FEATURE_SEED)
     retitle(task_dir, grading={"behaviour_tests": ["test_top_words.py"]})
 
@@ -761,16 +762,21 @@ def test_a_baseline_effort_claim_needs_a_control_in_its_own_category(
     frozen 22 never reached holds none unless one of its own tasks declares
     itself a control — checked here with no such declaration in the set.
 
-    The category is `performance-optimisation` because this fixture is a
-    feature-dev seed with another category written on it: an action with
-    authoring rules of its own — a refactor's behaviour tests, a
-    fault-location's accepted-answer key, a code-review's findings key — would
-    fail to load for a reason that is not the rule under test."""
+    The category is `bug-fix` because this fixture is a feature-dev seed with
+    another category written on it: an action with authoring rules of its own
+    — a refactor's or performance-optimisation's behaviour tests, a
+    fault-location's accepted-answer key, a code-review's findings key, a
+    test-authoring's mutants — would fail to load for a reason that is not the
+    rule under test, and `bug-fix` is the one action left whose grading is a
+    held-out suite and nothing more. It was `performance-optimisation` until
+    round 13's split reached that action too (design note 117.6); what the
+    fixture needs is a category holding no control *in this set*, which is
+    every category here, and not a category the frozen 22 never reached."""
     task_dir = clone_seed(tmp_path, FEATURE_SEED, "tuned-claimer")
     retitle(
         task_dir,
         id="tuned-claimer",
-        category="performance-optimisation",
+        category="bug-fix",
         construction=a_construction_block(
             prediction=a_prediction(effort={
                 "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
@@ -781,7 +787,7 @@ def test_a_baseline_effort_claim_needs_a_control_in_its_own_category(
     [problem] = lint_task_set(load_task_set(tmp_path))
 
     assert "tuned-claimer" in problem
-    assert "holds no performance-optimisation baseline control" in problem
+    assert "holds no bug-fix baseline control" in problem
 
 
 def test_a_declared_control_stocks_a_baseline_effort_claim_in_its_category(
@@ -789,22 +795,22 @@ def test_a_declared_control_stocks_a_baseline_effort_claim_in_its_category(
 ) -> None:
     """The positive case of the rule above, and the seam a narrowed
     `is_control` would break silently: `_effort_claim_problems` reads
-    `is_control`, exactly as `control_group` does, so a category the frozen 22
-    never reached still stocks a baseline comparator once one of its own
-    tasks declares itself a control, and the claim below lints clean. The
+    `is_control`, exactly as `control_group` does, so a category holding no
+    frozen-22 baseline in this set still stocks a baseline comparator once one
+    of its own tasks declares itself a control, and the claim below lints
+    clean. It reads `bug-fix` for the reason the test above does. The
     mutation this guards against is `is_control` narrowed back to `task.id in
     BASELINE_TASK_IDS`, under which this category would stock nothing and the
     claim would be refused."""
     control_dir = clone_seed(tmp_path, FEATURE_SEED, "tuned-control")
     retitle(
-        control_dir, id="tuned-control", category="performance-optimisation",
-        control=True,
+        control_dir, id="tuned-control", category="bug-fix", control=True,
     )
     claimer_dir = clone_seed(tmp_path, FEATURE_SEED, "tuned-claimer")
     retitle(
         claimer_dir,
         id="tuned-claimer",
-        category="performance-optimisation",
+        category="bug-fix",
         construction=a_construction_block(
             prediction=a_prediction(effort={
                 "comparator": "baseline", "metric": "cost", "at_least_factor": 2.0,
@@ -2327,7 +2333,11 @@ def test_rounds_4_and_5_register_four_categories_at_600() -> None:
     assert live_run_limit_s(code_review) == 600
     assert live_run_limit_s(codebase_comprehension) == 600
     assert live_run_limit_s(seed) == RUN_TIMEOUT_S == 600
-    assert set(LIVE_RUN_LIMITS_S) == {
+    # Round 13 registered a fifth row, `performance-optimisation`, at the same
+    # 600 (design note 118.9). Rounds 4 and 5's claim is about their own four,
+    # so the later entry is subtracted rather than swallowed and the next
+    # registration has to be a visible edit here.
+    assert set(LIVE_RUN_LIMITS_S) - {"performance-optimisation"} == {
         "bug-fix",
         "fault-location",
         "code-review",

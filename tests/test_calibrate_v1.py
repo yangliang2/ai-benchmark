@@ -1208,23 +1208,25 @@ def test_calibrate_v1_prices_a_category_off_the_controls_it_declares(
     — each category divides by its own controls whatever the corpus grows
     beside it, which is why both K9=single rows read 3.00x, where a
     denominator pooling the two categories' controls would have printed 1.50x
-    for feature-dev and 4.50x for performance-optimisation.
+    for feature-dev and 4.50x for bug-fix.
 
-    The second category is `performance-optimisation` because the fixtures here
-    are generic task directories with a category written on them: an action
-    carrying authoring rules of its own — a refactor's behaviour tests, a
-    fault-location's accepted-answer key, a code-review's findings key — would
-    make these fixtures fail to load for a reason that has nothing to do with
-    what is being priced.
+    The second category is `bug-fix` because the fixtures here are generic
+    task directories with a category written on them: an action carrying
+    authoring rules of its own — a refactor's or (since round 13) a
+    performance-optimisation task's behaviour tests, a fault-location's
+    accepted-answer key, a code-review's findings key — would make these
+    fixtures fail to load for a reason that has nothing to do with what is
+    being priced. It was `performance-optimisation` until round 13's loader
+    move gave that category a load-time rule of its own.
     """
     tasks = tmp_path / "tasks"
     write_task(tasks, _CONTROL)
     write_task(tasks, "feature-crux", knobs={"K9": "single"})
     write_task(
-        tasks, "tuned-control", category="performance-optimisation", control=True
+        tasks, "tuned-control", category="bug-fix", control=True
     )
     write_task(
-        tasks, "tuned-crux", category="performance-optimisation",
+        tasks, "tuned-crux", category="bug-fix",
         knobs={"K9": "single"},
     )
     loaded = firstparty_v1.load_task_set(tasks)
@@ -1239,12 +1241,12 @@ def test_calibrate_v1_prices_a_category_off_the_controls_it_declares(
     out = calibrate(tasks, log, capsys)
 
     assert baseline_line(
-        out, "performance-optimisation", "baseline mean cost"
+        out, "bug-fix", "baseline mean cost"
     ).startswith(f"{_HAIKU} $0.3000 (n=1)")
-    assert cells(out, "performance-optimisation", "(zero-knob)")[_HAIKU] == (
+    assert cells(out, "bug-fix", "(zero-knob)")[_HAIKU] == (
         "1.00x (n=1)"
     )
-    assert cells(out, "performance-optimisation", "K9=single")[_HAIKU] == (
+    assert cells(out, "bug-fix", "K9=single")[_HAIKU] == (
         "3.00x (n=1)"
     )
     assert baseline_line(out, "feature-dev", "baseline mean cost").startswith(

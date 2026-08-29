@@ -64,6 +64,13 @@ _ANCHOR_ROUND = "round-6"
 # four categories and the flat default for the other two.
 _LIMIT_S = 600
 
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
+
 # What the section claims the round is, per action.
 _COUNTS = {
     "bug-fix": 3,
@@ -269,7 +276,7 @@ def test_every_cell_runs_at_six_hundred_seconds_and_nothing_new_is_registered(
     on category alone, so the same table answers for both languages and no
     cell gets a longer run because of its toolchain.
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == {
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == {
         "bug-fix", "fault-location", "code-review", "codebase-comprehension"
     }, "this ticket registers nothing new"
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {_LIMIT_S}

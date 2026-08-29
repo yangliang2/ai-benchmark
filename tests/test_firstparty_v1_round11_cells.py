@@ -106,10 +106,18 @@ _CELLS = 3
 # rather than by a row: `requirement-decomposition` registers nothing.
 _LIMIT_S = 600
 
-# The four categories `LIVE_RUN_LIMITS_S` carries, which this registration does
-# not touch: round 4's two by §37 and round 5's two by §46.
+# The four categories `LIVE_RUN_LIMITS_S` carried when this round ran, which
+# its own registration does not touch: round 4's two by §37 and round 5's
+# two by §46.
 _REGISTERED_LIMITS = {"bug-fix", "fault-location", "code-review",
                       "codebase-comprehension"}
+
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
 
 # The convention the proofs' token arithmetic is done at.
 _CHARS_PER_TOKEN = 4
@@ -284,10 +292,11 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     )
     # §97-§105 (round 11's record, 2026-08-27), §106 (round 12's rulings),
     # §107 (round 12's pre-registration), §108-§116 (round 12's record,
-    # all 2026-08-28) and §117 (round 13's rulings, 2026-08-29) have since
-    # landed after the amendment: the contiguity claim extends over them,
-    # and the live frontier stays the round-9 suite's one moved assertion.
-    assert [number for number in numbered if number > 68] == list(range(69, 118)), (
+    # all 2026-08-28), §117 (round 13's rulings) and §118 (round 13's
+    # pre-registration, both 2026-08-29) have since landed after the
+    # amendment: the contiguity claim extends over them, and the live
+    # frontier stays the round-9 suite's one moved assertion.
+    assert [number for number in numbered if number > 68] == list(range(69, 119)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
@@ -952,7 +961,7 @@ def test_every_cell_runs_at_the_flat_default_and_no_row_is_registered() -> None:
     and §68.5's precedent is that a new action joins none for exactly that
     reason. So this is a test that a row was *not* added.
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == _REGISTERED_LIMITS, (
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == _REGISTERED_LIMITS, (
         "this registration adds nothing new"
     )
     assert _CATEGORY not in firstparty_v1.LIVE_RUN_LIMITS_S

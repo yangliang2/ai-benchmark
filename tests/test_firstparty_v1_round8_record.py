@@ -132,6 +132,13 @@ _REGISTERED_LIMITS = {
     "bug-fix", "fault-location", "code-review", "codebase-comprehension"
 }
 
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
+
 # Section 71's turn line. Quoted so that section 74's refusal to compare across
 # the harness boundary is anchored to numbers rather than to an assertion.
 _TURNS = {_HAIKU: 57, _SONNET: 55, _TERRA: 24}
@@ -839,7 +846,7 @@ def test_the_limits_in_force_were_the_flat_default_in_section_46s_sense(
     exactly why the distinction has to be stated rather than shown, and why no
     cross-round caveat arises from it.
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == _REGISTERED_LIMITS
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == _REGISTERED_LIMITS
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {600}
     assert _CATEGORY not in firstparty_v1.LIVE_RUN_LIMITS_S, (
         "the round registered no limit and this record says so"

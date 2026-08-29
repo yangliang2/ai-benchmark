@@ -63,6 +63,13 @@ _ROUND_4 = "round-4"
 # registration (four categories) or by fallback (two).
 _LIMIT_S = 600
 
+# Registered after this round, and subtracted from the live table below rather
+# than swallowed by it: round 13 (design note 118.9) registers
+# `performance-optimisation` at the same 600. Every limit claim here is about
+# the rows in force when this round ran, so the later entry is named explicitly
+# and the next addition has to be a visible edit here too.
+_LATER_LIMITS = {"performance-optimisation"}
+
 # What the section claims about the pool each per-category sample was drawn
 # from, and how many were taken. The pool sizes are the other half of "the
 # first N by id": a sample of six from a pool of six is not a sample.
@@ -331,7 +338,7 @@ def test_every_cell_runs_at_six_hundred_seconds_and_nothing_new_is_registered(
     matters anyway, because only a registered category's cell can later be
     described as running "under the registered 600 s".
     """
-    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) == {
+    assert set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS == {
         "bug-fix", "fault-location", "code-review", "codebase-comprehension"
     }, "this ticket registers nothing new"
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {_LIMIT_S}
@@ -347,7 +354,9 @@ def test_every_cell_runs_at_six_hundred_seconds_and_nothing_new_is_registered(
             defaulted_categories.add(task.category)
 
     assert defaulted_categories == {"feature-dev", "refactor"}
-    assert registered_categories == set(firstparty_v1.LIVE_RUN_LIMITS_S)
+    assert registered_categories == (
+        set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS
+    )
 
     counted = prose()
     assert "`feature-dev` and `refactor` are **not** in that table" in counted
