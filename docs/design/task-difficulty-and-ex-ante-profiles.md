@@ -10797,6 +10797,646 @@ print the round's own logs and nothing else. A row that appears there
 unaccounted for stops the round the way a moved split stopped §80.4's
 registration — by design, and before the sweep rather than after it.
 
+## Round 12 record — 2026-08-28
+
+**§108 is the next free number.** §107 is round 12's pre-registration and the
+last section written before the sweep — its 107.8 register filled in place by
+the round's second task-authoring ticket — so this record opens at **108** and
+runs to **116**. Nothing above it is renumbered.
+
+### 108. What the round measured
+
+**Nine cells, and they are exactly the nine §107.8 registered.** Three
+explain-style `codebase-comprehension` tasks × three combinations, every one
+of them swept and logged: **9 of 9**, with nothing dropped and nothing added.
+The three ids the rows carry are the three §107.8's filled register lists —
+`ropewalk`, `grocers` and `tramshed`, every point-keyed
+`codebase-comprehension` task the corpus holds — and each is swept once per
+combination and never twice. The category's four locate-style tasks stand
+beside them on their own accepted-answer key and are no part of this round.
+These are **heap 3's last action's cells**: explain-style
+`codebase-comprehension × python` filled on a points key, under the same
+verdict shape and the same unmoved instrument §86 certified and §103
+confirmed — **heap 3 closes with them** (§116). The point gate's verdict is
+binary `resolved` under the standing quality metric — every planted point
+covered by a span-verified ruling and no disqualifier present — and **no
+second quality metric enters the table**.
+
+**One sweep id, and the harness versions it ran under.** Every row carries
+`sweep: round-12` and `as_of: 2026-08-28`. The version is single within each
+harness's rows, and this round **crosses no version boundary**: `claude-code`
+ran at **2.1.246**, round 11's exactly, and `codex` at **codex-cli 0.147.0**,
+rounds 6, 7, 8, 10 and 11's exactly — the first of the three point-gate
+sweeps with no boundary to narrate, so no cost or turn reading below carries
+a version caveat and none is implied.  The reasoning level rides with the
+model (`ai_benchmark.agents.CODEX_REASONING_LEVELS` is
+`{"gpt-5.6-terra": "medium"}`) and no invocation could have asked for
+another.
+
+**Four invocations, four logs, none of them empty.** `r12-a` is the **dry
+cell** §107.8 required: one of the nine, run alone in its own invocation,
+paid for and **graded alone before the other eight**, so that a mis-shaped
+verdict on a deliverable shape the gate had never graded — an explanation of
+a closed-world question — would be found on one cell rather than nine. It is
+`ropewalk-explain-how-an-order-becomes-a-coil` on `claude-code` ×
+`claude-haiku-4-5`, and its verdict is the point gate's first paid verdict on
+this action: **resolved**, every planted point covered by a span the gate
+verified and neither disqualifier claimed, with the rulings archived — a
+green cell with locatable reasons, which is the verdict shape arriving
+well-formed, so the other eight were run. `r12-b` carries haiku's other two,
+`r12-c` sonnet's three and `r12-d` Codex's three. No stream died, no
+invocation logged nothing, and no cell was re-run: four logs, nine rows.
+**The dry cell was registered as the cheapest of the nine, and this round the
+column half of that reading held**: at round 11's anchor the haiku column was
+the cheaper ($0.0795 a cell against Codex's $0.0856) and in the event it was
+(**$0.0704** a cell against Codex's **$0.0843**) — but the dry cell itself
+cost **$0.0714**, and the cheapest of the nine cells was `tramshed` on haiku
+at **$0.0655**, so the word "cheapest" held of the column and not of the
+cell, a smaller version of the departure §85 and §97 each recorded.
+
+**Resolution: 7 of 9.** **2 of 3** on `claude-haiku-4-5`, **2 of 3** on
+`claude-sonnet-5` and **3 of 3** on `codex` × `gpt-5.6-terra` — the point
+gate's first round with more cells resolved than not. Both unresolved cells
+are `grocers-explain-why-the-plain-hamper-carries-the-cordial` on the two
+claude-code columns, and both are red on a claimed disqualifier with **every
+planted point covered** — §112 reads them, span by span. No red cell of this
+round is an uncovered point.
+
+**The limits in force: the category's own registered 600 seconds, every
+cell.** Unlike round 11's action, this one is registered:
+`codebase-comprehension` has carried its `LIVE_RUN_LIMITS_S` row at 600 since
+round 5, so all nine cells ran **under the registration the category already
+carries** rather than at the bare flat default — §46's distinction exactly as
+§107.9 said this record would use it. Because 600 is also the flat default's
+own value, 600 is the number in force for every cell of this round and of
+every earlier one: **no cross-round caveat arises** and none is implied.
+Nothing came near it: the round's longest run was **92.3 s**
+(`ropewalk-explain-how-an-order-becomes-a-coil` on sonnet) and the mean was
+**69.2 s**, so no verdict here is a timeout in disguise. And the limit bounds
+the agent's run alone — the point gate runs afterwards, over the collected
+answer file, and its grader calls are no part of the 600 (§107.9).
+
+**The toolchain the sweep graded under: Python 3.14.4, no Node, and the
+gate's instrument unmoved.** Every cell is a Python task, so the round's
+verdicts are the point gate's alone, computed from rulings taken under
+`deepseek-v4-pro:DeepSeek-V4-Pro-0813:8bf4fedb86be` — §107.1's pin, carried
+by every one of the nine rulings archives and by all six proofs archives, so
+no checkpoint movement was discovered en route and §107.1's stop never
+fired. The nine verdicts rest on **63 archived rulings — seven a cell, one
+per planted question — taken in 63 metered grader calls with no retry**: the
+archives hold exactly the keys' sixty-three rulings and the meter read the
+same number. The version is **provenance and not a row field** — round 12
+added no `grader` field to a run-log row and this record proposes none; the
+version lives in each cell's rulings archive, where a replay reads it.
+
+### 109. The gate opened: every reference resolved, every foil failed
+
+**The round's one hard gate was read before the first sweep dollar, and it
+opened.** §98 is its form, a round on, and §107.5 registered it as the only
+gate round 12 has. In the registered quantifier and no other form: **every
+planted point of every task's reference answer resolved, and every foil
+answer failed**, read offline from the archived rulings — every point, every
+task, both sides, no fraction met, no proportion computed, no threshold
+anywhere in the clause. That is the standing authoring requirement §76.10
+makes of every point-keyed task, held as this round's single registered gate:
+the instrument was certified by §86, confirmed by §103, and is not
+re-certified here — what the proofs prove this round is that **these three
+keys discriminate**, on a deliverable type the gate had never graded, before
+a sweep dollar moved on them.
+
+**Both sides, per task, off the archives.** Each of the three keys plants
+**five points and two disqualifiers**, so the gate is read off **14 archived
+calls a task** — one per question, against each of the reference answer and
+the foil — inside §107.6's registered 8–16 a task; the meter saw the same
+number, which is §110's to report against §107.6's line. The rulings sit in
+six files under the tasks' own `proofs/rulings/` subtrees, each stamped with
+the grader version above. The reference side: every planted point of all
+three reference answers was covered by a span the gate verified, and no
+reference answer tripped either of its disqualifiers. The foil side: every
+foil failed **both ways at once** — each claimed **both** of its task's
+disqualified claims (`cut-to-the-asked-length` and
+`a-short-rack-makes-what-it-can` for the ropewalk, `a-copy-per-hamper` and
+`an-extra-on-the-wrong-hamper` for the grocers, `two-separately-kept-lists`
+and `listed-in-the-order-entered` for the tramshed) *and* left planted
+points uncovered: the ropewalk and tramshed foils left **every** planted
+point of their keys uncovered, and the grocers foil left four of its key's
+five uncovered — so each key discriminates on its negative half as well as
+its positive one, which is what the foil exists to prove (§76.10).
+
+**One proofs-side ruling is disclosed here, where each foil's failure is
+named both ways.** On the grocers foil the grader ruled
+`one-list-across-the-standard-hampers` covered, quoting the foil's own
+wrong-claim span — "each standard hamper starts from its own copy of the
+standard list" — a **false-positive coverage on foil prose**: the span
+asserts the opposite of the planted fact. The verdict absorbs it — the foil
+still failed cleanly, both disqualifiers claimed and four points uncovered —
+and no registered rule requires a foil to score zero per point: the gate's
+bar is that the foil **fails**, and it did. The ruling stands in the archive
+as taken, disclosed as §92 and §104 disclosed what their rounds' checks saw,
+and it is one ruling of the proofs' 42.
+
+**The gate is read for nothing, offline, as often as anyone likes.**
+`_the_reference_resolves_and_the_foil_fails`
+(`src/ai_benchmark/firstparty_v1.py`) is the rule, dispatched for this
+category by the key on disk
+(`_the_comprehension_proof_the_key_on_disk_asks_for`, §107.5's shape-aware
+form), `ai-bench lint-v1` calls it, and every acceptance run since authoring
+has recomputed the verdicts from the archives without a client, a key or a
+call. The kill discipline's one standing sentence was never needed: no proof
+stood failed when the gate was read, no stream died and no re-prove was run —
+round 11's two operational causes had no successor this round — so the stop
+§107.5 kept armed did not fire, and explain-style `codebase-comprehension`
+opened instead of staying absent.
+
+### 110. Spend, by cost source, against both registered ranges
+
+**The three sweep columns, kept apart by how their dollars were made:**
+
+```
+claude-code x haiku     $0.2113  vendor-reported (what the account was billed)
+claude-code x sonnet    $0.4543  vendor-reported (what the account was billed)
+codex x gpt-5.6-terra   $0.2529  table-derived   (list price, openai-pricing-2026-08-18.1)
+```
+
+**What the account was actually billed for the sweep: $0.6656, and nothing
+per token for Codex.** The operator's Codex is authenticated by **ChatGPT
+login**, not by an API key, so no Codex run in this round was billed per
+token at all. The $0.2529 is this repository's own arithmetic — the round's
+Codex tokens priced through `data/price-table.json` at version
+**`openai-pricing-2026-08-18.1`**, stamped `cost_source: table-derived` on
+all three rows — a **list-price equivalent, not an invoice**. The two
+claude-code columns are the vendor's own figures, `cost_source:
+vendor-reported`, and their sum is what was billed. The round's third cost
+source is the proofs, below: **metered API calls on the operator's DeepSeek
+key**, where the list-price equivalent and the invoice are the same number
+and the vendor's console is the invoice's word (§107.6, §81.5).
+
+**The registered sweep range was $1.3–2.5. The round came to $0.9184, and
+the range was missed on the low side** — $0.38 under the floor, at **0.70×**
+the flat extrapolation the floor was rounded down from. Every total here is
+**summed before rounding**; this round the printed columns add to $0.9185,
+one ten-thousandth over the rounded total — round 7's situation rather than
+round 8's, said so that a reader who checks finds the check made. **The miss
+is the one §107.7 pre-read as the likelier, and it arrived on both of the
+routes that section named** — the action route and the Codex cache route —
+which the rows below keep separate rather than reporting one as the other.
+The registered high miss — an explanation that re-reads the repository for
+every edge it names — did not happen, and the $2.5 stop was never
+approached:
+
+```
+                        anchor (3 x r11/cell)  actual     per cell   round 11
+claude-code x haiku     $0.2385                $0.2113    $0.0704    $0.0795
+claude-code x sonnet    $0.8253                $0.4543    $0.1514    $0.2751
+codex x gpt-5.6-terra   $0.15-$0.72 (~$0.26)   $0.2529    $0.0843    $0.0856
+```
+
+**The action route, carried by the two claude columns.** The columns landed
+at **0.89×**, **0.55×** and **0.98×** round 11's, and the fall sits where
+the deliverable is: sonnet — the one column that wrote a decomposition at
+length last round — wrote **5,044** output tokens a cell against round 11's
+**12,732** and read **172,814** input tokens a cell against **240,069**,
+while haiku read **142,724** against **213,250** and wrote about the same
+(**5,259** against **5,338**). An explanation of one closed-world question is
+written straight out where a decomposition argued its order at length, which
+is §107.7's own pre-read sentence — "a finding about the action and not an
+accounting surprise" — and the sonnet column alone is $0.3710 of the round's
+$0.4022 fall against the anchor. Both claude columns are vendor-reported, so
+their token counts are the evidence the dollars follow.
+
+**The cache route, on the Codex column alone.** The round's Codex cells read
+**361,796** input tokens and wrote **7,851** — *more* than round 11's
+312,819 and 7,547 on both axes, so the action route cannot carry this
+column — and still came in at 0.98× the anchor. Priced at
+`openai-pricing-2026-08-18.1` those tokens bound the column at **$0.1666
+all-cached** and **$0.8178 all-uncached**, and the logged **$0.2529** sits
+between them, as it must. The effective input rate works out at
+**$0.4385/M**, against round 11's **$0.5314/M**, round 10's **$0.4711/M**,
+round 8's **$0.4771/M** and round 7's **$0.5714/M** on the same model and
+the same table — the cache-friendlier column §107.7 named as the second
+low-miss route, arrived, and a sixth point on one rate, from six sweeps that
+differ in more than one way, is still not a separated cause. The money is
+unspent rather than overspent, the band closes with the round, and **no new
+registration is opened** for it.
+
+**The proofs, against §107.6's registered 24–48 calls: the round metered 42,
+and the registered line was met with no operational overage.** Counted
+invocation by invocation: **14 calls a task** — one per planted question,
+seven questions, against each of the two answers — in one `--task`-selected
+invocation per task under §96's amendment, **zero retries**: no dead stream,
+no re-prove, the meter and the archives counting the same calls. §107.6
+expected operational retries and counted them against its line; none were
+needed, which is this round's whole entry under that clause.
+
+**The arithmetic, over text a reader holds, at §107.6's fetched peak-hour
+cache-miss prices.** All six proof answers are checked in, so the input half
+is measured rather than assumed:
+
+```
+proofs metered  42 calls x (template + point + answer)          = 227,954 chars / 4 =  56,988 tok  x $1.32/M = $0.0752
+                output low   42 x 100 tok thinking              =   4,200 tok  x $3.96/M = $0.0166
+                output high  42 x 300 tok + every proof answer quoted whole  =  53,144 tok  x $3.96/M = $0.2105
+                                                                round total    $0.0919 - $0.2857
+```
+
+**The registered $0.05–0.6 holds at both ends.** §107.6's named price miss —
+an answer longer than 8,000 characters or a grader thinking longer than 300
+tokens a call — did not happen on the half that is checkable: the archives'
+own counts are reference answers of 4,373, 4,389 and 4,804 characters and
+foils of 2,871, 3,133 and 3,598, none near the registered high and all under
+the twelve earlier proof answers' 5,449 ceiling. The output half is still
+the half with no anchor — the archives hold rulings and verified spans, not
+token counts — so it is bounded the registered way rather than stated. The
+calls landed on **2026-08-28**, a Friday, and are priced here at the
+registered peak-hour, cache-miss figures — §78.4's conservative end twice
+over — so the console's figure can only sit at or under this arithmetic. The
+sweep's own 63 grader calls (§108) ran on the same key and the same path,
+one call per archived ruling and no retry, and are read offline for nothing
+ever after, like the proofs'.
+
+**The payment path, disclosed where it was used.** The proofs' and the
+gate's metered calls ran on the operator's DeepSeek key, and the key was
+**supplied inline in the invoking command's environment from the operator's
+session memory** — the owner's disclosed exception of 2026-08-23 to the
+stored-nowhere rule (§106.5, and the round's runbook says the same). It was
+committed to no file, written to no config here, and **never printed** — not
+into a log, a transcript quote, this record or an error message.
+
+### 111. The nine cells under three combinations
+
+Every cell, its verdict and its cost, with each column's **cost source** in
+the header where a reader cannot join the three without seeing it:
+
+```
+                                                          claude-code x       claude-code x       codex x
+                                                          claude-haiku-4-5    claude-sonnet-5     gpt-5.6-terra
+                                                          vendor-reported     vendor-reported     table-derived
+grocers-explain-why-the-plain-hamper-carries-the-cordial  unresolved $0.0744  unresolved $0.1498  resolved   $0.0758
+ropewalk-explain-how-an-order-becomes-a-coil              resolved   $0.0714  resolved   $0.1853  resolved   $0.0784
+tramshed-explain-why-the-two-boards-disagree              resolved   $0.0655  resolved   $0.1192  resolved   $0.0986
+```
+
+There is no per-category block beside it and there is nothing to group: all
+three tasks are one action, which is the round. Nine cells is the whole
+denominator this record has, and no rate is quoted off it.
+
+**Turns, for what they are worth on each side.** Haiku took **27** turns over
+the three (9–9), sonnet **22** (4–10), Codex **25** (7–11). A Codex turn is
+a completed non-reasoning item and a claude-code turn is `num_turns`, so the
+three numbers are **not** comparable across the harness boundary — §115
+refuses that comparison as §104, §92, §74 and §65 did, and these are quoted
+only so that the refusal is anchored to something.
+
+### 112. The two red cells, read as the disqualifier each claimed
+
+The reading §89 introduced and §101 carried, on the action it was built to
+reach last: **per unresolved cell, which named planted point went uncovered
+or which disqualifier was present** — read off the archived rulings, where
+the grader's own evidence spans sit quotable beside every covered ruling.
+This round the shape is §101's reversed: **no planted point went uncovered
+anywhere** — all 45 point-rulings across the nine answers are covered, every
+span verified — so every red cell below is a present disqualifier and
+nothing else:
+
+```
+cell                                                                         present disqualifier(s)
+grocers-explain-why-the-plain-hamper-carries-the-cordial x claude-haiku-4-5  an-extra-on-the-wrong-hamper
+grocers-explain-why-the-plain-hamper-carries-the-cordial x claude-sonnet-5   an-extra-on-the-wrong-hamper
+grocers-explain-why-the-plain-hamper-carries-the-cordial x gpt-5.6-terra     none — every point covered, no disqualifier present
+ropewalk-explain-how-an-order-becomes-a-coil x claude-haiku-4-5              none — every point covered, no disqualifier present
+ropewalk-explain-how-an-order-becomes-a-coil x claude-sonnet-5               none — every point covered, no disqualifier present
+ropewalk-explain-how-an-order-becomes-a-coil x gpt-5.6-terra                 none — every point covered, no disqualifier present
+tramshed-explain-why-the-two-boards-disagree x claude-haiku-4-5              none — every point covered, no disqualifier present
+tramshed-explain-why-the-two-boards-disagree x claude-sonnet-5               none — every point covered, no disqualifier present
+tramshed-explain-why-the-two-boards-disagree x gpt-5.6-terra                 none — every point covered, no disqualifier present
+```
+
+**The disqualifier both reds are read as, with the grader's spans quotable
+beside it.** `an-extra-on-the-wrong-hamper` is the grocers key's second
+disqualifier: "the answer claims that the cordial reached Mrs Beech's hamper
+through a mix-up of orders or an extra applied to the wrong hamper". On the
+haiku cell the archived evidence span is "This appends to the list object.
+Since Mrs Beech's hamper also points to that same list object, the append
+modifies what Mrs Beech's hamper contains."; on the sonnet cell it is "Mrs
+Beech's hamper dict still holds a reference to `STANDARD` — the same object
+Col. Ashton's order mutated — so her docket enumerates all five items,
+cordial included". Both spans are verbatim in their deliverables under the
+instrument's normalisation — the rulings stand under §76.6's span rule — and
+both cells covered **every planted point of the key**, said here while
+reading the cells and never as a score. The verdicts are the gate's and they
+stand; whether the owner's holistic read of those two answers agrees with
+the gate's reading of those spans is exactly what §76.2's check exists to
+say, and §115 records where that check stands.
+
+**Zero demotions — the departure from §101, where there were two.** Every
+one of the round's 63 archived rulings quotes a span the deliverable
+contains under the instrument's normalisation, so §76.6's rule — no quotable
+span, no coverage — checked 63 quotations and demoted none, and no archive
+of this round carries `verified: false`. The gate policed the instrument's
+quotations exactly as in round 11 and this time found nothing to demote.
+
+**That is the whole of the verdict reading, and no fraction is computed over
+it.** Counting covered points while reading a cell is §82's allowance;
+presenting a coverage fraction as a result is the kill-rate move ADR-0004
+and ADR-0005 both refuse, and none appears here or anywhere in this record:
+the two grocers cells are red cells with a locatable reason — a named
+disqualified claim, its spans quoted above — not shares of a result.
+
+**What the named rulings say, read across the nine cells.** Every planted
+point of all three keys was covered by every answer — the gate did not
+separate this round on omitted facts of the code, the way §89's and §101's
+rounds separated, but on the disqualifier clause of one key; the round's
+proof that the keys separate on planted facts too is the foil side of §109,
+where every foil failed on exactly those facts.
+
+**What the collection rule archived: nothing, because there was nothing.**
+§67.4's rule, narrowed to a single path for this gate, collects the
+prompt-named `ANSWER.md` out of the workdir diff and archives everything
+else. All nine diffs touch `ANSWER.md` and no other file, so the rule is
+unexercised this round as it was in rounds 10 and 11, rather than proved:
+no scratch note, no source exploration and no repository edit reached a
+diff. And the deliverable the gate graded is the file, never the final
+message — production mode is where **pointer prose is structurally
+impossible** (§82), and this round is that sentence's third paid
+demonstration.
+
+### 113. The coverage table, as the lint prints it
+
+`uv run ai-bench lint-v1` reports **`lint clean: 139 task(s)`** and prints:
+
+```
+coverage: category x surface x language
+  category                   surface      language    count
+  bug-fix                    application  python      6
+  bug-fix                    application  typescript  3
+  feature-dev                application  python      71
+  feature-dev                application  typescript  3
+  refactor                   application  python      18
+  refactor                   application  typescript  3
+  test-authoring             application  python      3
+  codebase-comprehension     application  python      7
+  fault-location             application  python      6
+  fault-location             application  typescript  3
+  code-review                application  python      8
+  code-review                application  typescript  2
+  investigation              application  python      3
+  requirement-decomposition  application  python      3
+  performance-optimisation   -            -           0
+  unclassified               -            -           0
+```
+
+**`codebase-comprehension application python 7` is the round's acceptance
+figure**, and it is the line that read `4` in the table §102 quoted. The row
+counts the category and not the shape: four locate-style tasks and the
+round's three explain-style ones share it, and the explain shape's arrival
+is visible as the row's 4 → 7 and in §107.8's register, not as a row of its
+own. The rest of the table is §102's exactly: round 12 authored no task in
+any other category and re-ran none, so the `python` column stands at **125**
+and the five `typescript` rows are round 7's still.
+
+**`codebase-comprehension × typescript` is disclosed as the zero it is, and
+it is zero by absence — which is all the table can express.** §64's shape,
+unchanged: the category prints its Python row and nothing else; there is no
+`codebase-comprehension … typescript 0` line and **the lint was not
+changed** to print one. The disclosure lives here in the record's prose:
+heap 3 stays on Python until the grader has a record behind it (§76.10,
+§106.2), §85–§93 and §97–§105 are that record's first two instalments and
+this record is its third, and the TypeScript cell says nothing yet by the
+round's own design rather than by omission. And **`performance-optimisation`
+is still disclosed as a zero row** — heap 4, untouched by this round,
+printing in the `- - 0` shape a real zero prints.
+
+**No zero-exemplar moved this round, so the standing sentences are verified
+rather than edited.** The category already carried tasks, so no zero row
+became a filled one and no checked-in sentence was falsified: the
+`coverage_table` docstring (`src/ai_benchmark/firstparty_v1.py`) still reads
+"`performance-optimisation` is one of the categories reading zero today"
+with `requirement-decomposition` in its was-one-until clause, `CONTEXT.md`'s
+**coverage table** glossary entry still carries `performance-optimisation`
+as its current zero-row example, and the round-7/8 exemplar pins and the
+round-10-record pins still name `performance-optimisation` as the category
+reading zero. All of them are **verified, not edited**, and this record's
+suite pins their unchanged form the way the quoted figures are pinned.
+
+### 114. The false-red shape did not recur, and the loader's move is landed
+
+**The sentence a future round planner reads, stated plainly: across all nine
+production answers, no planted point was refused anywhere — all 45
+point-rulings are covered with verified spans — so the false-red shape
+§104's addendum found had no opportunity to recur, and did not.** That shape
+was the gate refusing planted points an answer states in its own text but
+outside the piece naming the change — a multi-clause point met by no single
+evidence span — and §106.1 ruled the author's side of the fork against it:
+from this round on a planted point is written **one-clause-tight**, and this
+round's three keys are the first written under that discipline. On this
+round's production prose the shape is absent in as many words: not one of
+the 45 point-rulings is a refusal, so there is no refused point for the
+shape to have appeared in. That is consistent with §106.1's discipline doing
+what it was ruled to do, and it is **one round of evidence on the easy
+action** — the case §76.8 named, where the code itself is the
+quasi-ground-truth and each point is a fact a single line states — and the
+owner's labels are the check's other half: §115 records where they stand,
+and the dated addendum that records them completes this reading. **Neither
+reading reopens §106.1 here**: that ruling's own sentence keeps the
+instrument path available if the shape reappears under the new discipline,
+and nothing happened this round to invoke it.
+
+**The loader's move, recorded as landed.** §106.5 named it and §107.5
+registered it, and it is in the code the round swept under:
+`codebase-comprehension` is `_POINT_CATEGORIES`' first **point-optional**
+member (`_POINT_OPTIONAL_CATEGORY`), `investigation` and
+`requirement-decomposition` must ship a points key and this category may,
+the key on disk decides the shape, and a task shipping both an
+accepted-answer key and a points key is refused as two ground truths for one
+deliverable. The category's existence proof is dispatched by the same key on
+disk (`_the_comprehension_proof_the_key_on_disk_asks_for`): a point-keyed
+comprehension task takes `investigation`'s registered two-sided form —
+§109's gate — and its terrain exemption reaches **an explain-style task
+alone**, consulted by key shape through `_terrain_exemption` with a reason
+of the category's own. And the sentence the move is incomplete without: **the
+category's four locate-style tasks kept all three terrain rules**
+(`prompt-names-a-key-location`, `prompt-word-narrows-to-the-accepted-module`,
+`accepted-class-is-the-only-class`) **and their locate proof** — every
+accepted location resolving in the starting repository — exactly as before
+the round. The loader comment that once expected explain-style
+comprehension to be graded by held-out tests is superseded, as §106.2 said:
+the file now carries the point-optional registration instead.
+
+### 115. What this round cannot say
+
+Refusals first registered in §82–§83 and §95, restated against the numbers;
+they all still hold.
+
+- **No coverage-fraction reading of any kind.** §112 names the disqualifier
+  and quotes its spans, and counts nothing into a score. No fraction over
+  planted points is computed anywhere in this record, in figures or in
+  words — "four of five covered" as a score is the second quality metric
+  wearing `resolved`'s name, refused by ADR-0004 for mutants and ADR-0005
+  for points. The round's 7 of 9, 2 of 3 and 3 of 3 are resolution lines
+  over cells, the one denominator this record has.
+- **Covered is not brilliant — the narrowing, in as many words.** Covering
+  every planted point does not certify a good explanation: an agent can
+  cover every planted point with a mediocre one — the walk traced, the
+  load-bearing facts named, the edges listed, and still an explanation
+  nobody should hand a newcomer — the trade §76.5 disclosed when the
+  verdict shape was ruled. So a heap-3 cell is to be read for what it
+  measures — the deliverable covered the author's planted points and made
+  no disqualified claim — and never as a certificate of quality beyond its
+  key. This round the narrowing has seven resolved cells to guard, the most
+  any point-gate round has had, and it guards the two red ones too: a
+  present disqualifier means the answer made the key's disqualified claim,
+  not that its explanation was worthless.
+- **The transfer gap, restated from §79.4, §81.4, §92 and §104.** A met
+  calibration bar would have proved the grader judges argued prose against
+  a known truth — not that it judges prose with no truth behind it. This
+  round met no calibration bar and ran no new experiment: what certified
+  the instrument is still §86's proofs, extended by §98 and §109 to six
+  point-keyed tasks' keys. The proofs' truth is still the author's planted
+  truth, so what remains unproved is exactly what §79.4 named, and the
+  check registered to watch it is the owner's, below — the check that on
+  round 11's cells found the gap open on two cells in one direction
+  (§104's addendum).
+- **The owner's ~9 agree/disagree labels: asked for when this record was
+  written, and not yet given.** §76.2 ruled and §77.2 registered a
+  disclosed, non-gating check riding the round's own swept heap-3 cells:
+  the owner labels agree/disagree on each of the nine verdicts above,
+  reading each answer file beside its task's planted key. They were asked
+  for in the orchestrator session when this record was written, and the
+  owner has not yet supplied them; they will be recorded in a **dated
+  addendum beside this section**, exactly as given, when they are given —
+  §92's and §104's precedent, both of which recorded labels supplied after
+  their records were written. The check gates nothing and the nine verdicts
+  above stand regardless; and this round's labels are also **§106.1's first
+  test** — the two cells §112 reads on a claimed disqualifier are the cells
+  a holistic read would most naturally contest — so the addendum is what
+  completes §114's reading rather than a courtesy.
+- **No cross-action difficulty comparison.** 7 of 9 here is not to be read
+  against round 11's 0 of 9 or round 10's 1 of 9: an explanation, a
+  decomposition and a proposal are different deliverables graded by
+  different keys, the round registered no contrast that could separate
+  action from difficulty, and nine cells is not a rate's denominator.
+  §76.8 named this action the easy case in advance — the code itself is
+  the quasi-ground-truth — which is both why the comparison tempts and why
+  it is refused.
+- **Nothing about `codebase-comprehension` × `typescript`.** No row of this
+  round is a TypeScript row; the cell is a disclosed zero (§113) and no
+  figure here says what an explanation in TypeScript would cost, take or
+  resolve at.
+- **No Codex rung.** `gpt-5.6-terra` is one model and one model is not a
+  ladder. `reconcile_v1.LADDER_MODELS` is the two claude-code models, so
+  the rung floor §116 quotes is claude-code's alone and the Codex column's
+  three resolved cells do not enter it.
+- **No cross-harness turn comparison.** §111's 27, 22 and 25 are counted
+  differently on each side of the harness boundary, so the Codex column
+  sitting between the two claude columns is a fact about two counting
+  rules meeting, not about three harnesses working.
+- **No multiplier.** All three tasks are declared controls with no
+  construction block, so `calibrate-v1`'s `codebase-comprehension` table
+  stays what it was — the controls divided by themselves at **1.00×**, now
+  on seven tasks (§116). The absence is the design: round 12 moves no
+  knob's counter and the kill discipline does not count it (§107.8).
+
+### 116. Replay, the readers, and heap 3 closed
+
+**Every round-12 log replays to the verdicts this record quotes, with the
+network unplugged.** A replay of a point-keyed row is handed **no grader
+factory** — `--replay` withholds it by construction — so each verdict is
+recomputed from the cell's archived rulings against the deliverable the diff
+collects, span by span, and a row whose archive were missing or stale would
+be refused loudly rather than re-graded. No client was constructed, no key
+was read, no call was made. Each of the four logs was replayed into a
+scratch dataset of its own:
+
+```
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-a.jsonl --data /tmp/r12replay/a.jsonl
+  evaluated 1 runs over 139 tasks (1 resolved)
+  merged 1 records into /tmp/r12replay/a.jsonl (1 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-b.jsonl --data /tmp/r12replay/b.jsonl
+  evaluated 2 runs over 139 tasks (1 resolved)
+  merged 2 records into /tmp/r12replay/b.jsonl (2 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-c.jsonl --data /tmp/r12replay/c.jsonl
+  evaluated 3 runs over 139 tasks (2 resolved)
+  merged 3 records into /tmp/r12replay/c.jsonl (3 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-d.jsonl --data /tmp/r12replay/d.jsonl
+  evaluated 3 runs over 139 tasks (3 resolved)
+  merged 3 records into /tmp/r12replay/d.jsonl (3 total)
+```
+
+9 rows and 7 resolved, which is §108's resolution line reached a second way.
+Every merged record carries its log row's own measurements — cost, turns,
+tokens, latency, version — because replay re-grades the diff and never
+re-runs the agent, and for a Codex row that is the whole of the claim that a
+table-derived cost is not recomputed on the way through.
+
+**And the readers count the round with no flag at all.** Round 12's
+claude-code rows are Python, so `reconcile-v1` and `calibrate-v1` pick up six
+of the nine by default — the three Codex rows dropped by the agent selection,
+exactly as rounds 8, 10 and 11's were:
+
+```
+  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), 67 constructed
+  runs       249 over 125 task(s)
+  rounds     10 round(s): as-of 2026-08-04, as-of 2026-08-05, sweep round-2, sweep round-3, sweep round-4, sweep round-5, sweep round-8, sweep round-10, sweep round-11, sweep round-12
+             8 keyed on a sweep id, 2 on an as-of date
+```
+
+`sweep round-12` appears in `reconcile-v1`'s report exactly once, in that
+rounds line, and `codebase-comprehension` appears in it not at all — the
+report is about constructed tasks and the knobs they declare, and this round
+declared none. **The prediction reconciliation is unmoved**: 67 constructed
+tasks, 67 swept, and every knob's counter where round 8 left it. What
+`calibrate-v1` holds for this category is the same table grown, not a new
+one:
+
+```
+category codebase-comprehension
+   baseline mean cost   claude-haiku-4-5 $0.0646 (n=7), claude-sonnet-5 $0.1381 (n=7)
+   baseline mix         7 single-file; 7 hand-authored
+
+   profile      tasks  claude-haiku-4-5  claude-sonnet-5  rung floor
+   (zero-knob)  7      1.00x (n=7)       1.00x (n=7)      haiku-solvable (n=7)
+```
+
+The controls divided by themselves, now on seven tasks — the four
+locate-style and the round's three — and what the corpus has for this action
+is a **denominator** at each ladder model, which is what a later round's
+constructed task would be read against. The rung floor reads
+**haiku-solvable** because the cheaper ladder model resolved cells of the
+category, and it is claude-code's ladder alone (§115). The published tables
+of earlier rounds are unmoved by any of this: no earlier section was edited,
+and the pin suites that read the live corpus were caught up to the three
+landed tasks and the nine landed rows with the moved figures named, before
+this record was written.
+
+**Nothing from the proofs reached `data/unified.jsonl`.** No reference
+answer, no foil, no proof ruling and no gate ruling landed there — a record
+in that dataset keeps meaning one thing, a combination's result on a
+benchmark instance (§76.11), and the dataset itself is gitignored, round 8's
+standing rule: the round's nine records are not *in* the repository, they
+**replay from it** — from the committed logs and rulings archives, offline,
+into any dataset a reader names, exactly as above. The proof rulings live
+under the tasks' own `proofs/` subtrees, where §109 reads them. The
+free-text archive §34.4 grew from **324 answers across eleven sweeps to 333
+across twelve** — round 12's nine final messages, archived and read by no
+verdict — while the registered split the A″ readings are computed over stays
+**306 rows, 63 of them stratum A**: the nine `round-12` cells are rows that
+archive never registered, out of that read rather than an error in it
+(§84.1, §93).
+
+**Heap 3 closes.** Explain-style `codebase-comprehension` was the last
+mechanical fill §103 licensed and §106 ruled, and it now has three tasks,
+nine graded cells, a two-sided proof behind each key and a majority-green
+result read span by span — the corpus's third action whose ground truth is
+planted points, and the first the gate resolved more cells of than not. The
+heap's three actions — an investigation's proposal (§85–§93), a
+decomposition (§97–§105) and an explanation (this record) — are all swept,
+and nothing of heap 3 is left to fill on Python; its TypeScript cells stay
+disclosed zeros, and heap 4's `performance-optimisation` stays the disclosed
+zero row it is. **§117 is the next free section number**, and whatever comes
+next — a round's rulings, an amendment, a record, this round's owner-labels
+addendum being a dated addendum beside §115 rather than a numbered section —
+takes it and what follows it; nothing above is renumbered.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect
