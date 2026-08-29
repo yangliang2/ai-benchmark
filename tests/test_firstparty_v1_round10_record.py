@@ -1436,19 +1436,21 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         assert line not in printed, line
     # 125 task(s) and 58 control(s) until round 13 authored its three
     # `performance-optimisation` tasks, Python controls all — one by ticket
-    # 04, two by ticket 05. The runs line counts tasks with rows and is
-    # untouched until that round's sweep.
+    # 04, two by ticket 05 — and that round's sweep (2026-08-29, six
+    # claude-code Python rows of its nine) then grew the runs line and
+    # joined the round list.
     assert (
         "  task set   tasks/first-party-v1 — 128 task(s): 61 control(s), "
         "67 constructed"
     ) in printed
-    assert "  runs       249 over 125 task(s)" in printed
+    assert "  runs       255 over 128 task(s)" in printed
     assert (
-        "  rounds     10 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10, sweep round-11, sweep round-12"
+        "sweep round-8, sweep round-10, sweep round-11, sweep round-12, "
+        "sweep round-13"
     ) in printed
-    assert "             8 keyed on a sweep id, 2 on an as-of date" in printed
+    assert "             9 keyed on a sweep id, 2 on an as-of date" in printed
     assert printed.count(f"sweep {_SWEEP}") == 1
     assert _CATEGORY not in printed, (
         "the round declared no contrast, so it reaches the report as a "
@@ -1491,13 +1493,15 @@ def test_nothing_from_the_round_reached_the_unified_dataset(
         ):
             assert needle not in flat, needle
 
-    # Round 11's sweep has since landed nine more answers (2026-08-26) and
-    # round 12's nine more (2026-08-28); §93's claim is about the archive as
+    # Round 11's sweep has since landed nine more answers (2026-08-26),
+    # round 12's nine more (2026-08-28) and round 13's nine more
+    # (2026-08-29); §93's claim is about the archive as
     # this round left it, so they are scoped back out by sweep id, never by a
     # log filename, and the section's figures stay unretyped.
     archived = [
         run for run in runs
-        if run.output and run.sweep not in {"round-11", "round-12"}
+        if run.output
+        and run.sweep not in {"round-11", "round-12", "round-13"}
     ]
     assert len(archived) == _ARCHIVE_NOW
     assert len(
@@ -1506,7 +1510,7 @@ def test_nothing_from_the_round_reached_the_unified_dataset(
     stratum_a = [
         run
         for run in runs
-        if run.sweep not in {_SWEEP, "round-11", "round-12"}
+        if run.sweep not in {_SWEEP, "round-11", "round-12", "round-13"}
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
     assert len(stratum_a) == _STRATUM_A

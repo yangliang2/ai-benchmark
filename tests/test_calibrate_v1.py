@@ -604,13 +604,12 @@ _PUBLISHED = {
         "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "unsolved (n=3)"),
     },
     # Round 13's category, authored whole (one task by ticket 04, two by
-    # ticket 05) and not yet swept: three declared controls, so one zero-knob
-    # row, every figure a "-" because no run exists — round 8's
-    # `test-authoring` arrival again. The tasks column reads 3 because a
-    # `Cell`'s members are every task of the set with this key, swept or
-    # not; round 13's sweep (ticket 06) then prices the row.
+    # ticket 05) and priced by its sweep (2026-08-29, nine cells): three
+    # declared controls, so one zero-knob row. Every cell of the nine
+    # resolved — the two claude-code columns included — so the rung floor
+    # reads haiku-solvable.
     "performance-optimisation": {
-        "(zero-knob)": ("3", "-", "-", "-"),
+        "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "haiku-solvable (n=3)"),
     },
 }
 
@@ -624,9 +623,7 @@ _PUBLISHED_DENOMINATORS = {
     "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",
     "investigation": f"{_HAIKU} $0.0843 (n=3), {_SONNET} $0.2368 (n=3)",
     "requirement-decomposition": f"{_HAIKU} $0.0795 (n=3), {_SONNET} $0.2751 (n=3)",
-    # Authored and unswept, so no mean exists on either model: "-" over n=0,
-    # until round 13's sweep prices the category's controls.
-    "performance-optimisation": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
+    "performance-optimisation": f"{_HAIKU} $0.0650 (n=3), {_SONNET} $0.1608 (n=3)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other

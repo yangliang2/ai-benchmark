@@ -209,9 +209,11 @@ _ROUND_12_CLAUDE_CODE_ROWS = 6
 # And round 13's three `performance-optimisation` tasks, Python controls
 # graded by the complexity proxy (ADR-0006). Ticket 04 moved the live
 # task-set arithmetic by one and ticket 05's two further tasks by two more;
-# the round's sweep has not landed, so they join no runs-line or round-list
-# figure.
+# its sweep then landed on 2026-08-29 — nine rows, six of them claude-code
+# Python ones that survive both selections the way this round's six did.
 _ROUND_13_TASKS = 3
+_ROUND_13_ROWS = 9
+_ROUND_13_CLAUDE_CODE_ROWS = 6
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
@@ -1369,9 +1371,11 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     ]
     # `_ALL_ROWS` was every row in the directory when §75 was recorded;
     # round 10's sweep landed nine more on 2026-08-24, round 11's nine on
-    # 2026-08-26 and round 12's nine on 2026-08-28, the only rows since.
+    # 2026-08-26, round 12's nine on 2026-08-28 and round 13's nine on
+    # 2026-08-29, the only rows since.
     assert len(everything) == (
         _ALL_ROWS + _ROUND_10_ROWS + _ROUND_11_ROWS + _ROUND_12_ROWS
+        + _ROUND_13_ROWS
     )
     assert len([run for run in everything if run.sweep == _SWEEP]) == _ROUND_8_ROWS
     selected = reconcile_v1.select_agent(
@@ -1381,12 +1385,14 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     selected = reconcile_v1.select_language(
         declared, selected, reconcile_v1.DEFAULT_LANGUAGE, explicit=False
     )
-    # Round 10's, round 11's and round 12's six claude-code Python rows each
+    # Round 10's, round 11's, round 12's and round 13's six claude-code
+    # Python rows each
     # now survive both selections exactly as this round's six do; §75's own
     # figure stays unretyped.
     assert len(selected) == (
         _CLAUDE_CODE_PYTHON_RUNS + _ROUND_10_CLAUDE_CODE_ROWS
         + _ROUND_11_CLAUDE_CODE_ROWS + _ROUND_12_CLAUDE_CODE_ROWS
+        + _ROUND_13_CLAUDE_CODE_ROWS
     )
     assert len([run for run in selected if run.sweep == _SWEEP]) == (
         _CLAUDE_CODE_ROUND_8_ROWS
@@ -1401,20 +1407,22 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     ) in reconciled
     assert (
         f"  runs       "
-        f"{_CLAUDE_CODE_PYTHON_RUNS + _ROUND_10_CLAUDE_CODE_ROWS + _ROUND_11_CLAUDE_CODE_ROWS + _ROUND_12_CLAUDE_CODE_ROWS}"
+        f"{_CLAUDE_CODE_PYTHON_RUNS + _ROUND_10_CLAUDE_CODE_ROWS + _ROUND_11_CLAUDE_CODE_ROWS + _ROUND_12_CLAUDE_CODE_ROWS + _ROUND_13_CLAUDE_CODE_ROWS}"
         f" over "
-        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_10_TASKS + _ROUND_11_TASKS + _ROUND_12_TASKS} "
+        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_10_TASKS + _ROUND_11_TASKS + _ROUND_12_TASKS + _ROUND_13_TASKS} "
         "task(s)"
     ) in reconciled
     # `sweep round-10` joined the round list when its sweep landed, the
-    # second round after 5 the default reading counts, and `sweep round-11`
-    # and `sweep round-12` followed it as the third and fourth.
+    # second round after 5 the default reading counts, and `sweep round-11`,
+    # `sweep round-12` and `sweep round-13` followed it as the third, fourth
+    # and fifth.
     assert (
-        "  rounds     10 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10, sweep round-11, sweep round-12"
+        "sweep round-8, sweep round-10, sweep round-11, sweep round-12, "
+        "sweep round-13"
     ) in reconciled
-    assert "             8 keyed on a sweep id, 2 on an as-of date" in reconciled
+    assert "             9 keyed on a sweep id, 2 on an as-of date" in reconciled
     # The round declared no contrast, so it reaches the report as a label and
     # nothing else, and the prediction reconciliation is where it was.
     assert reconciled.count(f"sweep {_SWEEP}") == 1
@@ -1525,13 +1533,15 @@ def test_heap_one_closes_and_the_archive_round_nine_waits_on_has_grown() -> None
     ]
     # The archive has grown again since §75 counted it — round 10's sweep
     # landed nine more answers on 2026-08-24, round 11's nine more on
-    # 2026-08-26 and round 12's nine more on 2026-08-28 — so §75's own count
+    # 2026-08-26, round 12's nine more on 2026-08-28 and round 13's nine
+    # more on 2026-08-29 — so §75's own count
     # is re-derived over the rows that
     # existed then, scoped by sweep id and never by a log filename; the
     # section's figures stay unretyped.
     assert len([
         run for run in archive
-        if run.output and run.sweep not in {"round-10", "round-11", "round-12"}
+        if run.output
+        and run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
     ]) == _ARCHIVE_NOW
     assert _ARCHIVE_NOW == _ARCHIVE_BEFORE + _ROUND_8_ROWS
 

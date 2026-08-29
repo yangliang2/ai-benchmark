@@ -175,10 +175,14 @@ def registered(runs: list[firstparty_v1.Run]) -> list[firstparty_v1.Run]:
     """The corpus §80.4 registered the split over, which §81's run then spent:
     every sweep before round 10's, which landed the first `investigation` rows
     on 2026-08-24, round 11's `requirement-decomposition` rows following on
-    2026-08-26 and round 12's `codebase-comprehension` rows on 2026-08-28.
+    2026-08-26, round 12's `codebase-comprehension` rows on 2026-08-28 and
+    round 13's `performance-optimisation` rows on 2026-08-29.
     Scoped by sweep id, never by a log filename; the registered
     counts below stay §80.4's own, unretyped."""
-    return [run for run in runs if run.sweep not in {"round-10", "round-11", "round-12"}]
+    return [
+        run for run in runs
+        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+    ]
 
 
 @pytest.fixture(scope="module")
@@ -275,14 +279,14 @@ def test_the_split_re_derived_offline_equals_the_registered_counts(
     its own task's held-out tests. No grader is built and no call is made,
     which is what lets the register be written before the first paid ruling.
     """
-    # 49 files since round 10's four sweep logs joined the directory on
-    # 2026-08-24, round 11's four on 2026-08-26 and round 12's four on
-    # 2026-08-28. The corpus §80.4
+    # 53 files since round 10's four sweep logs joined the directory on
+    # 2026-08-24, round 11's four on 2026-08-26, round 12's four on
+    # 2026-08-28 and round 13's four on 2026-08-29. The corpus §80.4
     # registered — `_LOGS_HELD` logs' rows — is scoped from every row by sweep
     # id and re-derived below at its own counts, unretyped; that its rows sit
     # in exactly `_LOGS_HELD` of the files is asserted with the guardrail
     # test below.
-    assert len(logs) == 49
+    assert len(logs) == 53
     assert len(registered) == _ANSWERS
     assert len(stratum_a) == _STRATUM_A
     assert len(registered) - len(stratum_a) == _STRATUM_B
@@ -580,21 +584,25 @@ def test_no_new_sweep_row_has_landed_under_the_run_log_directory(
     appeared.
     """
     # The directory grew by round 10's four sweep logs and nine rows, then by
-    # round 11's four and nine, then by round 12's four and nine, keyed on
-    # what the rows carry; the registered
+    # round 11's four and nine, then by round 12's four and nine, then by
+    # round 13's four and nine, keyed on what the rows carry; the registered
     # corpus is scoped back out by sweep id, its counts unretyped.
-    assert len(logs) == 49
-    late = [run for run in runs if run.sweep in {"round-10", "round-11", "round-12"}]
-    assert len(late) == 27
+    assert len(logs) == 53
+    late = [
+        run for run in runs
+        if run.sweep in {"round-10", "round-11", "round-12", "round-13"}
+    ]
+    assert len(late) == 36
     assert len(runs) - len(late) == _ANSWERS
-    # A registered log is one no round-10, round-11 or round-12 row landed in — keyed on
+    # A registered log is one no round-10, round-11, round-12 or round-13
+    # row landed in — keyed on
     # what its rows carry, and counting round 7's two empty logs the way the
     # register did (a file with no rows is still a file the split was
     # registered over).
     held = [
         log for log in logs
         if all(
-            run.sweep not in {"round-10", "round-11", "round-12"}
+            run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
             for run in firstparty_v1.load_runs(log)
         )
     ]
@@ -603,11 +611,12 @@ def test_no_new_sweep_row_has_landed_under_the_run_log_directory(
         "a round-9 row exists: the split §80.4 registered has moved under it, "
         "which is a stop-and-report rather than a re-registration"
     )
-    # `round-10`, `round-11` and `round-12` are the sweep ids the landed
+    # `round-10`, `round-11`, `round-12` and `round-13` are the sweep ids
+    # the landed
     # form admits beyond §80.4's eight; the registered census constant stays as
     # registered.
     assert {run.sweep for run in runs} == _SWEPT_SO_FAR | {
-        "round-10", "round-11", "round-12"
+        "round-10", "round-11", "round-12", "round-13"
     }
 
     counted = prose()

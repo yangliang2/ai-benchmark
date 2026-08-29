@@ -1008,15 +1008,16 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     # nothing else — 41 logs and 315 rows at registration, plus the sweep's
     # four logs and nine `round-11` rows, keyed on what the rows carry.
     # Round 12's sweep has since landed nine `round-12` rows in four more
-    # logs (2026-08-28); a claim about what stood between this registration
+    # logs (2026-08-28), and round 13's nine `round-13` rows in four more
+    # (2026-08-29); a claim about what stood between this registration
     # and the round's own sweep scopes them back out by sweep id, never by a
     # log filename.
-    assert len(logs) == 49
-    assert len(runs) == 333
+    assert len(logs) == 53
+    assert len(runs) == 342
     late = [run for run in runs if run.sweep == _SWEEP]
     assert len(late) == _CELLS * 3
-    since = [run for run in runs if run.sweep == "round-12"]
-    assert len(since) == 9
+    since = [run for run in runs if run.sweep in {"round-12", "round-13"}]
+    assert len(since) == 18
     assert len(runs) - len(late) - len(since) == 315, (
         "nothing else landed in between"
     )
@@ -1070,7 +1071,7 @@ def test_the_round_11_cells_are_the_nine_registered(
 
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", _ANCHOR_ROUND, _SWEEP, "round-12",
+        "round-8", _ANCHOR_ROUND, _SWEEP, "round-12", "round-13",
     }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
 
 

@@ -190,13 +190,14 @@ def stratum_a(
     does for stratum B as well. Scoped to the rows §77.2 registered — every
     sweep before round 10's, which landed the first `investigation` rows on
     2026-08-24, round 11's `requirement-decomposition` rows following on
-    2026-08-26 and round 12's `codebase-comprehension` rows on 2026-08-28 — by
+    2026-08-26, round 12's `codebase-comprehension` rows on 2026-08-28 and
+    round 13's `performance-optimisation` rows on 2026-08-29 — by
     sweep id, never by a log filename; what this fixture names
     is the archive the gate was read over, and that archive is spent.
     """
     return [
         run for run in runs
-        if run.sweep not in {"round-10", "round-11", "round-12"}
+        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
 
@@ -317,12 +318,13 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
     tests. That is the machine verdict the grader will be scored against, and
     computing it before the grader runs peeks at nothing the grader will see.
     """
-    # 49 files since round 10's, round 11's and round 12's four sweep logs
-    # each joined the directory; every derivation below is scoped to the registered rows by
-    # sweep id.
-    assert len(logs) == 49
+    # 53 files since round 10's, round 11's, round 12's and round 13's four
+    # sweep logs each joined the directory; every derivation below is scoped
+    # to the registered rows by sweep id.
+    assert len(logs) == 53
     registered = [
-        run for run in runs if run.sweep not in {"round-10", "round-11", "round-12"}
+        run for run in runs
+        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
     ]
     assert len(registered) == 306
 
@@ -467,7 +469,8 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
         if tasks[run.task_id].category == "code-review"
     )
     registered = [
-        run for run in runs if run.sweep not in {"round-10", "round-11", "round-12"}
+        run for run in runs
+        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
     ]
     synthetic_calls = len(registered) - len(stratum_a)
     assert (keyed_calls, review_calls, synthetic_calls) == (115, 78, 243)
@@ -1078,8 +1081,9 @@ def test_nothing_of_round_9_has_been_swept_and_the_action_landed_in_round_10(
     # `round-10` joined on 2026-08-24 — the round that filled heap 3's first
     # cells — `round-11` on 2026-08-26, the round that filled its second
     # action's, and `round-12` on 2026-08-28, the round that filled its last;
-    # still no `round-9`, which is this test's claim.
+    # `round-13` on 2026-08-29, heap 4's one action; still no `round-9`,
+    # which is this test's claim.
     assert {run.sweep for run in runs} == {
         None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", "round-10", "round-11", "round-12",
+        "round-8", "round-10", "round-11", "round-12", "round-13",
     }

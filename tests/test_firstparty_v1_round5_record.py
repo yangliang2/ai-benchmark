@@ -716,14 +716,11 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     # category the sentence above held the door for. Round 12's sweep
     # (2026-08-28) then moved `codebase-comprehension`'s denominators from
     # n=4 to n=7, so its live ratio below is the seven controls' and no
-    # longer the 2.12 §48 quoted. Round 13's ticket 04 has now authored
-    # `performance-optimisation`'s first task, so that category is authored
-    # but unswept — exactly round 8's `test-authoring` arrival the comment
-    # above names as the precedent, printing "-" for both means — and it
-    # stays the one unpriced category until round 13's sweep (ticket 06)
-    # lands and restores the stronger empty-set claim. The ratio reading
-    # below is unweakened: an unpriced category contributes no ratio.
-    assert unpriced == {"performance-optimisation"}
+    # longer the 2.12 §48 quoted. Round 13's sweep (2026-08-29) priced
+    # `performance-optimisation`, the last authorable category to arrive, so
+    # every category the table prints has priced controls behind it again
+    # and the stronger empty-set claim holds.
+    assert unpriced == set()
     assert gaps == {
         "bug-fix": 2.64,
         "investigation": 2.81,
@@ -731,6 +728,7 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
         "codebase-comprehension": 2.14,
         "fault-location": 2.58,
         "feature-dev": 2.60,
+        "performance-optimisation": 2.47,
         "refactor": 2.87,
         "requirement-decomposition": 3.46,
         "test-authoring": 2.44,

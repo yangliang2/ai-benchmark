@@ -218,10 +218,12 @@ _ROUND_12_CLAUDE_CODE_RUNS = 6
 
 # And round 13's three `performance-optimisation` tasks, Python controls
 # graded by the complexity proxy (ADR-0006). Ticket 04 moved the task-set
-# arithmetic below by one and ticket 05's two further tasks by two more; the
-# round's sweep has not landed, so no runs-line or round-list figure names
-# them yet.
+# arithmetic below by one and ticket 05's two further tasks by two more; its
+# sweep landed on 2026-08-29 — six claude-code rows that survive both
+# selections the way rounds 8's, 10's, 11's and 12's did, and three more
+# Codex ones that do not.
 _ROUND_13_TASKS = 3
+_ROUND_13_CLAUDE_CODE_RUNS = 6
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -1450,9 +1452,12 @@ def test_neither_reader_counts_a_round_7_row(
     ]
     # Every row in the directory: the corpus's Python claude-code rows, round
     # 6's thirty Codex ones, round 7's forty-two, round 8's nine, round 10's
-    # nine, round 11's nine, and round 12's nine. Two selections stand between
+    # nine, round 11's nine, round 12's nine, and round 13's nine. Two
+    # selections stand between
     # all of them and what the readers count.
-    assert len(everything) == _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9 + 9 + 9 + 9
+    assert len(everything) == (
+        _CLAUDE_CODE_PYTHON_RUNS + 30 + 42 + 9 + 9 + 9 + 9 + 9
+    )
     assert len([run for run in everything if run.sweep == _SWEEP]) == 42
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1464,7 +1469,7 @@ def test_neither_reader_counts_a_round_7_row(
     assert len(selected) == (
         _CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS
         + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS
-        + _ROUND_12_CLAUDE_CODE_RUNS
+        + _ROUND_12_CLAUDE_CODE_RUNS + _ROUND_13_CLAUDE_CODE_RUNS
     )
     assert not [run for run in selected if run.sweep == _SWEEP], (
         "section 66's claim: not one round-7 row survives the two selections"
@@ -1478,18 +1483,20 @@ def test_neither_reader_counts_a_round_7_row(
         f"{_PYTHON_CONTROLS} control(s), {_PYTHON_CONSTRUCTED} constructed"
     ) in reconciled
     assert (
-        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS + _ROUND_12_CLAUDE_CODE_RUNS} "
+        f"  runs       {_CLAUDE_CODE_PYTHON_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS + _ROUND_12_CLAUDE_CODE_RUNS + _ROUND_13_CLAUDE_CODE_RUNS} "
         f"over "
-        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS + _ROUND_12_TASKS} "
+        f"{_PYTHON_TASKS_WITH_RUNS + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS + _ROUND_12_TASKS + _ROUND_13_TASKS} "
         "task(s)"
     ) in reconciled
     # `sweep round-10` joined the round list when its sweep landed, and
-    # `sweep round-11` and `sweep round-12` after it; round 7's rows are
+    # `sweep round-11`, `sweep round-12` and `sweep round-13` after it;
+    # round 7's rows are
     # still not in it, which is the claim.
     assert (
-        "  rounds     10 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, "
         "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10, sweep round-11, sweep round-12"
+        "sweep round-8, sweep round-10, sweep round-11, sweep round-12, "
+        "sweep round-13"
     ) in reconciled
     assert "round-7" not in reconciled
     assert _TERRA not in reconciled

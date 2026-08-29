@@ -1659,24 +1659,42 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     [quoted] = fenced_blocks(note_section(
         "116. Replay, the readers, and heap 3 closed"
     ))[1:2]
-    # One quoted line has moved since §116 was recorded, named here in round
-    # 7's pattern rather than edited in the record: round 13 authored its
+    # The whole block has moved since the record was written, named here
+    # in round 7's pattern rather than edited there: round 13 authored its
     # three `performance-optimisation` tasks, Python controls all — one by
     # ticket 04, two by ticket 05 — growing the task-set line by three tasks
-    # and three controls. The round's sweep has not landed, so the runs and
-    # rounds lines are untouched.
-    stale = "  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), 67 constructed"
+    # and three controls, and the round's sweep (2026-08-29 — nine rows, six
+    # of them claude-code Python) then grew the runs line and joined the
+    # round list.
+    stale = {
+        "  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), "
+        "67 constructed",
+        "  runs       249 over 125 task(s)",
+        "  rounds     10 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
+        "sweep round-8, sweep round-10, sweep round-11, sweep round-12",
+        "             8 keyed on a sweep id, 2 on an as-of date",
+    }
     quoted_block_lines = quoted.strip("\n").splitlines()
-    assert stale in quoted_block_lines
-    assert stale not in printed
+    for line in stale:
+        assert line in quoted_block_lines, line
+        assert line not in printed, line
     for line in quoted_block_lines:
-        if line == stale:
+        if line in stale:
             continue
         assert line in printed, line
     assert (
         "  task set   tasks/first-party-v1 — 128 task(s): 61 control(s), "
         "67 constructed"
     ) in printed
+    assert "  runs       255 over 128 task(s)" in printed
+    assert (
+        "  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, "
+        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
+        "sweep round-8, sweep round-10, sweep round-11, sweep round-12, "
+        "sweep round-13"
+    ) in printed
+    assert "             9 keyed on a sweep id, 2 on an as-of date" in printed
     assert printed.count(f"sweep {_SWEEP}") == 1
     assert _CATEGORY not in printed, (
         "the round declared no contrast, so it reaches the report as a "
@@ -1725,7 +1743,13 @@ def test_nothing_from_the_proofs_reached_the_unified_dataset(
         ):
             assert needle not in flat, needle
 
-    archived = [run for run in runs if run.output]
+    # Round 13's sweep has since landed nine more answers (2026-08-29);
+    # §116's claim is about the archive as this round left it, so they are
+    # scoped back out by sweep id, never by a log filename, and the
+    # section's figures stay unretyped.
+    archived = [
+        run for run in runs if run.output and run.sweep != "round-13"
+    ]
     assert len(archived) == _ARCHIVE_NOW
     assert len(
         [run for run in archived if run.sweep != _SWEEP]
@@ -1733,7 +1757,7 @@ def test_nothing_from_the_proofs_reached_the_unified_dataset(
     stratum_a = [
         run
         for run in runs
-        if run.sweep not in {"round-10", _ANCHOR, _SWEEP}
+        if run.sweep not in {"round-10", _ANCHOR, _SWEEP, "round-13"}
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
     assert len(stratum_a) == _STRATUM_A

@@ -86,12 +86,13 @@ def answers() -> list[calibration.ArchivedAnswer]:
     # This suite pins §81's run, whose inputs were the rows that existed at
     # that run — every sweep before round 10's, which landed the first
     # `investigation` rows the day after, round 11's `requirement-decomposition`
-    # rows following on 2026-08-26 and round 12's `codebase-comprehension`
-    # rows on 2026-08-28. Scoped by sweep id, never by a log
+    # rows following on 2026-08-26, round 12's `codebase-comprehension`
+    # rows on 2026-08-28 and round 13's `performance-optimisation` rows on
+    # 2026-08-29. Scoped by sweep id, never by a log
     # filename; the constants below stay §81's own, unretyped.
     runs = [
         run for log in logs for run in load_runs(log)
-        if run.sweep not in {"round-10", "round-11", "round-12"}
+        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
     ]
     return calibration.split(tasks, runs)
 
