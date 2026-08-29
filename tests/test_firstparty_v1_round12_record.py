@@ -196,13 +196,23 @@ _ARCHIVE_BEFORE = 324
 _ARCHIVE_NOW = 333
 _STRATUM_A = 63
 
-# Section 113's zero-exemplar sites, verified unmoved — no zero row became a
-# filled one this round, so the round-11-era sentences stand as they were.
+# Section 113's zero-exemplar sites. Verified unmoved by round 12 itself —
+# no zero row became a filled one that round — and then moved by round 13's
+# ticket 04, which filled `performance-optimisation`'s Python cell: the last
+# authorable zero row, with no authorable successor category to re-point at,
+# because the only `- - 0` row left is `unclassified`'s, permanent and
+# structural — the loader refuses any task declaring it (the plan-review
+# ruling of 2026-08-29). The glossary sentence therefore changed shape — no
+# "today" exemplar remains — and this pin moves with it; §113's own quoted
+# prose stays what round 12 wrote.
 _CONTEXT_SENTENCE = (
-    "(`performance-optimisation` today; `test-authoring` was one until "
-    "round 8 authored its three Python tasks, `investigation` was one until "
-    "round 10 filled its Python cell, and `requirement-decomposition` was "
-    "one until round 11 filled its Python cell)"
+    "(`test-authoring` was one until round 8 authored its three Python "
+    "tasks, `investigation` was one until round 10 filled its Python cell, "
+    "`requirement-decomposition` was one until round 11 filled its Python "
+    "cell, and `performance-optimisation` was one until round 13 filled its "
+    "Python cell — the last authorable zero row, so the only `0` row still "
+    "printed is **unclassified**'s, permanent and structural because the "
+    "loader refuses any task declaring that category)"
 )
 
 
@@ -1169,16 +1179,18 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Section 113: the table as the lint prints it, whole, and the
-    zero-exemplar sites verified rather than edited.
+    zero-exemplar sites read in their caught-up form.
 
-    No zero-exemplar moved this round — the category already carried tasks —
-    so the `coverage_table` docstring, `CONTEXT.md`'s glossary entry and the
-    earlier suites' exemplar pins all still name `performance-optimisation`
-    as the category reading zero, and this test pins their unchanged form the
-    way the quoted figures are pinned. The `codebase-comprehension ×
-    typescript` zero is disclosed as zero by absence, and
-    `performance-optimisation` still prints the `- - 0` shape a real zero
-    prints.
+    No zero-exemplar moved in round 12 itself — the category already carried
+    tasks — and §113's own prose stays that record. Round 13's ticket 04 then
+    filled `performance-optimisation`'s Python cell, the last authorable zero
+    row, so the live sites this test reads moved with it: the
+    `coverage_table` docstring and `CONTEXT.md`'s glossary entry changed
+    shape (no "today" exemplar remains, because no authorable successor
+    category exists to point one at), and the zero *shape* is read off
+    `unclassified`'s row, which survives by construction — the loader
+    refuses any task declaring it. The `codebase-comprehension × typescript`
+    zero is disclosed as zero by absence, exactly as before.
     """
     coverage = firstparty_v1.coverage_table(firstparty_v1.load_task_set(_TASKS))
     python = {
@@ -1187,13 +1199,21 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
         if language == "python" and surface == "application"
     }
     assert python[_CATEGORY] == 7, "the round's acceptance figure"
-    assert sum(python.values()) == 125
+    # 125 when §113 was recorded; round 13's first `performance-optimisation`
+    # task (ticket 04) moved the live column to 126, and its ticket 05's two
+    # further tasks move it by two more.
+    assert sum(python.values()) == 126
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
     assert not [row for row in coverage if row[0] == _CATEGORY and row[3] == 0]
-    assert ("performance-optimisation", "-", "-", 0) in coverage, (
-        "the shape a real zero prints, and the docstring's example still"
+    # Round 13's ticket 04 filled `performance-optimisation`'s row — the last
+    # authorable zero — and no authorable successor exists to read the shape
+    # off, so it is read off `unclassified`'s row, which survives by
+    # construction: the loader refuses any task declaring it (the plan-review
+    # ruling of 2026-08-29).
+    assert ("unclassified", "-", "-", 0) in coverage, (
+        "the shape a real zero prints, off the one structural row left"
     )
 
     main(["lint-v1", "--tasks", str(_TASKS)])
@@ -1202,7 +1222,18 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
     [quoted] = fenced_blocks(
         note_section("113. The coverage table, as the lint prints it")
     )
-    for line in quoted.strip("\n").splitlines():
+    # One line has moved since §113 was recorded, named here in round 7's
+    # pattern rather than edited in the record: round 13's ticket 04 turned
+    # the `performance-optimisation` zero row this record quotes into the
+    # category's first Python cell — the last authorable zero row,
+    # `unclassified`'s structural one staying by construction.
+    moved = "  performance-optimisation   -            -           0"
+    quoted_lines = quoted.strip("\n").splitlines()
+    assert moved in quoted_lines
+    assert moved not in printed
+    for line in quoted_lines:
+        if line == moved:
+            continue
         assert line in printed, line
     assert [
         line.split()
@@ -1210,7 +1241,14 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
         if line.startswith("  codebase-comprehension")
     ] == [["codebase-comprehension", "application", "python", "7"]]
     assert "  codebase-comprehension     application  typescript" not in printed
-    assert "  performance-optimisation   -            -           0" in printed
+    # What prints where the quoted zero row stood: the category's first
+    # Python cell, and — the one `- - 0` row left — `unclassified`'s.
+    assert [
+        line.split()
+        for line in printed.splitlines()
+        if line.startswith("  performance-optimisation")
+    ] == [["performance-optimisation", "application", "python", "1"]]
+    assert "  unclassified               -            -           0" in printed
 
     said = prose(note_section("113. The coverage table, as the lint prints it"))
     assert (
@@ -1231,10 +1269,14 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
     # The zero-exemplar sites, read off the live function and the live file —
     # unmoved by this round, verified here, re-edited nowhere.
     docstring = " ".join((firstparty_v1.coverage_table.__doc__ or "").split())
+    # Round 13's ticket 04 moved the docstring's exemplar sentence into the
+    # past-zeros series — no "today" exemplar remains, because there is no
+    # authorable successor category to point one at.
     assert (
-        "`performance-optimisation` is one of the categories reading zero "
-        "today"
+        "`performance-optimisation` read zero until round 13 filled its "
+        "Python cell"
     ) in docstring
+    assert "is one of the categories reading zero today" not in docstring
     assert (
         "`requirement-decomposition` read zero until round 11 filled its "
         "Python cell"
@@ -1616,8 +1658,24 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     [quoted] = fenced_blocks(note_section(
         "116. Replay, the readers, and heap 3 closed"
     ))[1:2]
-    for line in quoted.strip("\n").splitlines():
+    # One quoted line has moved since §116 was recorded, named here in round
+    # 7's pattern rather than edited in the record: round 13's ticket 04
+    # authored the corpus's first `performance-optimisation` task, a Python
+    # control, growing the task-set line by one task and one control (its
+    # ticket 05 adds two more). The round's sweep has not landed, so the runs
+    # and rounds lines are untouched.
+    stale = "  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), 67 constructed"
+    quoted_block_lines = quoted.strip("\n").splitlines()
+    assert stale in quoted_block_lines
+    assert stale not in printed
+    for line in quoted_block_lines:
+        if line == stale:
+            continue
         assert line in printed, line
+    assert (
+        "  task set   tasks/first-party-v1 — 126 task(s): 59 control(s), "
+        "67 constructed"
+    ) in printed
     assert printed.count(f"sweep {_SWEEP}") == 1
     assert _CATEGORY not in printed, (
         "the round declared no contrast, so it reaches the report as a "

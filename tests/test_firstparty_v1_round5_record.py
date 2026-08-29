@@ -713,12 +713,17 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     # Round 8's sweep priced `test-authoring`, round 10's sweep (2026-08-24,
     # the day its three tasks were authored) priced `investigation`, and
     # round 11's sweep (2026-08-26) priced `requirement-decomposition` — the
-    # category the sentence above held the door for — so every category the
-    # corpus holds has priced controls behind it again and nothing is left
-    # out of the ratios. Round 12's sweep (2026-08-28) then moved
-    # `codebase-comprehension`'s denominators from n=4 to n=7, so its live
-    # ratio below is the seven controls' and no longer the 2.12 §48 quoted.
-    assert unpriced == set()
+    # category the sentence above held the door for. Round 12's sweep
+    # (2026-08-28) then moved `codebase-comprehension`'s denominators from
+    # n=4 to n=7, so its live ratio below is the seven controls' and no
+    # longer the 2.12 §48 quoted. Round 13's ticket 04 has now authored
+    # `performance-optimisation`'s first task, so that category is authored
+    # but unswept — exactly round 8's `test-authoring` arrival the comment
+    # above names as the precedent, printing "-" for both means — and it
+    # stays the one unpriced category until round 13's sweep (ticket 06)
+    # lands and restores the stronger empty-set claim. The ratio reading
+    # below is unweakened: an unpriced category contributes no ratio.
+    assert unpriced == {"performance-optimisation"}
     assert gaps == {
         "bug-fix": 2.64,
         "investigation": 2.81,

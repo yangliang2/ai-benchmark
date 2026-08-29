@@ -1,0 +1,53 @@
+# performance-optimisation seed task — the corpus's first, heap 4's action
+# (design note 117, ADR-0006). grading/ is split exactly as a refactor's is:
+# the behaviour tests named below must PASS on the pristine repository (the
+# quoting is already correct, and "preserved" needs a baseline to be measured
+# against), and everything else in grading/ is the complexity suite, which
+# must FAIL on it (the quoting is not yet cheap). The task-set lint enforces
+# both, and together they are the two-sided proof that the planted proxy is
+# honest.
+#
+# The round-13 question this task puts, in one line for section 118's id
+# register (task 1 of three; ticket 05's two must differ along the axis of
+# what is repeated and what removes the repetition): repeated re-derivation
+# inside a loop — Rack.quote re-gauges every cask on the rack for every order
+# in the book, and hoisting the gauging out of the per-order loop, or
+# memoising it, is what removes the repetition.
+#
+# What the counter counts, and through which seam: the complexity suite
+# counts gaugings through Gauge.gaugings, the shop's own tally — kept in
+# repo/ because gauging opens the cask and the shop has always recorded how
+# often that happens, not for any test's benefit. The bound is a ceiling of a
+# small multiple of the rack's size across held-out rack and book sizes, so
+# the assertion is a fact of the algorithm and never a wall-clock or an
+# implementation constant: any correct change of the intended growth class
+# passes, whether it gauges each cask once, twice over, or not at all.
+#
+# Why the intended optimisation is decidable from the repository alone: the
+# whole shop is two small stdlib-only modules, the repetition is on the page
+# in Rack.quote's per-order call to Rack.cask_for, and no external fact, no
+# library and no measurement is needed to see it or to remove it.
+id: cooperage-keep-the-quoting-quick-as-the-book-grows
+category: performance-optimisation
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The cooperage in this repository quotes the day's order book off its
+  rack: `Rack.quote` in rack.py answers each order with the name of the
+  cask the cooper should draw for it.
+
+  Quoting has grown slow. On a busy morning the book is long, and
+  `Rack.quote` takes visibly longer as the book grows — a long book drags
+  where a short one is answered before the ink dries. Make `Rack.quote`
+  stay quick as the order book grows.
+
+  Nothing anyone is told may change: every order must still get the
+  snuggest cask that holds it, ties must still go to the cask racked first,
+  an order no cask can hold must still be refused, and the book must still
+  be answered in the order it was taken. The deliverable is the change to
+  the code in this repository.
+grading:
+  behaviour_tests:
+    - test_cooperage_behaviour.py

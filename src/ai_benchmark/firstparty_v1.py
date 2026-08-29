@@ -3362,9 +3362,15 @@ def coverage_table(tasks: list[Task]) -> list[tuple[str, str, str, int]]:
     left it empty. `test-authoring` was the registered-empty cell (design note
     45.12) until round 8 filled its Python cell; `investigation` read zero
     until round 10 filled its Python cell; `requirement-decomposition` read
-    zero until round 11 filled its Python cell; `performance-optimisation` is
-    one of the categories reading zero today. `scale` and substrate are
-    disclosed on a task but not gridded here (design note 45.10).
+    zero until round 11 filled its Python cell; `performance-optimisation`
+    read zero until round 13 filled its Python cell — the last authorable
+    zero row, so the series above ends with no "today" exemplar left: the
+    one `- - 0` row still printed is `unclassified`'s, permanent and
+    structural, because the loader refuses any task declaring that category
+    (the plan-review ruling of 2026-08-29), and any future category added to
+    `TaskCategory` would print the same `- - 0` row here until its first
+    task landed. `scale` and substrate are disclosed on a task but not
+    gridded here (design note 45.10).
     """
     # There is no undeclared-language column: the loader now refuses a task
     # that declares none, so no input reaches this grid without a language.

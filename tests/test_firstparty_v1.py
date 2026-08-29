@@ -333,10 +333,14 @@ def test_task_set_loads_one_classified_task_per_seed_category() -> None:
     capability-matrix cell nobody built it for."""
     tasks = load_task_set(TASKS)
 
+    # Round 13's ticket 04 authored the corpus's first
+    # `performance-optimisation` task — the last authorable category, so from
+    # here the exact set below is every declarable action and only
+    # `unclassified` (which the loader refuses outright) stays uncovered.
     assert {task.category for task in tasks} == {
         "feature-dev", "refactor", "bug-fix", "fault-location", "code-review",
         "codebase-comprehension", "test-authoring", "investigation",
-        "requirement-decomposition",
+        "requirement-decomposition", "performance-optimisation",
     }
     assert len({task.id for task in tasks}) == len(tasks)
     for task in tasks:

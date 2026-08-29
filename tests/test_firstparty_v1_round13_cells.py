@@ -51,9 +51,10 @@ Nothing here calls the grader, runs a live cell or spends a dollar. Three tests
 read the round forwards, and they are three rather than one because they die at
 different tickets:
 
-- **the corpus** — no `performance-optimisation` task exists yet and the live
-  coverage table still prints its `- - 0` row, both retired by the round's
-  task-authoring tickets;
+- **the corpus** — this one is part-retired: ticket 04 landed the first
+  `performance-optimisation` task, so the test now reads task 1 present with
+  no second or third yet, and the table's `- - 0` rows down to
+  `unclassified`'s structural one alone; ticket 05's two tasks move it again;
 - **the rows** — no `round-13` row exists yet, retired by the sweep;
 - **the register** — §118 leaves the three ids explicitly to be filled in,
   retired by the authoring ticket that fills it and replaced with the
@@ -912,25 +913,28 @@ def test_the_id_register_is_left_to_be_filled_before_the_sweep() -> None:
     )
 
 
-def test_no_performance_optimisation_task_exists_and_the_table_reads_zero(
+def test_the_corpus_holds_task_one_and_the_table_keeps_one_structural_zero(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """The third forward-reading test: the corpus, before the round's tasks.
+    """What was the third forward-reading test, retired to its landed form by
+    the ticket that landed task 1.
 
     §118.2's claim about what the coverage table prints is a claim about the
-    corpus, so it is read off the live table rather than off the note. Today
-    the table prints **two** `- - 0` rows; when the round's authoring tickets
-    land, the action's row goes and `unclassified`'s stays, which is exactly
-    the correction §118.2 registers. This test is retired by the ticket that
-    lands the first task and replaced with the one-row form.
+    corpus, so it is read off the live table rather than off the note. The
+    round's ticket 04 authored the corpus's first `performance-optimisation`
+    task, so the action's `- - 0` row is gone and the corpus holds task 1 and
+    no second or third yet — those are ticket 05's, and this count moves to
+    three when they land. What stays is `unclassified`'s row, the one `- - 0`
+    row left, permanent and structural exactly as §118.2 registers: the
+    loader refuses any task declaring it, so no round can close it.
     """
-    assert not [task for task in tasks.values() if task.category == _CATEGORY], (
-        "the round's tasks are the authoring tickets' to land"
-    )
+    assert (
+        len([task for task in tasks.values() if task.category == _CATEGORY]) == 1
+    ), "task 1 landed; the second and third are ticket 05's to land"
     rows = firstparty_v1.coverage_table(list(tasks.values()))
     zeroes = [row[0] for row in rows if row[1:] == ("-", "-", 0)]
-    assert zeroes == [_CATEGORY, _STRUCTURAL_ZERO], (
-        "one authorable zero row and one structural one"
+    assert zeroes == [_STRUCTURAL_ZERO], (
+        "no authorable zero row left, and the structural one still printed"
     )
 
 

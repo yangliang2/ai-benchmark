@@ -603,6 +603,16 @@ _PUBLISHED = {
     "requirement-decomposition": {
         "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "unsolved (n=3)"),
     },
+    # Round 13's category, authored (ticket 04, one task so far) and not yet
+    # swept: one declared control, so one zero-knob row, every figure a "-"
+    # because no run exists — round 8's `test-authoring` arrival again. The
+    # tasks column reads 1 because a `Cell`'s members are every task of the
+    # set with this key, swept or not; ticket 05's two further tasks move
+    # this count from 1 to 3, and round 13's sweep (ticket 06) then prices
+    # the row.
+    "performance-optimisation": {
+        "(zero-knob)": ("1", "-", "-", "-"),
+    },
 }
 
 _PUBLISHED_DENOMINATORS = {
@@ -615,6 +625,9 @@ _PUBLISHED_DENOMINATORS = {
     "test-authoring": f"{_HAIKU} $0.2412 (n=3), {_SONNET} $0.5893 (n=3)",
     "investigation": f"{_HAIKU} $0.0843 (n=3), {_SONNET} $0.2368 (n=3)",
     "requirement-decomposition": f"{_HAIKU} $0.0795 (n=3), {_SONNET} $0.2751 (n=3)",
+    # Authored and unswept, so no mean exists on either model: "-" over n=0,
+    # until round 13's sweep prices the category's controls.
+    "performance-optimisation": f"{_HAIKU} - (n=0), {_SONNET} - (n=0)",
 }
 
 # The baseline's own mix, and every row whose mix differs from it — the other
@@ -633,6 +646,7 @@ _PUBLISHED_MIX = {
     "test-authoring": "3 single-file; 3 hand-authored",
     "investigation": "3 single-file; 3 hand-authored",
     "requirement-decomposition": "3 single-file; 3 hand-authored",
+    "performance-optimisation": "1 single-file; 1 hand-authored",
 }
 
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
@@ -665,6 +679,7 @@ _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {
     "test-authoring": {},
     "investigation": {},
     "requirement-decomposition": {},
+    "performance-optimisation": {},
 }
 
 

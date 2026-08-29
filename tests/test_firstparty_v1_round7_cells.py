@@ -88,12 +88,14 @@ _TYPESCRIPT_ROWS = {
 }
 
 # The Python side of the same table, which this round does not touch. It reads
-# 125 rather than round 7's 113 because later rounds authored into the Python
+# 126 rather than round 7's 113 because later rounds authored into the Python
 # column — round 8's three `test-authoring` tasks, round 10's three
 # `investigation` ones, round 11's three `requirement-decomposition` ones,
-# round 12's three explain-style `codebase-comprehension` ones; §59.8's own
-# prose, quoted below, is a claim about what round 7 did and stays at 113.
-_PYTHON_TOTAL = 125
+# round 12's three explain-style `codebase-comprehension` ones, and round 13's
+# first `performance-optimisation` one (ticket 04 moves this figure by one;
+# ticket 05's two further tasks move it by two more); §59.8's own prose,
+# quoted below, is a claim about what round 7 did and stays at 113.
+_PYTHON_TOTAL = 126
 
 
 def note_section() -> str:
@@ -470,8 +472,8 @@ def test_the_coverage_target_is_what_the_lint_prints(
     `test-authoring` was round 7's example of the zero row and is round 8's
     example of the other half of the same rule: the round authored Python tasks
     for it, so it prints a Python row and no TypeScript one (§67.2), exactly as
-    `codebase-comprehension` does. The zero shape is still pinned, on the
-    categories that still have no task in any language.
+    `codebase-comprehension` does. The zero shape is still pinned, on the one
+    category that still has no task in any language — and can never have one.
     """
     table = firstparty_v1.coverage_table(list(tasks.values()))
 
@@ -479,8 +481,14 @@ def test_the_coverage_target_is_what_the_lint_prints(
     assert typescript == _TYPESCRIPT_ROWS
 
     zeros = {row[0] for row in table if row[1:] == ("-", "-", 0)}
-    assert "performance-optimisation" in zeros, (
-        "no task in any language, so it prints as 0"
+    # Round 13's first `performance-optimisation` task filled the last
+    # authorable zero row, and there is no authorable successor category to
+    # re-point this at: the one `- - 0` row left is `unclassified`'s, which
+    # survives by construction — the loader refuses any task declaring it —
+    # so the zero *shape* is read off that permanent structural row (the
+    # plan-review ruling of 2026-08-29).
+    assert zeros == {"unclassified"}, (
+        "the one structural zero row, and no authorable one left"
     )
     assert "test-authoring" not in zeros
     # The row's shape, not round 8's figure: what that count reads is pinned
@@ -522,10 +530,10 @@ def test_the_readers_corpus_count_header_reads_the_python_column(
     authored into the Python column — round 8's three `test-authoring` tasks,
     round 10's three `investigation` ones, round 11's three
     `requirement-decomposition` ones, round 12's three explain-style
-    `codebase-comprehension` ones: 113 and 127 at the time §59.8 was written,
-    125 and 139 with those tasks checked in. The section's own prose is
-    quoted above and is unmoved — what round 7 did to the Python column is
-    still nothing.
+    `codebase-comprehension` ones, round 13's first `performance-optimisation`
+    one: 113 and 127 at the time §59.8 was written, 126 and 140 with those
+    tasks checked in. The section's own prose is quoted above and is
+    unmoved — what round 7 did to the Python column is still nothing.
     """
     assert len(tasks) == _PYTHON_TOTAL + sum(_COUNTS.values())
     outcomes = reconcile_v1.observed_outcomes(

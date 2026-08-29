@@ -160,22 +160,25 @@ _ARCHIVED = ((_DRY_CELL, _SONNET), "pytest.ini")
 _MODULES_UNDER_TEST = ("lido.py", "playbill.py", "register.py")
 
 # Section 73's coverage figure, per language. The Python column is round 7's
-# plus this round's three; the TypeScript rows are round 7's exactly. Two rows
+# plus this round's three; the TypeScript rows are round 7's exactly. Rows
 # joined after the round it records: round 10 authored its three
 # `investigation` tasks and round 11 its three `requirement-decomposition`
-# ones, Python controls all — and round 12's three explain-style tasks then
-# grew `codebase-comprehension`'s row — and this live read moves with the
-# corpus while the note's own quoted table stays the snapshot it was.
+# ones, Python controls all — round 12's three explain-style tasks then
+# grew `codebase-comprehension`'s row, and round 13's ticket 04 opened
+# `performance-optimisation`'s with its first task (ticket 05 adds two
+# more) — and this live read moves with the corpus while the note's own
+# quoted table stays the snapshot it was.
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 7, "code-review": 8, "test-authoring": 3,
     "investigation": 3, "requirement-decomposition": 3,
+    "performance-optimisation": 1,
 }
 _TYPESCRIPT_COVERAGE = {
     "bug-fix": 3, "fault-location": 3, "feature-dev": 3, "refactor": 3,
     "code-review": 2,
 }
-_PYTHON_TASKS = 125
+_PYTHON_TASKS = 126
 # What the runs line counts instead: the Python tasks that have rows. The two
 # were one number until round 10 authored tasks after every sweep — a task
 # with no rows joins the task-set line and not this one.
@@ -203,11 +206,17 @@ _ROUND_11_CLAUDE_CODE_ROWS = 6
 _ROUND_12_TASKS = 3
 _ROUND_12_ROWS = 9
 _ROUND_12_CLAUDE_CODE_ROWS = 6
+# And round 13's first `performance-optimisation` task, a Python control
+# graded by the complexity proxy (ADR-0006). Ticket 04 moves the live
+# task-set arithmetic by one and ticket 05's two further tasks will move it
+# by two more; the round's sweep has not landed, so it joins no runs-line or
+# round-list figure.
+_ROUND_13_TASKS = 1
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
 _CLAUDE_CODE_PYTHON_RUNS = 231
-_PYTHON_CONTROLS = 58
+_PYTHON_CONTROLS = 59
 _PYTHON_CONSTRUCTED = 67
 _ALL_ROWS = 306
 _ROUND_8_ROWS = 9
@@ -1149,8 +1158,13 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ]
     assert not [row for row in coverage if row[0] == _CATEGORY and row[3] == 0]
-    assert ("performance-optimisation", "-", "-", 0) in coverage, (
-        "the shape a real zero prints"
+    # Round 13's first `performance-optimisation` task filled the last
+    # authorable zero row, and there is no authorable successor category to
+    # read the shape off: the one `- - 0` row left is `unclassified`'s, which
+    # survives by construction — the loader refuses any task declaring it
+    # (the plan-review ruling of 2026-08-29).
+    assert ("unclassified", "-", "-", 0) in coverage, (
+        "the shape a real zero prints, off the one structural row left"
     )
     assert not [row for row in coverage if row[3] == 0 and row[2] == "typescript"]
 
@@ -1166,6 +1180,11 @@ def test_the_coverage_table_is_recorded_as_the_lint_prints_it(
             "  investigation              -            -           0",
         "requirement-decomposition":
             "  requirement-decomposition  -            -           0",
+        # Round 13's ticket 04 filled the last authorable zero row with the
+        # category's first task; the record's quoted line stays what the page
+        # was, and the printed table now carries the Python cell instead.
+        "performance-optimisation":
+            "  performance-optimisation   -            -           0",
     }
     # The row round 12's three explain-style tasks grew, no zero when this
     # was recorded: it read the four locate-style tasks and now reads seven.
@@ -1423,9 +1442,9 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     # asserted above off the same counts plus theirs.
     recorded = [
         "  task set   tasks/first-party-v1 — "
-        f"{_PYTHON_TASKS - _ROUND_10_TASKS - _ROUND_11_TASKS - _ROUND_12_TASKS} "
+        f"{_PYTHON_TASKS - _ROUND_10_TASKS - _ROUND_11_TASKS - _ROUND_12_TASKS - _ROUND_13_TASKS} "
         f"task(s): "
-        f"{_PYTHON_CONTROLS - _ROUND_10_TASKS - _ROUND_11_TASKS - _ROUND_12_TASKS} "
+        f"{_PYTHON_CONTROLS - _ROUND_10_TASKS - _ROUND_11_TASKS - _ROUND_12_TASKS - _ROUND_13_TASKS} "
         f"control(s), "
         f"{_PYTHON_CONSTRUCTED} constructed",
         f"  runs       {_CLAUDE_CODE_PYTHON_RUNS} over "
@@ -1480,11 +1499,13 @@ def test_heap_one_closes_and_the_archive_round_nine_waits_on_has_grown() -> None
     empty = {row[0] for row in coverage if row[3] == 0}
     # `investigation` printed in this set when the round was recorded and left
     # it when round 10 authored heap 3's first task; `requirement-decomposition`
-    # left it when round 11 authored heap 3's second action's first. The
-    # heap-1/heap-2 claim this test records is untouched by either.
-    assert empty == {
-        "performance-optimisation", "unclassified",
-    }
+    # left it when round 11 authored heap 3's second action's first;
+    # `performance-optimisation` left it when round 13's ticket 04 authored
+    # heap 4's first. That was the last authorable zero row, so what remains
+    # is `unclassified`'s alone — permanent and structural, because the
+    # loader refuses any task declaring it (the plan-review ruling of
+    # 2026-08-29). The heap-1/heap-2 claim this test records is untouched.
+    assert empty == {"unclassified"}
     assert not empty & (heap_1 | heap_2)
 
     # The ground truth behind the new cell is planted and machine-checked:

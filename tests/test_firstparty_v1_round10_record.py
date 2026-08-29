@@ -187,15 +187,23 @@ _STRATUM_A = 63
 # Section 90's updated CONTEXT.md sentence, pinned the way the quoted figures
 # are; the docstring's is asserted off the live function's __doc__ below.
 # Round 11 moved the sentence on when it filled
-# `requirement-decomposition`'s Python cell — the "today" exemplar is now
-# `performance-optimisation` and the filled category joined the record of
-# past zeros in the same form — so the pin is on the caught-up sentence;
-# §90's own quoted prose stays what round 10 wrote.
+# `requirement-decomposition`'s Python cell, and round 13's ticket 04 moved
+# it again when it filled `performance-optimisation`'s — the last authorable
+# zero row, with **no authorable successor category to re-point at**: the
+# only `- - 0` row left is `unclassified`'s, which survives by construction
+# because the loader refuses any task declaring it (the plan-review ruling
+# of 2026-08-29). So the sentence changed shape — the filled category joined
+# the record of past zeros and no "today" exemplar remains — and the pin is
+# on the caught-up sentence; §90's own quoted prose stays what round 10
+# wrote.
 _CONTEXT_SENTENCE = (
-    "(`performance-optimisation` today; `test-authoring` was one until "
-    "round 8 authored its three Python tasks, `investigation` was one until "
-    "round 10 filled its Python cell, and `requirement-decomposition` was "
-    "one until round 11 filled its Python cell)"
+    "(`test-authoring` was one until round 8 authored its three Python "
+    "tasks, `investigation` was one until round 10 filled its Python cell, "
+    "`requirement-decomposition` was one until round 11 filled its Python "
+    "cell, and `performance-optimisation` was one until round 13 filled its "
+    "Python cell — the last authorable zero row, so the only `0` row still "
+    "printed is **unclassified**'s, permanent and structural because the "
+    "loader refuses any task declaring that category)"
 )
 
 
@@ -1039,15 +1047,22 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     }
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
     # 119 when §90 was recorded; round 11's three `requirement-decomposition`
-    # tasks moved the live column to 122, and round 12's three explain-style
-    # `codebase-comprehension` tasks to 125.
-    assert sum(python.values()) == 125
+    # tasks moved the live column to 122, round 12's three explain-style
+    # `codebase-comprehension` tasks to 125, and round 13's first
+    # `performance-optimisation` task (ticket 04) to 126 — ticket 05's two
+    # further tasks move it by two more.
+    assert sum(python.values()) == 126
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
     assert not [row for row in coverage if row[0] == _CATEGORY and row[3] == 0]
-    assert ("performance-optimisation", "-", "-", 0) in coverage, (
-        "the shape a real zero prints, and the docstring's example now"
+    # Round 13's ticket 04 filled `performance-optimisation`'s row — the last
+    # authorable zero — and no authorable successor exists to read the shape
+    # off, so it is read off `unclassified`'s row, which survives by
+    # construction: the loader refuses any task declaring it (the plan-review
+    # ruling of 2026-08-29).
+    assert ("unclassified", "-", "-", 0) in coverage, (
+        "the shape a real zero prints, off the one structural row left"
     )
 
     main(["lint-v1", "--tasks", str(_TASKS)])
@@ -1056,14 +1071,18 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     [quoted] = fenced_blocks(
         note_section("90. The coverage table, as the lint prints it")
     )
-    # The two lines that have moved since §90 was recorded, each named in
+    # The lines that have moved since §90 was recorded, each named in
     # round 7's pattern rather than edited in the record: round 11's first
     # `requirement-decomposition` task turned the zero row this record quotes
-    # into a Python cell, and round 12's three explain-style tasks grew
-    # `codebase-comprehension`'s row from 4 to 7.
+    # into a Python cell, round 12's three explain-style tasks grew
+    # `codebase-comprehension`'s row from 4 to 7, and round 13's ticket 04
+    # turned `performance-optimisation`'s zero row into the category's first
+    # Python cell — the last authorable zero row, `unclassified`'s structural
+    # one staying by construction.
     moved = {
         "  requirement-decomposition  -            -           0",
         "  codebase-comprehension     application  python      4",
+        "  performance-optimisation   -            -           0",
     }
     quoted_lines = quoted.strip("\n").splitlines()
     for line in moved:
@@ -1106,10 +1125,18 @@ def test_the_coverage_table_and_the_two_updated_sentences(
         "`requirement-decomposition` read zero until round 11 filled its "
         "Python cell"
     ) in " ".join(docstring.split())
+    # Round 13's ticket 04 filled `performance-optimisation`'s Python cell —
+    # the last authorable zero row — so the docstring's series now ends with
+    # no "today" exemplar at all: there is no authorable successor category
+    # to re-point a prose exemplar at, and `unclassified`'s structural row
+    # (the loader refuses the category) is named there instead.
     assert (
-        "`performance-optimisation` is one of the categories reading zero "
-        "today"
+        "`performance-optimisation` read zero until round 13 filled its "
+        "Python cell"
     ) in " ".join(docstring.split())
+    assert "is one of the categories reading zero today" not in (
+        " ".join(docstring.split())
+    )
     assert "`investigation` is one of the categories reading zero" not in (
         " ".join(docstring.split())
     )
@@ -1127,11 +1154,14 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     assert (
         "\"`investigation` was one until round 10 filled its Python cell\""
     ) in said
-    # The three older exemplar pins, verified and not re-edited: each names
-    # the category that reads zero today. Round 10's ticket 05 pointed them
-    # at `requirement-decomposition`; round 11's first task re-pointed them
-    # at `performance-optimisation`, the next category with no task in any
-    # language.
+    # The three older suites' needle loop, verified and not re-edited: round
+    # 10's ticket 05 pointed their exemplars at `requirement-decomposition`,
+    # round 11's first task re-pointed them at `performance-optimisation`,
+    # and round 13's ticket 04 — filling that last authorable zero row, with
+    # no authorable successor to re-point at — moved their zero-shape reads
+    # onto `unclassified`'s structural row instead. The string
+    # `performance-optimisation` still stands in each file, in comments and
+    # in each round's own quoted prose, which is all this loop asserts.
     for suite, needle in (
         ("test_firstparty_v1_round7_cells.py", "performance-optimisation"),
         ("test_firstparty_v1_round7_record.py", "performance-optimisation"),
@@ -1404,8 +1434,12 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     )
     for line in recorded:
         assert line not in printed, line
+    # 125 task(s) and 58 control(s) until round 13's ticket 04 authored the
+    # corpus's first `performance-optimisation` task, a Python control;
+    # ticket 05's two further tasks move both figures by two more. The runs
+    # line counts tasks with rows and is untouched until that round's sweep.
     assert (
-        "  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), "
+        "  task set   tasks/first-party-v1 — 126 task(s): 59 control(s), "
         "67 constructed"
     ) in printed
     assert "  runs       249 over 125 task(s)" in printed
