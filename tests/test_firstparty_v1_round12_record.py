@@ -1344,9 +1344,13 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
 ) -> None:
     """Section 115's refusals, each anchored to something checkable, and the
     disclosures the ticket wants in as many words: the covered-but-mediocre
-    narrowing, the transfer gap, and the owner's ~9 labels recorded as
-    **asked for and not yet given** — the check disclosed rather than left
-    unmentioned, its dated addendum named as what completes §114's reading."""
+    narrowing, the transfer gap, and the owner's ~9 labels — **given
+    2026-08-29** in the dated-addendum form the section reserved, seven of
+    nine agree and two disagree, the orchestrator-assistance provenance
+    disclosed, the two disagreements the very cells §112 reads and the gap
+    read as opened a second time, in the same direction, by a new mechanism
+    (a disqualifier adjacent to the true mechanism, over-matched on
+    production prose)."""
     swept = {task_id for task_id, _ in rulings}
     assert all(tasks[task_id].control for task_id in swept)
     assert not [
@@ -1377,24 +1381,72 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     assert "The proofs' truth is still the author's planted truth" in said
     assert "found the gap open on two cells in one direction" in said
 
-    # The labels: asked for when the record was written, not yet given — the
-    # absence said in the section, the dated addendum named as where they
-    # land, §92's and §104's precedent. No labels table exists yet, and none
-    # is claimed: the section carries no fenced block and no machine line.
+    # The labels: given 2026-08-29, the day after the record, in the dated
+    # form the section reserved — provenance disclosed the way §104's was,
+    # the table fenced once and exactly as given, its machine column agreeing
+    # with the verdicts this suite re-derives from the archived rulings.
     assert (
-        "**The owner's ~9 agree/disagree labels: asked for when this record "
-        "was written, and not yet given.**"
+        "**The owner's ~9 agree/disagree labels: given 2026-08-29, the day "
+        "after this record — seven of nine agree, two disagree.**"
     ) in said
     assert "§76.2 ruled and §77.2 registered" in said
-    assert "the owner has not yet supplied them" in said
-    assert "**dated addendum beside this section**" in said
-    assert "§92's and §104's precedent" in said
-    assert "**§106.1's first test**" in said
-    assert "completes §114's reading" in said
-    assert not fenced_blocks(note_section("115. What this round cannot say")), (
-        "no labels table is quoted before the labels exist"
-    )
-    assert "(machine:" not in note_section("115. What this round cannot say")
+    assert (
+        "**these labels were formed with the orchestrator's assistance and "
+        "not by an unaided read**"
+    ) in said
+    assert "the owner adopted the recommendations" in said
+    labels_block = [
+        block
+        for block in fenced_blocks(note_section("115. What this round cannot say"))
+        if "agree" in block
+    ]
+    assert len(labels_block) == 1, "the labels table, fenced, once"
+    assert labels_block[0].count("agree     (machine:") == 7
+    assert labels_block[0].count("disagree  (machine:") == 2
+    # The machine column repeats the verdicts this suite re-derived from the
+    # archived rulings, cell for cell; the two disagreements are the two
+    # grocers × claude cells §112 reads, and this section named in advance
+    # as the ones a holistic read would most naturally contest.
+    short = {
+        "ropewalk-explain-how-an-order-becomes-a-coil": "ropewalk",
+        "grocers-explain-why-the-plain-hamper-carries-the-cordial": "grocers",
+        "tramshed-explain-why-the-two-boards-disagree": "tramshed",
+    }
+    verdicts = {
+        (short[task_id], model): resolved
+        for (task_id, model), (resolved, _, _) in rulings.items()
+    }
+    label_lines = [line for line in labels_block[0].splitlines() if " x " in line]
+    assert len(label_lines) == 9, "one label line per swept cell"
+    for line in label_lines:
+        prefix, _, machine = line.partition("(machine: ")
+        stem, _, rest = prefix.partition(" x ")
+        model = rest.split()[0]
+        assert verdicts[(stem.strip(), model)] == machine.startswith("resolved")
+        if "disagree" in line:
+            assert stem.strip() == "grocers"
+            assert model in (_HAIKU, _SONNET)
+    # The finding: the gap opened a second time, same direction, new
+    # mechanism — the disqualifier side of §106.1's coin — with the
+    # instrument's own asymmetry (the reference's clear ruling at the
+    # proofs) named as what settles the reading, and the next round's
+    # authoring rule priced in as many words.
+    assert (
+        "the transfer gap opened a second time, on two of nine and in the "
+        "same direction"
+    ) in said
+    assert (
+        "a **disqualifier whose text is semantically adjacent to the true "
+        "mechanism**"
+    ) in said
+    assert "§114's zero refused points stands untouched by these labels" in said
+    assert (
+        "the same instrument ruled its disqualifier clear at the proofs"
+    ) in said
+    assert "The check gated nothing and the nine verdicts stand" in said
+    assert (
+        "surface-disjoint from the true mechanism's own"
+    ) in said
 
     assert "**No cross-action difficulty comparison.**" in said
     assert (

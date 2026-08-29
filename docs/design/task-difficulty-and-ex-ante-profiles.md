@@ -11296,20 +11296,66 @@ they all still hold.
   check registered to watch it is the owner's, below — the check that on
   round 11's cells found the gap open on two cells in one direction
   (§104's addendum).
-- **The owner's ~9 agree/disagree labels: asked for when this record was
-  written, and not yet given.** §76.2 ruled and §77.2 registered a
-  disclosed, non-gating check riding the round's own swept heap-3 cells:
-  the owner labels agree/disagree on each of the nine verdicts above,
-  reading each answer file beside its task's planted key. They were asked
-  for in the orchestrator session when this record was written, and the
-  owner has not yet supplied them; they will be recorded in a **dated
-  addendum beside this section**, exactly as given, when they are given —
-  §92's and §104's precedent, both of which recorded labels supplied after
-  their records were written. The check gates nothing and the nine verdicts
-  above stand regardless; and this round's labels are also **§106.1's first
-  test** — the two cells §112 reads on a claimed disqualifier are the cells
-  a holistic read would most naturally contest — so the addendum is what
-  completes §114's reading rather than a courtesy.
+- **The owner's ~9 agree/disagree labels: given 2026-08-29, the day after
+  this record — seven of nine agree, two disagree.** §76.2 ruled and §77.2
+  registered a disclosed, non-gating check riding the round's own swept
+  heap-3 cells: the owner labels agree/disagree on each of the nine
+  verdicts above, reading each answer file beside its task's planted key.
+  They were asked for in the orchestrator session when this record was
+  written and the owner supplied them the next day, and the disclosure that
+  preceded §104's table precedes this one: **these labels were formed with
+  the orchestrator's assistance and not by an unaided read** — the
+  orchestrator put each ruling back to its answer's own text, cell by cell,
+  and recommended a label per cell with the borderline cells named, and the
+  owner adopted the recommendations. The labels are recorded exactly as
+  given:
+
+  ```
+  ropewalk   x claude-haiku-4-5   agree     (machine: resolved)
+  ropewalk   x claude-sonnet-5    agree     (machine: resolved)
+  ropewalk   x gpt-5.6-terra      agree     (machine: resolved)
+  grocers    x claude-haiku-4-5   disagree  (machine: unresolved)
+  grocers    x claude-sonnet-5    disagree  (machine: unresolved)
+  grocers    x gpt-5.6-terra      agree     (machine: resolved)
+  tramshed   x claude-haiku-4-5   agree     (machine: resolved)
+  tramshed   x claude-sonnet-5    agree     (machine: resolved)
+  tramshed   x gpt-5.6-terra      agree     (machine: resolved)
+  ```
+
+  The two disagreements are one finding twice, and they are exactly the two
+  cells §112 reads — the cells this section named in advance as the ones a
+  holistic read would most naturally contest. Both `grocers` × claude
+  answers cover all five planted points (the gate's own rulings say so) and
+  state the true route in as many words — the extra was Col. Ashton's,
+  applied to Col. Ashton's hamper, and reached Mrs Beech's docket through
+  the one shared list — and neither claims a mix-up of orders or an extra
+  applied to the wrong hamper. The spans the gate ruled
+  `an-extra-on-the-wrong-hamper` **present** on are correct statements of
+  that mechanism ("the append modifies what Mrs Beech's hamper contains";
+  "her docket enumerates all five items, cordial included"): the grader
+  matched the cordial's **arrival**, which the true explanation must state,
+  where the disqualifier's operative content is the claimed **route**. The
+  asymmetry that settles the reading is the instrument's own: the reference
+  answer also states the arrival, and the same instrument ruled its
+  disqualifier clear at the proofs (§109) — two readings of one question,
+  split by the prose put to it. So reading each answer whole beside its
+  key, both cells covered every planted point and made no disqualified
+  claim, and the holistic judgment says resolved where the gate said
+  unresolved. **On these nine cells the transfer gap opened a second time,
+  on two of nine and in the same direction — a false red on claude-written
+  production prose — by a new mechanism**: not §104's multi-clause point
+  met by no single span (§106.1 closed that side, and §114's zero refused
+  points stands untouched by these labels), but a **disqualifier whose text
+  is semantically adjacent to the true mechanism**, over-matched on
+  production prose that states the mechanism in its own words. The
+  proofs-side false positive §109 disclosed on the grocers foil is the same
+  over-match seen from the other side. The check gated nothing and the nine
+  verdicts stand; what rides to the next round's planning is the authoring
+  rule this finding prices: a disqualifier must name the wrong route in
+  words **surface-disjoint from the true mechanism's own**, exactly as
+  §106.1 made a point one-clause-tight — and until that rule exists, a
+  disqualifier adjacent to the truth is where this instrument's false reds
+  now live.
 - **No cross-action difficulty comparison.** 7 of 9 here is not to be read
   against round 11's 0 of 9 or round 10's 1 of 9: an explanation, a
   decomposition and a proposal are different deliverables graded by
