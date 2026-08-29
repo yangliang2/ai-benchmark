@@ -6495,16 +6495,16 @@ merged dataset; the four together are the merged one record for record:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-a.jsonl --data /tmp/r8replay/a.jsonl
-  evaluated 1 runs over 140 tasks (1 resolved)
+  evaluated 1 runs over 142 tasks (1 resolved)
   merged 1 records into /tmp/r8replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-b.jsonl --data /tmp/r8replay/b.jsonl
-  evaluated 2 runs over 140 tasks (2 resolved)
+  evaluated 2 runs over 142 tasks (2 resolved)
   merged 2 records into /tmp/r8replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-c.jsonl --data /tmp/r8replay/c.jsonl
-  evaluated 3 runs over 140 tasks (3 resolved)
+  evaluated 3 runs over 142 tasks (3 resolved)
   merged 3 records into /tmp/r8replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-20-r8-d.jsonl --data /tmp/r8replay/d.jsonl
-  evaluated 3 runs over 140 tasks (2 resolved)
+  evaluated 3 runs over 142 tasks (2 resolved)
   merged 3 records into /tmp/r8replay/d.jsonl (3 total)
 ```
 
@@ -8897,16 +8897,16 @@ dataset of its own:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-a.jsonl --data /tmp/r10replay/a.jsonl
-  evaluated 1 runs over 140 tasks (0 resolved)
+  evaluated 1 runs over 142 tasks (0 resolved)
   merged 1 records into /tmp/r10replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-b.jsonl --data /tmp/r10replay/b.jsonl
-  evaluated 2 runs over 140 tasks (0 resolved)
+  evaluated 2 runs over 142 tasks (0 resolved)
   merged 2 records into /tmp/r10replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-c.jsonl --data /tmp/r10replay/c.jsonl
-  evaluated 3 runs over 140 tasks (1 resolved)
+  evaluated 3 runs over 142 tasks (1 resolved)
   merged 3 records into /tmp/r10replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-24-r10-d.jsonl --data /tmp/r10replay/d.jsonl
-  evaluated 3 runs over 140 tasks (0 resolved)
+  evaluated 3 runs over 142 tasks (0 resolved)
   merged 3 records into /tmp/r10replay/d.jsonl (3 total)
 ```
 
@@ -10114,16 +10114,16 @@ dataset of its own:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-a.jsonl --data /tmp/r11replay/a.jsonl
-  evaluated 1 runs over 140 tasks (0 resolved)
+  evaluated 1 runs over 142 tasks (0 resolved)
   merged 1 records into /tmp/r11replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-b.jsonl --data /tmp/r11replay/b.jsonl
-  evaluated 2 runs over 140 tasks (0 resolved)
+  evaluated 2 runs over 142 tasks (0 resolved)
   merged 2 records into /tmp/r11replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-c.jsonl --data /tmp/r11replay/c.jsonl
-  evaluated 3 runs over 140 tasks (0 resolved)
+  evaluated 3 runs over 142 tasks (0 resolved)
   merged 3 records into /tmp/r11replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-26-r11-d.jsonl --data /tmp/r11replay/d.jsonl
-  evaluated 3 runs over 140 tasks (0 resolved)
+  evaluated 3 runs over 142 tasks (0 resolved)
   merged 3 records into /tmp/r11replay/d.jsonl (3 total)
 ```
 
@@ -11395,16 +11395,16 @@ scratch dataset of its own:
 
 ```
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-a.jsonl --data /tmp/r12replay/a.jsonl
-  evaluated 1 runs over 140 tasks (1 resolved)
+  evaluated 1 runs over 142 tasks (1 resolved)
   merged 1 records into /tmp/r12replay/a.jsonl (1 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-b.jsonl --data /tmp/r12replay/b.jsonl
-  evaluated 2 runs over 140 tasks (1 resolved)
+  evaluated 2 runs over 142 tasks (1 resolved)
   merged 2 records into /tmp/r12replay/b.jsonl (2 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-c.jsonl --data /tmp/r12replay/c.jsonl
-  evaluated 3 runs over 140 tasks (2 resolved)
+  evaluated 3 runs over 142 tasks (2 resolved)
   merged 3 records into /tmp/r12replay/c.jsonl (3 total)
 uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-28-r12-d.jsonl --data /tmp/r12replay/d.jsonl
-  evaluated 3 runs over 140 tasks (3 resolved)
+  evaluated 3 runs over 142 tasks (3 resolved)
   merged 3 records into /tmp/r12replay/d.jsonl (3 total)
 ```
 
@@ -11887,6 +11887,28 @@ descriptions**, so that what distinguishes the three is on the record beside
 their ids. **Round 7's pin is the check the authoring runs first**: no task id
 may share a repo prefix with an existing task, and the three prefixes are
 checked against every task the corpus holds before a repository is written.
+
+**Filled in 2026-08-29, by the round's second task-authoring ticket, exactly
+where this section left it.** The three are the tasks the round authored —
+each proved both ways under 118.4's gate before this line was written — read
+off `tasks/first-party-v1/` as the corpus actually holds them:
+
+```
+cooperage-keep-the-quoting-quick-as-the-book-grows           (repeated re-derivation inside a loop; the same gauging re-taken per order, hoisted or memoised out)
+cloakroom-keep-the-handing-back-quick-as-the-queue-grows     (a whole-rail scan per exact asking; keying the rail once puts each ticket straight to its coat)
+cornexchange-keep-the-best-turn-quick-as-the-tape-runs-long  (an all-pairs reckoning over one series; one pass carrying the cheapest call so far replaces every pair)
+```
+
+**This list is the register.** Three ids, all `performance-optimisation`, and
+they are **every `performance-optimisation` task the corpus holds**. Three
+different performance questions, deliberately, on the axis this section
+requires and each line names — what is repeated, and what removes the
+repetition: a derivation re-taken inside a loop, hoisted or memoised out; a
+whole-store walk per exact-match asking, keyed away though the walk's own
+answer never needed more than one coat; and an all-pairs reckoning over one
+series with no query stream at all, replaced by a single pass with
+bookkeeping — because three tasks that asked one performance question three
+times would measure one thing three times.
 
 **How the sweep is invoked.** Sweep id **`round-13`**, on every invocation of
 it. Run by hand under `docs/agents/sweep-protocol.md`, never queued. A **dry

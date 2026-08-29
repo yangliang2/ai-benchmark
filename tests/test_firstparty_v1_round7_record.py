@@ -216,12 +216,12 @@ _ROUND_11_CLAUDE_CODE_RUNS = 6
 _ROUND_12_TASKS = 3
 _ROUND_12_CLAUDE_CODE_RUNS = 6
 
-# And round 13's first `performance-optimisation` task, a Python control
-# graded by the complexity proxy (ADR-0006). Ticket 04 moves the task-set
-# arithmetic below by one and ticket 05's two further tasks will move it by
-# two more; the round's sweep has not landed, so no runs-line or round-list
-# figure names it yet.
-_ROUND_13_TASKS = 1
+# And round 13's three `performance-optimisation` tasks, Python controls
+# graded by the complexity proxy (ADR-0006). Ticket 04 moved the task-set
+# arithmetic below by one and ticket 05's two further tasks by two more; the
+# round's sweep has not landed, so no runs-line or round-list figure names
+# them yet.
+_ROUND_13_TASKS = 3
 
 # And what round 8 then swept of them into this reading: six claude-code rows,
 # the first since round 5 that the default agent-then-language selection keeps.
@@ -229,9 +229,9 @@ _ROUND_13_TASKS = 1
 _ROUND_8_CLAUDE_CODE_RUNS = 6
 
 _CLAUDE_CODE_PYTHON_RUNS = 225
-_PYTHON_TASKS = 126
+_PYTHON_TASKS = 128
 _PYTHON_TASKS_WITH_RUNS = 113
-_PYTHON_CONTROLS = 59
+_PYTHON_CONTROLS = 61
 _PYTHON_CONSTRUCTED = 67
 
 # What `--language typescript` reaches instead: 28 rather than 42, because the
@@ -248,7 +248,7 @@ _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 7, "code-review": 8, "test-authoring": 3,
     "investigation": 3, "requirement-decomposition": 3,
-    "performance-optimisation": 1,
+    "performance-optimisation": 3,
 }
 
 # The two fields of a calibration block a later round moves, and the only two —
@@ -1395,8 +1395,8 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # three more when round 10 authored its `investigation` ones, three
     # more when round 11 authored its `requirement-decomposition` ones, three
     # more when round 12 authored its explain-style `codebase-comprehension`
-    # ones, and one more when round 13's ticket 04 authored the corpus's
-    # first `performance-optimisation` task (its ticket 05 adds two more).
+    # ones, and three more when round 13 authored its `performance-optimisation`
+    # ones (one by ticket 04, two by ticket 05).
     # The record is a snapshot and is not edited for that; the live count is
     # asserted here beside the recorded one so the two cannot drift silently
     # apart.

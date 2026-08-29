@@ -603,15 +603,14 @@ _PUBLISHED = {
     "requirement-decomposition": {
         "(zero-knob)": ("3", "1.00x (n=3)", "1.00x (n=3)", "unsolved (n=3)"),
     },
-    # Round 13's category, authored (ticket 04, one task so far) and not yet
-    # swept: one declared control, so one zero-knob row, every figure a "-"
-    # because no run exists — round 8's `test-authoring` arrival again. The
-    # tasks column reads 1 because a `Cell`'s members are every task of the
-    # set with this key, swept or not; ticket 05's two further tasks move
-    # this count from 1 to 3, and round 13's sweep (ticket 06) then prices
-    # the row.
+    # Round 13's category, authored whole (one task by ticket 04, two by
+    # ticket 05) and not yet swept: three declared controls, so one zero-knob
+    # row, every figure a "-" because no run exists — round 8's
+    # `test-authoring` arrival again. The tasks column reads 3 because a
+    # `Cell`'s members are every task of the set with this key, swept or
+    # not; round 13's sweep (ticket 06) then prices the row.
     "performance-optimisation": {
-        "(zero-knob)": ("1", "-", "-", "-"),
+        "(zero-knob)": ("3", "-", "-", "-"),
     },
 }
 
@@ -646,7 +645,7 @@ _PUBLISHED_MIX = {
     "test-authoring": "3 single-file; 3 hand-authored",
     "investigation": "3 single-file; 3 hand-authored",
     "requirement-decomposition": "3 single-file; 3 hand-authored",
-    "performance-optimisation": "1 single-file; 1 hand-authored",
+    "performance-optimisation": "3 single-file; 3 hand-authored",
 }
 
 _PUBLISHED_ROW_MIX: dict[str, dict[str, str]] = {

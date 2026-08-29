@@ -88,14 +88,14 @@ _TYPESCRIPT_ROWS = {
 }
 
 # The Python side of the same table, which this round does not touch. It reads
-# 126 rather than round 7's 113 because later rounds authored into the Python
+# 128 rather than round 7's 113 because later rounds authored into the Python
 # column — round 8's three `test-authoring` tasks, round 10's three
 # `investigation` ones, round 11's three `requirement-decomposition` ones,
 # round 12's three explain-style `codebase-comprehension` ones, and round 13's
-# first `performance-optimisation` one (ticket 04 moves this figure by one;
-# ticket 05's two further tasks move it by two more); §59.8's own prose,
-# quoted below, is a claim about what round 7 did and stays at 113.
-_PYTHON_TOTAL = 126
+# three `performance-optimisation` ones (ticket 04 moved this figure by one,
+# and ticket 05's two further tasks by two more); §59.8's own prose, quoted
+# below, is a claim about what round 7 did and stays at 113.
+_PYTHON_TOTAL = 128
 
 
 def note_section() -> str:
@@ -530,8 +530,8 @@ def test_the_readers_corpus_count_header_reads_the_python_column(
     authored into the Python column — round 8's three `test-authoring` tasks,
     round 10's three `investigation` ones, round 11's three
     `requirement-decomposition` ones, round 12's three explain-style
-    `codebase-comprehension` ones, round 13's first `performance-optimisation`
-    one: 113 and 127 at the time §59.8 was written, 126 and 140 with those
+    `codebase-comprehension` ones, round 13's three `performance-optimisation`
+    ones: 113 and 127 at the time §59.8 was written, 128 and 142 with those
     tasks checked in. The section's own prose is quoted above and is
     unmoved — what round 7 did to the Python column is still nothing.
     """

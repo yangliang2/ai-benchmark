@@ -1199,10 +1199,10 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
         if language == "python" and surface == "application"
     }
     assert python[_CATEGORY] == 7, "the round's acceptance figure"
-    # 125 when §113 was recorded; round 13's first `performance-optimisation`
-    # task (ticket 04) moved the live column to 126, and its ticket 05's two
-    # further tasks move it by two more.
-    assert sum(python.values()) == 126
+    # 125 when §113 was recorded; round 13's three `performance-optimisation`
+    # tasks moved the live column to 128 — one by ticket 04, two by ticket
+    # 05.
+    assert sum(python.values()) == 128
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
@@ -1241,13 +1241,14 @@ def test_the_coverage_table_and_the_zero_exemplar_sites_are_verified(
         if line.startswith("  codebase-comprehension")
     ] == [["codebase-comprehension", "application", "python", "7"]]
     assert "  codebase-comprehension     application  typescript" not in printed
-    # What prints where the quoted zero row stood: the category's first
-    # Python cell, and — the one `- - 0` row left — `unclassified`'s.
+    # What prints where the quoted zero row stood: the category's Python
+    # cell, three tasks since ticket 05 landed the round's second and third,
+    # and — the one `- - 0` row left — `unclassified`'s.
     assert [
         line.split()
         for line in printed.splitlines()
         if line.startswith("  performance-optimisation")
-    ] == [["performance-optimisation", "application", "python", "1"]]
+    ] == [["performance-optimisation", "application", "python", "3"]]
     assert "  unclassified               -            -           0" in printed
 
     said = prose(note_section("113. The coverage table, as the lint prints it"))
@@ -1659,11 +1660,11 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         "116. Replay, the readers, and heap 3 closed"
     ))[1:2]
     # One quoted line has moved since §116 was recorded, named here in round
-    # 7's pattern rather than edited in the record: round 13's ticket 04
-    # authored the corpus's first `performance-optimisation` task, a Python
-    # control, growing the task-set line by one task and one control (its
-    # ticket 05 adds two more). The round's sweep has not landed, so the runs
-    # and rounds lines are untouched.
+    # 7's pattern rather than edited in the record: round 13 authored its
+    # three `performance-optimisation` tasks, Python controls all — one by
+    # ticket 04, two by ticket 05 — growing the task-set line by three tasks
+    # and three controls. The round's sweep has not landed, so the runs and
+    # rounds lines are untouched.
     stale = "  task set   tasks/first-party-v1 — 125 task(s): 58 control(s), 67 constructed"
     quoted_block_lines = quoted.strip("\n").splitlines()
     assert stale in quoted_block_lines
@@ -1673,7 +1674,7 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
             continue
         assert line in printed, line
     assert (
-        "  task set   tasks/first-party-v1 — 126 task(s): 59 control(s), "
+        "  task set   tasks/first-party-v1 — 128 task(s): 61 control(s), "
         "67 constructed"
     ) in printed
     assert printed.count(f"sweep {_SWEEP}") == 1

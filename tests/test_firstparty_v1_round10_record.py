@@ -1048,10 +1048,10 @@ def test_the_coverage_table_and_the_two_updated_sentences(
     assert python[_CATEGORY] == 3, "the round's acceptance figure"
     # 119 when §90 was recorded; round 11's three `requirement-decomposition`
     # tasks moved the live column to 122, round 12's three explain-style
-    # `codebase-comprehension` tasks to 125, and round 13's first
-    # `performance-optimisation` task (ticket 04) to 126 — ticket 05's two
-    # further tasks move it by two more.
-    assert sum(python.values()) == 126
+    # `codebase-comprehension` tasks to 125, and round 13's three
+    # `performance-optimisation` ones to 128 (one by ticket 04, two by
+    # ticket 05).
+    assert sum(python.values()) == 128
     assert not [
         row for row in coverage if row[0] == _CATEGORY and row[2] == "typescript"
     ], "the TypeScript zero is by absence"
@@ -1434,12 +1434,12 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     )
     for line in recorded:
         assert line not in printed, line
-    # 125 task(s) and 58 control(s) until round 13's ticket 04 authored the
-    # corpus's first `performance-optimisation` task, a Python control;
-    # ticket 05's two further tasks move both figures by two more. The runs
-    # line counts tasks with rows and is untouched until that round's sweep.
+    # 125 task(s) and 58 control(s) until round 13 authored its three
+    # `performance-optimisation` tasks, Python controls all — one by ticket
+    # 04, two by ticket 05. The runs line counts tasks with rows and is
+    # untouched until that round's sweep.
     assert (
-        "  task set   tasks/first-party-v1 — 126 task(s): 59 control(s), "
+        "  task set   tasks/first-party-v1 — 128 task(s): 61 control(s), "
         "67 constructed"
     ) in printed
     assert "  runs       249 over 125 task(s)" in printed

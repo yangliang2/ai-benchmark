@@ -165,20 +165,20 @@ _MODULES_UNDER_TEST = ("lido.py", "playbill.py", "register.py")
 # `investigation` tasks and round 11 its three `requirement-decomposition`
 # ones, Python controls all — round 12's three explain-style tasks then
 # grew `codebase-comprehension`'s row, and round 13's ticket 04 opened
-# `performance-optimisation`'s with its first task (ticket 05 adds two
-# more) — and this live read moves with the corpus while the note's own
-# quoted table stays the snapshot it was.
+# `performance-optimisation`'s with its first task and its ticket 05 grew
+# it to three — and this live read moves with the corpus while the note's
+# own quoted table stays the snapshot it was.
 _PYTHON_COVERAGE = {
     "bug-fix": 6, "fault-location": 6, "feature-dev": 71, "refactor": 18,
     "codebase-comprehension": 7, "code-review": 8, "test-authoring": 3,
     "investigation": 3, "requirement-decomposition": 3,
-    "performance-optimisation": 1,
+    "performance-optimisation": 3,
 }
 _TYPESCRIPT_COVERAGE = {
     "bug-fix": 3, "fault-location": 3, "feature-dev": 3, "refactor": 3,
     "code-review": 2,
 }
-_PYTHON_TASKS = 126
+_PYTHON_TASKS = 128
 # What the runs line counts instead: the Python tasks that have rows. The two
 # were one number until round 10 authored tasks after every sweep — a task
 # with no rows joins the task-set line and not this one.
@@ -206,17 +206,17 @@ _ROUND_11_CLAUDE_CODE_ROWS = 6
 _ROUND_12_TASKS = 3
 _ROUND_12_ROWS = 9
 _ROUND_12_CLAUDE_CODE_ROWS = 6
-# And round 13's first `performance-optimisation` task, a Python control
-# graded by the complexity proxy (ADR-0006). Ticket 04 moves the live
-# task-set arithmetic by one and ticket 05's two further tasks will move it
-# by two more; the round's sweep has not landed, so it joins no runs-line or
-# round-list figure.
-_ROUND_13_TASKS = 1
+# And round 13's three `performance-optimisation` tasks, Python controls
+# graded by the complexity proxy (ADR-0006). Ticket 04 moved the live
+# task-set arithmetic by one and ticket 05's two further tasks by two more;
+# the round's sweep has not landed, so they join no runs-line or round-list
+# figure.
+_ROUND_13_TASKS = 3
 
 # Section 75's reader counts. Unlike round 7's, this round's claude-code rows
 # are Python, so the default reading picks them up with no flag at all.
 _CLAUDE_CODE_PYTHON_RUNS = 231
-_PYTHON_CONTROLS = 59
+_PYTHON_CONTROLS = 61
 _PYTHON_CONSTRUCTED = 67
 _ALL_ROWS = 306
 _ROUND_8_ROWS = 9

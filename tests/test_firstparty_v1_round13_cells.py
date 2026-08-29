@@ -48,17 +48,18 @@ to invalidate, which is 118.1's claim about the round said again about the
 suite that pins it.
 
 Nothing here calls the grader, runs a live cell or spends a dollar. Three tests
-read the round forwards, and they are three rather than one because they die at
-different tickets:
+read the round forwards, and they were three rather than one because they die
+at different tickets — two are now retired to their landed forms:
 
-- **the corpus** — this one is part-retired: ticket 04 landed the first
-  `performance-optimisation` task, so the test now reads task 1 present with
-  no second or third yet, and the table's `- - 0` rows down to
-  `unclassified`'s structural one alone; ticket 05's two tasks move it again;
-- **the rows** — no `round-13` row exists yet, retired by the sweep;
-- **the register** — §118 leaves the three ids explicitly to be filled in,
-  retired by the authoring ticket that fills it and replaced with the
-  ids-match-the-corpus check §107.8's suite carries today.
+- **the corpus** — retired: ticket 04 landed the first
+  `performance-optimisation` task and ticket 05 the second and third, so the
+  test now reads all three present with no fourth, and the table's `- - 0`
+  rows down to `unclassified`'s structural one alone;
+- **the rows** — no `round-13` row exists yet, retired by the sweep, which is
+  the one claim still read forwards;
+- **the register** — retired: §118 left the three ids explicitly to be filled
+  in, ticket 05 filled it, and the test now holds the register to the corpus
+  with the ids-match-the-corpus check §107.8's suite carries today.
 
 Two more read the round forwards and no longer do, both retired by the round's
 machinery ticket and both now asserted in their landed form rather than
@@ -197,10 +198,10 @@ def register_blocks() -> list[dict[str, str]]:
     register form, looked for by shape rather than by position or by a quoted
     id.
 
-    §118.10 leaves the register explicitly to be filled in before the sweep, so
-    this finds none today; when the round's authoring ticket fills it, the same
-    shape check finds exactly one, and a second id-shaped block appearing
-    anywhere in the section is caught as the ambiguity it would be.
+    §118.10 left the register explicitly to be filled in before the sweep, so
+    this found none until the round's second authoring ticket filled it; the
+    same shape check now finds exactly one, and a second id-shaped block
+    appearing anywhere in the section is caught as the ambiguity it would be.
     """
     found: list[dict[str, str]] = []
     for block in blocks():
@@ -899,38 +900,78 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     assert _SWEEP in counted
 
 
-def test_the_id_register_is_left_to_be_filled_before_the_sweep() -> None:
-    """The second forward-reading test: the register, registered as empty.
-
-    §118.10 leaves the three ids to be filled in before the sweep, so no
-    id-shaped block stands in the section today. The round's task-authoring
-    ticket retires this and replaces it with §107.8's landed form: the
-    register's ids read against the corpus, one gloss a line naming the
-    performance question its task puts.
-    """
-    assert register_blocks() == [], (
-        "the register is left explicitly to be filled in before the sweep"
-    )
-
-
-def test_the_corpus_holds_task_one_and_the_table_keeps_one_structural_zero(
+def test_the_register_names_every_performance_task_and_the_questions_differ(
     tasks: dict[str, firstparty_v1.Task],
 ) -> None:
-    """What was the third forward-reading test, retired to its landed form by
-    the ticket that landed task 1.
+    """What was the second forward-reading test, in its final form: the
+    register check.
+
+    Its first form said no id-shaped block stood in §118 — the register was
+    left explicitly to be filled in before the sweep. The round's second
+    task-authoring ticket (ticket 05) landed tasks 2 and 3 and filled it, and
+    this is §107.8's landed pattern a round on: the register is read against
+    the corpus rather than restated — its three ids are exactly the
+    `performance-optimisation` tasks the corpus holds, no fourth anywhere,
+    and every one is the Python application-surface declared control §118.10
+    registered. The three question-lines are present and distinct, each
+    naming its task's kind of repetition — the axis §117.5 requires the three
+    questions to differ on — with each kind carried exactly once across the
+    three lines.
+    """
+    [register] = register_blocks()
+    authored = sorted(
+        task.id for task in tasks.values() if task.category == _CATEGORY
+    )
+    assert sorted(register) == authored, (
+        "the register is the corpus's performance-optimisation set, whole"
+    )
+    assert len(register) == _CELLS, "and the corpus holds no fourth"
+
+    # Each register line's gloss names its task's kind of repetition, and the
+    # three kinds are three: a derivation re-taken inside a loop, a
+    # whole-store scan per exact-match asking, an all-pairs reckoning over
+    # one series. Each carried exactly once, and no gloss line repeated.
+    kinds = (
+        "re-derivation inside a loop",
+        "scan per exact asking",
+        "all-pairs reckoning",
+    )
+    for kind in kinds:
+        assert len(
+            [task_id for task_id, gloss in register.items() if kind in gloss]
+        ) == 1, f"exactly one register gloss names {kind!r}"
+    for task_id, gloss in register.items():
+        assert gloss, f"{task_id}: its question-line is present"
+    assert len(set(register.values())) == _CELLS, "and the three lines differ"
+
+    for task_id in register:
+        task = tasks[task_id]
+        assert task.category == _CATEGORY
+        assert task.language == "python"
+        assert task.surface == "application"
+        assert task.control is True
+        assert task.construction is None
+
+
+def test_the_corpus_holds_the_three_tasks_and_the_one_structural_zero(
+    tasks: dict[str, firstparty_v1.Task],
+) -> None:
+    """What was the third forward-reading test, in its final form: the corpus
+    with all three of the round's tasks landed.
 
     §118.2's claim about what the coverage table prints is a claim about the
-    corpus, so it is read off the live table rather than off the note. The
-    round's ticket 04 authored the corpus's first `performance-optimisation`
-    task, so the action's `- - 0` row is gone and the corpus holds task 1 and
-    no second or third yet — those are ticket 05's, and this count moves to
-    three when they land. What stays is `unclassified`'s row, the one `- - 0`
-    row left, permanent and structural exactly as §118.2 registers: the
-    loader refuses any task declaring it, so no round can close it.
+    corpus, so it is read off the live table rather than off the note. Ticket
+    04 authored the corpus's first `performance-optimisation` task — the last
+    authorable `- - 0` row leaving the table — and ticket 05 the second and
+    third, so the corpus holds exactly the **three fresh tasks** §118.2
+    registered and no fourth. What stays is `unclassified`'s row, the one
+    `- - 0` row left, permanent and structural exactly as §118.2 registers:
+    the loader refuses any task declaring it, so no round can close it.
     """
     assert (
-        len([task for task in tasks.values() if task.category == _CATEGORY]) == 1
-    ), "task 1 landed; the second and third are ticket 05's to land"
+        len([task for task in tasks.values() if task.category == _CATEGORY])
+        == _CELLS
+    ), "the round's three tasks, whole, and no fourth"
     rows = firstparty_v1.coverage_table(list(tasks.values()))
     zeroes = [row[0] for row in rows if row[1:] == ("-", "-", 0)]
     assert zeroes == [_STRUCTURAL_ZERO], (

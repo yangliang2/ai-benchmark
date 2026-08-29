@@ -1,0 +1,61 @@
+# performance-optimisation task 2 of round 13's three, heap 4's action
+# (design note 117, ADR-0006). grading/ is split exactly as a refactor's is:
+# the behaviour tests named below must PASS on the pristine repository (the
+# handing back is already correct, and "preserved" needs a baseline to be
+# measured against), and everything else in grading/ is the complexity
+# suite, which must FAIL on it (the handing back is not yet cheap). The
+# task-set lint enforces both, and together they are the two-sided proof
+# that the planted proxy is honest.
+#
+# The round-13 question this task puts, in one line for section 118's id
+# register (task 2 of three; the axis the three differ on is what is
+# repeated and what removes the repetition): a whole-rail scan per exact
+# asking — Cloakroom.hand_back walks every peg for every ticket in the
+# queue, though each ticket names exactly one coat, and keying the rail
+# once so an asking lands straight on its coat is what removes the
+# repetition. It is not cooperage's question (there the same derivation is
+# re-taken per order and hoisting it out removes it, while the per-order
+# scan legitimately remains, the fit being an inequality), and it is not
+# cornexchange's (there one collection is paired against itself with no
+# queue at all).
+#
+# What the counter counts, and through which seam: the complexity suite
+# counts take-downs through Rail.takedowns, the room's own tally — kept in
+# repo/ because a take-down is a handling and the house rules have always
+# had the attendant count handlings, not for any test's benefit. The bound
+# is a ceiling of a small multiple of the rail's size across held-out rail
+# and queue sizes, so the assertion is a fact of the algorithm and never a
+# wall-clock or an implementation constant: any correct change of the
+# intended growth class passes, whether it takes each coat down once,
+# twice over, or not at all.
+#
+# Why the intended optimisation is decidable from the repository alone: the
+# whole room is two small stdlib-only modules, the repetition is on the
+# page in Cloakroom.hand_back's per-ticket call to Cloakroom.coat_for, the
+# one-ticket-one-coat invariant that makes keying safe is written on the
+# rail itself, and no external fact, no library and no measurement is
+# needed to see it or to remove it.
+id: cloakroom-keep-the-handing-back-quick-as-the-queue-grows
+category: performance-optimisation
+scale: single-file
+surface: application
+language: python
+control: true
+prompt: |
+  The cloakroom in this repository hands the evening's coats back over
+  its hatch: `Cloakroom.hand_back` in cloakroom.py answers each ticket in
+  the queue with the coat to fetch for it.
+
+  Handing back has grown slow. At the end of a full house the queue is
+  long, and `Cloakroom.hand_back` takes visibly longer as the queue grows
+  — the last patrons are still waiting while coats are lifted and lifted
+  again. Make `Cloakroom.hand_back` stay quick as the queue grows.
+
+  Nothing anyone is told may change: every ticket must still get the coat
+  checked under it, a ticket no coat carries must still be refused, an
+  asking repeated must still be answered the same way, and the queue must
+  still be answered in the order it formed. The deliverable is the change
+  to the code in this repository.
+grading:
+  behaviour_tests:
+    - test_cloakroom_behaviour.py
