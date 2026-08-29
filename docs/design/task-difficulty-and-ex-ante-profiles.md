@@ -12068,6 +12068,556 @@ and records. It is said here rather than left unmentioned, because a
 disclosure that simply stops appearing reads like an omission and this one is
 an absence of spend.
 
+## Round 13 record — 2026-08-29
+
+**§119 is the next free number.** §118 is round 13's pre-registration and the
+last section written before the sweep — its 118.10 register filled in place by
+the round's second task-authoring ticket — so this record opens at **119** and
+runs to **127**. Nothing above it is renumbered.
+
+### 119. What the round measured
+
+**Nine cells, and they are exactly the nine §118.10 registered.** Three
+`performance-optimisation` tasks × three combinations, every one of them swept
+and logged: **9 of 9**, with nothing dropped and nothing added. The three ids
+the rows carry are the three §118.10's filled register lists — `cooperage`,
+`cloakroom` and `cornexchange`, every `performance-optimisation` task the
+corpus holds — and each is swept once per combination and never twice. These
+are **heap 4's one action's cells**: `performance-optimisation × python`,
+filled under the **complexity-proxy verdict shape** §117.1 ruled and ADR-0006
+records — two held-out suites, a behaviour half proving correctness unchanged
+and a complexity half asserting operation counts across held-out input sizes,
+`resolved` being **both suites passing** — with **no grader in the verdict
+path**: no cell of this round was point-graded, no rulings archive exists for
+any of the nine, and round 13 is the first round since round 9 whose verdict
+path spent no grader dollar, exactly as §118.1 registered. The verdict is
+binary, computed rather than spoken, and **no second quality metric enters the
+table**.
+
+**One sweep id, and the harness versions it ran under.** Every row carries
+`sweep: round-13` and `as_of: 2026-08-29`. The version is single within each
+harness's rows, and this round **crosses no version boundary**: `claude-code`
+ran at **2.1.246**, rounds 11 and 12's exactly, and `codex` at **codex-cli
+0.147.0**, rounds 6, 7, 8, 10, 11 and 12's exactly — the second consecutive
+round with no boundary to narrate, so no cost or turn reading below carries a
+version caveat and none is implied. The reasoning level rides with the model
+(`ai_benchmark.agents.CODEX_REASONING_LEVELS` is
+`{"gpt-5.6-terra": "medium"}`) and no invocation could have asked for another.
+
+**Four invocations, four logs, none of them empty.** `r13-a` is the **dry
+cell** §118.10 required: one of the nine, run alone in its own invocation,
+paid for and **graded alone before the other eight**, so that a mis-shaped
+verdict on a verdict shape that had never graded anything would be found on
+one cell rather than nine. It is
+`cooperage-keep-the-quoting-quick-as-the-book-grows` on `claude-code` ×
+`claude-haiku-4-5`, and its verdict is the complexity-proxy shape's first paid
+verdict: **resolved**, both held-out suites passing on the collected diff —
+a green cell whose reasons are two test runs anyone can repeat, which is the
+verdict shape arriving well-formed, so the other eight were run. `r13-b`
+carries haiku's other two, `r13-c` sonnet's three and `r13-d` Codex's three.
+No stream died, no invocation logged nothing, and no cell was re-run: four
+logs, nine rows. **The dry cell was registered as the cheapest of the nine,
+and this round the column half of that reading held**: the haiku column was
+the cheaper (**$0.0650** a cell against Codex's **$0.0762**) — but the dry
+cell itself cost **$0.0833**, the dearest of haiku's three, and the cheapest
+of the nine cells was `cloakroom` on haiku at **$0.0534**, so the word
+"cheapest" held of the column and not of the cell, the same smaller departure
+§108 recorded of its round.
+
+**Resolution: 9 of 9.** **3 of 3** on `claude-haiku-4-5`, **3 of 3** on
+`claude-sonnet-5` and **3 of 3** on `codex` × `gpt-5.6-terra` — the first of
+the corpus's five nine-cell rounds (8, 10, 11, 12 and this one) to resolve
+all nine. There is no red cell to read: §123 records what the reading would
+have named, and that it had nothing to name.
+
+**The limits in force: the category's own registered 600 s, every cell.**
+§118.9 registered `performance-optimisation: 600` before the sweep and the
+round's machinery ticket landed the entry, so all nine cells ran **under the
+registration the category carries** rather than at the bare flat default —
+and because 600 is also the flat default's own value, 600 is the number in
+force for every cell of this round and of every earlier one: **no cross-round
+caveat arises** and none is implied. The limit was **never adjusted per
+cell**, and it bounds the agent's run alone — the two held-out suites run
+afterwards, over the collected diff, and are no part of the 600. And — the
+departure from every record since §85, whose limits paragraphs quoted a
+longest run and a mean — **no run-time reading appears here**: §118.3
+registered wall-clock out of the round as a prohibition, not a preference,
+and this record keeps it, so the 600 above is a registered bound and the
+record carries no measured duration of any kind.
+
+**The toolchain the sweep graded under: Python 3.14.4, no Node, and no
+instrument anywhere.** Every cell is a Python task, so each verdict is two
+pytest runs under the task's own runner — the behaviour suite and the
+complexity suite, over the pristine repository with the collected diff
+applied. There is **no grader version to quote**, because no grader graded
+anything: the round's provenance is the committed logs and the checked-in
+held-out suites, and a replay recomputes every verdict from exactly those
+(§127).
+
+### 120. The gate opened: both pristine invariants, over all three tasks
+
+**The round's one hard gate was read before the first sweep dollar, and it
+opened.** §86, §98 and §109 are its form in the point-gate rounds; §118.4
+registered this round's as the only gate round 13 has, and it is the first
+gate since round 9's whose reading needed no instrument, no archive and no
+dollar. In the registered quantifier and no other form: for **every one of
+the three `performance-optimisation` tasks**, the **whole grading suite did
+not pass** on the pristine repository, and the **named behaviour half did
+pass** on it — every task, both invariants, no fraction met, no proportion
+computed, no threshold anywhere in the clause. Together the two say per task
+that the slow start is real: behaviour already works, the whole suite still
+fails, and the failing half is the complexity suite — the planted proxy is
+one the unoptimised repository does not already satisfy, which is §118.5's
+refusal made mechanical.
+
+**Both invariants are the lint's own, and neither was added for this round.**
+They are the two standing rules that close `lint_task_set`'s per-task tail:
+the **grading-must-not-pass-on-pristine** rule — "the grading tests already
+pass on the pristine repo — there is nothing left for an agent to do" — doing
+for a slow start exactly what it does for a buggy one, and the
+**behaviour-tests-pass-on-pristine** rule — "the behaviour tests fail on the
+pristine repo — a refactor or performance-optimisation task must start from
+behaviour that already works" — reaching this category through §118.8's one
+loader move. The gate is **standing machinery**: no proofs archive, no foil,
+no grader call and no LLM anywhere in its path.
+
+**The gate is read for nothing, offline, as often as anyone likes.** `ai-bench
+lint-v1` runs both invariants over every task of the set, and it was read
+open at each authoring landing — the first task's, then the second and
+third's — and again at the sweep's own acceptance, all before the first sweep
+dollar. The kill discipline's one standing sentence was never needed: no task
+stood failed when the gate was read, and `performance-optimisation` opened
+instead of staying absent.
+
+### 121. Spend, by cost source, against the one registered range
+
+**The three sweep columns, kept apart by how their dollars were made:**
+
+```
+claude-code x haiku     $0.1950  vendor-reported (what the account was billed)
+claude-code x sonnet    $0.4823  vendor-reported (what the account was billed)
+codex x gpt-5.6-terra   $0.2285  table-derived   (list price, openai-pricing-2026-08-18.1)
+```
+
+**What the account was actually billed for the sweep: $0.6772, and nothing
+per token for Codex.** The operator's Codex is authenticated by **ChatGPT
+login**, not by an API key, so no Codex run in this round was billed per
+token at all. The $0.2285 is this repository's own arithmetic — the round's
+Codex tokens priced through `data/price-table.json` at version
+**`openai-pricing-2026-08-18.1`**, stamped `cost_source: table-derived` on
+all three rows — a **list-price equivalent, not an invoice**. The two
+claude-code columns are the vendor's own figures, `cost_source:
+vendor-reported`, and their sum is what was billed. **There is no third cost
+source this round, because there was no metered call of any kind**: no proof
+call, no gate call, no grading call. **No grader spend is reported because
+none was made** — said in as many words, as §118.11 registered it would be,
+rather than left as an omission a reader must interpret.
+
+**The registered sweep range was $0.9–2.8. The round came to $0.9058, inside
+the band and $0.0058 above its floor** — at **0.99×** the flat extrapolation
+($0.9183) the floor was rounded down from, and **$0.0126 under** round 12's
+own landed $0.9184. Every total here is **summed before rounding**, and this
+round the printed columns add to the same $0.9058 — round 8's situation
+rather than round 7's, said so that a reader who checks finds the check made.
+**Neither of §118.11's pre-read misses arrived**, and the direction the round
+leaned is the low bound's: three optimisations cost **$0.3019 a task** where
+round 12's three explanations cost $0.3061, so **the anchor's honest caveat —
+that a perf cell makes a real code change and runs tests and may run longer
+and dearer than an explain cell — did not price in**. The action edited,
+re-ran and still cost a hair less than reading and writing prose did; that is
+the registered low-side finding about the action arrived in miniature,
+without crossing the floor. The registered high miss — an optimisation loop
+that re-runs a slow suite after every edit — did not happen, and the $2.8
+stop was never approached:
+
+```
+                        anchor (3 x r12/cell)  actual     per cell   round 12
+claude-code x haiku     $0.2112                $0.1950    $0.0650    $0.0704
+claude-code x sonnet    $0.4542                $0.4823    $0.1608    $0.1514
+codex x gpt-5.6-terra   $0.17-$0.82 (~$0.25)   $0.2285    $0.0762    $0.0843
+```
+
+**The action's own signature, carried by the two claude columns: read more,
+wrote less.** The columns landed at **0.92×**, **1.06×** and **0.90×** round
+12's, and the token shape under them is the code-change-plus-tests loop in as
+many words: haiku read **233,669** input tokens a cell against round 12's
+142,724 and wrote **3,419** against 5,259, and sonnet read **371,637**
+against 172,814 and wrote **3,134** against 5,044 — a cell of this round
+reads a repository *and its test output, twice over*, and writes a diff,
+which is shorter than an essay. Sonnet, the one column that rose, is the one
+whose reading more than doubled. Both claude columns are vendor-reported, so
+their token counts are the evidence the dollars follow — and the input side's
+dollars ride the vendor's caching arithmetic, which this record does not
+claim to separate.
+
+**The cache reading, on the Codex column alone.** The round's Codex cells
+read **358,132** input tokens and wrote **6,128** — *less* than round 12's
+361,796 and 7,851 on both axes — and came in at 0.90× the anchor. Priced at
+`openai-pricing-2026-08-18.1` those tokens bound the column at **$0.1452
+all-cached** and **$0.7898 all-uncached**, and the logged **$0.2285** sits
+between them, as it must. The effective input rate works out at
+**$0.4328/M**, against round 12's **$0.4385/M** and round 11's **$0.5314/M**
+on the same model and the same table — a seventh point on one rate, from
+seven sweeps that differ in more than one way, and still not a separated
+cause. The money is unspent rather than overspent, the band closes with the
+round, and **no new registration is opened** for it.
+
+**The payment path, stated by its absence.** No `DEEPSEEK_API_KEY` was
+supplied to any column, no cell was point-graded, and the round's whole spend
+is the nine agent runs above — §118.13's registration, landed as written. The
+standing session-memory storage disclosure — the owner's ruling of
+2026-08-23 — is **not owed by this round** and stays where it was used, in
+the round-10, round-11 and round-12 runbooks and records; the round's own
+sweep runbook says the same.
+
+### 122. The nine cells under three combinations
+
+Every cell, its verdict and its cost, with each column's **cost source** in
+the header where a reader cannot join the three without seeing it:
+
+```
+                                                             claude-code x       claude-code x       codex x
+                                                             claude-haiku-4-5    claude-sonnet-5     gpt-5.6-terra
+                                                             vendor-reported     vendor-reported     table-derived
+cloakroom-keep-the-handing-back-quick-as-the-queue-grows     resolved   $0.0534  resolved   $0.1335  resolved   $0.0787
+cooperage-keep-the-quoting-quick-as-the-book-grows           resolved   $0.0833  resolved   $0.1818  resolved   $0.0932
+cornexchange-keep-the-best-turn-quick-as-the-tape-runs-long  resolved   $0.0583  resolved   $0.1670  resolved   $0.0566
+```
+
+There is no per-category block beside it and there is nothing to group: all
+three tasks are one action, which is the round. Nine cells is the whole
+denominator this record has, and no rate is quoted off it.
+
+**Turns, for what they are worth on each side.** Haiku took **26** turns over
+the three (7–11), sonnet **31** (9–12), Codex **28** (7–11). A Codex turn is
+a completed non-reasoning item and a claude-code turn is `num_turns`, so the
+three numbers are **not** comparable across the harness boundary — §126
+refuses that comparison as §115, §104, §92, §74 and §65 did, and these are
+quoted only so that the refusal is anchored to something.
+
+### 123. What the shape bought, and the reading it refuses
+
+**The sentence a future round planner reads, asking whether this shape should
+carry a second language or a second action.** The verdict the round ran on is
+**binary, execution-verified and replayable offline** — two held-out suites
+over a collected diff, no network, no client, no key, no archive — and it is
+**immune to shared-hardware noise because wall-clock is nowhere in the
+path**: nothing in it can re-time, so nothing in it can flip on replay, which
+is the replay-exactness every round since round 5 has kept, bought here for
+the one action whose name tempts a stopwatch. What the shape cost is
+authoring, not dollars: two held-out suites per task, a reference solution
+proved against both, and the two-sided pristine proof of §120 — no
+instrument, no proofs spend, no grader dollar, the whole of §118.11's
+"agent-run prices alone" cashed as registered.
+
+**The reading the shape makes possible, and what it had to read this round.**
+An unresolved cell under this verdict fails on a **named side**: the
+behaviour suite — the change broke correctness — or the complexity suite —
+the bound was not met — read off the run's own grading, with no grader's
+opinion in between. This round the reading had **nothing to name**: no cell
+is unresolved, and in every one of the nine both suites pass on the collected
+diff — said here while reading the cells, and never as a score.
+
+**The reading it refuses.** A **fraction over assertions** presented as a
+quality figure — "most of the bounds met" as a score — is the kill-rate move
+ADR-0004 refused for mutants and ADR-0005 for points, and ADR-0006 inherits
+the refusal for complexity assertions: counting while *reading* a cell is
+§82's allowance, and publishing a rate as a result is not, so none appears
+here or anywhere in this record. And **no wall-clock figure appears anywhere
+in this record** — not a longest run, not a mean, not a disclosed non-gating
+reading beside a verdict — because §118.3 registered the prohibition and a
+reading nobody gates on is still a reading a later round would be tempted to
+gate on.
+
+### 124. The coverage table, as the lint prints it
+
+`uv run ai-bench lint-v1` reports **`lint clean: 142 task(s)`** and prints:
+
+```
+coverage: category x surface x language
+  category                   surface      language    count
+  bug-fix                    application  python      6
+  bug-fix                    application  typescript  3
+  feature-dev                application  python      71
+  feature-dev                application  typescript  3
+  refactor                   application  python      18
+  refactor                   application  typescript  3
+  test-authoring             application  python      3
+  codebase-comprehension     application  python      7
+  fault-location             application  python      6
+  fault-location             application  typescript  3
+  code-review                application  python      8
+  code-review                application  typescript  2
+  investigation              application  python      3
+  requirement-decomposition  application  python      3
+  performance-optimisation   application  python      3
+  unclassified               -            -           0
+```
+
+**`performance-optimisation application python 3` is the round's acceptance
+figure**, and it is the line that read `- - 0` in the table §113 quoted. The
+rest of the table is §113's exactly: round 13 authored no task in any other
+category and re-ran none, so the `python` column stands at **128** and the
+five `typescript` rows are round 7's still.
+
+**The last authorable zero row is gone, and the record says exactly that and
+not more.** The only `- - 0` row the table prints is **`unclassified`'s**,
+and that row is **structural**: `unclassified` is a `TaskCategory` member
+(`src/ai_benchmark/schema.py:37`) that no task can ever declare — the loader
+refuses it outright at `classified_and_split_by_category` — and
+`coverage_table` emits a `(category, "-", "-", 0)` row for every uncovered
+category, so `("unclassified", "-", "-", 0)` survives this round and every
+round after it. The claim is therefore quantified over **authorable**
+categories and never stated as "the table is zero-row-free" — the plan-review
+ruling of 2026-08-29, kept here as it was kept in §117.5, §117.6 and §118.2.
+
+**What the filled row closes, and what stays disclosed.** Every category the
+loader admits now holds at least one task in at least one language: every
+action of §34.3's four heaps is in the corpus with graded cells behind it —
+**every heap is swept** (§127 closes heap 4 in as many words). What stays
+disclosed is the language axis: heaps 3 and 4 are Python-only, so
+`codebase-comprehension` × `typescript` and `performance-optimisation` in any
+non-Python language are zeros **by the absence of their rows** — all the
+table can express, the disclosure living here in prose exactly as §64 shaped
+it and §113 carried it.
+
+**The zero-exemplar cascade, landed as §117.6 named it in advance.** The
+first task's landing removed the last authorable zero row with **no
+authorable successor category to point at**, so the two checked-in sentences
+that used `performance-optimisation` as the zero-row exemplar **changed
+shape** rather than re-pointing. The `coverage_table` docstring
+(`src/ai_benchmark/firstparty_v1.py`) now closes its series with
+"`performance-optimisation` read zero until round 13 filled its Python cell —
+the last authorable zero row, so the series above ends with no "today"
+exemplar left: the one `- - 0` row still printed is `unclassified`'s,
+permanent and structural, because the loader refuses any task declaring that
+category". And `CONTEXT.md`'s **coverage table** glossary entry now reads
+"and `performance-optimisation` was one until round 13 filled its Python cell
+— the last authorable zero row, so the only `0` row still printed is
+**unclassified**'s, permanent and structural because the loader refuses any
+task declaring that category". Both are quoted here as checked-in text the
+way §90, §102 and §113 quoted their predecessors, and the earlier suites'
+exemplar pins — the round-7 and round-8 pins, the round-10-record pins and
+the round-12-record suite's own — moved with them at the first task's landing,
+with the mechanism named per site, before this record was written.
+
+### 125. The machinery, recorded as landed
+
+**The loader's one move, in the code the round swept under.** The
+behaviour/structural grading split now admits **exactly two categories**:
+`refactor`, whose it has been since round 3, and `performance-optimisation`
+(`_SPLIT_CATEGORIES`, `src/ai_benchmark/firstparty_v1.py`) — the behaviour
+tests named per task in the `grading` block and required to **pass** on the
+pristine repository, the structural half being everything else in `grading/`,
+which the standing must-not-pass-on-pristine invariant holds to **failing**
+on the start; for this category that half is the **complexity suite**. The
+split's semantics are untouched: the same two validators, the same two
+invariants, one more category allowed through them, exactly as §118.8
+registered.
+
+**Two registries gained nothing, and owe nothing.** `EXISTENCE_PROOFS` — the
+keyed actions' registry — **gained no entry and owes none**: the category
+ships no key of any shape, so it is outside the keyed-minus-registered union
+`_unregistered_proof_form_problems` computes, neither refused nor exempt.
+And the category **joined no point machinery**: not `_POINT_CATEGORIES`, no
+points key, no terrain exemption. No new subcommand, no new flag, no change
+to the runner, the readers, the point gate or the proofs writer.
+
+**`LIVE_RUN_LIMITS_S` gained one entry, at the flat default's own value.**
+`performance-optimisation: 600` is the dict's fifth row, beside round 4's two
+and round 5's two — registration, not tuning: the fallback a category with no
+row reaches is the same 600, so the entry bought no seconds and took none
+away, only the commitment §118.9 wanted on the record before a dollar ran
+under it.
+
+**ADR-0006 records the shape, beside the mutation gate's and the point
+gate's.** `docs/adr/0006-the-complexity-proxy-verdict-shape.md` is the
+permanent record of the decision and of the **three rejected alternatives**
+at their own prices — measured wall-clock (noise unpriced, a threshold is a
+tuning knob, a verdict that re-times can flip), point-keyed
+explain-the-optimisation (grades the explanation, not the speedup, and a fake
+optimisation with a good essay resolves), and the hybrid rider (paid proofs
+and grader calls for a reading that gates nothing; declined, not foreclosed).
+
+**And §117.4's disqualifier rule stands registered forward-only.** The
+surface-disjoint discipline binds future point-keyed authoring tickets' text;
+**this round authored no point key**, so the rule cost it nothing, no
+machinery moved for it, and rounds 10, 11 and 12's keys, proofs, records and
+labels stand as written, §115's addendum remaining the permanent disclosure
+of the adjacency it priced.
+
+### 126. What this round cannot say
+
+Refusals in §115's form, cast for the new verdict shape; the standing ones
+all still hold.
+
+- **Covered growth behaviour is not elegant code — the narrowing, in as many
+  words.** `resolved` is **both suites passing**, and nothing more: a
+  resolved perf cell certifies that the operation's growth behaviour changed
+  as the held-out counters demanded and that correctness survived, and an
+  agent can meet both with a graceless change — a hoist nobody would merge, a
+  cache with no eviction story — so a heap-4 cell is to be read for what it
+  measures and **never as a certificate of code quality beyond its two
+  suites**. This round the narrowing has all nine green cells to guard, the
+  most any round has had.
+- **An asserted growth bound is not a measured speedup.** The counters assert
+  an algorithmic fact — operation counts across held-out input sizes — and
+  **no wall-clock was read anywhere**, in the verdict path or out of it, so
+  nothing in this round says how much faster anything got on any machine. A
+  reader wanting seconds is asking for the shape §117.1 declined at its own
+  price, and the record declines it again rather than approximating it.
+- **The honest-proxy rule is an authoring discipline, and no machine asserts
+  it.** A resolved cell certifies the planted proxy was met; that the proxy
+  is *honest* — that the counter counts a fact of the algorithm through a
+  seam the repository owns, never a wall-clock and never an implementation
+  constant — rests on the authoring and the spec review, with §120's two
+  pristine invariants catching the degenerate cases mechanically. A dishonest
+  proxy that survived both would grade something else without any machine
+  saying so, which is why §118.5 registered the rule as a discipline and this
+  record repeats it as one.
+- **The transfer gap, restated from §79.4, §81.4, §92, §104 and §115 — and
+  untouched by this round.** The gap is the point instrument's: proofs
+  against a planted truth do not prove the grader judges prose with no truth
+  behind it. This round's verdicts never asked the grader anything, so round
+  13 neither tests the gap nor moves it: it stands exactly where §115's
+  addendum left it — open on two cells in one direction, with §117.4's
+  authoring rule registered against the mechanism — and the next point-keyed
+  round is where evidence lands.
+- **The owner's ~9 agree/disagree labels: not yet given as this record is
+  written.** §76.2 ruled and §77.2 registered the disclosed, non-gating check
+  riding a round's own swept cells, and on this round it is the first
+  holistic read of a brand-new verdict shape: the owner labels agree/disagree
+  on each of the nine verdicts above, reading each cell's diff beside the two
+  suites its task plants. They were asked for in the orchestrator session
+  when this record was written and are **not yet given**; the section says so
+  rather than leaving the check unmentioned, and they land as a **dated
+  addendum beside this section** when given — §104's and §115's addenda are
+  the precedent for the form. Until then, the check has gated nothing and the
+  nine verdicts stand on their own execution.
+- **No cross-action difficulty comparison.** 9 of 9 here is not to be read
+  against round 12's 7 of 9, round 11's 0 of 9 or round 10's 1 of 9: a code
+  change, an explanation, a decomposition and a proposal are different
+  deliverables under different verdict keys — this round's under no key at
+  all — the round registered no contrast that could separate action from
+  difficulty, and nine cells is not a rate's denominator.
+- **Nothing about `performance-optimisation` in any non-Python language.** No
+  row of this round is anything but Python; the cells are disclosed zeros by
+  absence (§124) and no figure here says what an optimisation in another
+  language would cost, take or resolve at.
+- **No Codex rung.** `gpt-5.6-terra` is one model and one model is not a
+  ladder. `reconcile_v1.LADDER_MODELS` is the two claude-code models, so the
+  rung floor §127 quotes is claude-code's alone and the Codex column's three
+  resolved cells do not enter it.
+- **No cross-harness turn comparison.** §122's 26, 31 and 28 are counted
+  differently on each side of the harness boundary, so nothing follows from
+  their order.
+- **No multiplier.** All three tasks are declared controls with no
+  construction block, so `calibrate-v1`'s new `performance-optimisation`
+  table is the controls divided by themselves at **1.00×** on three tasks
+  (§127). The absence is the design: round 13 moves no knob's counter and the
+  kill discipline does not count it (§118.10).
+
+### 127. Replay, the readers, and heap 4 closed
+
+**Every round-13 log replays to the verdicts this record quotes, with the
+network unplugged — and with no rulings archive, because there is none.** A
+replay of a `performance-optimisation` row re-runs the two held-out suites
+over the diff the log carries: the verdict is recomputed from execution, no
+grader factory is handed anywhere (`--replay` withholds it by construction,
+and this round there is nothing for one to do), no client was constructed, no
+key was read, no call was made and **no rulings archive was read, because
+this round wrote none** — the first swept round since round 9 whose replay
+touches nothing but the committed logs and the checked-in task set. Each of
+the four logs was replayed into a scratch dataset of its own:
+
+```
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-29-r13-a.jsonl --data /tmp/r13replay/a.jsonl
+  evaluated 1 runs over 142 tasks (1 resolved)
+  merged 1 records into /tmp/r13replay/a.jsonl (1 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-29-r13-b.jsonl --data /tmp/r13replay/b.jsonl
+  evaluated 2 runs over 142 tasks (2 resolved)
+  merged 2 records into /tmp/r13replay/b.jsonl (2 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-29-r13-c.jsonl --data /tmp/r13replay/c.jsonl
+  evaluated 3 runs over 142 tasks (3 resolved)
+  merged 3 records into /tmp/r13replay/c.jsonl (3 total)
+uv run ai-bench eval-v1 --replay data/first-party-v1-runs/2026-08-29-r13-d.jsonl --data /tmp/r13replay/d.jsonl
+  evaluated 3 runs over 142 tasks (3 resolved)
+  merged 3 records into /tmp/r13replay/d.jsonl (3 total)
+```
+
+9 rows and 9 resolved, which is §119's resolution line reached a second way.
+Every merged record carries its log row's own measurements — cost, turns,
+tokens, latency, version — because replay re-grades the diff and never
+re-runs the agent, and for a Codex row that is the whole of the claim that a
+table-derived cost is not recomputed on the way through.
+
+**And the readers count the round with no flag at all.** Round 13's
+claude-code rows are Python, so `reconcile-v1` and `calibrate-v1` pick up six
+of the nine by default — the three Codex rows dropped by the agent selection,
+exactly as rounds 8, 10, 11 and 12's were:
+
+```
+  task set   tasks/first-party-v1 — 128 task(s): 61 control(s), 67 constructed
+  runs       255 over 128 task(s)
+  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, sweep round-2, sweep round-3, sweep round-4, sweep round-5, sweep round-8, sweep round-10, sweep round-11, sweep round-12, sweep round-13
+             9 keyed on a sweep id, 2 on an as-of date
+```
+
+`sweep round-13` appears in `reconcile-v1`'s report exactly once, in that
+rounds line, and `performance-optimisation` appears in it not at all — the
+report is about constructed tasks and the knobs they declare, and this round
+declared none. **The prediction reconciliation is unmoved**: 67 constructed
+tasks, 67 swept, and every knob's counter where round 8 left it. What
+`calibrate-v1` now holds for this category is a table it never had:
+
+```
+category performance-optimisation
+   baseline mean cost   claude-haiku-4-5 $0.0650 (n=3), claude-sonnet-5 $0.1608 (n=3)
+   baseline mix         3 single-file; 3 hand-authored
+
+   profile      tasks  claude-haiku-4-5  claude-sonnet-5  rung floor
+   (zero-knob)  3      1.00x (n=3)       1.00x (n=3)      haiku-solvable (n=3)
+```
+
+The category is priced off its **three declared controls**, divided by
+themselves at **1.00×, n=3** — no multiplier, by design (§126) — and what the
+corpus has for this action is a **denominator** at each ladder model, which
+is what a later round's constructed task would be read against. The rung
+floor reads **haiku-solvable** because the cheaper ladder model resolved
+cells of the category, and it is claude-code's ladder alone (§126). The
+published tables of earlier rounds are unmoved by any of this: no earlier
+section was edited, and the pin suites that read the live corpus were caught
+up to the three landed tasks and the nine landed rows with the moved figures
+named, before this record was written.
+
+**`data/unified.jsonl` still means one thing, and nothing but the nine
+graded records entered it.** A record in that dataset keeps meaning a
+combination's result on a benchmark instance (§76.11), the dataset itself is
+gitignored, round 8's standing rule, and the round's nine records are not
+*in* the repository — they **replay from it**, from the committed logs alone,
+offline, into any dataset a reader names, exactly as above; there was no
+proof answer, no ruling and no gate artifact for this round to keep out. The
+free-text archive §34.4 grew from **333 answers across twelve sweeps to 342
+across thirteen** — round 13's nine final messages, archived and read by no
+verdict — while the registered split the A″ readings are computed over stays
+**306 rows, 63 of them stratum A**: the nine `round-13` cells are rows that
+archive never registered, out of that read rather than an error in it
+(§84.1, §93).
+
+**Heap 4 closes.** `performance-optimisation` was the corpus's last unfilled
+action, parked behind the hardest ground-truth question the corpus had left,
+and it now has three tasks, nine graded cells, a two-sided pristine proof
+behind each planted proxy and a nine-green result computed from execution —
+the corpus's first action whose ground truth is asserted growth behaviour.
+With it, every action of §34.3's four heaps holds tasks with graded cells
+behind them: **every heap is swept**, and what stays open is disclosed rather
+than pending — heaps 3 and 4 are Python-only, their other-language cells
+zeros by absence (§124), and the hybrid point-keyed rider stays queued where
+§117.1 left it. **§128 is the next free section number**, and whatever comes
+next — a round's rulings, an amendment, a record, this round's owner-labels
+addendum being a dated addendum beside §126 rather than a numbered section —
+takes it and what follows it; nothing above is renumbered.
+
 ## Open questions (superseded list resolved 2026-08-05)
 
 Of the five candidate gaps: #5 confirmed as the real gap (architect

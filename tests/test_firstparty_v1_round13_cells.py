@@ -288,7 +288,10 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert all(numbered.count(number) == 1 for number in range(108, 117)), (
         "round 12's record, §108-§116, each spent once and not renumbered"
     )
-    assert [number for number in numbered if number > 68] == list(range(69, 119)), (
+    # §119-§127 (round 13's record, 2026-08-29) have since landed after this
+    # pre-registration: the contiguity claim extends over them, and the live
+    # frontier stays the round-9 suite's one moved assertion.
+    assert [number for number in numbered if number > 68] == list(range(69, 128)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
@@ -298,8 +301,14 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     assert headings.index(_HEADING) == headings.index(_RULINGS_HEADING) + 1, (
         "§118 follows §117's own heading"
     )
-    assert headings[headings.index(_HEADING) + 1].startswith("## Open questions"), (
-        "and nothing of the round has landed after it yet"
+    # The heading after this section was `## Open questions` until the
+    # round's record landed there (§119-§127, 2026-08-29); the claim that
+    # survives is that §118 sits inside the note's numbered run, before the
+    # trailing headings — this adjacency pin moved in the commit that landed
+    # the record, exactly as the round-12 cells suite's did when §108-§116
+    # landed.
+    assert headings[headings.index(_HEADING) + 1].startswith("## Round 13 record"), (
+        "round 13's record is what landed after it"
     )
 
     counted = prose()

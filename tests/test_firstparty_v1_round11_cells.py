@@ -292,11 +292,12 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
     )
     # §97-§105 (round 11's record, 2026-08-27), §106 (round 12's rulings),
     # §107 (round 12's pre-registration), §108-§116 (round 12's record,
-    # all 2026-08-28), §117 (round 13's rulings) and §118 (round 13's
-    # pre-registration, both 2026-08-29) have since landed after the
-    # amendment: the contiguity claim extends over them, and the live
-    # frontier stays the round-9 suite's one moved assertion.
-    assert [number for number in numbered if number > 68] == list(range(69, 119)), (
+    # all 2026-08-28), §117 (round 13's rulings), §118 (round 13's
+    # pre-registration) and §119-§127 (round 13's record, all 2026-08-29)
+    # have since landed after the amendment: the contiguity claim extends
+    # over them, and the live frontier stays the round-9 suite's one moved
+    # assertion.
+    assert [number for number in numbered if number > 68] == list(range(69, 128)), (
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
