@@ -11591,7 +11591,12 @@ The columns are `claude-code` × `claude-haiku-4-5`, `claude-code` ×
 `claude-sonnet-5`, and `codex` × `gpt-5.6-terra` at reasoning `medium`.
 Sweep id **`round-13`**, dry cell first, by hand under the sweep protocol,
 never queued. Heap 4 closes with this round if the machinery proves out,
-and with it the coverage table's last `- - 0` row.
+and with it the coverage table's last **authorable** `- - 0` row —
+corrected from "last `- - 0` row" on 2026-08-29, the day of the ruling,
+when the plan review read the table as the lint actually prints it:
+`unclassified` prints a `- - 0` row too, permanently, because the loader
+refuses any task declaring it, so that row is structural and no round's to
+close.
 
 **117.6 The limit, and delivery down the standing pipeline.**
 `performance-optimisation` joins `LIVE_RUN_LIMITS_S` explicitly at **600**
@@ -11618,12 +11623,16 @@ The category ships no key, so **`EXISTENCE_PROOFS` — the keyed actions'
 registry — gains no entry and owes none**, and the category **joins no
 point machinery**: not `_POINT_CATEGORIES`, no points key, no terrain
 exemption. And the exemplar cascade is named in advance: the first
-task landing removes the coverage table's last zero row, so every
-checked-in sentence that uses `performance-optimisation` as the zero-row
-exemplar changes shape with **no successor category to point at** — the
-`coverage_table` docstring, `CONTEXT.md`'s glossary entry, and the
-round-7/8 and round-10 pin suites — and the spec's pin-break inventory
-carries each site by coordinate.
+task landing removes the coverage table's last **authorable** zero row
+(the same 2026-08-29 correction as 117.5's — `unclassified`'s structural
+row survives every round), so every checked-in sentence that uses
+`performance-optimisation` as the zero-row exemplar changes shape with
+**no authorable successor category to point at**: a prose exemplar is
+never re-pointed at the one category no task may declare, while a
+mechanical zero-shape assertion may read `unclassified`'s surviving row
+where that is the truer claim. The sites — the `coverage_table` docstring,
+`CONTEXT.md`'s glossary entry, and the round-7/8 and round-10 pin suites —
+are carried by coordinate in the spec's pin-break inventory.
 
 ## Open questions (superseded list resolved 2026-08-05)
 
