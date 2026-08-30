@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
+from ai_benchmark import firstparty_v1, reconcile_v1
+
 FIXTURES = Path(__file__).parent / "fixtures"
+_REPO = Path(__file__).parent.parent
+_TASKS = _REPO / "tasks" / "first-party-v1"
+_LOGS = _REPO / "data" / "first-party-v1-runs"
 
 # A stand-in claude CLI for live-runner tests: no live agent is ever run.
 # It answers --version, appends its argv to a log for assertions, acts on its
@@ -215,3 +220,29 @@ def firstparty_fixture() -> Path:
 @pytest.fixture
 def firstparty_v1_fixture() -> Path:
     return FIXTURES / "firstparty-v1" / "runs.jsonl"
+
+
+@pytest.fixture(scope="module")
+def tasks() -> dict[str, firstparty_v1.Task]:
+    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
+
+
+@pytest.fixture(scope="module")
+def logs() -> list[Path]:
+    """Every log under the run-log directory, collected wholesale. A filename
+    says nothing about which sweep a row belongs to, and selecting on one is
+    what the sweep protocol forbids."""
+    return reconcile_v1.collect_logs([_LOGS])
+
+
+@pytest.fixture(scope="module")
+def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
+    """Every row of every log, in order.
+
+    Takes the `logs` fixture rather than reading `collect_logs` itself: the
+    five round9..13 cells suites (`runs(logs)`) and the four round10..13
+    record suites (`runs()` reading `collect_logs` directly) compute the same
+    list from the same directory, and this form covers both without either
+    family changing its own call site.
+    """
+    return [run for log in logs for run in firstparty_v1.load_runs(log)]
