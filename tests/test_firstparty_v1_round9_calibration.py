@@ -27,6 +27,7 @@ import json
 from pathlib import Path
 
 import pytest
+import sweep_census
 
 from ai_benchmark import firstparty_v1, point_grader, reconcile_v1
 from ai_benchmark import grader_calibration_v1 as calibration
@@ -76,15 +77,15 @@ def answers() -> list[calibration.ArchivedAnswer]:
     tasks = firstparty_v1.load_task_set(_TASKS)
     logs = reconcile_v1.collect_logs([_LOGS])
     # This suite pins §79's run, whose inputs were the rows that existed at
-    # that run — every sweep before round 10's, which landed the first
-    # `investigation` rows on 2026-08-24, round 11's `requirement-decomposition`
-    # rows following on 2026-08-26, round 12's `codebase-comprehension`
-    # rows on 2026-08-28 and round 13's `performance-optimisation` rows on
-    # 2026-08-29. Scoped by sweep id, never by a log
-    # filename; the constants below stay §79's own, unretyped.
+    # that run — every sweep before the ones
+    # `sweep_census.sweeps_after("round-9")` names, so a round landing after
+    # round 9 is one edit to the census and none here. Scoped by sweep id,
+    # never by a log filename; the constants below stay §79's own,
+    # unretyped.
+    after = sweep_census.sweeps_after("round-9")
     runs = [
         run for log in logs for run in load_runs(log)
-        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+        if run.sweep not in after
     ]
     return calibration.split(tasks, runs)
 
@@ -252,6 +253,9 @@ def test_nothing_from_calibration_reached_the_unified_dataset() -> None:
 # --- the prose: §79 against the archive ---------------------------------------
 
 
+# Stays local rather than moving to `note_reading.section()`: this slices by
+# `text.index` from a numbered item to a named landmark, not from a heading to
+# the next one — a genuine divergence from the kit, disclosed here.
 def _section_79() -> str:
     """§79 with its hard wraps folded, so phrase assertions read across the
     note's 75-column line breaks."""

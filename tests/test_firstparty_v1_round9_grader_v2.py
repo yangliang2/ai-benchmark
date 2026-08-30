@@ -38,17 +38,16 @@ import json
 from pathlib import Path
 
 import pytest
+import sweep_census
+from note_reading import block_holding, prose
 
 from ai_benchmark import (
     firstparty_v1,
     grader_calibration_v1,
     point_grader,
-    reconcile_v1,
 )
 
 _REPO = Path(__file__).parent.parent
-_TASKS = _REPO / "tasks" / "first-party-v1"
-_LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 _UNIFIED = _REPO / "data" / "unified.jsonl"
 _ARCHIVES = _REPO / "data" / "point-gate-calibration"
@@ -61,7 +60,7 @@ _NEXT_ITEM = "**80.5 What §79 keeps"
 
 # The sweep id that must not appear before §81's run, and the eight the logs
 # carried at the registration. `None` is round 1, which predates `--sweep`.
-# The later sweeps — round 10's and round 11's — are admitted only where the
+# The later sweeps — the census names them — are admitted only where the
 # landed-form guardrail below names them, never here.
 _SWEEP = "round-9"
 _SWEPT_SO_FAR = {
@@ -110,33 +109,10 @@ def item() -> str:
     return text[start : text.index(_NEXT_ITEM, start)]
 
 
-def prose() -> str:
-    """The item with its wrapping collapsed. What a sentence says is the pin;
-    where the line happens to break is not."""
-    return " ".join(item().split())
-
-
-def blocks() -> list[str]:
-    """The item's fenced blocks, in order."""
-    return item().split("```")[1::2]
-
-
-def block_holding(*needles: str) -> str:
-    """The one fenced block holding all of these, found by what it contains
-    rather than by its position — so adding a block above it does not silently
-    move the read."""
-    found = [
-        block for block in blocks()
-        if all(needle in block for needle in needles)
-    ]
-    assert len(found) == 1, f"exactly one fenced block holds {needles!r}"
-    return found[0]
-
-
 def register_line(label: str) -> str:
     """One line of the register block, by its label, with the label stripped
     and the continuation lines folded in."""
-    register = block_holding("grader v2 version tuple:")
+    register = block_holding(item(), "grader v2 version tuple:")
     lines = [line for line in register.splitlines() if line.strip()]
     starts = [i for i, line in enumerate(lines) if line.startswith(label)]
     assert len(starts) == 1, f"exactly one register line reads {label!r}"
@@ -154,34 +130,15 @@ def register_line(label: str) -> str:
 
 
 @pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
-
-
-@pytest.fixture(scope="module")
-def logs() -> list[Path]:
-    """Every log under the run-log directory, collected wholesale. Selecting
-    on a filename is what the sweep protocol forbids."""
-    return reconcile_v1.collect_logs([_LOGS])
-
-
-@pytest.fixture(scope="module")
-def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
-    return [run for log in logs for run in firstparty_v1.load_runs(log)]
-
-
-@pytest.fixture(scope="module")
 def registered(runs: list[firstparty_v1.Run]) -> list[firstparty_v1.Run]:
     """The corpus §80.4 registered the split over, which §81's run then spent:
-    every sweep before round 10's, which landed the first `investigation` rows
-    on 2026-08-24, round 11's `requirement-decomposition` rows following on
-    2026-08-26, round 12's `codebase-comprehension` rows on 2026-08-28 and
-    round 13's `performance-optimisation` rows on 2026-08-29.
+    every sweep before the ones `sweep_census.sweeps_after("round-9")` names,
+    so a round landing after this one is one edit to the census and none here.
     Scoped by sweep id, never by a log filename; the registered
     counts below stay §80.4's own, unretyped."""
     return [
         run for run in runs
-        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+        if run.sweep not in sweep_census.sweeps_after("round-9")
     ]
 
 
@@ -242,7 +199,7 @@ def test_the_register_quotes_the_live_version_tuple() -> None:
     )
     assert v1_hash != point_grader.PROMPT_HASH, "the prompt hash is what moved"
 
-    counted = prose()
+    counted = prose(item())
     assert "`point_grader.GRADER_VERSION`" in counted
     assert "**The alias is unchanged**" in counted
     assert "**The checkpoint is unchanged**" in counted
@@ -279,14 +236,13 @@ def test_the_split_re_derived_offline_equals_the_registered_counts(
     its own task's held-out tests. No grader is built and no call is made,
     which is what lets the register be written before the first paid ruling.
     """
-    # 53 files since round 10's four sweep logs joined the directory on
-    # 2026-08-24, round 11's four on 2026-08-26, round 12's four on
-    # 2026-08-28 and round 13's four on 2026-08-29. The corpus §80.4
+    # The directory's whole count, from the census, since the logs of every
+    # sweep after round 9 joined it. The corpus §80.4
     # registered — `_LOGS_HELD` logs' rows — is scoped from every row by sweep
     # id and re-derived below at its own counts, unretyped; that its rows sit
     # in exactly `_LOGS_HELD` of the files is asserted with the guardrail
     # test below.
-    assert len(logs) == 53
+    assert len(logs) == sweep_census.LOG_COUNT
     assert len(registered) == _ANSWERS
     assert len(stratum_a) == _STRATUM_A
     assert len(registered) - len(stratum_a) == _STRATUM_B
@@ -315,7 +271,9 @@ def test_the_split_re_derived_offline_equals_the_registered_counts(
     # counts it carries, not the widths the command aligned them to.
     printed = {
         " ".join(line.split())
-        for line in block_holding("stratum  answers  points", "(all)").splitlines()
+        for line in block_holding(
+            item(), "stratum  answers  points", "(all)"
+        ).splitlines()
     }
     for row in (
         f"A {_STRATUM_A} {_POINTS_A} the task's planted key, run in production mode",
@@ -341,7 +299,7 @@ def test_the_split_re_derived_offline_equals_the_registered_counts(
     ):
         assert count in quoted, count
 
-    counted = prose()
+    counted = prose(item())
     assert "--split-only" in counted
     assert "no grader built, no call made" in counted
     assert f"was run on **{_AS_OF}** and printed" in counted
@@ -368,14 +326,14 @@ def test_the_bar_is_restated_unchanged_and_re_argued_by_nothing() -> None:
     """
     printed = {
         " ".join(line.split())
-        for line in block_holding("overall agreement").splitlines()
+        for line in block_holding(item(), "overall agreement").splitlines()
     }
     assert f"overall agreement >= {_OVERALL_BAR} of {_STRATUM_A}" in printed
     assert (
         f"unresolved-class agreement >= {_UNRESOLVED_BAR} of {_UNRESOLVED}"
     ) in printed
 
-    counted = prose()
+    counted = prose(item())
     assert (
         f"**The bar, unchanged: ≥ {_OVERALL_BAR} of {_STRATUM_A} overall and "
         f"≥ {_UNRESOLVED_BAR} of {_UNRESOLVED} unresolved-class.**"
@@ -491,7 +449,7 @@ def test_the_price_is_re_derived_from_the_live_prompt_at_fetched_prices(
     # what "reaffirmed" means and what the register claims.
     assert _RANGE_LOW <= total_low and total_high <= _RANGE_HIGH
 
-    arithmetic = block_holding("round total")
+    arithmetic = block_holding(item(), "round total")
     for line in (
         f"input   {prompt_chars:,} chars / 4                    "
         f"= {input_tokens:,} tok  x ${_INPUT_PER_MTOK}/M = ${input_cost:.4f}",
@@ -512,9 +470,9 @@ def test_the_price_is_re_derived_from_the_live_prompt_at_fetched_prices(
         assert line in arithmetic, line
 
     # The fetch itself, pinned as the command that was run.
-    assert block_holding(_PRICING_URL).strip() == f"curl -sL {_PRICING_URL}"
+    assert block_holding(item(), _PRICING_URL).strip() == f"curl -sL {_PRICING_URL}"
 
-    counted = prose()
+    counted = prose(item())
     assert "**The prices were read, not remembered.**" in counted
     assert f"Fetched on **{_AS_OF}** with" in counted
     assert f"`source_url`: `{_PRICING_URL}`" in counted
@@ -574,35 +532,32 @@ def test_no_new_sweep_row_has_landed_under_the_run_log_directory(
     answers, and no `round-9` row, selected by **sweep id** over every log in
     the directory and never by a log filename.
 
-    Landed form: §81's run has since spent the registration, and round 10's
-    sweep then landed the first rows after it, on 2026-08-24 — every one
-    carrying sweep id `round-10` — with round 11's nine following on
-    2026-08-26 under `round-11`. What stays checkable is that the corpus
+    Landed form: §81's run has since spent the registration, and the sweeps
+    after it — `sweep_census.sweeps_after("round-9")` names them, and the
+    census counts their rows — then landed the first rows after it, every one
+    carrying its own sweep id. What stays checkable is that the corpus
     held still between the registration and the run: the registered logs
     still hold exactly the registered answers, nothing beyond them carries
     any sweep id but the later rounds' own, and no `round-9` row ever
     appeared.
     """
-    # The directory grew by round 10's four sweep logs and nine rows, then by
-    # round 11's four and nine, then by round 12's four and nine, then by
-    # round 13's four and nine, keyed on what the rows carry; the registered
-    # corpus is scoped back out by sweep id, its counts unretyped.
-    assert len(logs) == 53
-    late = [
-        run for run in runs
-        if run.sweep in {"round-10", "round-11", "round-12", "round-13"}
-    ]
-    assert len(late) == 36
+    # The directory grew by the logs and the rows of every sweep after round
+    # 9, keyed on what the rows carry and counted in the census; the registered
+    # corpus is scoped back out by sweep id, its counts unretyped. Both
+    # directions read the one census entry, so they cannot disagree.
+    after = sweep_census.sweeps_after("round-9")
+    assert len(logs) == sweep_census.LOG_COUNT
+    late = [run for run in runs if run.sweep in after]
+    assert len(late) == sweep_census.rows_of(*after)
     assert len(runs) - len(late) == _ANSWERS
-    # A registered log is one no round-10, round-11, round-12 or round-13
-    # row landed in — keyed on
+    # A registered log is one no later sweep's row landed in — keyed on
     # what its rows carry, and counting round 7's two empty logs the way the
     # register did (a file with no rows is still a file the split was
     # registered over).
     held = [
         log for log in logs
         if all(
-            run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+            run.sweep not in after
             for run in firstparty_v1.load_runs(log)
         )
     ]
@@ -611,15 +566,12 @@ def test_no_new_sweep_row_has_landed_under_the_run_log_directory(
         "a round-9 row exists: the split §80.4 registered has moved under it, "
         "which is a stop-and-report rather than a re-registration"
     )
-    # `round-10`, `round-11`, `round-12` and `round-13` are the sweep ids
-    # the landed
+    # The sweeps after round 9 are the sweep ids the landed
     # form admits beyond §80.4's eight; the registered census constant stays as
     # registered.
-    assert {run.sweep for run in runs} == _SWEPT_SO_FAR | {
-        "round-10", "round-11", "round-12", "round-13"
-    }
+    assert {run.sweep for run in runs} == _SWEPT_SO_FAR | set(after)
 
-    counted = prose()
+    counted = prose(item())
     assert (
         "**no new sweep row lands under `data/first-party-v1-runs/` between "
         "this registration and §81's run.**"
@@ -660,6 +612,6 @@ def test_the_register_was_written_before_the_first_paid_call() -> None:
         "§81's run archives under the tuple §80.4 registered"
     )
 
-    counted = prose()
+    counted = prose(item())
     assert "before the first paid call" in counted
     assert "not one grader call has been made under this instrument" in counted

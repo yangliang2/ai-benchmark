@@ -38,6 +38,8 @@ import re
 from pathlib import Path
 
 import pytest
+import sweep_census
+from note_reading import block_holding, fenced_blocks, prose, section
 
 from ai_benchmark import (
     agents,
@@ -50,8 +52,6 @@ from ai_benchmark import (
 )
 
 _REPO = Path(__file__).parent.parent
-_TASKS = _REPO / "tasks" / "first-party-v1"
-_LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _HEADING = "## Round 9 cells and cost — registered 2026-08-21"
@@ -129,55 +129,6 @@ _SUPERSEDED_OUTPUT_PER_MTOK = 25.0
 _SUPERSEDED_RANGE = "$1.5–8"
 
 
-def note_section() -> str:
-    """Section 77, from its heading to the next top-level one."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"{_HEADING}\n")
-    assert len(body) == 2, f"the note carries exactly one {_HEADING!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose() -> str:
-    """The section with its wrapping collapsed. What a sentence says is the
-    pin; where the line happens to break is not, and a pin on the break would
-    fail the next time a word is added upstream of it."""
-    return " ".join(note_section().split())
-
-
-def blocks() -> list[str]:
-    """The section's fenced blocks, in order."""
-    return note_section().split("```")[1::2]
-
-
-def block_holding(*needles: str) -> str:
-    """The one fenced block holding all of these, found by what it contains
-    rather than by its position — so adding a block above it does not silently
-    move the read."""
-    found = [
-        block for block in blocks()
-        if all(needle in block for needle in needles)
-    ]
-    assert len(found) == 1, f"exactly one fenced block holds {needles!r}"
-    return found[0]
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
-
-
-@pytest.fixture(scope="module")
-def logs() -> list[Path]:
-    """Every log under the run-log directory, collected wholesale. A filename
-    says nothing about which sweep a row belongs to, and selecting on one is
-    what the sweep protocol forbids."""
-    return reconcile_v1.collect_logs([_LOGS])
-
-
-@pytest.fixture(scope="module")
-def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
-    return [run for log in logs for run in firstparty_v1.load_runs(log)]
-
-
 @pytest.fixture(scope="module")
 def stratum_a(
     tasks: dict[str, firstparty_v1.Task], runs: list[firstparty_v1.Run]
@@ -188,16 +139,14 @@ def stratum_a(
     Derived from the key shape the task ships, never from its category, which
     is `grader_calibration_v1.split`'s own rule read here without the replay it
     does for stratum B as well. Scoped to the rows §77.2 registered — every
-    sweep before round 10's, which landed the first `investigation` rows on
-    2026-08-24, round 11's `requirement-decomposition` rows following on
-    2026-08-26, round 12's `codebase-comprehension` rows on 2026-08-28 and
-    round 13's `performance-optimisation` rows on 2026-08-29 — by
+    sweep before the ones `sweep_census.sweeps_after("round-9")` names, so a
+    round landing after this one is one edit to the census and none here — by
     sweep id, never by a log filename; what this fixture names
     is the archive the gate was read over, and that archive is spent.
     """
     return [
         run for run in runs
-        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+        if run.sweep not in sweep_census.sweeps_after("round-9")
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
 
@@ -285,7 +234,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
         "the rounds since 68 are contiguous and nothing was renumbered"
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "This is round 9's pre-registration and nothing else" in counted
     assert "written down before the first paid call" in counted
     assert "**pre-registration comes before the calibration experiment**" in counted
@@ -321,13 +270,13 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
     tests. That is the machine verdict the grader will be scored against, and
     computing it before the grader runs peeks at nothing the grader will see.
     """
-    # 53 files since round 10's, round 11's, round 12's and round 13's four
-    # sweep logs each joined the directory; every derivation below is scoped
+    # The directory's whole count, from the census, since the logs of every
+    # sweep after round 9 joined it; every derivation below is scoped
     # to the registered rows by sweep id.
-    assert len(logs) == 53
+    assert len(logs) == sweep_census.LOG_COUNT
     registered = [
         run for run in runs
-        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+        if run.sweep not in sweep_census.sweeps_after("round-9")
     ]
     assert len(registered) == 306
 
@@ -357,7 +306,7 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
     assert (resolved.count(True), resolved.count(False)) == (55, 8)
 
     # The command's own printed table, as the section quotes it.
-    printed = block_holding("stratum  answers  points", "(all)")
+    printed = block_holding(section(_HEADING), "stratum  answers  points", "(all)")
     for line in (
         "A        63       115     the task's planted key, run in production mode",
         "B        243      243     the synthetic point "
@@ -369,7 +318,7 @@ def test_the_split_is_re_derived_from_the_logs_and_not_copied(
     ):
         assert line in printed, line
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "--split-only" in counted
     assert "no grader built, no call made" in counted
     assert "**306** archived answers read out of the **37** run logs" in counted
@@ -410,13 +359,13 @@ def test_the_bar_is_registered_as_counts_with_its_rounding_shown() -> None:
     assert 56 / 63 < 0.90 <= 57 / 63
     assert 6 / 8 < 0.80 <= 7 / 8
 
-    shown = block_holding("0.90 x 63", "0.80 x")
+    shown = block_holding(section(_HEADING), "0.90 x 63", "0.80 x")
     assert "0.90 x 63 = 56.7" in shown
     assert ">= 57 of 63" in shown
     assert "0.80 x  8 =  6.4" in shown
     assert ">=  7 of  8" in shown
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "check by hand: ≥ 57 of 63, and ≥ 7 of 8.**" in counted
     assert "Rounding **up** in both lines, and never to the nearest" in counted
     assert "56 of 63 is 88.9% and 6 of 8 is 75%" in counted
@@ -473,13 +422,13 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     )
     registered = [
         run for run in runs
-        if run.sweep not in {"round-10", "round-11", "round-12", "round-13"}
+        if run.sweep not in sweep_census.sweeps_after("round-9")
     ]
     synthetic_calls = len(registered) - len(stratum_a)
     assert (keyed_calls, review_calls, synthetic_calls) == (115, 78, 243)
     assert keyed_calls + synthetic_calls == 358
 
-    counts = block_holding("archive calls in all")
+    counts = block_holding(section(_HEADING), "archive calls in all")
     for line in (
         "27 fault-location   x 1 point  =  27",
         "26 code-review      x 3 points =  78",
@@ -554,7 +503,7 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     # The registered range holds the arithmetic, rounded outward at both ends.
     assert 0.25 <= total_low and total_high <= 1.5
 
-    arithmetic = block_holding("round total")
+    arithmetic = block_holding(section(_HEADING), "round total")
     for line in (
         "input   576,450 chars / 4                    = 144,112 tok  "
         "x $1.32/M = $0.1902",
@@ -574,17 +523,21 @@ def test_the_experiment_is_priced_over_calls_at_prices_that_were_fetched(
     ):
         assert line in arithmetic, line
 
-    proofs = block_holding("reference + foil")
+    proofs = block_holding(section(_HEADING), "reference + foil")
     assert "3 tasks x (4-6 points + 0-2 disqualifiers) x (reference + foil)" in proofs
     assert "= 8-16 calls a task = 24-48 calls for the round" in proofs
 
     # The two fetches themselves, each pinned as the command that was run
     # rather than as a remembered number. Found by the page each names, since
     # the section now runs two of them.
-    assert block_holding(_PRICING_URL).strip() == f"curl -sL {_PRICING_URL}"
-    assert block_holding(_CACHING_URL).strip() == f"curl -sL {_CACHING_URL}"
+    assert block_holding(section(_HEADING), _PRICING_URL).strip() == (
+        f"curl -sL {_PRICING_URL}"
+    )
+    assert block_holding(section(_HEADING), _CACHING_URL).strip() == (
+        f"curl -sL {_CACHING_URL}"
+    )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "The experiment's price: $0.25–1.5" in counted
     assert "at peak-hour list price" in counted
     assert "counted in calls and not in answers" in counted
@@ -746,7 +699,7 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_8_rows(
     assert round(per_task * _CELLS, 4) == 2.7612
 
     # §68.4's summed-columns form, against the same arithmetic.
-    summed = block_holding("total", "claude-code x claude-haiku-4-5")
+    summed = block_holding(section(_HEADING), "total", "claude-code x claude-haiku-4-5")
     columns: dict[tuple[str, str], float] = {}
     for line in summed.splitlines():
         match = re.fullmatch(
@@ -796,7 +749,7 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_8_rows(
     )
     assert high < (2.5 + 5) / 2, "and below its middle, which is §59.4's shape"
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "The sweep's price: $2.5–5" in counted
     assert "in round 8's band" in counted
     assert "selected by sweep id `round-8`" in counted
@@ -845,7 +798,7 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     The dry cell is the rule this round exists for a second time: a brand-new
     gate meeting its first paid diff, found wrong on one cell rather than nine.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert agents.CODEX_REASONING_LEVELS["gpt-5.6-terra"] == "medium"
     assert (
@@ -893,7 +846,7 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     # No fenced block of the section is a register of task ids: an id listed
     # here before the tasks exist would be a cell nothing can sweep.
     id_line = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
-    for block in blocks():
+    for block in fenced_blocks(section(_HEADING)):
         for line in block.splitlines():
             assert id_line.fullmatch(line.strip()) is None, line
 
@@ -910,7 +863,7 @@ def test_the_nine_cells_and_the_invocation_are_registered(
     assert "**`--task`**" in counted
     assert "**Nothing is re-run**" in counted
 
-    command = block_holding("eval-v1")
+    command = block_holding(section(_HEADING), "eval-v1")
     assert f"--sweep {_SWEEP}" in command
     assert "--agent claude-code" in command
     assert "--model claude-haiku-4-5" in command
@@ -938,7 +891,7 @@ def test_every_cell_runs_at_the_flat_default_and_no_row_is_registered() -> None:
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {_LIMIT_S}
     assert firstparty.RUN_TIMEOUT_S == _LIMIT_S, "the flat default is the same number"
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "**`investigation` joins none of them**" in counted
     assert "This ticket adds no row" in counted
     assert "`test-authoring` joined no register" in counted
@@ -981,7 +934,7 @@ def test_the_grader_version_is_quoted_verbatim() -> None:
     # re-derived from the code by that item's own suite. The block lookup still
     # goes through the live alias, which did not move — checked here rather
     # than assumed.
-    version = block_holding(point_grader.GRADER_MODEL).strip()
+    version = block_holding(section(_HEADING), point_grader.GRADER_MODEL).strip()
     assert version == _V1_GRADER_VERSION
     v1_alias, v1_checkpoint, v1_hash = _V1_GRADER_VERSION.split(":")
     assert (v1_alias, v1_checkpoint) == (
@@ -990,7 +943,7 @@ def test_the_grader_version_is_quoted_verbatim() -> None:
     assert version == f"{v1_alias}:{v1_checkpoint}:{v1_hash}"
     assert len(version.split(":")) == 3
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "`point_grader.GRADER_VERSION`" in counted
     assert "the first twelve hex digits of the SHA-256 of the prompt" in counted
     assert "**a later grader change is visibly a different instrument**" in counted
@@ -1081,12 +1034,6 @@ def test_nothing_of_round_9_has_been_swept_and_the_action_landed_in_round_10(
     assert [task for task in tasks.values() if task.category == _CATEGORY]
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
-    # `round-10` joined on 2026-08-24 — the round that filled heap 3's first
-    # cells — `round-11` on 2026-08-26, the round that filled its second
-    # action's, and `round-12` on 2026-08-28, the round that filled its last;
-    # `round-13` on 2026-08-29, heap 4's one action; still no `round-9`,
-    # which is this test's claim.
-    assert {run.sweep for run in runs} == {
-        None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", "round-10", "round-11", "round-12", "round-13",
-    }
+    # Every other live id is the census's, so a round that lands is one edit
+    # there and none here; still no `round-9`, which is this test's claim.
+    assert {run.sweep for run in runs} == set(sweep_census.ALL_SWEEPS) | {None}
