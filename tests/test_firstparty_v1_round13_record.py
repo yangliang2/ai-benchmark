@@ -1111,9 +1111,10 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     disclosures the ticket wants in as many words: the two narrowings
     (covered growth behaviour is not elegant code; an asserted bound is not a
     measured speedup), the honest-proxy discipline, the transfer gap in its
-    standing form, and the owner's ~9 labels recorded as **not yet given** —
-    the absence stated the way §115 stated its check's standing, to land
-    later as a dated addendum."""
+    standing form, and the owner's ~9 labels — recorded as **not yet given**
+    when the record was written, and caught up here to the dated addendum of
+    2026-08-30 that gave them: nine of nine agree, recorded exactly as given,
+    the way §115's addendum moved this suite's round-12 counterpart."""
     swept = {task_id for task_id, _ in round_13}
     assert all(tasks[task_id].control for task_id in swept)
     assert not [
@@ -1165,22 +1166,54 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     assert "neither tests the gap nor moves it" in said
     assert "the next point-keyed round is where evidence lands" in said
 
+    # The addendum of 2026-08-30 replaced the not-yet-given form with the
+    # given one — §115's addendum is the precedent, and this catch-up is its
+    # round-12 counterpart's move made here: the absence assertions retire
+    # and the given form is pinned instead, labels block included.
     assert (
-        "**The owner's ~9 agree/disagree labels: not yet given as this "
-        "record is written.**"
+        "**The owner's ~9 agree/disagree labels: given 2026-08-30, the day "
+        "after this record — nine of nine agree.**"
     ) in said
     assert "§76.2 ruled and §77.2 registered" in said
     assert "the first holistic read of a brand-new verdict shape" in said
     assert "asked for in the orchestrator session" in said
-    assert "**not yet given**" in said
     assert (
-        "the section says so rather than leaving the check unmentioned"
+        "**formed with the orchestrator's assistance and not by an unaided "
+        "read**"
     ) in said
-    assert "**dated addendum beside this section**" in said
-    assert "§104's and §115's addenda are the precedent for the form" in said
+    assert "recommended a label per cell with the borderline cell named" in said
+    assert "The labels are recorded exactly as given" in said
+    assert "No cell was found to evade its counter" in said
+    assert "the label is agree and the choice is recorded" in said
+    assert (
+        "no false green — no gamed proxy and no behaviour break"
+    ) in said
     assert (
         "the nine verdicts stand on their own execution"
     ) in said
+    assert "they read execution verdicts, not grader rulings" in said
+
+    # The labels block itself: nine lines, one per registered cell, every one
+    # of them agree beside a machine resolved — parsed from the section's own
+    # fenced block rather than retyped as a table here.
+    label_block = next(
+        block
+        for block in note_section("126. What this round cannot say").split(
+            "```"
+        )[1::2]
+        if "agree" in block
+    )
+    label_lines = [line for line in label_block.splitlines() if line.strip()]
+    assert len(label_lines) == 9
+    for line in label_lines:
+        assert "agree     (machine: resolved)" in line
+    for task_word in ("cooperage", "cloakroom", "cornexchange"):
+        for model_word in ("claude-haiku-4-5", "claude-sonnet-5",
+                           "gpt-5.6-terra"):
+            assert any(
+                task_word in line and model_word in line
+                for line in label_lines
+            )
 
     assert "**No cross-action difficulty comparison.**" in said
     assert (

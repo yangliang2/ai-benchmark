@@ -12483,17 +12483,55 @@ all still hold.
   addendum left it — open on two cells in one direction, with §117.4's
   authoring rule registered against the mechanism — and the next point-keyed
   round is where evidence lands.
-- **The owner's ~9 agree/disagree labels: not yet given as this record is
-  written.** §76.2 ruled and §77.2 registered the disclosed, non-gating check
-  riding a round's own swept cells, and on this round it is the first
-  holistic read of a brand-new verdict shape: the owner labels agree/disagree
-  on each of the nine verdicts above, reading each cell's diff beside the two
-  suites its task plants. They were asked for in the orchestrator session
-  when this record was written and are **not yet given**; the section says so
-  rather than leaving the check unmentioned, and they land as a **dated
-  addendum beside this section** when given — §104's and §115's addenda are
-  the precedent for the form. Until then, the check has gated nothing and the
-  nine verdicts stand on their own execution.
+- **The owner's ~9 agree/disagree labels: given 2026-08-30, the day after
+  this record — nine of nine agree.** §76.2 ruled and §77.2 registered the
+  disclosed, non-gating check riding a round's own swept cells, and on this
+  round it is the first holistic read of a brand-new verdict shape: the
+  owner labels agree/disagree on each of the nine verdicts above, reading
+  each cell's diff beside the two suites its task plants. They were asked
+  for in the orchestrator session when this record was written and the
+  owner supplied them the next day, and the disclosure that preceded §104's
+  and §115's labels precedes these: **formed with the orchestrator's
+  assistance and not by an unaided read** — each cell's diff was re-applied
+  to a fresh copy of its task's repository and put back to both suites, the
+  seam counts were measured directly, and a differential harness ran each
+  patched tree against the pristine algorithm (~400 random trials per cell,
+  exhaustive small-tape tie enumeration for the cornexchange cells,
+  equal-capacity casks injected for the cooperage ones) with zero
+  mismatches; the orchestrator recommended a label per cell with the
+  borderline cell named, and the owner adopted the recommendations. The
+  labels are recorded exactly as given:
+
+  ```
+  cooperage    x claude-haiku-4-5   agree     (machine: resolved)
+  cooperage    x claude-sonnet-5    agree     (machine: resolved)
+  cooperage    x gpt-5.6-terra      agree     (machine: resolved)
+  cloakroom    x claude-haiku-4-5   agree     (machine: resolved)
+  cloakroom    x claude-sonnet-5    agree     (machine: resolved)
+  cloakroom    x gpt-5.6-terra      agree     (machine: resolved)
+  cornexchange x claude-haiku-4-5   agree     (machine: resolved)
+  cornexchange x claude-sonnet-5    agree     (machine: resolved)
+  cornexchange x gpt-5.6-terra      agree     (machine: resolved)
+  ```
+
+  No cell was found to evade its counter: every remaining per-query path in
+  all nine diffs runs over data obtained through the repository's own seam,
+  once per item, and every per-query shortcut — a dict lookup, a bisect, a
+  running minimum — is genuinely O(1) or O(log n). The one holistic
+  judgment call is named rather than absorbed: **cooperage ×
+  claude-sonnet-5** is the only cell that caches across calls — gauging
+  moved to the Rack's construction and capacities held for its lifetime,
+  where the starting code and the reference both re-gauge per book — a
+  choice the repository gives no path to falsify (no mutation API, no
+  covering test, no prompt clause reaches it) and that is exact on every
+  reachable behaviour; the label is agree and the choice is recorded. **On
+  the first holistic read of the complexity-proxy shape the check found no
+  false green — no gamed proxy and no behaviour break — and no false red
+  existed to look for, all nine machine verdicts being resolved.** The
+  check gated nothing and the nine verdicts stand on their own execution;
+  and these labels say nothing about the transfer gap the bullet above
+  restates, because they read execution verdicts, not grader rulings — the
+  next point-keyed round is still where that evidence lands.
 - **No cross-action difficulty comparison.** 9 of 9 here is not to be read
   against round 12's 7 of 9, round 11's 0 of 9 or round 10's 1 of 9: a code
   change, an explanation, a decomposition and a proposal are different
