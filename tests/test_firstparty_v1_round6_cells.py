@@ -34,13 +34,12 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
+from note_reading import prose, section
 
 from ai_benchmark import agents, firstparty_v1, reconcile_v1
 
 _REPO = Path(__file__).parent.parent
-_TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
-_NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _HEADING = "## Round 6 cells and cost — registered 2026-08-18"
 _REGISTERED_ON = dt.date(2026, 8, 18)
@@ -83,20 +82,6 @@ _SAMPLE = {
 }
 
 
-def note_section() -> str:
-    """Section 52, from its heading to the next top-level one."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"{_HEADING}\n")
-    assert len(body) == 2, f"the note carries exactly one {_HEADING!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose() -> str:
-    """The section with its wrapping collapsed. What a sentence says is the
-    pin; where the line happens to break is not, and a pin on the break would
-    fail the next time a word is added upstream of it."""
-    return " ".join(note_section().split())
-
-
 # A task id as the register writes it: lowercase words joined by hyphens, and
 # nothing else. The section's last fenced block is the sweep's command line
 # rather than a list of cells, so the blocks are told apart by their contents
@@ -112,7 +97,7 @@ def registered_ids() -> list[str]:
     followed by the action it is listed under, so the id is the first token.
     """
     ids: list[str] = []
-    for block in note_section().split("```")[1::2]:
+    for block in section(_HEADING).split("```")[1::2]:
         first = [line.split()[0] for line in block.splitlines() if line.strip()]
         listed = [token for token in first if _TASK_ID.fullmatch(token)]
         if not listed:
@@ -120,11 +105,6 @@ def registered_ids() -> list[str]:
         assert listed == first, f"a fenced block mixes ids with other lines: {first}"
         ids.extend(listed)
     return ids
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
 
 
 @pytest.fixture(scope="module")
@@ -184,7 +164,8 @@ def test_the_register_is_thirty_ids_the_task_set_actually_loads(
     unknown = sorted(set(ids) - set(tasks))
     assert not unknown, f"the register names tasks the set does not load: {unknown}"
 
-    assert "thirty task" in prose() or "thirty cells" in prose()
+    counted = prose(section(_HEADING))
+    assert "thirty task" in counted or "thirty cells" in counted
 
 
 def test_the_per_category_counts_are_the_categories_the_tasks_declare(
@@ -200,7 +181,7 @@ def test_the_per_category_counts_are_the_categories_the_tasks_declare(
     declared = Counter(tasks[task_id].category for task_id in registered_ids())
     assert declared == {name: taken for name, (taken, _) in _SAMPLE.items()}
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     for name, (taken, _) in _SAMPLE.items():
         spelled = {2: "two", 4: "four", 6: "six"}[taken]
         assert re.search(rf"\b{taken} `{name}`", counted) or re.search(
@@ -239,7 +220,7 @@ def test_round_fours_twelve_are_present_as_six_repositories_under_both_actions(
     for categories in by_repo.values():
         assert categories == {"bug-fix", "fault-location"}, sorted(categories)
 
-    assert "six planted-defect repositories" in prose()
+    assert "six planted-defect repositories" in prose(section(_HEADING))
 
 
 def test_every_sampled_task_is_a_control_and_declares_no_knob(
@@ -321,7 +302,7 @@ def test_the_sample_is_the_first_n_by_id_of_each_categorys_control_pool(
             pool[:taken]
         ), category
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "the eligible set was ordered by task id and the first N taken" in counted
     assert "eleven eligible tasks and six were taken" in counted
 
@@ -358,7 +339,7 @@ def test_every_cell_runs_at_six_hundred_seconds_and_nothing_new_is_registered(
         set(firstparty_v1.LIVE_RUN_LIMITS_S) - _LATER_LIMITS
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "`feature-dev` and `refactor` are **not** in that table" in counted
     assert "run under the **flat default**" in counted
     assert "**no cross-round caveat arises**" in counted
@@ -373,7 +354,7 @@ def test_the_section_registers_the_combination_the_range_and_the_sweep_id(
     level is checked against the registry rather than only quoted, because it
     is as much a property of what was measured as the model name is.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert agents.CODEX_REASONING_LEVELS[_MODEL] == "medium"
     assert f"`{_AGENT}` × `{_MODEL}` at reasoning `medium`" in counted
@@ -409,7 +390,7 @@ def test_the_stated_anchor_for_the_range_is_what_the_logs_say(
     assert total == 6.2572
     assert round(total / 30, 4) == 0.2086
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "total **$6.2572**" in counted
     assert "$0.2086 a cell" in counted
     assert 5 < total < 10, "the anchor sits inside the registered range"
@@ -426,7 +407,7 @@ def test_the_codex_calls_that_preceded_the_registration_are_disclosed() -> None:
     a ChatGPT-login account is not billed per token, so `cost_usd` is
     `table-derived` by construction rather than by choice.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert "several throwaway calls" in counted
     assert "`tests/fixtures/codex/metadata.json`" in counted

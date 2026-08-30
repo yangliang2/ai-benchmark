@@ -570,6 +570,12 @@ def prompt_words(task: Task) -> int:
     return len(task.prompt.split())
 
 
+# Not the note-reading kit's `prose`, which collapses a passage's wrapping:
+# this is a different function that shares its name — it fetches a task's
+# authoring comment and case-folds it, reads no design-note section, and takes
+# a task id rather than a text. Kept local and disclosed in
+# `tests/test_note_reading_equivalence.py`'s allowlist, which scans for helpers
+# by name and would otherwise read this one as an unmigrated copy.
 def prose(task_id: str) -> str:
     """A task's opening authoring comment, case-folded.
 

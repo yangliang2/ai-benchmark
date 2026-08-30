@@ -38,11 +38,12 @@ import re
 from pathlib import Path
 
 import pytest
+import sweep_census
+from note_reading import REGISTER_LINE, prose, section
 
 from ai_benchmark import agents, firstparty, firstparty_v1, pricing, reconcile_v1
 
 _REPO = Path(__file__).parent.parent
-_TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
@@ -89,38 +90,22 @@ _LATER_LIMITS = {"performance-optimisation"}
 _NUMBER_WORDS = {"three": 3, "four": 4, "five": 5, "six": 6}
 
 
-def note_section() -> str:
-    """Section 68, from its heading to the next top-level one."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"{_HEADING}\n")
-    assert len(body) == 2, f"the note carries exactly one {_HEADING!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose() -> str:
-    """The section with its wrapping collapsed. What a sentence says is the
-    pin; where the line happens to break is not, and a pin on the break would
-    fail the next time a word is added upstream of it."""
-    return " ".join(note_section().split())
-
-
-# One line of the register: a task id — lowercase words joined by hyphens —
-# alone or followed by a parenthesised note on the scenario and its mutant
-# count. Two of the section's three fenced blocks are not lists of cells (the
-# summed columns of §68.4 and the sweep's command line), and neither has a line
-# shaped like this. A block that is neither wholly register lines nor wholly
-# not is a malformed register rather than something to read half of.
-_REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
-
-
+# `note_reading.REGISTER_LINE` is the line this register is read by: a task id
+# — lowercase words joined by hyphens — alone or followed by a parenthesised
+# note on the scenario and its mutant count. Two of the section's three fenced
+# blocks are not lists of cells (the summed columns of §68.4 and the sweep's
+# command line), and neither has a line shaped like this. A block that is
+# neither wholly register lines nor wholly not is a malformed register rather
+# than something to read half of.
 def registered() -> dict[str, str]:
     """The three task ids and their parenthesised notes, read out of the
     section's own fenced blocks. The register is the list in the note."""
     found: dict[str, str] = {}
-    for block in note_section().split("```")[1::2]:
+    for block in section(_HEADING).split("```")[1::2]:
         lines = [line.strip() for line in block.splitlines() if line.strip()]
         listed = [
             match for line in lines
-            if (match := _REGISTER_LINE.fullmatch(line)) is not None
+            if (match := REGISTER_LINE.fullmatch(line)) is not None
         ]
         if not listed:
             continue
@@ -139,7 +124,7 @@ def summed_columns() -> dict[tuple[str, str], float]:
     adding a fenced block above it does not silently move the read.
     """
     blocks = [
-        block for block in note_section().split("```")[1::2] if "total" in block
+        block for block in section(_HEADING).split("```")[1::2] if "total" in block
     ]
     assert len(blocks) == 1, "one summed-columns block"
     columns: dict[tuple[str, str], float] = {}
@@ -150,11 +135,6 @@ def summed_columns() -> dict[tuple[str, str], float]:
         if match is not None:
             columns[(match.group(1), match.group(2))] = float(match.group(3))
     return columns
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
 
 
 @pytest.fixture(scope="module")
@@ -221,7 +201,7 @@ def test_the_section_takes_the_next_free_number_before_any_paid_run() -> None:
         "the record did not open at the number this section left free"
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "written down before the first paid run" in counted
     assert "This is round 8's pre-registration and nothing else" in counted
     assert "**the next free section number**, §69 onward" in counted
@@ -254,7 +234,7 @@ def test_the_register_is_three_ids_the_task_set_actually_loads(
         planted = len(firstparty_v1.mutant_patches(tasks[task_id]))
         assert _NUMBER_WORDS[word.group(1)] == planted, task_id
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "three tasks × three combinations = nine cells" in counted
     assert "**This list is the register.**" in counted
     assert "**every `test-authoring` task the corpus holds**" in counted
@@ -292,7 +272,7 @@ def test_the_three_are_every_test_authoring_task_and_each_is_a_control(
     }
     assert authored == set(registered())
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "each is a **declared control**" in counted
     assert "**round 8 moves no knob's counter and the kill discipline does " \
         "not count it**" in counted
@@ -357,7 +337,7 @@ def test_every_cell_runs_at_the_flat_default_and_no_row_is_registered(
     assert sample.category not in firstparty_v1.LIVE_RUN_LIMITS_S
     assert firstparty_v1.live_run_limit_s(sample) == firstparty.RUN_TIMEOUT_S
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "**`test-authoring` joins none of them**" in counted
     assert "This ticket adds no row" in counted
     assert "all nine cells run at the **flat default**" in counted
@@ -375,7 +355,7 @@ def test_the_section_registers_the_three_standing_combinations() -> None:
     checked against the registry rather than only quoted, because it is as much
     a property of what was measured as the model name is.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert agents.CODEX_REASONING_LEVELS["gpt-5.6-terra"] == "medium"
     assert (
@@ -401,7 +381,7 @@ def test_the_invocation_plan_is_registered_with_its_dry_cell() -> None:
     round-1 lesson that a paid cell hidden in a rehearsal-shaped name gets
     dropped from the analysis.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert f"Sweep id **`{_SWEEP}`**" in counted
     assert "never queued" in counted
@@ -414,8 +394,8 @@ def test_the_invocation_plan_is_registered_with_its_dry_cell() -> None:
     assert "bans `-dry` in a log's name" in counted
     assert "**`--task`**" in counted
     assert f"--sweep {_SWEEP}" in counted
-    assert "--agent claude-code" in note_section()
-    assert "--model claude-haiku-4-5" in note_section()
+    assert "--agent claude-code" in section(_HEADING)
+    assert "--model claude-haiku-4-5" in section(_HEADING)
 
 
 def test_the_cost_range_is_derived_from_round_sevens_own_rows(
@@ -463,7 +443,7 @@ def test_the_cost_range_is_derived_from_round_sevens_own_rows(
     }
     assert round(sum(summed_columns().values()), 4) == 1.5627
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "**$1.4532** on `claude-haiku-4-5`" in counted
     assert "**$4.2344** on `claude-sonnet-5`" in counted
     assert "**$1.6046** on `codex` × `gpt-5.6-terra`" in counted
@@ -545,7 +525,7 @@ def test_the_registered_bound_is_caching_aware_at_both_ends(
         "6's error"
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "**2,169,811** input tokens and wrote **30,396**" in counted
     assert "154,986.5 in and 2,171 out a cell" in counted
     assert "**464,960 input** and **6,513 output** tokens" in counted
@@ -576,7 +556,7 @@ def test_what_the_round_cannot_say_is_registered_in_advance() -> None:
     rate whatever produced it; and the Codex rung because a column with one
     model in it looks like a ladder with one rung.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert "Four readings are ruled out now" in counted
     assert "Nothing about `test-authoring` × `typescript`.**" in counted
@@ -629,12 +609,7 @@ def test_the_register_is_exactly_what_the_sweep_then_did(
     ]
 
     # `None` is round 1, which predates `--sweep` and is keyed on `as_of`.
-    # `round-10` joined on 2026-08-24, when heap 3's first sweep landed,
-    # `round-11` on 2026-08-26, when its second action's did, and `round-12`
-    # on 2026-08-28, when its last action's did; `round-13` on 2026-08-29,
-    # when heap 4's one action's did; this test's claim — the
-    # thing swept is the thing registered — is untouched.
-    assert {run.sweep for run in rows.values()} == {
-        None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        _SWEEP, "round-10", "round-11", "round-12", "round-13",
-    }
+    # Every other live id is the census's, so a round that lands is one edit
+    # there and none here; this test's claim — the thing swept is the thing
+    # registered — is untouched by whichever rounds have landed since.
+    assert {run.sweep for run in rows.values()} == set(sweep_census.ALL_SWEEPS) | {None}

@@ -113,6 +113,7 @@ from firstparty_v1_tasks import (
     task_by_id,
     visible_tests_pass,
 )
+from note_reading import prose
 from test_firstparty_v1_k9_round2_tasks import added_lines, answer_of, authoring_comment
 from test_firstparty_v1_k12_families import FAMILIES as ROUND_TWO_FAMILIES
 from test_firstparty_v1_k12_families import (
@@ -588,7 +589,7 @@ def test_only_the_crux_passage_varies_across_the_prompts(family: Family) -> None
     assert shared == by_level[SHARED_ONLY]
     # Read with the line wrapping taken out: which line a criterion breaks on
     # is not what is being asserted about it.
-    unwrapped = " ".join(shared.split())
+    unwrapped = prose(shared)
     assert "It must satisfy all of the following:" in unwrapped
     assert "Keep the existing functions and their behaviour unchanged" in unwrapped
 

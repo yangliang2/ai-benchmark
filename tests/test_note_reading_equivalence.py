@@ -46,9 +46,14 @@ _CANDIDATES = sorted(_TESTS_DIR.glob("test_firstparty_v1_round*.py")) + [
 ]
 
 # Disclosed divergences: a suite whose local helper does not agree with the
-# kit for a reason that is not "still a local copy". Empty until a real one
-# turns up — see the module docstring on how a suite lands here.
-DISCLOSED_DIVERGENCES: dict[str, str] = {}
+# kit for a reason that is not "still a local copy". A suite lands here when
+# its helper is genuinely a different function; the reason is the skip message.
+DISCLOSED_DIVERGENCES: dict[str, str] = {
+    "test_firstparty_v1_k10_k4_round3_pairs.py": (
+        "its `prose` is a name collision, not a copy: it case-folds a task's "
+        "authoring comment and reads no section of the design note"
+    ),
+}
 
 
 def _local_function_names(path: Path) -> set[str]:

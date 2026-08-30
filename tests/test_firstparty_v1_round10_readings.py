@@ -42,13 +42,12 @@ from typing import Iterator
 
 import pytest
 
-from ai_benchmark import firstparty_v1, point_grader, reconcile_v1
+from ai_benchmark import firstparty_v1, point_grader
 from ai_benchmark import grader_calibration_v1 as calibration
 from ai_benchmark.firstparty_v1 import load_runs
 
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
-_LOGS = _REPO / "data" / "first-party-v1-runs"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 _UNIFIED = _REPO / "data" / "unified.jsonl"
 
@@ -142,16 +141,6 @@ def registered_stratum_a(
         for one in archive.answers
         if one.stratum == "A"
     }
-
-
-@pytest.fixture(scope="module")
-def logs() -> list[Path]:
-    """Every run log under the corpus's log directory, collected wholesale.
-
-    Never selected by filename: the sweep protocol's rule, after the round-1
-    analysis silently dropped two paid cells by filtering on a name.
-    """
-    return reconcile_v1.collect_logs([_LOGS])
 
 
 @pytest.fixture(scope="module")

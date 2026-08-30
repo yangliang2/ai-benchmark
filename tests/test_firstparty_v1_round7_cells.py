@@ -35,13 +35,13 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
+from note_reading import prose, section
 
 from ai_benchmark import agents, firstparty, firstparty_v1, pricing, reconcile_v1
 
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
-_NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _HEADING = "## Round 7 cells and cost — registered 2026-08-20"
 
@@ -98,20 +98,6 @@ _TYPESCRIPT_ROWS = {
 _PYTHON_TOTAL = 128
 
 
-def note_section() -> str:
-    """Section 59, from its heading to the next top-level one."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"{_HEADING}\n")
-    assert len(body) == 2, f"the note carries exactly one {_HEADING!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose() -> str:
-    """The section with its wrapping collapsed. What a sentence says is the
-    pin; where the line happens to break is not, and a pin on the break would
-    fail the next time a word is added upstream of it."""
-    return " ".join(note_section().split())
-
-
 # One line of the register: a task id — lowercase words joined by hyphens —
 # alone or followed by a parenthesised note on the scenario. Three of the
 # section's fenced blocks are not lists of cells (the sweep's command line and
@@ -120,6 +106,12 @@ def prose() -> str:
 # what tells a register block from the rest. A block that is neither wholly
 # register lines nor wholly not is a malformed register rather than something
 # to read half of.
+#
+# Not `note_reading.REGISTER_LINE`, which every other register-reading suite
+# imports: this one leaves the parenthesised note uncaptured, because round 7
+# reads the ids and never the scenario beside them. Kept local rather than
+# reconciled with the kit's — the kit's second group is what the suites that
+# read a note beside the id need, and it is not this suite's reading.
 _REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\(.+\))?$")
 
 
@@ -129,7 +121,7 @@ def registered_ids() -> list[str]:
     The register is the list in the note.
     """
     ids: list[str] = []
-    for block in note_section().split("```")[1::2]:
+    for block in section(_HEADING).split("```")[1::2]:
         lines = [line.strip() for line in block.splitlines() if line.strip()]
         listed = [
             match.group(1)
@@ -143,11 +135,6 @@ def registered_ids() -> list[str]:
         )
         ids.extend(listed)
     return ids
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
 
 
 @pytest.fixture(scope="module")
@@ -202,7 +189,7 @@ def test_the_register_is_fourteen_ids_the_task_set_actually_loads(
     unknown = sorted(set(ids) - set(tasks))
     assert not unknown, f"the register names tasks the set does not load: {unknown}"
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "fourteen tasks × three combinations = forty-two cells" in counted
     assert "**This list is the register.**" in counted
 
@@ -221,7 +208,7 @@ def test_the_per_action_counts_are_the_categories_the_tasks_declare(
     declared = Counter(tasks[task_id].category for task_id in registered_ids())
     assert declared == _COUNTS
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     for name, count in _COUNTS.items():
         assert re.search(rf"\b{count} `{name}`", counted), (
             f"section 59 does not state {count} `{name}`"
@@ -256,7 +243,7 @@ def test_every_registered_task_is_a_typescript_application_control(
     }
     assert typescript == set(registered_ids())
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "each is a **declared control**" in counted
     assert "moves no knob's counter" in counted
     assert "Nothing is re-run in Python, and nothing was ported from it" in counted
@@ -308,7 +295,7 @@ def test_every_cell_runs_at_six_hundred_seconds_and_nothing_new_is_registered(
         }
         assert limits == {_LIMIT_S}, category
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "`feature-dev` and `refactor` are **not** in that table" in counted
     assert "run under the **flat default**" in counted
     assert "the limit comes out of the same table for every language" in counted
@@ -325,7 +312,7 @@ def test_the_section_registers_the_three_combinations_and_the_sweep_id() -> None
     registry rather than only quoted, because it is as much a property of what
     was measured as the model name is.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert agents.CODEX_REASONING_LEVELS["gpt-5.6-terra"] == "medium"
     assert (
@@ -369,7 +356,7 @@ def test_the_cost_range_is_derived_from_round_sixs_per_cell_figures(
     assert per_task == 0.3586
     assert round(per_task * 14, 2) == 5.02
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "**$0.0783** a cell on `claude-haiku-4-5`" in counted
     assert "**$0.2086** on `claude-sonnet-5`" in counted
     assert "**$0.0717** on `codex` × `gpt-5.6-terra`" in counted
@@ -437,7 +424,7 @@ def test_the_registered_bound_is_caching_aware_at_both_ends(
         "error"
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "Round 6 missed its range 2.3× low" in counted
     assert "The fix is in the estimate, not in the stance" in counted
     assert "**3,892,528** input tokens and wrote **49,636**" in counted
@@ -505,7 +492,7 @@ def test_the_coverage_target_is_what_the_lint_prints(
     assert sum(row[3] for row in python_rows) == _PYTHON_TOTAL
     assert len(tasks) == _PYTHON_TOTAL + sum(_COUNTS.values())
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "exactly **five `typescript` × `application` rows**" in counted
     assert "**no `typescript` row** for `test-authoring` or for" in counted
     assert "zero by absence" in counted

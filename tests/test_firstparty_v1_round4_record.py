@@ -30,6 +30,7 @@ import statistics
 from pathlib import Path
 
 import pytest
+from note_reading import fenced_blocks, prose, section
 
 from ai_benchmark import firstparty_v1, reconcile_v1
 from ai_benchmark.cli import main
@@ -37,7 +38,6 @@ from ai_benchmark.cli import main
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
-_NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _SWEEP = "round-4"
 _AGENT_VERSION = "2.1.233 (Claude Code)"
@@ -157,24 +157,6 @@ def verdicts() -> dict[tuple[str, str], bool]:
     }
 
 
-def note_section(heading: str) -> str:
-    """One numbered section of the design note, by its heading line."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"### {heading}\n")[1]
-    return body.split("\n### ")[0].split("\n## ")[0]
-
-
-def prose(text: str) -> str:
-    """A passage with its wrapping collapsed. What a sentence of the record
-    says is the pin; where the line happens to break is not, and a pin on the
-    break would fail the next time a word is added upstream of it."""
-    return " ".join(text.split())
-
-
-def fenced_block(text: str) -> str:
-    """The first fenced code block of a passage of the note."""
-    return text.split("```\n")[1]
-
-
 # The two fields of a calibration block a later round moves, and the only two.
 #
 # A block holds numbers of two kinds. The **measured** ones — the baseline
@@ -258,7 +240,7 @@ def test_the_round_cost_what_the_record_states() -> None:
         assert round(actual, 4) == spend, model
     assert round(sum(run.cost_usd for run in runs.values()), 4) == _TOTAL
 
-    measured = prose(note_section("38. What the round measured"))
+    measured = prose(section("### 38. What the round measured"))
     assert (
         "Expected **$5–8**, 24 cells priced at the nearest terrain's p90"
     ) in measured
@@ -285,7 +267,7 @@ def test_the_limits_in_force_were_registered_before_the_sweep_and_never_reached(
     assert round(max(latencies), 1) == 101.4
     assert round(statistics.mean(latencies), 1) == 51.4
 
-    measured = prose(note_section("38. What the round measured"))
+    measured = prose(section("### 38. What the round measured"))
     assert "`bug-fix` and `fault-location` in `LIVE_RUN_LIMITS_S`, both at" in measured
     assert "**600 seconds**" in measured
     assert "**No cross-round caveat arises**" in measured
@@ -376,10 +358,10 @@ def test_locating_against_fixing_reads_per_defect_as_the_record_states(
     runs = round_4_runs()
     printed = {
         line.split()[0]: line.split()[1:]
-        for line in fenced_block(
-            note_section("40. Locating against fixing, per model over six matched "
-                         "defects")
-        ).splitlines()[1:]
+        for line in fenced_blocks(
+            section("### 40. Locating against fixing, per model over six matched "
+                    "defects")
+        )[0].splitlines()[1:]
         if line.strip()
     }
 
@@ -454,7 +436,9 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     ])
     out = capsys.readouterr().out
 
-    quoted = fenced_block(note_section("39. The two new categories' rows, as printed"))
+    quoted = fenced_blocks(
+        section("### 39. The two new categories' rows, as printed")
+    )[0]
     # Block by block rather than as one string: the note quotes bug-fix and
     # fault-location back to back because in round 4 nothing sorted between
     # them, and round 5's code-review and codebase-comprehension now do. Each

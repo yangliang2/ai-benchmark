@@ -33,6 +33,7 @@ import statistics
 from pathlib import Path
 
 import pytest
+from note_reading import fenced_blocks, prose, section
 
 from ai_benchmark import firstparty, firstparty_v1, reconcile_v1
 from ai_benchmark.cli import main
@@ -40,7 +41,6 @@ from ai_benchmark.cli import main
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
-_NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _SWEEP = "round-5"
 
@@ -201,24 +201,6 @@ def verdicts() -> dict[tuple[str, str], bool]:
     }
 
 
-def note_section(heading: str) -> str:
-    """One numbered section of the design note, by its heading line."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"### {heading}\n")[1]
-    return body.split("\n### ")[0].split("\n## ")[0]
-
-
-def prose(text: str) -> str:
-    """A passage with its wrapping collapsed. What a sentence of the record
-    says is the pin; where the line happens to break is not, and a pin on the
-    break would fail the next time a word is added upstream of it."""
-    return " ".join(text.split())
-
-
-def fenced_block(text: str) -> str:
-    """The first fenced code block of a passage of the note."""
-    return text.split("```\n")[1]
-
-
 def strings(source: bytes) -> set[str]:
     """Every string literal a shipped grading module evaluates, docstrings
     left out: what a module says about a field in its own prose is not what it
@@ -323,7 +305,7 @@ def test_the_round_cost_what_the_record_states() -> None:
         )
         assert round(actual, 4) == spend, name
 
-    measured = prose(note_section("47. What the round measured"))
+    measured = prose(section("### 47. What the round measured"))
     assert "Expected **$3–6**, stated in §46" in measured
     assert (
         "Actual **$3.96** — $0.9794 on haiku and $2.9836 on sonnet, "
@@ -355,7 +337,7 @@ def test_the_limits_in_force_were_registered_before_the_sweep_and_never_reached(
     assert round(max(latencies), 1) == 265.2
     assert round(statistics.mean(latencies), 1) == 77.6
 
-    measured = prose(note_section("47. What the round measured"))
+    measured = prose(section("### 47. What the round measured"))
     assert (
         "`code-review` and `codebase-comprehension` in `LIVE_RUN_LIMITS_S`, "
         "both at **600 seconds**"
@@ -395,7 +377,7 @@ def test_the_rider_ran_at_the_flat_default_and_is_recorded_apart() -> None:
         "the rider logged no sonnet row in any round; round 3's cell stands"
     )
 
-    measured = prose(note_section("47. What the round measured"))
+    measured = prose(section("### 47. What the round measured"))
     assert "**timed out again**" in measured
     assert "**flat default of 600 seconds**" in measured
     assert "**it is not merged into round 3's readings**" in measured
@@ -431,7 +413,7 @@ def test_which_cells_resolved_per_category_and_model(
     }
     assert sum(counts.values()) == 20
 
-    printed = fenced_block(note_section("47. What the round measured"))
+    printed = fenced_blocks(section("### 47. What the round measured"))[0]
     assert printed == (
         "                  code-review  codebase-comprehension\n"
         "claude-haiku-4-5  5/8          4/4\n"
@@ -537,7 +519,7 @@ def test_every_finding_reported_lands_where_section_50_says(
         "an accepted answer landed on an alternative rather than the primary"
     )
 
-    read = prose(note_section("50. The four cells that did not resolve, read"))
+    read = prose(section("### 50. The four cells that did not resolve, read"))
     assert (
         "51 findings reported, of which 45 matched a planted finding, "
         "two matched a rejected one and four were unlisted and archived"
@@ -603,8 +585,8 @@ def test_no_repository_carries_two_of_the_round_s_actions() -> None:
     assert all(len(shipped[digest]) == 1 for digest in signatures)
 
     quoted = prose(
-        note_section(
-            "49. Review against locating against fixing: what this round "
+        section(
+            "### 49. Review against locating against fixing: what this round "
             "cannot quote"
         )
     )
@@ -642,7 +624,9 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     ])
     out = capsys.readouterr().out
 
-    quoted = fenced_block(note_section("48. The two new categories' rows, as printed"))
+    quoted = fenced_blocks(
+        section("### 48. The two new categories' rows, as printed")
+    )[0]
     # Round 12's sweep (2026-08-28) re-priced `codebase-comprehension` over
     # seven controls — the four locate-style plus its three explain-style
     # tasks — so that block is the first §48 published that the table no
@@ -745,7 +729,7 @@ def test_calibrate_v1_prints_the_two_new_rows_the_record_quotes(
     assert max(compared, key=lambda name: gaps[name]) == "code-review"
     assert max(gaps, key=lambda name: gaps[name]) == "requirement-decomposition"
 
-    read = prose(note_section("48. The two new categories' rows, as printed"))
+    read = prose(section("### 48. The two new categories' rows, as printed"))
     assert (
         "Sonnet costs 3.35× haiku on this category's controls, against 2.87× on "
         "`refactor`, 2.64× on `bug-fix`, 2.60× on `feature-dev`, 2.58× on "
@@ -807,9 +791,9 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
     # The commands the note prints, against the four logs they name: what each
     # replay evaluated and resolved is quoted, and the rider's empty log is
     # quoted at zero rather than left out.
-    printed = fenced_block(
-        note_section("51. Replay, the archive, and how each was shown")
-    )
+    printed = fenced_blocks(
+        section("### 51. Replay, the archive, and how each was shown")
+    )[0]
     for name, evaluated, resolved in (
         (_LOG_NAMES[0], 1, 1), (_LOG_NAMES[1], 11, 8),
         (_LOG_NAMES[2], 12, 11), (_LOG_NAMES[3], 0, 0),
@@ -848,6 +832,6 @@ def test_the_free_text_is_archived_in_the_logs_and_no_verdict_reads_it() -> None
     # lives, which is the module this one imports rather than restates.
     assert {"file", "symbol"} <= strings(firstparty_v1.answer_module_source())
 
-    read = prose(note_section("51. Replay, the archive, and how each was shown"))
+    read = prose(section("### 51. Replay, the archive, and how each was shown"))
     assert "**the verdict does not read a word of it**" in read
     assert "2,373 words of agent `output`" in read

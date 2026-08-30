@@ -51,7 +51,7 @@ from pathlib import Path
 import pytest
 
 from ai_benchmark import grader_calibration_v1, point_grader, reconcile_v1
-from ai_benchmark.firstparty_v1 import Run, Task, load_runs, load_task_set
+from ai_benchmark.firstparty_v1 import Run, Task, load_runs
 from ai_benchmark.grader_calibration_v1 import (
     FILE_OR_SYMBOL,
     FILE_REFERENCE,
@@ -60,7 +60,6 @@ from ai_benchmark.grader_calibration_v1 import (
 )
 
 _REPO = Path(__file__).parent.parent
-_TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
 
 # The two counts §82.5's preview reported, held here as what the implemented
@@ -88,11 +87,6 @@ _TRUE_POINTERS = (_APIARY_CODEX, _PAPERROUND_SONNET)
 _SYMBOL_ONLY = (_BELFRY_HAIKU, _PARISHHALL_HAIKU)
 
 Cell = tuple[str, str, str]
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, Task]:
-    return {task.id: task for task in load_task_set(_TASKS)}
 
 
 @pytest.fixture(scope="module")
