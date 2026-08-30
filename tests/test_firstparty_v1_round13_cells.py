@@ -81,6 +81,8 @@ from pathlib import Path
 from typing import get_args
 
 import pytest
+import sweep_census
+from note_reading import REGISTER_LINE, block_holding, fenced_blocks, prose, section
 
 from ai_benchmark import (
     agents,
@@ -93,7 +95,6 @@ from ai_benchmark.schema import TaskCategory
 
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
-_LOGS = _REPO / "data" / "first-party-v1-runs"
 _RULINGS = _REPO / "data" / "first-party-v1-rulings"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
@@ -155,47 +156,6 @@ _FLOOR = 0.9
 _CEILING = 2.8
 
 
-def note_section() -> str:
-    """Section 118, from its own heading to the next top-level one.
-
-    Deliberately sliced: a slice that ran to `## Open questions` would swallow
-    every section written after this one, and each pin below would then pass on
-    text §118 never wrote. `docs/agents/runbook-grader-v2-gate.md:153` is where
-    that rule is written down, after §79's suite came within one section of the
-    accident.
-    """
-    body = _NOTE.read_text(encoding="utf-8").split(f"{_HEADING}\n")
-    assert len(body) == 2, f"the note carries exactly one {_HEADING!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose() -> str:
-    """The section with its wrapping collapsed. What a sentence says is the
-    pin; where the line happens to break is not, and a pin on the break would
-    fail the next time a word is added upstream of it."""
-    return " ".join(note_section().split())
-
-
-def blocks() -> list[str]:
-    """The section's fenced blocks, in order."""
-    return note_section().split("```")[1::2]
-
-
-def block_holding(*needles: str) -> str:
-    """The one fenced block holding all of these, found by what it contains
-    rather than by its position — so adding a block above it does not silently
-    move the read."""
-    found = [
-        block for block in blocks()
-        if all(needle in block for needle in needles)
-    ]
-    assert len(found) == 1, f"exactly one fenced block holds {needles!r}"
-    return found[0]
-
-
-_REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
-
-
 def register_blocks() -> list[dict[str, str]]:
     """Every fenced block of §118 whose every line is an id line — §83.7's
     register form, looked for by shape rather than by position or by a quoted
@@ -207,9 +167,9 @@ def register_blocks() -> list[dict[str, str]]:
     appearing anywhere in the section is caught as the ambiguity it would be.
     """
     found: list[dict[str, str]] = []
-    for block in blocks():
+    for block in fenced_blocks(section(_HEADING)):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
-        matches = [_REGISTER_LINE.fullmatch(line) for line in lines]
+        matches = [REGISTER_LINE.fullmatch(line) for line in lines]
         if lines and all(matches):
             found.append({
                 match.group(1): match.group(2) or ""
@@ -226,14 +186,14 @@ def item(number: str) -> str:
     """One numbered item of §118, collapsed, from its own bold number to the
     next one — so that a claim registered about the gate can be checked
     *inside the gate's clause* rather than anywhere in the section."""
-    section = note_section()
-    found = list(_ITEM.finditer(section))
+    text = section(_HEADING)
+    found = list(_ITEM.finditer(text))
     assert found, "§118 numbers its items"
     for index, match in enumerate(found):
         if (match.group(1) or "0") != number:
             continue
-        end = found[index + 1].start() if index + 1 < len(found) else len(section)
-        return " ".join(section[match.start():end].split())
+        end = found[index + 1].start() if index + 1 < len(found) else len(text)
+        return " ".join(text[match.start():end].split())
     raise AssertionError(f"§118 carries no item {number!r}")
 
 
@@ -241,27 +201,7 @@ def other_section(heading: str) -> str:
     """Another top-level section of the note, sliced the same deliberate way
     and collapsed — so a sentence §118 says it quotes is checked against the
     section that actually wrote it."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"{heading}\n")
-    assert len(body) == 2, f"the note carries exactly one {heading!r}"
-    return " ".join(body[1].split("\n## ")[0].split())
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
-
-
-@pytest.fixture(scope="module")
-def logs() -> list[Path]:
-    """Every log under the run-log directory, collected wholesale. A filename
-    says nothing about which sweep a row belongs to, and selecting on one is
-    what the sweep protocol forbids."""
-    return reconcile_v1.collect_logs([_LOGS])
-
-
-@pytest.fixture(scope="module")
-def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
-    return [run for log in logs for run in firstparty_v1.load_runs(log)]
+    return prose(section(heading))
 
 
 def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> None:
@@ -311,7 +251,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
         "round 13's record is what landed after it"
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "This is round 13's pre-registration and nothing else" in counted
     assert "written down before the first paid call" in counted
     assert "**no paid experiment at all**" in counted
@@ -338,22 +278,22 @@ def test_the_round_registers_no_instrument_and_prices_no_grader_dollar() -> None
     `point_grader` — which is why it carries no §80.5 freezing line, as its
     own docstring says.
     """
-    section = note_section()
-    assert "GRADER_VERSION" not in section, (
+    text = section(_HEADING)
+    assert "GRADER_VERSION" not in text, (
         "a round with no instrument registers no version string"
     )
-    assert "GRADER_MODEL" not in section
-    assert "api-docs.deepseek.com" not in section, (
+    assert "GRADER_MODEL" not in text
+    assert "api-docs.deepseek.com" not in text, (
         "and fetches no price for a call it does not make"
     )
     # The two marks a registered grader price leaves — the vendor's model
     # column and its per-million unit — are absent, and the only mention
     # §118 makes of a pricing block is 118.11's sentence saying it carries
     # none.
-    assert "deepseek-v4-pro" not in section
-    assert "MTok" not in section
-    assert section.count("`source_url`/`as_of`") == 1
-    assert "no `source_url`/`as_of` pricing block" in prose()
+    assert "deepseek-v4-pro" not in text
+    assert "MTok" not in text
+    assert text.count("`source_url`/`as_of`") == 1
+    assert "no `source_url`/`as_of` pricing block" in prose(section(_HEADING))
 
     instrument = item("1")
     assert (
@@ -831,7 +771,7 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     *as empty*, said to be left for the authoring tickets, with round 7's
     prefix pin named as the check the authoring runs first.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
     cells = item("10")
 
     assert agents.CODEX_REASONING_LEVELS["gpt-5.6-terra"] == "medium"
@@ -902,7 +842,7 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     assert "**`--task`**" in cells
     assert "**Nothing is re-run**" in cells
 
-    command = block_holding("eval-v1")
+    command = block_holding(section(_HEADING), "eval-v1")
     assert f"--sweep {_SWEEP}" in command
     assert "--agent claude-code" in command
     assert "--model claude-haiku-4-5" in command
@@ -1068,7 +1008,7 @@ def test_the_sweep_band_is_derived_from_the_checked_in_round_12_rows(
     assert f"${rounded_columns:.4f} landed" in rulings
 
     # §68.4's summed-columns form, against the same arithmetic.
-    summed = block_holding("total", "claude-code x claude-haiku-4-5")
+    summed = block_holding(section(_HEADING), "total", "claude-code x claude-haiku-4-5")
     columns: dict[tuple[str, str], float] = {}
     for line in summed.splitlines():
         match = re.fullmatch(
@@ -1285,8 +1225,8 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     # Landed form: the archive grew by exactly the round's own sweep and by
     # nothing else — 49 logs and 333 rows at registration, plus the sweep's
     # four logs and nine `round-13` rows, keyed on what the rows carry.
-    assert len(logs) == 53
-    assert len(runs) == 342
+    assert len(logs) == sweep_census.LOG_COUNT
+    assert len(runs) == sweep_census.ROW_COUNT
     late = [run for run in runs if run.sweep == _SWEEP]
     assert len(late) == _CELLS * 3
     assert len(runs) - len(late) == 333, "nothing else landed in between"
@@ -1303,7 +1243,7 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     assert "**the rows this section registers**" in band
     assert "Run before the round's own sweep it must print nothing" in band
 
-    check = block_holding("-newermt").strip()
+    check = block_holding(section(_HEADING), "-newermt").strip()
     assert check == "find data/first-party-v1-runs -type f -newermt 2026-08-29"
 
 
@@ -1351,7 +1291,8 @@ def test_the_round_13_cells_are_the_nine_registered(
             "verdict is execution, not an instrument's ruling"
         )
 
-    assert {run.sweep for run in runs} == {
-        None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", "round-10", "round-11", _ANCHOR_ROUND, _SWEEP,
-    }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
+    # Every live id is the census's, `_ANCHOR_ROUND` and `_SWEEP` among
+    # them, so a round that lands is one edit there and none here.
+    assert {run.sweep for run in runs} == set(sweep_census.ALL_SWEEPS) | {None}, (
+        "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
+    )

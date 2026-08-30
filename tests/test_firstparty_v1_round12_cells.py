@@ -58,7 +58,8 @@ import re
 from pathlib import Path
 from typing import get_args
 
-import pytest
+import sweep_census
+from note_reading import REGISTER_LINE, block_holding, fenced_blocks, prose, section
 
 from ai_benchmark import (
     agents,
@@ -71,8 +72,6 @@ from ai_benchmark import (
 from ai_benchmark.schema import TaskCategory
 
 _REPO = Path(__file__).parent.parent
-_TASKS = _REPO / "tasks" / "first-party-v1"
-_LOGS = _REPO / "data" / "first-party-v1-runs"
 _RULINGS = _REPO / "data" / "first-party-v1-rulings"
 _NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
@@ -178,47 +177,6 @@ _SECTIONS = (
 # exactly as §95's suite carried §83's rule forward.
 
 
-def note_section() -> str:
-    """Section 107, from its own heading to the next top-level one.
-
-    Deliberately sliced: a slice that ran to `## Open questions` would swallow
-    every section written after this one, and each pin below would then pass on
-    text §107 never wrote. `docs/agents/runbook-grader-v2-gate.md:153` is where
-    that rule is written down, after §79's suite came within one section of the
-    accident.
-    """
-    body = _NOTE.read_text(encoding="utf-8").split(f"{_HEADING}\n")
-    assert len(body) == 2, f"the note carries exactly one {_HEADING!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose() -> str:
-    """The section with its wrapping collapsed. What a sentence says is the
-    pin; where the line happens to break is not, and a pin on the break would
-    fail the next time a word is added upstream of it."""
-    return " ".join(note_section().split())
-
-
-def blocks() -> list[str]:
-    """The section's fenced blocks, in order."""
-    return note_section().split("```")[1::2]
-
-
-def block_holding(*needles: str) -> str:
-    """The one fenced block holding all of these, found by what it contains
-    rather than by its position — so adding a block above it does not silently
-    move the read."""
-    found = [
-        block for block in blocks()
-        if all(needle in block for needle in needles)
-    ]
-    assert len(found) == 1, f"exactly one fenced block holds {needles!r}"
-    return found[0]
-
-
-_REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
-
-
 def register_blocks() -> list[dict[str, str]]:
     """Every fenced block of §107 whose every line is an id line — §83.7's
     register form, looked for by shape rather than by position or by a quoted
@@ -231,9 +189,9 @@ def register_blocks() -> list[dict[str, str]]:
     ambiguity it would be.
     """
     found: list[dict[str, str]] = []
-    for block in blocks():
+    for block in fenced_blocks(section(_HEADING)):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
-        matches = [_REGISTER_LINE.fullmatch(line) for line in lines]
+        matches = [REGISTER_LINE.fullmatch(line) for line in lines]
         if lines and all(matches):
             found.append({
                 match.group(1): match.group(2) or ""
@@ -250,14 +208,14 @@ def item(number: str) -> str:
     """One numbered item of §107, collapsed, from its own bold number to the
     next one — so that a claim registered about the proofs gate can be checked
     *inside the proofs gate's clause* rather than anywhere in the section."""
-    section = note_section()
-    found = list(_ITEM.finditer(section))
+    text = section(_HEADING)
+    found = list(_ITEM.finditer(text))
     assert found, "§107 numbers its items"
     for index, match in enumerate(found):
         if (match.group(1) or "0") != number:
             continue
-        end = found[index + 1].start() if index + 1 < len(found) else len(section)
-        return " ".join(section[match.start():end].split())
+        end = found[index + 1].start() if index + 1 < len(found) else len(text)
+        return " ".join(text[match.start():end].split())
     raise AssertionError(f"§107 carries no item {number!r}")
 
 
@@ -265,27 +223,7 @@ def other_section(heading: str) -> str:
     """Another top-level section of the note, sliced the same deliberate way
     and collapsed — so a sentence §107 says it quotes is checked against the
     section that actually wrote it."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"{heading}\n")
-    assert len(body) == 2, f"the note carries exactly one {heading!r}"
-    return " ".join(body[1].split("\n## ")[0].split())
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
-
-
-@pytest.fixture(scope="module")
-def logs() -> list[Path]:
-    """Every log under the run-log directory, collected wholesale. A filename
-    says nothing about which sweep a row belongs to, and selecting on one is
-    what the sweep protocol forbids."""
-    return reconcile_v1.collect_logs([_LOGS])
-
-
-@pytest.fixture(scope="module")
-def runs(logs: list[Path]) -> list[firstparty_v1.Run]:
-    return [run for log in logs for run in firstparty_v1.load_runs(log)]
+    return prose(section(heading))
 
 
 def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> None:
@@ -337,7 +275,7 @@ def test_the_section_takes_the_next_free_number_before_the_first_paid_call() -> 
         "the round's own record is what landed after it"
     )
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "This is round 12's pre-registration and nothing else" in counted
     assert "written down before the first paid call" in counted
     assert "**no paid experiment at all**" in counted
@@ -362,7 +300,7 @@ def test_the_instrument_is_quoted_from_the_code_and_does_not_move() -> None:
     section has to say so — a round that quietly moved the instrument beside a
     new action would confound the two.
     """
-    registered = block_holding(point_grader.GRADER_MODEL).strip()
+    registered = block_holding(section(_HEADING), point_grader.GRADER_MODEL).strip()
     assert registered == point_grader.GRADER_VERSION
     alias, checkpoint, prompt_hash = registered.split(":")
     assert (alias, checkpoint) == (
@@ -371,7 +309,7 @@ def test_the_instrument_is_quoted_from_the_code_and_does_not_move() -> None:
     assert prompt_hash and len(registered.split(":")) == 3
 
     # Read, not remembered: the command the register was filled from.
-    read_with = block_holding("GRADER_VERSION").strip()
+    read_with = block_holding(section(_HEADING), "GRADER_VERSION").strip()
     assert read_with == (
         "uv run python -c 'from ai_benchmark import point_grader as p; "
         "print(p.GRADER_VERSION)'"
@@ -698,7 +636,7 @@ def test_the_proofs_are_priced_over_counted_metered_calls_at_fetched_prices() ->
     unchanged and a stale date is exactly what that would hide.
     """
     # The call range, re-derived from the registered assumption.
-    counts = block_holding("reference + foil")
+    counts = block_holding(section(_HEADING), "reference + foil")
     match = re.search(
         r"(\d+) tasks x \((\d+)-(\d+) points \+ (\d+)-(\d+) disqualifiers\) "
         r"x \(reference \+ foil\)",
@@ -721,7 +659,7 @@ def test_the_proofs_are_priced_over_counted_metered_calls_at_fetched_prices() ->
         f"{low_calls}-{high_calls} calls for the round"
     ) in counts
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "counted over metered calls" in counted
     assert "**The assumed disqualifier count is 0–2 a task**" in counted
     assert "forces a re-registration rather than being absorbed by it" in counted
@@ -742,11 +680,13 @@ def test_the_proofs_are_priced_over_counted_metered_calls_at_fetched_prices() ->
     assert "the way §99 read round 11's overage" in priced
 
     # The fetch itself, pinned as the command that was run.
-    assert block_holding(_PRICING_URL).strip() == f"curl -sL {_PRICING_URL}"
+    assert block_holding(section(_HEADING), _PRICING_URL).strip() == (
+        f"curl -sL {_PRICING_URL}"
+    )
     assert f"`source_url`: `{_PRICING_URL}`" in priced
     assert f"`as_of`: **{_AS_OF}**" in priced
     assert f"Fetched on **{_AS_OF}**" in priced
-    assert _PREVIOUS_AS_OF not in note_section(), (
+    assert _PREVIOUS_AS_OF not in section(_HEADING), (
         "the recorded as-of is this round's fetch, not §95.5's"
     )
     assert _PREVIOUS_AS_OF in other_section(_PREVIOUS_HEADING), (
@@ -796,7 +736,7 @@ def test_the_proofs_are_priced_over_counted_metered_calls_at_fetched_prices() ->
     # The registered range holds the arithmetic, rounded outward at both ends.
     assert 0.05 <= total_low and total_high <= 0.6
 
-    arithmetic = block_holding("round total")
+    arithmetic = block_holding(section(_HEADING), "round total")
     for line in (
         f"proofs  low   {low_calls} calls x "
         f"{_PROOF_ANSWER_LOW + surround:,} chars / {_CHARS_PER_TOKEN}     "
@@ -876,7 +816,7 @@ def test_the_checked_in_proof_answers_are_what_the_input_half_is_measured_at(
     )
     assert (len(lengths), len(references)) == (12, 6)
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert (
         "the corpus now holds **twelve** checked-in proof answers across six "
         "point-keyed tasks"
@@ -958,7 +898,7 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_11_rows(
     assert f"${landed:.4f} landed" in rulings
 
     # §68.4's summed-columns form, against the same arithmetic.
-    summed = block_holding("total", "claude-code x claude-haiku-4-5")
+    summed = block_holding(section(_HEADING), "total", "claude-code x claude-haiku-4-5")
     columns: dict[tuple[str, str], float] = {}
     for line in summed.splitlines():
         match = re.fullmatch(
@@ -1021,7 +961,7 @@ def test_the_sweep_range_is_derived_from_the_checked_in_round_11_rows(
     assert (floor + narrow) / 2 > high, "1.8× this anchor keeps its middle above the bound"
     assert ceiling >= narrow, "the ceiling is the first round number at or above it"
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert "The sweep's price: $1.3–2.5" in counted
     assert "re-anchored on round 11's own nine cells" in counted
     assert (
@@ -1086,7 +1026,7 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     here is that exactly one id-shaped block stands in the section and each
     of its lines carries a gloss naming the kind of question its task asks.
     """
-    counted = prose()
+    counted = prose(section(_HEADING))
 
     assert agents.CODEX_REASONING_LEVELS["gpt-5.6-terra"] == "medium"
     assert (
@@ -1179,7 +1119,7 @@ def test_the_nine_cells_and_the_invocation_are_registered() -> None:
     assert "**`--task`**" in counted
     assert "**Nothing is re-run**" in counted
 
-    command = block_holding("eval-v1")
+    command = block_holding(section(_HEADING), "eval-v1")
     assert f"--sweep {_SWEEP}" in command
     assert "--agent claude-code" in command
     assert "--model claude-haiku-4-5" in command
@@ -1206,7 +1146,7 @@ def test_every_cell_runs_at_the_registered_limit_and_no_entry_moves() -> None:
     assert set(firstparty_v1.LIVE_RUN_LIMITS_S.values()) == {_LIMIT_S}
     assert firstparty.RUN_TIMEOUT_S == _LIMIT_S, "the flat default is the same number"
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert (
         f"**`{_CATEGORY}` is already one of them, at {_LIMIT_S}, and has been "
         "since round 5**"
@@ -1250,22 +1190,22 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     # Landed form: the archive grew by exactly the round's own sweep and by
     # nothing else — 45 logs and 324 rows at registration, plus the sweep's
     # four logs and nine `round-12` rows, keyed on what the rows carry.
-    # Round 13's sweep has since landed nine `round-13` rows in four more
-    # logs (2026-08-29); a claim about what stood between this registration
-    # and the round's own sweep scopes them back out by sweep id, never by a
-    # log filename.
-    assert len(logs) == 53
-    assert len(runs) == 342
+    # Every sweep since is the census's, counted there rather than here; a
+    # claim about what stood between this registration and the round's own
+    # sweep scopes them back out by sweep id, never by a log filename.
+    assert len(logs) == sweep_census.LOG_COUNT
+    assert len(runs) == sweep_census.ROW_COUNT
     late = [run for run in runs if run.sweep == _SWEEP]
     assert len(late) == _CELLS * 3
-    since = [run for run in runs if run.sweep == "round-13"]
-    assert len(since) == 9
+    later = sweep_census.sweeps_after(_SWEEP)
+    since = [run for run in runs if run.sweep in later]
+    assert len(since) == sweep_census.rows_of(*later)
     assert len(runs) - len(late) - len(since) == 324, (
         "nothing else landed in between"
     )
     assert len([run for run in runs if run.sweep == _ANCHOR_ROUND]) == _CELLS * 3
 
-    counted = prose()
+    counted = prose(section(_HEADING))
     assert (
         "No new sweep row lands between this registration and the round's "
         "own sweep.**"
@@ -1276,7 +1216,7 @@ def test_no_new_sweep_row_lands_before_the_rounds_own_sweep(
     assert "**the rows this section registers**" in counted
     assert "Run before the round's own sweep it must print nothing" in counted
 
-    check = block_holding("-newermt").strip()
+    check = block_holding(section(_HEADING), "-newermt").strip()
     assert check == f"find data/first-party-v1-runs -type f -newermt {_AS_OF}"
 
 
@@ -1310,10 +1250,11 @@ def test_the_round_12_cells_are_the_nine_registered(
             _RULINGS, task_id, agent, model
         ).is_file(), f"{task_id} x {agent} x {model}: archived rulings"
 
-    assert {run.sweep for run in runs} == {
-        None, "round-2", "round-3", "round-4", "round-5", "round-6", "round-7",
-        "round-8", "round-10", _ANCHOR_ROUND, _SWEEP, "round-13",
-    }, "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
+    # Every live id is the census's, `_ANCHOR_ROUND` and `_SWEEP` among
+    # them, so a round that lands is one edit there and none here.
+    assert {run.sweep for run in runs} == set(sweep_census.ALL_SWEEPS) | {None}, (
+        "`None` is round 1, which predates `--sweep` and is keyed on `as_of`"
+    )
 
 
 def test_the_register_names_every_point_keyed_comprehension_task_and_each_is_proved(
