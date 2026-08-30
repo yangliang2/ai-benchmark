@@ -46,6 +46,8 @@ from pathlib import Path
 from typing import Iterator
 
 import pytest
+import sweep_census
+from note_reading import NOTE, REGISTER_LINE, fenced_blocks, prose, section
 
 from ai_benchmark import (
     agents,
@@ -62,7 +64,6 @@ _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
 _RULINGS = _REPO / "data" / "first-party-v1-rulings"
-_NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 _UNIFIED = _REPO / "data" / "unified.jsonl"
 _CONTEXT = _REPO / "CONTEXT.md"
 _RUNBOOK = _REPO / "docs" / "agents" / "runbook-round-11-proofs.md"
@@ -258,36 +259,6 @@ def no_grader_can_be_built() -> Iterator[None]:
         point_grader.deepseek_point_grader = original
 
 
-def note_section(heading: str) -> str:
-    """One numbered section of the record, from its own heading to the next.
-
-    Deliberately never sliced to `## Open questions` or any landmark further
-    down (`docs/agents/runbook-grader-v2-gate.md:153`): a slice that runs to
-    the note's trailing headings swallows whole sections silently.
-    """
-    body = _NOTE.read_text(encoding="utf-8").split(f"### {heading}\n")
-    assert len(body) == 2, f"the note carries exactly one {heading!r}"
-    return body[1].split("\n### ")[0].split("\n## ")[0]
-
-
-def note_part(heading: str) -> str:
-    """One top-level part of the design note, by its heading line."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"## {heading}\n")
-    assert len(body) == 2, f"the note carries exactly one {heading!r}"
-    return body[1].split("\n## ")[0]
-
-
-def prose(text: str) -> str:
-    """A passage with its wrapping collapsed: the sentence is the pin, the
-    line break is not."""
-    return " ".join(text.split())
-
-
-def fenced_blocks(text: str) -> list[str]:
-    """Every fenced code block of a passage, in order."""
-    return text.split("```\n")[1::2]
-
-
 def record_sections() -> list[str]:
     """The record's own sections, by heading, in order."""
     return [
@@ -304,19 +275,16 @@ def record_sections() -> list[str]:
     ]
 
 
-_REGISTER_LINE = re.compile(r"^([a-z0-9]+(?:-[a-z0-9]+)+)(?:\s+\((.+)\))?$")
-
-
 def registered_cells() -> list[str]:
     """§95.7's filled register, read back out of the pre-registration, so
     what the round swept is compared against the register itself and never a
     copy."""
     for block in fenced_blocks(
-        note_part("Round 11 cells and cost — registered 2026-08-26")
+        section("## Round 11 cells and cost — registered 2026-08-26")
     ):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
         matched = [
-            match for line in lines if (match := _REGISTER_LINE.fullmatch(line))
+            match for line in lines if (match := REGISTER_LINE.fullmatch(line))
         ]
         if len(matched) == len(lines) and all(
             match.group(2) for match in matched
@@ -330,22 +298,6 @@ def tasks_in_set() -> int:
     derived rather than pinned, because a later round authoring a task moves
     the replay block's `over N tasks` and this has to move with it."""
     return len(firstparty_v1.load_task_set(_TASKS))
-
-
-@pytest.fixture(scope="module")
-def tasks() -> dict[str, firstparty_v1.Task]:
-    return {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
-
-
-@pytest.fixture(scope="module")
-def runs() -> list[firstparty_v1.Run]:
-    """Every run in the log directory, collected wholesale — a filename says
-    nothing about which sweep a row belongs to."""
-    return [
-        run
-        for log in reconcile_v1.collect_logs([_LOGS])
-        for run in firstparty_v1.load_runs(log)
-    ]
 
 
 @pytest.fixture(scope="module")
@@ -545,7 +497,7 @@ def test_the_round_swept_exactly_the_cells_that_were_registered(
 
     assert agents.CODEX_REASONING_LEVELS == {_TERRA: "medium"}
 
-    measured = prose(note_section("97. What the round measured"))
+    measured = prose(section("### 97. What the round measured"))
     assert "**Nine cells, and they are exactly the nine §95.7 registered.**" in measured
     assert "**9 of 9**" in measured
     assert "**heap 3's second action's cells**" in measured
@@ -613,7 +565,7 @@ def test_the_dry_cell_and_the_four_logs_are_what_the_record_says(
     assert round(cheapest[1].cost_usd, 4) == 0.0645
     assert round(round_11[_DRY_CELL, _HAIKU].cost_usd, 4) == 0.0854
 
-    measured = prose(note_section("97. What the round measured"))
+    measured = prose(section("### 97. What the round measured"))
     assert "**Four invocations, four logs, none of them empty.**" in measured
     assert "**graded alone before the other eight**" in measured
     assert "**unresolved**, with four named points uncovered" in measured
@@ -695,8 +647,8 @@ def test_the_gate_opened_on_all_three_keys_before_the_first_sweep_dollar(
         is firstparty_v1._the_reference_resolves_and_the_foil_fails
     )
 
-    certified = prose(note_section(
-        "98. The gate opened: every reference resolved, every foil failed"
+    certified = prose(section(
+        "### 98. The gate opened: every reference resolved, every foil failed"
     ))
     assert (
         "**The round's one hard gate was read before the first sweep dollar, "
@@ -805,8 +757,8 @@ def test_the_sweep_cost_what_the_record_states_by_cost_source(
         "the cache-friendlier low-miss route did not happen"
     )
 
-    read = prose(note_section(
-        "99. Spend, by cost source, against both registered ranges"
+    read = prose(section(
+        "### 99. Spend, by cost source, against both registered ranges"
     ))
     assert (
         "**The registered sweep range was $1.2–2.5. The round came to "
@@ -834,8 +786,8 @@ def test_the_sweep_cost_what_the_record_states_by_cost_source(
     ) in read
     assert "the Codex column crossed none and still rose" in read
 
-    blocks = fenced_blocks(note_section(
-        "99. Spend, by cost source, against both registered ranges"
+    blocks = fenced_blocks(section(
+        "### 99. Spend, by cost source, against both registered ranges"
     ))
     assert blocks[0] == (
         "claude-code x haiku     $0.2385  vendor-reported "
@@ -945,11 +897,11 @@ def test_the_proofs_meter_missed_the_reregistered_line_and_the_record_says_so(
 
     # §96's re-registered line, read out of the amendment's own slice rather
     # than retyped into the record.
-    amendment = " ".join(note_part("Round 11 amendment — 2026-08-26").split())
+    amendment = " ".join(section("## Round 11 amendment — 2026-08-26").split())
     assert "48 spent + 16–32 selected = 64–80 calls" in amendment
 
-    read = prose(note_section(
-        "99. Spend, by cost source, against both registered ranges"
+    read = prose(section(
+        "### 99. Spend, by cost source, against both registered ranges"
     ))
     assert (
         "**The proofs, against §96's re-registered 64–80 calls: the round "
@@ -982,8 +934,8 @@ def test_the_proofs_meter_missed_the_reregistered_line_and_the_record_says_so(
 
     [block] = [
         block
-        for block in fenced_blocks(note_section(
-            "99. Spend, by cost source, against both registered ranges"
+        for block in fenced_blocks(section(
+            "### 99. Spend, by cost source, against both registered ranges"
         ))
         if "proofs metered" in block
     ]
@@ -1015,8 +967,8 @@ def test_the_payment_path_is_disclosed_as_it_was_used() -> None:
     """Section 99's disclosure, and the runbook's same words: the DeepSeek
     key from the operator's session memory, supplied inline in the invoking
     environment by the owner's disclosed exception, and never printed."""
-    read = prose(note_section(
-        "99. Spend, by cost source, against both registered ranges"
+    read = prose(section(
+        "### 99. Spend, by cost source, against both registered ranges"
     ))
     assert "**The payment path, disclosed where it was used.**" in read
     assert (
@@ -1041,7 +993,7 @@ def test_the_per_cell_table_is_what_the_logs_and_the_rulings_say(
     byte — the only pin that cannot drift a cell at a time, headers and cost
     sources included."""
     quoted = fenced_blocks(
-        note_section("100. The nine cells under three combinations")
+        section("### 100. The nine cells under three combinations")
     )[0]
     assert quoted == cell_table(round_11, rulings)
 
@@ -1056,7 +1008,7 @@ def test_the_per_cell_table_is_what_the_logs_and_the_rulings_say(
     assert resolved == _RESOLVED
     assert sum(resolved.values()) == 0, "the point gate's first all-red round"
 
-    measured = prose(note_section("97. What the round measured"))
+    measured = prose(section("### 97. What the round measured"))
     assert "**Resolution: 0 of 9.**" in measured
     assert (
         "**0 of 3** on `claude-haiku-4-5`, **0 of 3** on `claude-sonnet-5` "
@@ -1065,7 +1017,7 @@ def test_the_per_cell_table_is_what_the_logs_and_the_rulings_say(
     assert "first all-red round" in measured
     assert "`turnpike` on Codex, one named point short" in measured
 
-    said = prose(note_section("100. The nine cells under three combinations"))
+    said = prose(section("### 100. The nine cells under three combinations"))
     assert "There is no per-category block beside it" in said
     assert "no rate is quoted off it" in said
 
@@ -1081,7 +1033,7 @@ def test_the_turn_counts_are_quoted_and_refused_in_the_same_breath(
         assert sum(turns) == _TURNS[model], model
         assert (min(turns), max(turns)) == _TURN_RANGE[model], model
 
-    said = prose(note_section("100. The nine cells under three combinations"))
+    said = prose(section("### 100. The nine cells under three combinations"))
     assert (
         "Haiku took **31** turns over the three (8–12), sonnet **33** "
         "(11–11), Codex **21** (7–7)."
@@ -1106,8 +1058,8 @@ def test_each_red_cell_names_the_points_its_rulings_left_uncovered(
     outright. The cross-cell reading is re-derived too: six points uncovered
     under all three combinations, two covered by every answer.
     """
-    quoted = fenced_blocks(note_section(
-        "101. Which point went uncovered, and the two rulings the span rule "
+    quoted = fenced_blocks(section(
+        "### 101. Which point went uncovered, and the two rulings the span rule "
         "demoted"
     ))[0]
     assert quoted == gate_table(rulings)
@@ -1154,8 +1106,8 @@ def test_each_red_cell_names_the_points_its_rulings_left_uncovered(
         touched = re.findall(r"^diff --git a/(\S+) b/", run.diff, re.MULTILINE)
         assert touched == ["ANSWER.md"], (task_id, model)
 
-    said = prose(note_section(
-        "101. Which point went uncovered, and the two rulings the span rule "
+    said = prose(section(
+        "### 101. Which point went uncovered, and the two rulings the span rule "
         "demoted"
     ))
     assert "**no disqualifier was present in any of the nine answers**" in said
@@ -1195,11 +1147,11 @@ def test_no_fraction_over_points_is_quoted_as_a_quality_figure() -> None:
         re.IGNORECASE,
     )
     for heading in record_sections():
-        text = note_section(heading)
+        text = section(f"### {heading}")
         assert not point_fraction.search(text), heading
         assert "coverage rate" not in text, heading
         assert "kill rate" not in text, heading
-    said = prose(note_section("104. What this round cannot say"))
+    said = prose(section("### 104. What this round cannot say"))
     assert "**No coverage-fraction reading of any kind.**" in said
     assert '"four of five covered" as a score' in said
 
@@ -1248,7 +1200,7 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
     printed = capsys.readouterr().out
     assert f"lint clean: {tasks_in_set()} task(s) in {_TASKS}" in printed
     [quoted] = fenced_blocks(
-        note_section("102. The coverage table, as the lint prints it")
+        section("### 102. The coverage table, as the lint prints it")
     )
     # Two lines have moved since §102 was recorded, named here in round 7's
     # pattern rather than edited in the record: round 12's three
@@ -1279,7 +1231,7 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
     ) in quoted
     assert "  requirement-decomposition  -            -           0" not in printed
 
-    said = prose(note_section("102. The coverage table, as the lint prints it"))
+    said = prose(section("### 102. The coverage table, as the lint prints it"))
     assert (
         "**`requirement-decomposition application python 3` is the round's "
         "acceptance figure**"
@@ -1344,8 +1296,8 @@ def test_the_coverage_table_and_the_two_moved_sentences_are_verified(
 def test_the_second_action_confirmed_the_instruments_record() -> None:
     """Section 103: the sentence the next round planner reads, stated plainly
     (spec user story 16), and quoted against the licence it cashes."""
-    said = prose(note_section(
-        "103. The second action confirmed the instrument's record"
+    said = prose(section(
+        "### 103. The second action confirmed the instrument's record"
     ))
     assert (
         "**Confirmed — in as many words: the second heap-3 action confirmed "
@@ -1362,7 +1314,7 @@ def test_the_second_action_confirmed_the_instruments_record() -> None:
 
     # The licence §103 says it cashes is §86's own sentence, still in round
     # 10's record where §95.2 quoted it from.
-    record = " ".join(note_part("Round 10 record — 2026-08-24").split())
+    record = " ".join(section("## Round 10 record — 2026-08-24").split())
     assert (
         "planted points survived contact with an open-ended proposal, so "
         "`requirement-decomposition` and explain-style "
@@ -1388,7 +1340,7 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     assert reconcile_v1.LADDER_MODELS == (_HAIKU, _SONNET)
     assert _TERRA not in reconcile_v1.LADDER_MODELS
 
-    said = prose(note_section("104. What this round cannot say"))
+    said = prose(section("### 104. What this round cannot say"))
     assert "**Covered is not brilliant — the narrowing, in as many words.**" in said
     assert (
         "Covering every planted point does not certify a good decomposition"
@@ -1422,7 +1374,7 @@ def test_what_this_round_cannot_say_is_stated_and_true_of_the_corpus(
     assert "§76.2 ruled and §77.2 registered" in said
     labels_block = [
         block
-        for block in fenced_blocks(note_section("104. What this round cannot say"))
+        for block in fenced_blocks(section("### 104. What this round cannot say"))
         if "agree" in block
     ]
     assert len(labels_block) == 1, "the labels table, fenced, once"
@@ -1479,7 +1431,7 @@ def test_the_limits_and_toolchain_paragraphs_hold_against_the_code(
 
     assert platform.python_version() == _PYTHON_VERSION
 
-    measured = prose(note_section("97. What the round measured"))
+    measured = prose(section("### 97. What the round measured"))
     assert (
         "**The limits in force: the flat default of 600 seconds, every "
         "cell.**"
@@ -1489,8 +1441,8 @@ def test_the_limits_and_toolchain_paragraphs_hold_against_the_code(
     assert f"the round's longest run was **{_LONGEST_S} s**" in measured
     assert f"the mean was **{_MEAN_S} s**" in measured
     assert f"Python {_PYTHON_VERSION}" in measured
-    assert point_grader.GRADER_VERSION in note_section(
-        "97. What the round measured"
+    assert point_grader.GRADER_VERSION in section(
+        "### 97. What the round measured"
     ), "the instrument, quoted from the code the round ran on"
     assert "**provenance and not a row field**" in measured
     assert "no `grader` field" in measured
@@ -1560,8 +1512,8 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
         assert record["category"] == _CATEGORY
     assert sum(float(record["quality_value"]) for record in merged) == 0
 
-    printed_block = fenced_blocks(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    printed_block = fenced_blocks(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))[0]
     for name, (evaluated, resolved) in _REPLAYED.items():
         assert name in printed_block
@@ -1570,8 +1522,8 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
             f"({resolved} resolved)"
         ) in printed_block
 
-    said = prose(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    said = prose(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))
     assert (
         "**Every round-11 log replays to the verdicts this record quotes, "
@@ -1595,15 +1547,14 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     reconciled = capsys.readouterr().out
     printed = reconciled.replace(str(_TASKS), "tasks/first-party-v1")
-    [quoted] = fenced_blocks(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    [quoted] = fenced_blocks(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))[1:2]
     # The whole block has moved since the record was written, named here
-    # in round 7's pattern rather than edited there: round 12's three
-    # explain-style `codebase-comprehension` tasks, Python controls, grew
-    # the task-set line by three tasks and three controls, and the round's
-    # sweep (2026-08-28 — nine rows, six of them claude-code Python) then
-    # grew the runs line and joined the round list.
+    # in round 7's pattern rather than edited there: every sweep after this
+    # one authored Python controls and then swept them, so the task-set line,
+    # the runs line and the round list all grew, and `tests/sweep_census.py`
+    # is where that list and its arithmetic live.
     stale = {
         "  task set   tasks/first-party-v1 — 122 task(s): 55 control(s), "
         "67 constructed",
@@ -1621,23 +1572,17 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         if line in stale:
             continue
         assert line in printed, line
-    # 125 task(s) and 58 control(s) until round 13 authored its three
-    # `performance-optimisation` tasks, Python controls all — one by ticket
-    # 04, two by ticket 05 — and that round's sweep (2026-08-29, six
-    # claude-code Python rows of its nine) then grew the runs line and
-    # joined the round list.
+    # The task-set line is the live corpus, and every sweep after this one has
+    # moved it by authoring Python controls before sweeping them;
+    # `tests/sweep_census.py` keeps that list, and the three reader lines under
+    # it are rebuilt from the census rather than retyped a round at a time.
     assert (
         "  task set   tasks/first-party-v1 — 128 task(s): 61 control(s), "
         "67 constructed"
     ) in printed
-    assert "  runs       255 over 128 task(s)" in printed
-    assert (
-        "  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, "
-        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10, sweep round-11, sweep round-12, "
-        "sweep round-13"
-    ) in printed
-    assert "             9 keyed on a sweep id, 2 on an as-of date" in printed
+    assert sweep_census.reconcile_runs_line() in printed
+    assert sweep_census.reconcile_rounds_line() in printed
+    assert sweep_census.reconcile_keys_line() in printed
     assert printed.count(f"sweep {_SWEEP}") == 1
     assert _CATEGORY not in printed, (
         "the round declared no contrast, so it reaches the report as a "
@@ -1647,8 +1592,8 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
 
     main(["calibrate-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     calibrated = capsys.readouterr().out
-    [table] = fenced_blocks(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    [table] = fenced_blocks(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))[2:3]
     assert table.strip("\n") in calibrated, (
         "the calibration table the record quotes is not what the reader prints"
@@ -1659,8 +1604,8 @@ def test_both_readers_count_the_round_and_print_what_the_record_quotes(
         "unsolved (n=3)"
     ) in calibrated
 
-    said = prose(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    said = prose(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))
     assert "**And the readers count the round with no flag at all.**" in said
     assert "**The prediction reconciliation is unmoved**" in said
@@ -1685,29 +1630,31 @@ def test_nothing_from_the_proofs_reached_the_unified_dataset(
         ):
             assert needle not in flat, needle
 
-    # Round 12's sweep has since landed nine more answers (2026-08-28) and
-    # round 13's nine more (2026-08-29);
-    # §105's claim is about the archive as this round left it, so they are
-    # scoped back out by sweep id, never by a log filename, and the
-    # section's figures stay unretyped.
+    # Every sweep after this one has since landed more answers, which
+    # `tests/sweep_census.py` enumerates; §105's claim is about the archive as
+    # this round left it, so they are scoped back out by sweep id, never by a
+    # log filename, and the section's figures stay unretyped.
     archived = [
         run for run in runs
-        if run.output and run.sweep not in {"round-12", "round-13"}
+        if run.output and run.sweep not in sweep_census.sweeps_after(_SWEEP)
     ]
     assert len(archived) == _ARCHIVE_NOW
     assert len(
         [run for run in archived if run.sweep != _SWEEP]
     ) == _ARCHIVE_BEFORE
+    # This round's own sweep id and its anchor's stay written out: §105's
+    # split is this record's claim about which point-gate rounds stratum A
+    # excludes, and only the tail after it is the census's to keep.
     stratum_a = [
         run
         for run in runs
-        if run.sweep not in {_ANCHOR, _SWEEP, "round-12", "round-13"}
+        if run.sweep not in {_ANCHOR, _SWEEP, *sweep_census.sweeps_after(_SWEEP)}
         and firstparty_v1.carries_a_key(tasks[run.task_id])
     ]
     assert len(stratum_a) == _STRATUM_A
 
-    said = prose(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    said = prose(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))
     assert "**Nothing from the proofs reached `data/unified.jsonl`.**" in said
     assert "a combination's result on a benchmark instance (§76.11)" in said
@@ -1723,7 +1670,7 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     spent once, landing before the note's trailing headings — and the last
     section names the next free number, which is the frontier sentence the
     round-9 suite's moved assertion reads."""
-    text = _NOTE.read_text(encoding="utf-8")
+    text = NOTE.read_text(encoding="utf-8")
     numbered = sorted(
         {int(match) for match in re.findall(r"^### (\d+)\.", text, re.MULTILINE)}
         | {int(match) for match in re.findall(r"^\*\*(\d+)\. ", text, re.MULTILINE)}
@@ -1754,14 +1701,14 @@ def test_the_record_takes_the_next_free_numbers_and_renumbers_nothing() -> None:
     assert headings[record_at + 1].startswith("## Round 12 rulings")
 
     opening = prose(
-        note_part("Round 11 record — 2026-08-27").split("\n### ")[0]
+        section("## Round 11 record — 2026-08-27").split("\n### ")[0]
     )
     assert "**§97 is the next free number.**" in opening
     assert "this record opens at **97** and runs to **105**" in opening
     assert "Nothing above it is renumbered." in opening
 
-    closing = prose(note_section(
-        "105. Replay, the readers, and heap 3's second cell filled"
+    closing = prose(section(
+        "### 105. Replay, the readers, and heap 3's second cell filled"
     ))
     assert "**Heap 3's second cell fills.**" in closing
     assert "**§106 is the next free section number**" in closing
