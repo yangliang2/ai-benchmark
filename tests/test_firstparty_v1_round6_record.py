@@ -34,6 +34,8 @@ import statistics
 from pathlib import Path
 
 import pytest
+import sweep_census
+from note_reading import fenced_blocks, prose, section
 
 from ai_benchmark import agents, firstparty, firstparty_v1, pricing, reconcile_v1
 from ai_benchmark.cli import main
@@ -41,7 +43,6 @@ from ai_benchmark.cli import main
 _REPO = Path(__file__).parent.parent
 _TASKS = _REPO / "tasks" / "first-party-v1"
 _LOGS = _REPO / "data" / "first-party-v1-runs"
-_NOTE = _REPO / "docs" / "design" / "task-difficulty-and-ex-ante-profiles.md"
 
 _SWEEP = "round-6"
 
@@ -126,38 +127,10 @@ _CLAUDE_CODE_RUNS = 225
 _TASKS_AS_RECORDED = 113
 _TASKS_THE_RUNS_MENTION = 113
 
-# What round 8 added to both of the moving numbers: three `test-authoring`
-# tasks, each of them Python and a control, swept by six claude-code rows and
-# three Codex ones. Named apart from the round-6 figures above so that the
-# claim §58 makes — agent selection drops every round-6 row — stays readable
-# beside the counts a later round moved.
-_ROUND_8_TASKS = 3
-_ROUND_8_CLAUDE_CODE_RUNS = 6
-
-# And what round 10's sweep then added, on 2026-08-24: three `investigation`
-# tasks — Python controls all — swept by six claude-code rows and three more
-# Codex ones. The same shape as round 8's arrival, named apart for the same
-# reason.
-_ROUND_10_TASKS = 3
-_ROUND_10_CLAUDE_CODE_RUNS = 6
-
-# And round 11's, on 2026-08-26: three `requirement-decomposition` tasks —
-# Python controls all — swept by six claude-code rows and three more Codex
-# ones. The same shape a third time, named apart for the same reason.
-_ROUND_11_TASKS = 3
-_ROUND_11_CLAUDE_CODE_RUNS = 6
-
-# And round 12's, on 2026-08-28: three explain-style `codebase-comprehension`
-# tasks — Python controls all — swept by six claude-code rows and three more
-# Codex ones. The same shape a fourth time, named apart for the same reason.
-_ROUND_12_TASKS = 3
-_ROUND_12_CLAUDE_CODE_RUNS = 6
-
-# And round 13's, on 2026-08-29: three `performance-optimisation` tasks —
-# Python controls all — swept by six claude-code rows and three more Codex
-# ones. The same shape a fifth time, named apart for the same reason.
-_ROUND_13_TASKS = 3
-_ROUND_13_CLAUDE_CODE_RUNS = 6
+# What the rounds after this one added to both of the moving numbers is read
+# from `tests/sweep_census.py` — `sweeps_after(_SWEEP)` and its counters —
+# rather than named a pair of constants at a time here, so that landing a
+# sweep is one visible edit there and none in this record.
 
 
 def tasks_in_set() -> int:
@@ -233,7 +206,9 @@ def categories() -> dict[str, str]:
 
 
 @pytest.fixture(scope="module")
-def verdicts() -> dict[tuple[str, str], bool]:
+def verdicts(
+    tasks: dict[str, firstparty_v1.Task],
+) -> dict[tuple[str, str], bool]:
     """Every cell of section 55's table re-graded, keyed task x model.
 
     The computation `eval-v1 --replay` does, and the only way to a verdict: a
@@ -241,7 +216,6 @@ def verdicts() -> dict[tuple[str, str], bool]:
     round's thirty and the sixty ladder rows they are read against — graded
     once for the whole module.
     """
-    tasks = {task.id: task for task in firstparty_v1.load_task_set(_TASKS)}
     graded = {
         (task_id, _MODEL): firstparty_v1.grade(tasks[task_id], run.diff)
         for task_id, run in round_6_runs().items()
@@ -253,44 +227,20 @@ def verdicts() -> dict[tuple[str, str], bool]:
     return graded
 
 
-def note_section(heading: str) -> str:
-    """One numbered section of the design note, by its heading line."""
-    body = _NOTE.read_text(encoding="utf-8").split(f"### {heading}\n")[1]
-    return body.split("\n### ")[0].split("\n## ")[0]
-
-
-def note_part(heading: str) -> str:
-    """One top-level part of the design note, by its heading line.
-
-    Section 52 is written as bold-numbered paragraphs under a `##` heading
-    rather than as `###` sections, so the registered cell list has to be read
-    this way rather than through `note_section`.
-    """
-    body = _NOTE.read_text(encoding="utf-8").split(f"## {heading}\n")[1]
-    return body.split("\n## ")[0]
-
-
-def prose(text: str) -> str:
-    """A passage with its wrapping collapsed. What a sentence of the record
-    says is the pin; where the line happens to break is not, and a pin on the
-    break would fail the next time a word is added upstream of it."""
-    return " ".join(text.split())
-
-
-def fenced_blocks(text: str) -> list[str]:
-    """Every fenced code block of a passage of the note, in order."""
-    return text.split("```\n")[1::2]
-
-
 def registered_cells() -> dict[str, list[str]]:
     """Ticket 08's register, read back out of section 52.
 
     The five fenced blocks of section 52.1 are the round's declared cell list,
     written before the first paid run. Read here rather than restated, so that
     what the round swept is compared against the register itself and not
-    against a copy of it made afterwards.
+    against a copy of it made afterwards. Section 52 is written as
+    bold-numbered paragraphs under a `##` heading rather than as `###`
+    sections, which is why the heading passed to the kit's reader is a `##`
+    one.
     """
-    blocks = fenced_blocks(note_part("Round 6 cells and cost — registered 2026-08-18"))
+    blocks = fenced_blocks(
+        section("## Round 6 cells and cost — registered 2026-08-18")
+    )
     assert len(blocks) == 6, "section 52 lists five cell blocks and one command"
     return {
         name: [line.split()[0] for line in block.splitlines() if line.strip()]
@@ -382,7 +332,7 @@ def test_the_round_swept_exactly_the_cells_that_were_registered() -> None:
     # another.
     assert agents.CODEX_REASONING_LEVELS == {_MODEL: "medium"}
 
-    measured = prose(note_section("53. What the round measured"))
+    measured = prose(section("### 53. What the round measured"))
     assert "**the thirty are exactly the thirty §52.1 registered**" in measured
     assert "The version is `codex-cli 0.147.0`" in measured
     assert "**it held across both**" in measured
@@ -420,8 +370,8 @@ def test_every_codex_row_discloses_a_table_derived_cost_and_its_table() -> None:
     assert agents.ClaudeCodeAdapter.cost_source == "vendor-reported"
     assert agents.ClaudeCodeAdapter.price_table is None
 
-    read = prose(note_section(
-        "54. Spend, by cost source, against the range registered before it"
+    read = prose(section(
+        "### 54. Spend, by cost source, against the range registered before it"
     ))
     assert "**What the account was billed: nothing per token.**" in read
     assert "It is not an invoice" in read
@@ -452,8 +402,8 @@ def test_the_round_cost_what_the_record_states_by_cost_source() -> None:
     assert round(_LADDER_SPEND[_HAIKU] / 30, 4) == 0.0783
     assert round(_LADDER_SPEND[_SONNET] / 30, 4) == 0.2086
 
-    [printed] = fenced_blocks(note_section(
-        "54. Spend, by cost source, against the range registered before it"
+    [printed] = fenced_blocks(section(
+        "### 54. Spend, by cost source, against the range registered before it"
     ))
     assert printed == (
         "codex x gpt-5.6-terra     $2.1511  table-derived  "
@@ -515,8 +465,8 @@ def test_the_registered_range_was_missed_low_and_the_record_says_so() -> None:
         < prices.input_uncached_per_token
     )
 
-    read = prose(note_section(
-        "54. Spend, by cost source, against the range registered before it"
+    read = prose(section(
+        "### 54. Spend, by cost source, against the range registered before it"
     ))
     assert (
         "**The registered range was $5–10. The round came to $2.1511. "
@@ -558,7 +508,7 @@ def test_the_limits_in_force_were_the_same_600_everywhere_and_never_reached(
     assert round(statistics.mean(latencies), 1) == _MEAN_S
     assert max(latencies) < 600
 
-    measured = prose(note_section("53. What the round measured"))
+    measured = prose(section("### 53. What the round measured"))
     assert "**The limits in force: 600 seconds, every cell.**" in measured
     assert "**no cross-round caveat arises**" in measured
     assert "the round's longest run was **92.8 s**" in measured
@@ -576,7 +526,7 @@ def test_the_per_cell_table_is_what_the_logs_and_the_grading_say(
     the numbers under it rather than beside them.
     """
     quoted = fenced_blocks(
-        note_section("55. The thirty cells under three combinations")
+        section("### 55. The thirty cells under three combinations")
     )[0]
     assert quoted == cell_table(verdicts)
 
@@ -600,7 +550,7 @@ def test_the_per_cell_table_is_what_the_logs_and_the_grading_say(
     # The same cell round 5's sonnet failed, which is what section 55 reads.
     assert verdicts[_UNRESOLVED, _SONNET] is False
 
-    measured = prose(note_section("53. What the round measured"))
+    measured = prose(section("### 53. What the round measured"))
     assert "**Resolution: 29 of 30.**" in measured
     assert (
         "24 of 30 on `claude-haiku-4-5` and 27 of 30 on `claude-sonnet-5`"
@@ -633,7 +583,7 @@ def test_the_per_category_sample_is_beside_the_table_and_says_its_n(
             parts.append(f"{hit}/{len(members)}  ${spend:.4f}")
         rows.append((name, len(members), parts))
 
-    quoted = fenced_blocks(note_section("55. The thirty cells under three combinations"))[1]
+    quoted = fenced_blocks(section("### 55. The thirty cells under three combinations"))[1]
     for name, n, parts in rows:
         line = next(
             line for line in quoted.splitlines() if line.startswith(name + " ")
@@ -711,7 +661,7 @@ def test_the_review_findings_land_where_section_55_says(
     assert primaries == 13, "every accepted answer named its finding's primary"
     assert (covered, planted_total) == (12, 12), "every planted finding covered"
 
-    read = prose(note_section("55. The thirty cells under three combinations"))
+    read = prose(section("### 55. The thirty cells under three combinations"))
     assert (
         "13 matched a planted one, all 13 at its primary; one matched a "
         "rejected one; two were unlisted and archived"
@@ -806,8 +756,8 @@ def test_locating_against_fixing_under_all_three_combinations(
                 ratios.setdefault(model, []).append((cost, turns))
         lines.append((f"{name:<14}" + "".join(f"{c:>13}" for c in cells)).rstrip())
 
-    [quoted] = fenced_blocks(note_section(
-        "56. Locating against fixing, with a second harness beside the ladder"
+    [quoted] = fenced_blocks(section(
+        "### 56. Locating against fixing, with a second harness beside the ladder"
     ))
     assert quoted == "\n".join(lines) + "\n"
 
@@ -826,8 +776,8 @@ def test_locating_against_fixing_under_all_three_combinations(
         ) == pinned, model
         assert max(costs) < 1.0, "no both-resolved pair reached parity"
 
-    read = prose(note_section(
-        "56. Locating against fixing, with a second harness beside the ladder"
+    read = prose(section(
+        "### 56. Locating against fixing, with a second harness beside the ladder"
     ))
     assert (
         "**0.59×–0.78× on cost, median 0.70×**, and 0.47×–0.82× on turns, "
@@ -866,7 +816,7 @@ def test_what_the_round_cannot_say_is_stated_and_is_true_of_the_rows() -> None:
     assert sum(turns) == _CODEX_TURNS
     assert (min(turns), max(turns)) == _CODEX_TURN_RANGE
 
-    said = prose(note_section("57. What this round cannot say"))
+    said = prose(section("### 57. What this round cannot say"))
     assert "**No rung.**" in said
     assert "**No multiplier, and no Codex baseline.**" in said
     assert "**No cross-harness turn comparison.**" in said
@@ -910,7 +860,7 @@ def test_the_expensive_assumption_is_held_by_the_runner_not_by_the_adapter(
     }
     assert {firstparty_v1.live_run_limit_s(task) for task in swept.values()} == {600}
 
-    said = prose(note_section("57. What this round cannot say"))
+    said = prose(section("### 57. What this round cannot say"))
     assert "**the same prompt bytes**" in said
     assert "**the same grant**" in said
     assert "**the same grading**" in said
@@ -975,8 +925,8 @@ def test_replaying_each_log_reproduces_the_merged_records_exactly(
         assert record["benchmark"] == "first-party-v1"
 
     # The commands the note prints, against the two logs they name.
-    printed_block = fenced_blocks(note_section(
-        "58. Replay, and the published tables left where they were"
+    printed_block = fenced_blocks(section(
+        "### 58. Replay, and the published tables left where they were"
     ))[0]
     for name, (evaluated, resolved) in _REPLAYED.items():
         assert f"--replay data/first-party-v1-runs/{name}" in printed_block
@@ -1001,31 +951,33 @@ def test_neither_reader_counts_a_codex_row(
     `gpt-5.6-terra` rows.
 
     The printed totals are no longer the ones section 58 published, and the
-    reason is not this round: rounds 8, 10, 11 and 12 each swept six claude-code
-    Python rows, which survive both selections. Section 58's claim is about
-    round 6's rows and it still holds exactly; the later rounds' arrivals are
-    named in the body rather than written back into a record of what the
-    readers printed that day.
+    reason is not this round: every sweep after it that landed claude-code
+    Python rows survives both selections, and `tests/sweep_census.py` is where
+    that list is kept. Section 58's claim is about round 6's rows and it still
+    holds exactly; the later rounds' arrivals are derived from the census
+    rather than written back into a record of what the readers printed that
+    day.
     """
     everything = [
         run
         for log in reconcile_v1.collect_logs([_LOGS])
         for run in firstparty_v1.load_runs(log)
     ]
-    # Since section 58 was pinned, six rounds have added rows to the same
-    # directory: round 7's forty-two — twenty-eight claude-code TypeScript ones
-    # and fourteen more Codex ones — round 8's nine, six of them claude-code
-    # *Python* ones, round 10's nine of the same shape (its sweep landed
-    # 2026-08-24), round 11's nine of it again (2026-08-26), round 12's
-    # nine (2026-08-28), and round 13's nine (2026-08-29). Section 58's own
-    # claim is unchanged and is what this
+    # Since section 58 was pinned, further rounds have added rows to the same
+    # directory; `tests/sweep_census.py` is the one place that list and its
+    # arithmetic live. Section 58's own claim is unchanged and is what this
     # test checks: agent selection drops every round-6 row. What has moved is
-    # the printed total, because round 8's six, round 10's six, round 11's
-    # six, round 12's six and round 13's six survive both
-    # selections where round 7's twenty-eight did not. That is those rounds'
-    # truth, pinned in their own suites and named here rather than edited into
-    # a record of what round 6 printed on the day.
-    assert len(everything) == _CLAUDE_CODE_RUNS + 30 + 42 + 9 + 9 + 9 + 9 + 9
+    # the printed total, because the later rounds' claude-code *Python* rows
+    # survive both selections where round 7's twenty-eight did not. That is
+    # those rounds' truth, pinned in their own suites and derived here rather
+    # than edited into a record of what round 6 printed on the day.
+    #
+    # The tail is read over this round *and* the sweeps after it, because the
+    # frozen base is the corpus's claude-code rows as they stood before round 6
+    # landed its own thirty.
+    assert len(everything) == _CLAUDE_CODE_RUNS + sweep_census.rows_of(
+        _SWEEP, *sweep_census.sweeps_after(_SWEEP)
+    )
     assert len([run for run in everything if run.sweep == _SWEEP]) == 30
     selected = reconcile_v1.select_agent(
         everything, firstparty.CLAUDE_CODE, explicit=False
@@ -1035,32 +987,21 @@ def test_neither_reader_counts_a_codex_row(
     selected = reconcile_v1.select_language(
         declared, selected, reconcile_v1.DEFAULT_LANGUAGE, explicit=False
     )
-    assert len(selected) == (
-        _CLAUDE_CODE_RUNS + _ROUND_8_CLAUDE_CODE_RUNS
-        + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS
-        + _ROUND_12_CLAUDE_CODE_RUNS + _ROUND_13_CLAUDE_CODE_RUNS
+    # Only the rows surviving *both* selections are summed, which is why the
+    # tail's own contribution is `reconciled_rows_of` and not the raw count:
+    # round 7's twenty-eight claude-code rows are TypeScript and add nothing.
+    assert len(selected) == _CLAUDE_CODE_RUNS + sweep_census.reconciled_rows_of(
+        *sweep_census.sweeps_after(_SWEEP)
     )
     assert not [run for run in selected if run.sweep == _SWEEP]
 
     main(["reconcile-v1", "--tasks", str(_TASKS), "--replay", str(_LOGS)])
     reconciled = capsys.readouterr().out
-    assert (
-        f"  runs       "
-        f"{_CLAUDE_CODE_RUNS + _ROUND_8_CLAUDE_CODE_RUNS + _ROUND_10_CLAUDE_CODE_RUNS + _ROUND_11_CLAUDE_CODE_RUNS + _ROUND_12_CLAUDE_CODE_RUNS + _ROUND_13_CLAUDE_CODE_RUNS}"
-        f" over "
-        f"{_TASKS_THE_RUNS_MENTION + _ROUND_8_TASKS + _ROUND_10_TASKS + _ROUND_11_TASKS + _ROUND_12_TASKS + _ROUND_13_TASKS} "
-        "task(s)"
-    ) in reconciled
-    # `sweep round-10` joined the round list when its sweep landed, and
-    # `sweep round-11`, `sweep round-12` and `sweep round-13` after it;
-    # round 6's rows are
-    # still not in it, which is the claim.
-    assert (
-        "  rounds     11 round(s): as-of 2026-08-04, as-of 2026-08-05, "
-        "sweep round-2, sweep round-3, sweep round-4, sweep round-5, "
-        "sweep round-8, sweep round-10, sweep round-11, sweep round-12, "
-        "sweep round-13"
-    ) in reconciled
+    assert sweep_census.reconcile_runs_line() in reconciled
+    # Each later sweep that reconciles joined the round list when it landed;
+    # the census keeps that list, and round 6's rows are still not in it, which
+    # is the claim.
+    assert sweep_census.reconcile_rounds_line() in reconciled
     assert "sweep round-6" not in reconciled
     assert "sweep round-7" not in reconciled
     # And the Codex logs were read, not skipped: they are named in the
@@ -1078,8 +1019,8 @@ def test_neither_reader_counts_a_codex_row(
     # being edited; the other quoted blocks still print as published, and
     # the moved category's own suites pin what prints instead.
     for quoted in (
-        fenced_blocks(note_section("39. The two new categories' rows, as printed"))
-        + fenced_blocks(note_section("48. The two new categories' rows, as printed"))
+        fenced_blocks(section("### 39. The two new categories' rows, as printed"))
+        + fenced_blocks(section("### 48. The two new categories' rows, as printed"))
     ):
         for block in ["category " + rest for rest in quoted.split("\ncategory ")[1:]] or [
             quoted
@@ -1096,8 +1037,8 @@ def test_neither_reader_counts_a_codex_row(
                 "prints:\n" + block
             )
 
-    said = prose(note_section(
-        "58. Replay, and the published tables left where they were"
+    said = prose(section(
+        "### 58. Replay, and the published tables left where they were"
     ))
     assert (
         "**`calibrate-v1` and `reconcile-v1` print for `claude-code` exactly "
